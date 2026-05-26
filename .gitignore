@@ -1,0 +1,12 @@
+# Entorno Frontend (React)
+frontend/node_modules/
+frontend/dist/
+.env
+.env.*
+
+# Entorno Backend (Python/FastAPI)
+backend/venv/
+backend/env/
+backend/__pycache__/
+*.pyc
+*.pyo
