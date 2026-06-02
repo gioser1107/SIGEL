@@ -5,8 +5,9 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import get_db
-from dependencias.auth_dependencia import obtener_usuario_actual
+from dependencias.permiso_dependencia import requiere_permiso
 from modelos.permiso_modelo import Permiso
+from utilidades.permisos_constantes import PERMISO_GESTIONAR_PERMISOS
 
 router = APIRouter(prefix="/permisos", tags=["Permisos"])
 
@@ -15,12 +16,15 @@ class DatosPermisoNuevo(BaseModel):
     descripcion: str
 
 
+class DatosPermisoActualizar(BaseModel):
+    descripcion: str
+
+
 @router.get("/")
 def obtener_todos_los_permisos(
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
 ):
-    """Lista todos los permisos activos del sistema."""
     consulta = db.query(Permiso).filter(Permiso.eliminado_en.is_(None))
     lista_permisos = consulta.all()
 
@@ -35,13 +39,35 @@ def obtener_todos_los_permisos(
     return resultado
 
 
+@router.get("/{permiso_id}")
+def obtener_permiso_por_id(
+    permiso_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+):
+    consulta = db.query(Permiso).filter(
+        Permiso.id == permiso_id,
+        Permiso.eliminado_en.is_(None),
+    )
+    permiso = consulta.first()
+
+    if permiso is None:
+        raise HTTPException(status_code=404, detail="Permiso no encontrado")
+
+    return {
+        "permiso": {
+            "id": permiso.id,
+            "descripcion": permiso.descripcion,
+        }
+    }
+
+
 @router.post("/")
 def crear_permiso(
     datos: DatosPermisoNuevo,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
 ):
-    """Crea un permiso nuevo."""
     ahora = datetime.now()
 
     nuevo_permiso = Permiso(
@@ -60,4 +86,60 @@ def crear_permiso(
             "id": nuevo_permiso.id,
             "descripcion": nuevo_permiso.descripcion,
         },
+    }
+
+
+@router.put("/{permiso_id}")
+def actualizar_permiso(
+    permiso_id: int,
+    datos: DatosPermisoActualizar,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+):
+    consulta = db.query(Permiso).filter(
+        Permiso.id == permiso_id,
+        Permiso.eliminado_en.is_(None),
+    )
+    permiso = consulta.first()
+
+    if permiso is None:
+        raise HTTPException(status_code=404, detail="Permiso no encontrado")
+
+    permiso.descripcion = datos.descripcion
+    permiso.actualizado_en = datetime.now()
+    db.commit()
+    db.refresh(permiso)
+
+    return {
+        "mensaje": "Permiso actualizado con éxito",
+        "permiso": {
+            "id": permiso.id,
+            "descripcion": permiso.descripcion,
+        },
+    }
+
+
+@router.delete("/{permiso_id}")
+def eliminar_permiso(
+    permiso_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+):
+    consulta = db.query(Permiso).filter(
+        Permiso.id == permiso_id,
+        Permiso.eliminado_en.is_(None),
+    )
+    permiso = consulta.first()
+
+    if permiso is None:
+        raise HTTPException(status_code=404, detail="Permiso no encontrado")
+
+    ahora = datetime.now()
+    permiso.eliminado_en = ahora
+    permiso.actualizado_en = ahora
+    db.commit()
+
+    return {
+        "mensaje": "Permiso eliminado con éxito",
+        "permiso_id": permiso_id,
     }

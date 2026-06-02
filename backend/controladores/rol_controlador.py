@@ -6,9 +6,11 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
+from dependencias.permiso_dependencia import requiere_permiso
 from modelos.permiso_modelo import Permiso
 from modelos.rol_modelo import Rol
 from modelos.rol_permiso_modelo import RolPermiso
+from utilidades.permisos_constantes import PERMISO_GESTIONAR_ROLES
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
@@ -18,13 +20,20 @@ class DatosRolNuevo(BaseModel):
     descripcion: str | None = None
 
 
+class DatosRolActualizar(BaseModel):
+    nombre: str | None = None
+    descripcion: str | None = None
+
+
 class DatosAsignarPermiso(BaseModel):
     permiso_id: int
 
 
 @router.get("/")
-def obtener_todos_los_roles(db: Session = Depends(get_db)):
-    """Lista todos los roles activos del sistema."""
+def obtener_todos_los_roles(
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
     consulta = db.query(Rol).filter(Rol.eliminado_en.is_(None))
     lista_roles = consulta.all()
 
@@ -40,13 +49,36 @@ def obtener_todos_los_roles(db: Session = Depends(get_db)):
     return resultado
 
 
+@router.get("/{rol_id}")
+def obtener_rol_por_id(
+    rol_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    consulta_rol = db.query(Rol).filter(
+        Rol.id == rol_id,
+        Rol.eliminado_en.is_(None),
+    )
+    rol = consulta_rol.first()
+
+    if rol is None:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+
+    return {
+        "rol": {
+            "id": rol.id,
+            "nombre": rol.nombre,
+            "descripcion": rol.descripcion,
+        }
+    }
+
+
 @router.post("/")
 def crear_rol(
     datos: DatosRolNuevo,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
 ):
-    """Crea un rol nuevo."""
     consulta_nombre = db.query(Rol).filter(Rol.nombre == datos.nombre)
     rol_existente = consulta_nombre.first()
 
@@ -79,13 +111,83 @@ def crear_rol(
     }
 
 
+@router.put("/{rol_id}")
+def actualizar_rol(
+    rol_id: int,
+    datos: DatosRolActualizar,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+):
+    consulta_rol = db.query(Rol).filter(
+        Rol.id == rol_id,
+        Rol.eliminado_en.is_(None),
+    )
+    rol = consulta_rol.first()
+
+    if rol is None:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+
+    if datos.nombre is not None and datos.nombre != rol.nombre:
+        consulta_nombre = db.query(Rol).filter(Rol.nombre == datos.nombre)
+        otro = consulta_nombre.first()
+
+        if otro is not None and otro.id != rol_id and otro.eliminado_en is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Ya existe otro rol con ese nombre",
+            )
+
+        rol.nombre = datos.nombre
+
+    if datos.descripcion is not None:
+        rol.descripcion = datos.descripcion
+
+    rol.actualizado_en = datetime.now()
+    db.commit()
+    db.refresh(rol)
+
+    return {
+        "mensaje": "Rol actualizado con éxito",
+        "rol": {
+            "id": rol.id,
+            "nombre": rol.nombre,
+            "descripcion": rol.descripcion,
+        },
+    }
+
+
+@router.delete("/{rol_id}")
+def eliminar_rol(
+    rol_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+):
+    consulta_rol = db.query(Rol).filter(
+        Rol.id == rol_id,
+        Rol.eliminado_en.is_(None),
+    )
+    rol = consulta_rol.first()
+
+    if rol is None:
+        raise HTTPException(status_code=404, detail="Rol no encontrado")
+
+    ahora = datetime.now()
+    rol.eliminado_en = ahora
+    rol.actualizado_en = ahora
+    db.commit()
+
+    return {
+        "mensaje": "Rol eliminado con éxito",
+        "rol_id": rol_id,
+    }
+
+
 @router.get("/{rol_id}/permisos")
 def obtener_permisos_del_rol(
     rol_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
 ):
-    """Lista los permisos asignados a un rol."""
     consulta_rol = db.query(Rol).filter(
         Rol.id == rol_id,
         Rol.eliminado_en.is_(None),
@@ -125,9 +227,8 @@ def asignar_permiso_a_rol(
     rol_id: int,
     datos: DatosAsignarPermiso,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
 ):
-    """Asigna un permiso existente a un rol."""
     consulta_rol = db.query(Rol).filter(
         Rol.id == rol_id,
         Rol.eliminado_en.is_(None),
@@ -183,9 +284,8 @@ def quitar_permiso_de_rol(
     rol_id: int,
     permiso_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
 ):
-    """Quita un permiso de un rol (soft delete)."""
     consulta_asignacion = db.query(RolPermiso).filter(
         RolPermiso.rol_id == rol_id,
         RolPermiso.permiso_id == permiso_id,

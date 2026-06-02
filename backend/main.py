@@ -60,4 +60,10 @@ def ruta_raiz_api():
     return {
         "mensaje": "API Travel BQTO activa",
         "documentacion": "/docs",
+        "modulos": {
+            "auth": "/api/auth",
+            "usuarios": "/api/usuarios",
+            "roles": "/api/roles",
+            "permisos": "/api/permisos",
+        },
     }
