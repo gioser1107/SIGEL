@@ -1,18 +1,51 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-import models
-from database import get_db
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
+
+from controladores.auth_controlador import router as router_auth
+from controladores.permiso_controlador import router as router_permisos
+from controladores.rol_controlador import router as router_roles
+from controladores.usuario_controlador import router as router_usuarios
 
 app = FastAPI(title="API Travel BQTO")
 
-# Ruta de prueba básica
-@app.get("/")
-def ruta_raiz():
-    return {"mensaje": "¡Backend de Travel BQTO inicializado con éxito!"}
 
-# Ejemplo de una ruta que consulta a la base de datos (Tu Controlador)
-@app.get("/usuarios")
-def obtener_usuarios(db: Session = Depends(get_db)):
-    # Esto es equivalente a un "SELECT * FROM usuarios"
-    usuarios = db.query(models.Usuario).all()
-    return usuarios
+@app.exception_handler(SQLAlchemyError)
+def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detalle": "No se pudo conectar o consultar la base de datos MySQL",
+            "error": str(error.orig) if hasattr(error, "orig") else str(error),
+            "sugerencia": "Revisa backend/.env con usuario y contraseña correctos de MySQL",
+        },
+    )
+
+
+# Permite que React (Vite o Create React App) consuma la API desde el navegador
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router_auth, prefix="/api")
+app.include_router(router_permisos, prefix="/api")
+app.include_router(router_usuarios, prefix="/api")
+app.include_router(router_roles, prefix="/api")
+
+
+@app.get("/api")
+def ruta_raiz_api():
+    return {
+        "mensaje": "API Travel BQTO activa",
+        "documentacion": "/docs",
+    }
