@@ -1,9 +1,9 @@
 import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import jwt
 from dotenv import load_dotenv
-from pathlib import Path
 
 directorio_backend = Path(__file__).resolve().parent.parent
 load_dotenv(directorio_backend / ".env")
@@ -23,8 +23,8 @@ def crear_token(usuario_id: int, correo: str, rol_id: int) -> tuple[str, int]:
         "sub": str(usuario_id),
         "correo": correo,
         "rol_id": rol_id,
-        "iat": ahora,
-        "exp": expiracion,
+        "iat": int(ahora.timestamp()),
+        "exp": int(expiracion.timestamp()),
     }
 
     token = jwt.encode(payload, SECRETO_JWT, algorithm=ALGORITMO_JWT)

@@ -4,6 +4,3 @@ sqlalchemy
 pymysql
 python-dotenv
 pyjwt
-
-
-ejemplo: pip install pyjwt

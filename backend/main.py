@@ -23,6 +23,18 @@ def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
     )
 
 
+@app.exception_handler(Exception)
+def manejar_error_general(request: Request, error: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detalle": "Error interno del servidor",
+            "error": str(error),
+            "tipo": type(error).__name__,
+        },
+    )
+
+
 # Permite que React (Vite o Create React App) consuma la API desde el navegador
 app.add_middleware(
     CORSMiddleware,
