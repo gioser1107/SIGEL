@@ -4,11 +4,13 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from controladores.auth_controlador import router as router_auth
+from controladores.cliente_controlador import router as router_clientes
 from controladores.permiso_controlador import router as router_permisos
 from controladores.rol_controlador import router as router_roles
+from controladores.ubicacion_controlador import router as router_ubicaciones
 from controladores.usuario_controlador import router as router_usuarios
 
-app = FastAPI(title="API Travel BQTO")
+app = FastAPI(title="API Travel BQTO", version="1.1.0")
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -50,9 +52,11 @@ app.add_middleware(
 )
 
 app.include_router(router_auth, prefix="/api")
+app.include_router(router_clientes, prefix="/api")
 app.include_router(router_permisos, prefix="/api")
 app.include_router(router_usuarios, prefix="/api")
 app.include_router(router_roles, prefix="/api")
+app.include_router(router_ubicaciones, prefix="/api")
 
 
 @app.get("/api")
@@ -62,8 +66,10 @@ def ruta_raiz_api():
         "documentacion": "/docs",
         "modulos": {
             "auth": "/api/auth",
+            "clientes": "/api/clientes",
             "usuarios": "/api/usuarios",
             "roles": "/api/roles",
             "permisos": "/api/permisos",
+            "ubicaciones": "/api/ubicaciones",
         },
     }
