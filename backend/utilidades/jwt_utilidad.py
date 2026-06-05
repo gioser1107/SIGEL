@@ -28,6 +28,8 @@ def crear_token(usuario_id: int, correo: str, rol_id: int) -> tuple[str, int]:
     }
 
     token = jwt.encode(payload, SECRETO_JWT, algorithm=ALGORITMO_JWT)
+    if isinstance(token, bytes):
+        token = token.decode("utf-8")
     return token, expira_en_segundos
 
 
