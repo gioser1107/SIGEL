@@ -4,13 +4,16 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 
 from controladores.auth_controlador import router as router_auth
+from controladores.bitacora_controlador import router as router_bitacora
+from controladores.cliente_controlador import router as router_clientes
+from controladores.cotizacion_controlador import router as router_cotizaciones
 from controladores.permiso_controlador import router as router_permisos
 from controladores.rol_controlador import router as router_roles
+from controladores.ubicacion_controlador import router as router_ubicaciones
 from controladores.usuario_controlador import router as router_usuarios
 from controladores.viaje_controlador import router as router_viajes
-from controladores.cotizacion_controlador import router as router_cotizaciones
 
-app = FastAPI(title="API Travel BQTO")
+app = FastAPI(title="API Travel BQTO", version="1.1.0")
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -37,7 +40,7 @@ def manejar_error_general(request: Request, error: Exception):
     )
 
 
-# Permite que React (Vite o Create React App) consuma la API desde el navegador
+# Permite que React (Vite) consuma la API desde el navegador
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -54,11 +57,14 @@ app.add_middleware(
 )
 
 app.include_router(router_auth, prefix="/api")
+app.include_router(router_clientes, prefix="/api")
 app.include_router(router_permisos, prefix="/api")
 app.include_router(router_usuarios, prefix="/api")
 app.include_router(router_roles, prefix="/api")
+app.include_router(router_ubicaciones, prefix="/api")
 app.include_router(router_viajes, prefix="/api")
 app.include_router(router_cotizaciones, prefix="/api")
+app.include_router(router_bitacora, prefix="/api")
 
 
 @app.get("/api")
@@ -68,10 +74,13 @@ def ruta_raiz_api():
         "documentacion": "/docs",
         "modulos": {
             "auth": "/api/auth",
+            "clientes": "/api/clientes",
             "usuarios": "/api/usuarios",
             "roles": "/api/roles",
             "permisos": "/api/permisos",
+            "ubicaciones": "/api/ubicaciones",
             "viajes": "/api/viajes",
             "cotizaciones": "/api/cotizaciones",
+            "bitacora": "/api/bitacora",
         },
     }
