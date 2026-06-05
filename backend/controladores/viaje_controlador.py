@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ from modelos.unidad_transporte_modelo import UnidadTransporte
 from modelos.usuario_modelo import Usuario
 from modelos.viaje_modelo import Viaje
 from modelos.viaje_parada_modelo import ViajeParadaRecogida
+from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
 
 router = APIRouter(prefix="/viajes", tags=["Planificación - Viajes"])
 
@@ -225,6 +226,7 @@ def obtener_viaje(
 @router.post("")
 def crear_viaje(
     datos: DatosViajeCrear,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -249,6 +251,18 @@ def crear_viaje(
     db.commit()
     db.refresh(nuevo_viaje)
 
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="INSERT",
+        resumen=f"Viaje creado (destino {datos.destino_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viajes",
+        registro_id=nuevo_viaje.id,
+        detalle={"destino_id": datos.destino_id, "estado": datos.estado},
+        ip_origen=obtener_ip_origen(request),
+    )
+
     return {
         "mensaje": "Viaje creado con éxito",
         "viaje": _viaje_a_dict(db, nuevo_viaje),
@@ -259,6 +273,7 @@ def crear_viaje(
 def actualizar_viaje(
     viaje_id: int,
     datos: DatosViajeActualizar,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -292,6 +307,18 @@ def actualizar_viaje(
     db.commit()
     db.refresh(viaje)
 
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="UPDATE",
+        resumen=f"Viaje actualizado (id {viaje_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viajes",
+        registro_id=viaje_id,
+        detalle=datos.model_dump(exclude_none=True),
+        ip_origen=obtener_ip_origen(request),
+    )
+
     return {
         "mensaje": "Viaje actualizado con éxito",
         "viaje": _viaje_a_dict(db, viaje),
@@ -301,6 +328,7 @@ def actualizar_viaje(
 @router.delete("/{viaje_id}")
 def eliminar_viaje(
     viaje_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -309,6 +337,17 @@ def eliminar_viaje(
     viaje.eliminado_en = ahora
     viaje.actualizado_en = ahora
     db.commit()
+
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="DELETE",
+        resumen=f"Viaje eliminado (id {viaje_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viajes",
+        registro_id=viaje_id,
+        ip_origen=obtener_ip_origen(request),
+    )
 
     return {
         "mensaje": "Viaje eliminado con éxito",
@@ -348,6 +387,7 @@ def listar_paradas(
 def crear_parada(
     viaje_id: int,
     datos: DatosParadaCrear,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -384,6 +424,18 @@ def crear_parada(
     db.add(nueva_parada)
     db.commit()
 
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="INSERT",
+        resumen=f"Parada creada en viaje {viaje_id} (orden {datos.orden})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viajes_paradas_recogida",
+        registro_id=f"{viaje_id}-{datos.orden}",
+        detalle={"viaje_id": viaje_id, "orden": datos.orden, "punto_recogida_id": datos.punto_recogida_id},
+        ip_origen=obtener_ip_origen(request),
+    )
+
     punto = db.query(PuntoRecogida).filter(PuntoRecogida.id == datos.punto_recogida_id).first()
 
     return {
@@ -404,6 +456,7 @@ def actualizar_parada(
     viaje_id: int,
     orden: int,
     datos: DatosParadaActualizar,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -438,6 +491,18 @@ def actualizar_parada(
     parada.actualizado_en = datetime.now()
     db.commit()
 
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="UPDATE",
+        resumen=f"Parada actualizada en viaje {viaje_id} (orden {orden})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viajes_paradas_recogida",
+        registro_id=f"{viaje_id}-{orden}",
+        detalle=datos.model_dump(exclude_none=True),
+        ip_origen=obtener_ip_origen(request),
+    )
+
     punto = db.query(PuntoRecogida).filter(PuntoRecogida.id == parada.punto_recogida_id).first()
 
     return {
@@ -457,6 +522,7 @@ def actualizar_parada(
 def eliminar_parada(
     viaje_id: int,
     orden: int,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -475,6 +541,17 @@ def eliminar_parada(
     parada.eliminado_en = ahora
     parada.actualizado_en = ahora
     db.commit()
+
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="DELETE",
+        resumen=f"Parada eliminada en viaje {viaje_id} (orden {orden})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viajes_paradas_recogida",
+        registro_id=f"{viaje_id}-{orden}",
+        ip_origen=obtener_ip_origen(request),
+    )
 
     return {
         "mensaje": "Parada eliminada con éxito",
@@ -552,6 +629,7 @@ def resumen_costos(
 def crear_costo(
     viaje_id: int,
     datos: DatosCostoCrear,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -571,6 +649,18 @@ def crear_costo(
     db.commit()
     db.refresh(nuevo_costo)
 
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="INSERT",
+        resumen=f"Costo creado en viaje {viaje_id} ({datos.categoria})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="costos_operativos",
+        registro_id=nuevo_costo.id,
+        detalle={"viaje_id": viaje_id, "categoria": datos.categoria, "monto_eur": str(datos.monto_eur)},
+        ip_origen=obtener_ip_origen(request),
+    )
+
     return {
         "mensaje": "Costo operativo registrado con éxito",
         "costo": {
@@ -588,6 +678,7 @@ def actualizar_costo(
     viaje_id: int,
     costo_id: int,
     datos: DatosCostoActualizar,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -613,6 +704,18 @@ def actualizar_costo(
     db.commit()
     db.refresh(costo)
 
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="UPDATE",
+        resumen=f"Costo actualizado en viaje {viaje_id} (id {costo_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="costos_operativos",
+        registro_id=costo_id,
+        detalle=datos.model_dump(exclude_none=True),
+        ip_origen=obtener_ip_origen(request),
+    )
+
     return {
         "mensaje": "Costo operativo actualizado con éxito",
         "costo": {
@@ -629,6 +732,7 @@ def actualizar_costo(
 def eliminar_costo(
     viaje_id: int,
     costo_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -647,6 +751,17 @@ def eliminar_costo(
     costo.eliminado_en = ahora
     costo.actualizado_en = ahora
     db.commit()
+
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="DELETE",
+        resumen=f"Costo eliminado en viaje {viaje_id} (id {costo_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="costos_operativos",
+        registro_id=costo_id,
+        ip_origen=obtener_ip_origen(request),
+    )
 
     return {
         "mensaje": "Costo operativo eliminado con éxito",

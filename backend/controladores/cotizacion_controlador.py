@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,7 @@ from dependencias.auth_dependencia import obtener_usuario_actual
 from modelos.cliente_modelo import Cliente
 from modelos.cotizacion_modelo import Cotizacion
 from modelos.destino_modelo import Destino
+from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
 
 router = APIRouter(prefix="/cotizaciones", tags=["Cotizaciones"])
 
@@ -123,6 +124,7 @@ def obtener_cotizacion(
 @router.post("")
 def crear_cotizacion(
     datos: DatosCotizacionCrear,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -145,6 +147,18 @@ def crear_cotizacion(
     db.commit()
     db.refresh(nueva_cotizacion)
 
+    registrar_evento(
+        db,
+        modulo="cotizaciones",
+        accion="INSERT",
+        resumen=f"Cotización creada (cliente {datos.cliente_id}, destino {datos.destino_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="cotizaciones",
+        registro_id=nueva_cotizacion.id,
+        detalle={"cliente_id": datos.cliente_id, "destino_id": datos.destino_id, "estado": datos.estado},
+        ip_origen=obtener_ip_origen(request),
+    )
+
     return {
         "mensaje": "Cotización creada con éxito",
         "cotizacion": _cotizacion_a_dict(db, nueva_cotizacion),
@@ -155,6 +169,7 @@ def crear_cotizacion(
 def actualizar_cotizacion(
     cotizacion_id: int,
     datos: DatosCotizacionActualizar,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -179,6 +194,22 @@ def actualizar_cotizacion(
     db.commit()
     db.refresh(cotizacion)
 
+    accion_bitacora = "UPDATE"
+    if datos.estado is not None and datos.estado == "cancelada":
+        accion_bitacora = "ANULAR"
+
+    registrar_evento(
+        db,
+        modulo="cotizaciones",
+        accion=accion_bitacora,
+        resumen=f"Cotización actualizada (id {cotizacion_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="cotizaciones",
+        registro_id=cotizacion_id,
+        detalle=datos.model_dump(exclude_none=True),
+        ip_origen=obtener_ip_origen(request),
+    )
+
     return {
         "mensaje": "Cotización actualizada con éxito",
         "cotizacion": _cotizacion_a_dict(db, cotizacion),
@@ -188,6 +219,7 @@ def actualizar_cotizacion(
 @router.delete("/{cotizacion_id}")
 def eliminar_cotizacion(
     cotizacion_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
@@ -197,6 +229,17 @@ def eliminar_cotizacion(
     cotizacion.actualizado_en = ahora
     cotizacion.estado = "cancelada"
     db.commit()
+
+    registrar_evento(
+        db,
+        modulo="cotizaciones",
+        accion="ANULAR",
+        resumen=f"Cotización cancelada (id {cotizacion_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="cotizaciones",
+        registro_id=cotizacion_id,
+        ip_origen=obtener_ip_origen(request),
+    )
 
     return {
         "mensaje": "Cotización cancelada con éxito",
