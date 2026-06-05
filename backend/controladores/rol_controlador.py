@@ -250,17 +250,27 @@ def asignar_permiso_a_rol(
     consulta_asignacion = db.query(RolPermiso).filter(
         RolPermiso.rol_id == rol_id,
         RolPermiso.permiso_id == datos.permiso_id,
-        RolPermiso.eliminado_en.is_(None),
     )
     asignacion_existente = consulta_asignacion.first()
 
-    if asignacion_existente is not None:
+    ahora = datetime.now()
+
+    if asignacion_existente is not None and asignacion_existente.eliminado_en is None:
         raise HTTPException(
             status_code=400,
             detail="Ese permiso ya está asignado a este rol",
         )
 
-    ahora = datetime.now()
+    if asignacion_existente is not None:
+        asignacion_existente.eliminado_en = None
+        asignacion_existente.actualizado_en = ahora
+        db.commit()
+
+        return {
+            "mensaje": "Permiso reasignado al rol con éxito",
+            "rol_id": rol_id,
+            "permiso_id": datos.permiso_id,
+        }
 
     nueva_asignacion = RolPermiso(
         rol_id=rol_id,
