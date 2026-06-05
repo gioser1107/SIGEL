@@ -7,6 +7,8 @@ from controladores.auth_controlador import router as router_auth
 from controladores.permiso_controlador import router as router_permisos
 from controladores.rol_controlador import router as router_roles
 from controladores.usuario_controlador import router as router_usuarios
+from controladores.viaje_controlador import router as router_viajes
+from controladores.cotizacion_controlador import router as router_cotizaciones
 
 app = FastAPI(title="API Travel BQTO")
 
@@ -40,8 +42,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
         "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
@@ -53,6 +57,8 @@ app.include_router(router_auth, prefix="/api")
 app.include_router(router_permisos, prefix="/api")
 app.include_router(router_usuarios, prefix="/api")
 app.include_router(router_roles, prefix="/api")
+app.include_router(router_viajes, prefix="/api")
+app.include_router(router_cotizaciones, prefix="/api")
 
 
 @app.get("/api")
@@ -65,5 +71,7 @@ def ruta_raiz_api():
             "usuarios": "/api/usuarios",
             "roles": "/api/roles",
             "permisos": "/api/permisos",
+            "viajes": "/api/viajes",
+            "cotizaciones": "/api/cotizaciones",
         },
     }
