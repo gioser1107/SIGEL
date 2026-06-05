@@ -6,11 +6,17 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
-from dependencias.auth_dependencia import obtener_usuario_actual
+from dependencias.permiso_dependencia import requiere_permiso
 from modelos.cliente_modelo import Cliente
 from modelos.cotizacion_modelo import Cotizacion
 from modelos.destino_modelo import Destino
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
+from utilidades.permisos_constantes import (
+    PERMISO_BORRAR_COTIZACIONES,
+    PERMISO_CREAR_COTIZACIONES,
+    PERMISO_EDITAR_COTIZACIONES,
+    PERMISO_LEER_COTIZACIONES,
+)
 
 router = APIRouter(prefix="/cotizaciones", tags=["Cotizaciones"])
 
@@ -92,7 +98,7 @@ def listar_cotizaciones(
     estado: str | None = Query(default=None),
     cliente_id: int | None = Query(default=None),
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_COTIZACIONES)),
 ):
     consulta = db.query(Cotizacion).filter(Cotizacion.eliminado_en.is_(None))
 
@@ -115,7 +121,7 @@ def listar_cotizaciones(
 def obtener_cotizacion(
     cotizacion_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_COTIZACIONES)),
 ):
     cotizacion = _obtener_cotizacion_activa(db, cotizacion_id)
     return _cotizacion_a_dict(db, cotizacion)
@@ -126,7 +132,7 @@ def crear_cotizacion(
     datos: DatosCotizacionCrear,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_COTIZACIONES)),
 ):
     _obtener_cliente_activo(db, datos.cliente_id)
     _obtener_destino_activo(db, datos.destino_id)
@@ -171,7 +177,7 @@ def actualizar_cotizacion(
     datos: DatosCotizacionActualizar,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_COTIZACIONES)),
 ):
     cotizacion = _obtener_cotizacion_activa(db, cotizacion_id)
 
@@ -221,7 +227,7 @@ def eliminar_cotizacion(
     cotizacion_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_COTIZACIONES)),
 ):
     cotizacion = _obtener_cotizacion_activa(db, cotizacion_id)
     ahora = datetime.now()

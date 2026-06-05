@@ -5,12 +5,16 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import get_db
-from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.permiso_modelo import Permiso
 from modelos.rol_modelo import Rol
 from modelos.rol_permiso_modelo import RolPermiso
-from utilidades.permisos_constantes import PERMISO_GESTIONAR_ROLES
+from utilidades.permisos_constantes import (
+    PERMISO_BORRAR_ROLES,
+    PERMISO_CREAR_ROLES,
+    PERMISO_EDITAR_ROLES,
+    PERMISO_LEER_ROLES,
+)
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
@@ -32,7 +36,7 @@ class DatosAsignarPermiso(BaseModel):
 @router.get("/")
 def obtener_todos_los_roles(
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ROLES)),
 ):
     consulta = db.query(Rol).filter(Rol.eliminado_en.is_(None))
     lista_roles = consulta.all()
@@ -53,7 +57,7 @@ def obtener_todos_los_roles(
 def obtener_rol_por_id(
     rol_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ROLES)),
 ):
     consulta_rol = db.query(Rol).filter(
         Rol.id == rol_id,
@@ -77,7 +81,7 @@ def obtener_rol_por_id(
 def crear_rol(
     datos: DatosRolNuevo,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_ROLES)),
 ):
     consulta_nombre = db.query(Rol).filter(Rol.nombre == datos.nombre)
     rol_existente = consulta_nombre.first()
@@ -116,7 +120,7 @@ def actualizar_rol(
     rol_id: int,
     datos: DatosRolActualizar,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_ROLES)),
 ):
     consulta_rol = db.query(Rol).filter(
         Rol.id == rol_id,
@@ -160,7 +164,7 @@ def actualizar_rol(
 def eliminar_rol(
     rol_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_ROLES)),
 ):
     consulta_rol = db.query(Rol).filter(
         Rol.id == rol_id,
@@ -186,7 +190,7 @@ def eliminar_rol(
 def obtener_permisos_del_rol(
     rol_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ROLES)),
 ):
     consulta_rol = db.query(Rol).filter(
         Rol.id == rol_id,
@@ -227,7 +231,7 @@ def asignar_permiso_a_rol(
     rol_id: int,
     datos: DatosAsignarPermiso,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_ROLES)),
 ):
     consulta_rol = db.query(Rol).filter(
         Rol.id == rol_id,
@@ -294,7 +298,7 @@ def quitar_permiso_de_rol(
     rol_id: int,
     permiso_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_ROLES)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_ROLES)),
 ):
     consulta_asignacion = db.query(RolPermiso).filter(
         RolPermiso.rol_id == rol_id,

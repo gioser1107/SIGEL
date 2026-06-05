@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
-from dependencias.auth_dependencia import obtener_usuario_actual
+from dependencias.permiso_dependencia import requiere_permiso
 from modelos.costo_operativo_modelo import CostoOperativo
 from modelos.destino_modelo import Destino
 from modelos.punto_recogida_modelo import PuntoRecogida
@@ -15,6 +15,12 @@ from modelos.usuario_modelo import Usuario
 from modelos.viaje_modelo import Viaje
 from modelos.viaje_parada_modelo import ViajeParadaRecogida
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
+from utilidades.permisos_constantes import (
+    PERMISO_BORRAR_PLANIFICACION,
+    PERMISO_CREAR_PLANIFICACION,
+    PERMISO_EDITAR_PLANIFICACION,
+    PERMISO_LEER_PLANIFICACION,
+)
 
 router = APIRouter(prefix="/viajes", tags=["Planificación - Viajes"])
 
@@ -156,7 +162,7 @@ def listar_viajes(
     fecha_desde: datetime | None = Query(default=None),
     fecha_hasta: datetime | None = Query(default=None),
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
     consulta = db.query(Viaje).filter(Viaje.eliminado_en.is_(None))
 
@@ -183,7 +189,7 @@ def listar_viajes(
 def obtener_viaje(
     viaje_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
     viaje = _obtener_viaje_activo(db, viaje_id)
     detalle = _viaje_a_dict(db, viaje)
@@ -228,7 +234,7 @@ def crear_viaje(
     datos: DatosViajeCrear,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_PLANIFICACION)),
 ):
     _obtener_destino_activo(db, datos.destino_id)
     _obtener_unidad_activa(db, datos.unidad_id)
@@ -275,7 +281,7 @@ def actualizar_viaje(
     datos: DatosViajeActualizar,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_PLANIFICACION)),
 ):
     viaje = _obtener_viaje_activo(db, viaje_id)
 
@@ -330,7 +336,7 @@ def eliminar_viaje(
     viaje_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_PLANIFICACION)),
 ):
     viaje = _obtener_viaje_activo(db, viaje_id)
     ahora = datetime.now()
@@ -359,7 +365,7 @@ def eliminar_viaje(
 def listar_paradas(
     viaje_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 
@@ -389,7 +395,7 @@ def crear_parada(
     datos: DatosParadaCrear,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
     _obtener_punto_recogida_activo(db, datos.punto_recogida_id)
@@ -458,7 +464,7 @@ def actualizar_parada(
     datos: DatosParadaActualizar,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 
@@ -524,7 +530,7 @@ def eliminar_parada(
     orden: int,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 
@@ -564,7 +570,7 @@ def eliminar_parada(
 def listar_costos(
     viaje_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 
@@ -590,7 +596,7 @@ def listar_costos(
 def resumen_costos(
     viaje_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 
@@ -631,7 +637,7 @@ def crear_costo(
     datos: DatosCostoCrear,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 
@@ -680,7 +686,7 @@ def actualizar_costo(
     datos: DatosCostoActualizar,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 
@@ -734,7 +740,7 @@ def eliminar_costo(
     costo_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_PLANIFICACION)),
 ):
     _obtener_viaje_activo(db, viaje_id)
 

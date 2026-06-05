@@ -10,7 +10,12 @@ from dependencias.permiso_dependencia import requiere_permiso
 from modelos.rol_modelo import Rol
 from modelos.usuario_modelo import Usuario
 from utilidades.contrasena_utilidad import hashear_contrasena, verificar_contrasena
-from utilidades.permisos_constantes import PERMISO_GESTIONAR_USUARIOS
+from utilidades.permisos_constantes import (
+    PERMISO_BORRAR_USUARIOS,
+    PERMISO_CREAR_USUARIOS,
+    PERMISO_EDITAR_USUARIOS,
+    PERMISO_LEER_USUARIOS,
+)
 from utilidades.usuario_respuesta_utilidad import usuario_a_dict
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
@@ -125,7 +130,7 @@ def cambiar_mi_contrasena(
 @router.get("/")
 def obtener_todos_los_usuarios(
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_USUARIOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_USUARIOS)),
 ):
     consulta = db.query(Usuario).filter(Usuario.eliminado_en.is_(None))
     lista_usuarios = consulta.all()
@@ -144,7 +149,7 @@ def obtener_usuario_por_id(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
-    puede_gestionar = PERMISO_GESTIONAR_USUARIOS in usuario_actual.get("permisos", [])
+    puede_gestionar = PERMISO_LEER_USUARIOS in usuario_actual.get("permisos", [])
     es_el_mismo = usuario_actual["id"] == usuario_id
 
     if not puede_gestionar and not es_el_mismo:
@@ -167,7 +172,7 @@ def obtener_usuario_por_id(
 def crear_usuario(
     datos: DatosUsuarioNuevo,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_USUARIOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_USUARIOS)),
 ):
     consulta_correo = db.query(Usuario).filter(Usuario.correo == datos.correo)
     usuario_existente = consulta_correo.first()
@@ -215,7 +220,7 @@ def actualizar_usuario(
     usuario_id: int,
     datos: DatosActualizarUsuario,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_USUARIOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_USUARIOS)),
 ):
     usuario = buscar_usuario_activo(db, usuario_id)
 
@@ -257,7 +262,7 @@ def asignar_rol_a_usuario(
     usuario_id: int,
     datos: DatosAsignarRol,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_USUARIOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_USUARIOS)),
 ):
     usuario = buscar_usuario_activo(db, usuario_id)
 
@@ -289,7 +294,7 @@ def resetear_contrasena_de_usuario(
     usuario_id: int,
     datos: DatosResetearContrasena,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_USUARIOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_USUARIOS)),
 ):
     usuario = buscar_usuario_activo(db, usuario_id)
 
@@ -307,7 +312,7 @@ def resetear_contrasena_de_usuario(
 def eliminar_usuario(
     usuario_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_USUARIOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_USUARIOS)),
 ):
     if usuario_actual["id"] == usuario_id:
         raise HTTPException(

@@ -11,7 +11,12 @@ from modelos.cliente_modelo import Cliente
 from modelos.estado_modelo import Estado
 from modelos.usuario_modelo import Usuario
 from utilidades.cliente_utilidad import cliente_a_dict, obtener_rol_cliente
-from utilidades.permisos_constantes import PERMISO_GESTIONAR_RESERVAS
+from utilidades.permisos_constantes import (
+    PERMISO_BORRAR_CLIENTES,
+    PERMISO_CREAR_CLIENTES,
+    PERMISO_EDITAR_CLIENTES,
+    PERMISO_LEER_CLIENTES,
+)
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
@@ -131,7 +136,7 @@ def validar_documento_no_repetido(
 @router.get("/")
 def listar_clientes(
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_RESERVAS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_CLIENTES)),
 ):
     """Lista fichas de clientes registradas. Usado por ATC/Admin."""
     consulta = db.query(Cliente).filter(Cliente.eliminado_en.is_(None))
@@ -149,7 +154,7 @@ def listar_clientes(
 def obtener_cliente(
     cliente_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_RESERVAS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_CLIENTES)),
 ):
     cliente = buscar_cliente_activo(db, cliente_id)
 
@@ -165,7 +170,7 @@ def obtener_cliente(
 def crear_cliente_desde_admin(
     datos: DatosClienteNuevo,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_RESERVAS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_CLIENTES)),
 ):
     """ATC o Admin registra una ficha de cliente sin obligarlo a tener usuario."""
     validar_documento_no_repetido(
@@ -211,7 +216,7 @@ def actualizar_cliente(
     cliente_id: int,
     datos: DatosClienteActualizar,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_RESERVAS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_CLIENTES)),
 ):
     cliente = buscar_cliente_activo(db, cliente_id)
 
@@ -286,7 +291,7 @@ def actualizar_cliente(
 def desactivar_cliente(
     cliente_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_RESERVAS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_CLIENTES)),
 ):
     cliente = buscar_cliente_activo(db, cliente_id)
 

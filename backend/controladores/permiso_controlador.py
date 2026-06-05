@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.permiso_modelo import Permiso
-from utilidades.permisos_constantes import PERMISO_GESTIONAR_PERMISOS
+from utilidades.permisos_constantes import (
+    PERMISO_BORRAR_PERMISOS,
+    PERMISO_CREAR_PERMISOS,
+    PERMISO_EDITAR_PERMISOS,
+    PERMISO_LEER_PERMISOS,
+)
 
 router = APIRouter(prefix="/permisos", tags=["Permisos"])
 
@@ -23,7 +28,7 @@ class DatosPermisoActualizar(BaseModel):
 @router.get("/")
 def obtener_todos_los_permisos(
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PERMISOS)),
 ):
     consulta = db.query(Permiso).filter(Permiso.eliminado_en.is_(None))
     lista_permisos = consulta.all()
@@ -43,7 +48,7 @@ def obtener_todos_los_permisos(
 def obtener_permiso_por_id(
     permiso_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PERMISOS)),
 ):
     consulta = db.query(Permiso).filter(
         Permiso.id == permiso_id,
@@ -66,7 +71,7 @@ def obtener_permiso_por_id(
 def crear_permiso(
     datos: DatosPermisoNuevo,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_PERMISOS)),
 ):
     ahora = datetime.now()
 
@@ -94,7 +99,7 @@ def actualizar_permiso(
     permiso_id: int,
     datos: DatosPermisoActualizar,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_PERMISOS)),
 ):
     consulta = db.query(Permiso).filter(
         Permiso.id == permiso_id,
@@ -123,7 +128,7 @@ def actualizar_permiso(
 def eliminar_permiso(
     permiso_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_GESTIONAR_PERMISOS)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_PERMISOS)),
 ):
     consulta = db.query(Permiso).filter(
         Permiso.id == permiso_id,

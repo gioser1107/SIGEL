@@ -8,13 +8,14 @@ from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from modelos.bitacora_modelo import Bitacora
 from modelos.usuario_modelo import Usuario
+from utilidades.permisos_constantes import PERMISO_LEER_BITACORA
 
 router = APIRouter(prefix="/bitacora", tags=["Bitácora"])
 
 
 def _verificar_permiso_bitacora(usuario_actual: dict) -> None:
     permisos = usuario_actual.get("permisos", [])
-    if "ver_bitacora" not in permisos:
+    if PERMISO_LEER_BITACORA not in permisos:
         raise HTTPException(
             status_code=403,
             detail="No tienes permiso para consultar la bitácora",
