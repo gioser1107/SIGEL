@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from controladores.auth_controlador import router as router_auth
 from controladores.bitacora_controlador import router as router_bitacora
+from controladores.catalogo_controlador import router as router_catalogo
 from controladores.cliente_controlador import router as router_clientes
 from controladores.cotizacion_controlador import router as router_cotizaciones
 from controladores.permiso_controlador import router as router_permisos
@@ -57,6 +58,7 @@ app.add_middleware(
 )
 
 app.include_router(router_auth, prefix="/api")
+app.include_router(router_catalogo, prefix="/api")
 app.include_router(router_clientes, prefix="/api")
 app.include_router(router_permisos, prefix="/api")
 app.include_router(router_usuarios, prefix="/api")
@@ -74,6 +76,7 @@ def ruta_raiz_api():
         "documentacion": "/docs",
         "modulos": {
             "auth": "/api/auth",
+            "catalogo": "/api/catalogo",
             "clientes": "/api/clientes",
             "usuarios": "/api/usuarios",
             "roles": "/api/roles",

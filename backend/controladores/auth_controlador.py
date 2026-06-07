@@ -14,7 +14,7 @@ from modelos.cliente_modelo import Cliente
 from modelos.estado_modelo import Estado
 from modelos.rol_modelo import Rol
 from modelos.usuario_modelo import Usuario
-from utilidades.cliente_utilidad import cliente_a_dict, obtener_rol_cliente
+from utilidades.cliente_utilidad import cliente_a_dict, obtener_cliente_por_usuario_id, obtener_rol_cliente
 from utilidades.contrasena_utilidad import hashear_contrasena, verificar_contrasena
 from utilidades.jwt_utilidad import crear_token
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
@@ -66,6 +66,8 @@ def iniciar_sesion(datos: DatosLogin, request: Request, db: Session = Depends(ge
 
     usuario_dict = usuario_a_dict(usuario, nombre_rol)
     usuario_dict["permisos"] = obtener_permisos_del_rol(db, usuario.rol_id)
+    cliente = obtener_cliente_por_usuario_id(db, usuario.id)
+    usuario_dict["cliente_id"] = cliente.id if cliente is not None else None
 
     registrar_evento(
         db,
@@ -207,6 +209,11 @@ def registrar_cliente_portal(datos: DatosRegistroCliente, db: Session = Depends(
     cliente_dict = cliente_a_dict(nuevo_cliente, nuevo_usuario, estado, ciudad)
     cliente_dict["rol"] = rol_cliente.nombre
     cliente_dict["permisos"] = obtener_permisos_del_rol(db, nuevo_usuario.rol_id)
+    cliente_dict["cliente_id"] = nuevo_cliente.id
+
+    usuario_dict = usuario_a_dict(nuevo_usuario, rol_cliente.nombre)
+    usuario_dict["permisos"] = cliente_dict["permisos"]
+    usuario_dict["cliente_id"] = nuevo_cliente.id
 
     return {
         "mensaje": "Cuenta de cliente creada con éxito",
@@ -214,6 +221,7 @@ def registrar_cliente_portal(datos: DatosRegistroCliente, db: Session = Depends(
         "tipo_token": "Bearer",
         "expira_en_segundos": expira_en_segundos,
         "cliente": cliente_dict,
+        "usuario": usuario_dict,
     }
 
 
