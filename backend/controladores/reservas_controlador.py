@@ -1,0 +1,458 @@
+from datetime import datetime
+from decimal import Decimal
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from database import get_db
+from dependencias.permiso_dependencia import requiere_permiso
+from modelos.reservas_modelo import Reserva
+from modelos.reserva_cliente_modelo import ReservaCliente
+from modelos.asiento_reservado_modelo import AsientoReservado
+from modelos.asiento_modelo import Asiento
+from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
+from utilidades.permisos_constantes import (
+    PERMISO_BORRAR_RESERVAS,
+    PERMISO_CREAR_RESERVAS,
+    PERMISO_EDITAR_RESERVAS,
+    PERMISO_LEER_RESERVAS,
+)
+
+router = APIRouter(prefix="/reservas", tags=["Reservas y Pasajeros"])
+
+# --- Schemas Reservas ---
+class DatosReservaCrear(BaseModel):
+    cliente_id: int
+    viaje_id: int
+    estado: str = "pendiente"
+
+class DatosReservaActualizar(BaseModel):
+    estado: Optional[str] = None
+
+# --- Schemas Pasajeros (ReservaCliente) ---
+class DatosPasajeroCrear(BaseModel):
+    cliente_id: Optional[int] = None
+    nombre_completo: str
+    tipo_documento: str
+    numero_documento: str
+    es_menor: bool = False
+    ocupa_asiento: bool = True
+    precio_pasajero_eur: Decimal = Field(default=0.00, ge=0)
+    recargo_eur: Decimal = Field(default=0.00, ge=0)
+    notas_tarifa: Optional[str] = None
+
+class DatosPasajeroActualizar(BaseModel):
+    cliente_id: Optional[int] = None
+    nombre_completo: Optional[str] = None
+    tipo_documento: Optional[str] = None
+    numero_documento: Optional[str] = None
+    es_menor: Optional[bool] = None
+    ocupa_asiento: Optional[bool] = None
+    precio_pasajero_eur: Optional[Decimal] = Field(default=None, ge=0)
+    recargo_eur: Optional[Decimal] = Field(default=None, ge=0)
+    notas_tarifa: Optional[str] = None
+
+# --- Schemas Asientos Reservados ---
+class DatosAsientoReservadoCrear(BaseModel):
+    asiento_id: int
+
+
+def _obtener_reserva_activa(db: Session, reserva_id: int) -> Reserva:
+    consulta = db.query(Reserva).filter(
+        Reserva.id == reserva_id,
+        Reserva.eliminado_en.is_(None)
+    )
+    reserva = consulta.first()
+    if not reserva:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    return reserva
+
+def _obtener_pasajero_activo(db: Session, reserva_id: int, pasajero_id: int) -> ReservaCliente:
+    consulta = db.query(ReservaCliente).filter(
+        ReservaCliente.id == pasajero_id,
+        ReservaCliente.reserva_id == reserva_id
+    )
+    pasajero = consulta.first()
+    if not pasajero:
+        raise HTTPException(status_code=404, detail="Pasajero no encontrado en esta reserva")
+    return pasajero
+
+# ==========================================
+# RUTAS DE RESERVA
+# ==========================================
+
+@router.get("")
+def listar_reservas(
+    viaje_id: Optional[int] = Query(default=None),
+    cliente_id: Optional[int] = Query(default=None),
+    estado: Optional[str] = Query(default=None),
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
+):
+    consulta = db.query(Reserva).filter(Reserva.eliminado_en.is_(None))
+    if viaje_id:
+        consulta = consulta.filter(Reserva.viaje_id == viaje_id)
+    if cliente_id:
+        consulta = consulta.filter(Reserva.cliente_id == cliente_id)
+    if estado:
+        consulta = consulta.filter(Reserva.estado == estado)
+
+    lista = consulta.order_by(Reserva.creado_en.desc()).all()
+    
+    resultado = []
+    for r in lista:
+        resultado.append({
+            "id": r.id,
+            "cliente_id": r.cliente_id,
+            "viaje_id": r.viaje_id,
+            "fecha_reserva": r.fecha_reserva,
+            "estado": r.estado,
+            "creado_en": r.creado_en,
+            "actualizado_en": r.actualizado_en
+        })
+    return resultado
+
+
+@router.post("")
+def crear_reserva(
+    datos: DatosReservaCrear,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_RESERVAS)),
+):
+    ahora = datetime.now()
+    nueva_reserva = Reserva(
+        cliente_id=datos.cliente_id,
+        viaje_id=datos.viaje_id,
+        fecha_reserva=ahora,
+        estado=datos.estado,
+        creado_por=usuario_actual["id"],
+        creado_en=ahora,
+        actualizado_en=ahora
+    )
+    db.add(nueva_reserva)
+    db.commit()
+    db.refresh(nueva_reserva)
+
+    registrar_evento(
+        db, modulo="reservas", accion="INSERT",
+        resumen=f"Reserva creada (viaje {datos.viaje_id})",
+        usuario_id=usuario_actual["id"], tabla_afectada="reservas",
+        registro_id=nueva_reserva.id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {
+        "mensaje": "Reserva creada con éxito",
+        "reserva": {
+            "id": nueva_reserva.id,
+            "cliente_id": nueva_reserva.cliente_id,
+            "viaje_id": nueva_reserva.viaje_id,
+            "estado": nueva_reserva.estado,
+        }
+    }
+
+
+@router.get("/{reserva_id}")
+def obtener_reserva(
+    reserva_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
+):
+    reserva = _obtener_reserva_activa(db, reserva_id)
+    return {
+        "id": reserva.id,
+        "cliente_id": reserva.cliente_id,
+        "viaje_id": reserva.viaje_id,
+        "fecha_reserva": reserva.fecha_reserva,
+        "estado": reserva.estado,
+        "creado_en": reserva.creado_en,
+    }
+
+
+@router.put("/{reserva_id}")
+def actualizar_reserva(
+    reserva_id: int,
+    datos: DatosReservaActualizar,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
+):
+    reserva = _obtener_reserva_activa(db, reserva_id)
+
+    if datos.estado:
+        reserva.estado = datos.estado
+
+    reserva.actualizado_en = datetime.now()
+    db.commit()
+    db.refresh(reserva)
+
+    registrar_evento(
+        db, modulo="reservas", accion="UPDATE",
+        resumen=f"Reserva {reserva_id} actualizada",
+        usuario_id=usuario_actual["id"], tabla_afectada="reservas",
+        registro_id=reserva_id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {"mensaje": "Reserva actualizada con éxito"}
+
+
+@router.delete("/{reserva_id}")
+def eliminar_reserva(
+    reserva_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_RESERVAS)),
+):
+    reserva = _obtener_reserva_activa(db, reserva_id)
+    ahora = datetime.now()
+    reserva.eliminado_en = ahora
+    reserva.actualizado_en = ahora
+    db.commit()
+
+    registrar_evento(
+        db, modulo="reservas", accion="DELETE",
+        resumen=f"Reserva eliminada (id {reserva_id})",
+        usuario_id=usuario_actual["id"], tabla_afectada="reservas",
+        registro_id=reserva_id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {"mensaje": "Reserva eliminada"}
+
+
+# ==========================================
+# RUTAS DE PASAJEROS (Manifiesto)
+# ==========================================
+
+@router.get("/{reserva_id}/pasajeros")
+def listar_pasajeros(
+    reserva_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
+):
+    _obtener_reserva_activa(db, reserva_id)
+    pasajeros = db.query(ReservaCliente).filter(
+        ReservaCliente.reserva_id == reserva_id
+    ).order_by(ReservaCliente.creado_en).all()
+
+    resultado = []
+    for p in pasajeros:
+        resultado.append({
+            "id": p.id,
+            "cliente_id": p.cliente_id,
+            "nombre_completo": p.nombre_completo,
+            "tipo_documento": p.tipo_documento,
+            "numero_documento": p.numero_documento,
+            "es_menor": p.es_menor,
+            "ocupa_asiento": p.ocupa_asiento,
+            "precio_pasajero_eur": float(p.precio_pasajero_eur),
+            "recargo_eur": float(p.recargo_eur),
+            "notas_tarifa": p.notas_tarifa,
+        })
+    return resultado
+
+
+@router.post("/{reserva_id}/pasajeros")
+def agregar_pasajero(
+    reserva_id: int,
+    datos: DatosPasajeroCrear,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
+):
+    _obtener_reserva_activa(db, reserva_id)
+    
+    ahora = datetime.now()
+    nuevo_pasajero = ReservaCliente(
+        reserva_id=reserva_id,
+        cliente_id=datos.cliente_id,
+        nombre_completo=datos.nombre_completo,
+        tipo_documento=datos.tipo_documento,
+        numero_documento=datos.numero_documento,
+        es_menor=datos.es_menor,
+        ocupa_asiento=datos.ocupa_asiento,
+        precio_pasajero_eur=datos.precio_pasajero_eur,
+        recargo_eur=datos.recargo_eur,
+        notas_tarifa=datos.notas_tarifa,
+        creado_en=ahora,
+        actualizado_en=ahora
+    )
+    db.add(nuevo_pasajero)
+    db.commit()
+    db.refresh(nuevo_pasajero)
+
+    registrar_evento(
+        db, modulo="reservas", accion="INSERT",
+        resumen=f"Pasajero {nuevo_pasajero.id} agregado a reserva {reserva_id}",
+        usuario_id=usuario_actual["id"], tabla_afectada="reserva_clientes",
+        registro_id=nuevo_pasajero.id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {"mensaje": "Pasajero agregado", "pasajero_id": nuevo_pasajero.id}
+
+
+@router.put("/{reserva_id}/pasajeros/{pasajero_id}")
+def actualizar_pasajero(
+    reserva_id: int,
+    pasajero_id: int,
+    datos: DatosPasajeroActualizar,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
+):
+    pasajero = _obtener_pasajero_activo(db, reserva_id, pasajero_id)
+
+    if datos.cliente_id is not None: pasajero.cliente_id = datos.cliente_id
+    if datos.nombre_completo is not None: pasajero.nombre_completo = datos.nombre_completo
+    if datos.tipo_documento is not None: pasajero.tipo_documento = datos.tipo_documento
+    if datos.numero_documento is not None: pasajero.numero_documento = datos.numero_documento
+    if datos.es_menor is not None: pasajero.es_menor = datos.es_menor
+    if datos.ocupa_asiento is not None: pasajero.ocupa_asiento = datos.ocupa_asiento
+    if datos.precio_pasajero_eur is not None: pasajero.precio_pasajero_eur = datos.precio_pasajero_eur
+    if datos.recargo_eur is not None: pasajero.recargo_eur = datos.recargo_eur
+    if datos.notas_tarifa is not None: pasajero.notas_tarifa = datos.notas_tarifa
+
+    db.commit()
+    
+    registrar_evento(
+        db, modulo="reservas", accion="UPDATE",
+        resumen=f"Pasajero {pasajero_id} de reserva {reserva_id} editado",
+        usuario_id=usuario_actual["id"], tabla_afectada="reserva_clientes",
+        registro_id=pasajero_id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {"mensaje": "Pasajero actualizado"}
+
+@router.delete("/{reserva_id}/pasajeros/{pasajero_id}")
+def eliminar_pasajero(
+    reserva_id: int,
+    pasajero_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
+):
+    pasajero = _obtener_pasajero_activo(db, reserva_id, pasajero_id)
+    
+    # Eliminar asientos reservados primero para evitar constraint fk error
+    db.query(AsientoReservado).filter(AsientoReservado.reserva_cliente_id == pasajero_id).delete()
+    db.delete(pasajero)
+    db.commit()
+
+    registrar_evento(
+        db, modulo="reservas", accion="DELETE",
+        resumen=f"Pasajero {pasajero_id} eliminado de reserva {reserva_id}",
+        usuario_id=usuario_actual["id"], tabla_afectada="reserva_clientes",
+        registro_id=pasajero_id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {"mensaje": "Pasajero eliminado"}
+
+
+# ==========================================
+# RUTAS DE ASIENTOS RESERVADOS
+# ==========================================
+
+@router.get("/{reserva_id}/pasajeros/{pasajero_id}/asientos")
+def listar_asientos_pasajero(
+    reserva_id: int,
+    pasajero_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
+):
+    _obtener_pasajero_activo(db, reserva_id, pasajero_id)
+    asientos = db.query(AsientoReservado).filter(
+        AsientoReservado.reserva_cliente_id == pasajero_id,
+        AsientoReservado.eliminado_en.is_(None)
+    ).all()
+
+    resultado = []
+    for a in asientos:
+        resultado.append({
+            "id": a.id,
+            "asiento_id": a.asiento_id,
+            "viaje_id": a.viaje_id,
+        })
+    return resultado
+
+@router.post("/{reserva_id}/pasajeros/{pasajero_id}/asientos")
+def asignar_asiento_pasajero(
+    reserva_id: int,
+    pasajero_id: int,
+    datos: DatosAsientoReservadoCrear,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
+):
+    reserva = _obtener_reserva_activa(db, reserva_id)
+    _obtener_pasajero_activo(db, reserva_id, pasajero_id)
+
+    # Validar que el asiento exista y no esté eliminado
+    asiento = db.query(Asiento).filter(
+        Asiento.id == datos.asiento_id, Asiento.eliminado_en.is_(None)
+    ).first()
+    if not asiento:
+        raise HTTPException(status_code=404, detail="El asiento seleccionado no existe o está eliminado")
+
+    # Validar que no esté ocupado en el MISMO VIAJE
+    ocupado = db.query(AsientoReservado).filter(
+        AsientoReservado.asiento_id == datos.asiento_id,
+        AsientoReservado.viaje_id == reserva.viaje_id,
+        AsientoReservado.eliminado_en.is_(None)
+    ).first()
+    if ocupado:
+        raise HTTPException(status_code=400, detail="Este asiento ya está reservado para este viaje")
+
+    ahora = datetime.now()
+    nuevo_asiento = AsientoReservado(
+        reserva_cliente_id=pasajero_id,
+        viaje_id=reserva.viaje_id,
+        asiento_id=datos.asiento_id,
+        creado_en=ahora,
+        actualizado_en=ahora
+    )
+    db.add(nuevo_asiento)
+    db.commit()
+    db.refresh(nuevo_asiento)
+
+    registrar_evento(
+        db, modulo="reservas", accion="INSERT",
+        resumen=f"Asiento {datos.asiento_id} asignado a pasajero {pasajero_id}",
+        usuario_id=usuario_actual["id"], tabla_afectada="asientos_reservados",
+        registro_id=nuevo_asiento.id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {"mensaje": "Asiento asignado", "asiento_reservado_id": nuevo_asiento.id}
+
+@router.delete("/{reserva_id}/pasajeros/{pasajero_id}/asientos/{asiento_reservado_id}")
+def quitar_asiento_pasajero(
+    reserva_id: int,
+    pasajero_id: int,
+    asiento_reservado_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
+):
+    _obtener_pasajero_activo(db, reserva_id, pasajero_id)
+    asignacion = db.query(AsientoReservado).filter(
+        AsientoReservado.id == asiento_reservado_id,
+        AsientoReservado.reserva_cliente_id == pasajero_id,
+        AsientoReservado.eliminado_en.is_(None)
+    ).first()
+
+    if not asignacion:
+        raise HTTPException(status_code=404, detail="Asignación de asiento no encontrada")
+
+    ahora = datetime.now()
+    asignacion.eliminado_en = ahora
+    asignacion.actualizado_en = ahora
+    db.commit()
+
+    registrar_evento(
+        db, modulo="reservas", accion="DELETE",
+        resumen=f"Asiento quitado a pasajero {pasajero_id}",
+        usuario_id=usuario_actual["id"], tabla_afectada="asientos_reservados",
+        registro_id=asiento_reservado_id, ip_origen=obtener_ip_origen(request)
+    )
+
+    return {"mensaje": "Asiento liberado"}
