@@ -13,6 +13,8 @@ from controladores.rol_controlador import router as router_roles
 from controladores.ubicacion_controlador import router as router_ubicaciones
 from controladores.usuario_controlador import router as router_usuarios
 from controladores.viaje_controlador import router as router_viajes
+from controladores.reservas_controlador import router as router_reservas
+from controladores.asiento_controlador import router as router_asientos
 
 app = FastAPI(title="API Travel BQTO", version="1.1.0")
 
@@ -67,6 +69,8 @@ app.include_router(router_ubicaciones, prefix="/api")
 app.include_router(router_viajes, prefix="/api")
 app.include_router(router_cotizaciones, prefix="/api")
 app.include_router(router_bitacora, prefix="/api")
+app.include_router(router_reservas, prefix="/api")
+app.include_router(router_asientos, prefix="/api")
 
 
 @app.get("/api")
@@ -85,5 +89,7 @@ def ruta_raiz_api():
             "viajes": "/api/viajes",
             "cotizaciones": "/api/cotizaciones",
             "bitacora": "/api/bitacora",
+            "reservas": "/api/reservas",
+            "asientos": "/api/asientos",
         },
     }
