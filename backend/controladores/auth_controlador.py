@@ -29,7 +29,8 @@ class DatosLogin(BaseModel):
 
 
 class DatosRegistroCliente(BaseModel):
-    nombre_completo: str
+    nombre: str
+    apellido: str
     correo: str
     contrasena: str
     tipo_cliente: str = "natural"
@@ -151,7 +152,8 @@ def registrar_cliente_portal(datos: DatosRegistroCliente, db: Session = Depends(
         rol_id=rol_cliente.id,
         correo=datos.correo,
         hash_contrasena=hash_contrasena,
-        nombre_completo=datos.nombre_completo,
+        nombre=datos.nombre,
+        apellido=datos.apellido,
         telefono=datos.telefono,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -166,7 +168,8 @@ def registrar_cliente_portal(datos: DatosRegistroCliente, db: Session = Depends(
             tipo_cliente=datos.tipo_cliente,
             tipo_documento=datos.tipo_documento,
             numero_documento=datos.numero_documento,
-            nombre_completo=datos.nombre_completo,
+            nombre=datos.nombre,
+            apellido=datos.apellido,
             razon_social=datos.razon_social,
             telefono=datos.telefono,
             telefono_secundario=datos.telefono_secundario,
@@ -183,7 +186,8 @@ def registrar_cliente_portal(datos: DatosRegistroCliente, db: Session = Depends(
     else:
         nuevo_cliente = cliente_existente
         nuevo_cliente.usuario_id = nuevo_usuario.id
-        nuevo_cliente.nombre_completo = datos.nombre_completo
+        nuevo_cliente.nombre = datos.nombre
+        nuevo_cliente.apellido = datos.apellido
         nuevo_cliente.razon_social = datos.razon_social
         nuevo_cliente.telefono = datos.telefono
         nuevo_cliente.telefono_secundario = datos.telefono_secundario

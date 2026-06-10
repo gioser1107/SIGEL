@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
+from utilidades.nombre_utilidad import nombre_completo_de
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.asiento_modelo import Asiento
 from modelos.asiento_reservado_modelo import AsientoReservado
@@ -138,7 +139,7 @@ def _viaje_a_dict(db: Session, viaje: Viaje) -> dict:
         "unidad_id": viaje.unidad_id,
         "unidad_placa": unidad.placa if unidad is not None else None,
         "guia_id": viaje.guia_id,
-        "guia_nombre": guia.nombre_completo if guia is not None else None,
+        "guia_nombre": nombre_completo_de(guia.nombre, guia.apellido) if guia is not None else None,
         "fecha_salida": viaje.fecha_salida,
         "fecha_regreso": viaje.fecha_regreso,
         "estado": viaje.estado,

@@ -8,6 +8,7 @@ from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from modelos.bitacora_modelo import Bitacora
 from modelos.usuario_modelo import Usuario
+from utilidades.nombre_utilidad import nombre_completo_de
 from utilidades.permisos_constantes import PERMISO_LEER_BITACORA
 
 router = APIRouter(prefix="/bitacora", tags=["Bitácora"])
@@ -137,6 +138,6 @@ def obtener_detalle_bitacora(
         "detalle": entrada.detalle,
         "ip_origen": entrada.ip_origen,
         "usuario_id": entrada.usuario_id,
-        "usuario_nombre": usuario.nombre_completo if usuario is not None else None,
+        "usuario_nombre": nombre_completo_de(usuario.nombre, usuario.apellido) if usuario is not None else None,
         "usuario_correo": usuario.correo if usuario is not None else None,
     }

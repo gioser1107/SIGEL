@@ -34,7 +34,8 @@ class DatosReservaActualizar(BaseModel):
 # --- Schemas Pasajeros (ReservaCliente) ---
 class DatosPasajeroCrear(BaseModel):
     cliente_id: Optional[int] = None
-    nombre_completo: str
+    nombre: str
+    apellido: str
     tipo_documento: str
     numero_documento: str
     es_menor: bool = False
@@ -45,7 +46,8 @@ class DatosPasajeroCrear(BaseModel):
 
 class DatosPasajeroActualizar(BaseModel):
     cliente_id: Optional[int] = None
-    nombre_completo: Optional[str] = None
+    nombre: Optional[str] = None
+    apellido: Optional[str] = None
     tipo_documento: Optional[str] = None
     numero_documento: Optional[str] = None
     es_menor: Optional[bool] = None
@@ -241,7 +243,8 @@ def listar_pasajeros(
         resultado.append({
             "id": p.id,
             "cliente_id": p.cliente_id,
-            "nombre_completo": p.nombre_completo,
+            "nombre": p.nombre,
+            "apellido": p.apellido,
             "tipo_documento": p.tipo_documento,
             "numero_documento": p.numero_documento,
             "es_menor": p.es_menor,
@@ -267,7 +270,8 @@ def agregar_pasajero(
     nuevo_pasajero = ReservaCliente(
         reserva_id=reserva_id,
         cliente_id=datos.cliente_id,
-        nombre_completo=datos.nombre_completo,
+        nombre=datos.nombre,
+        apellido=datos.apellido,
         tipo_documento=datos.tipo_documento,
         numero_documento=datos.numero_documento,
         es_menor=datos.es_menor,
@@ -304,7 +308,8 @@ def actualizar_pasajero(
     pasajero = _obtener_pasajero_activo(db, reserva_id, pasajero_id)
 
     if datos.cliente_id is not None: pasajero.cliente_id = datos.cliente_id
-    if datos.nombre_completo is not None: pasajero.nombre_completo = datos.nombre_completo
+    if datos.nombre is not None: pasajero.nombre = datos.nombre
+    if datos.apellido is not None: pasajero.apellido = datos.apellido
     if datos.tipo_documento is not None: pasajero.tipo_documento = datos.tipo_documento
     if datos.numero_documento is not None: pasajero.numero_documento = datos.numero_documento
     if datos.es_menor is not None: pasajero.es_menor = datos.es_menor

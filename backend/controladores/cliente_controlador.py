@@ -22,7 +22,8 @@ router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
 
 class DatosClienteNuevo(BaseModel):
-    nombre_completo: str
+    nombre: str
+    apellido: str
     tipo_cliente: str = "natural"
     tipo_documento: str
     numero_documento: str
@@ -36,7 +37,8 @@ class DatosClienteNuevo(BaseModel):
 
 
 class DatosClienteActualizar(BaseModel):
-    nombre_completo: str | None = None
+    nombre: str | None = None
+    apellido: str | None = None
     tipo_cliente: str | None = None
     tipo_documento: str | None = None
     numero_documento: str | None = None
@@ -187,7 +189,8 @@ def crear_cliente_desde_admin(
         tipo_cliente=datos.tipo_cliente,
         tipo_documento=datos.tipo_documento,
         numero_documento=datos.numero_documento,
-        nombre_completo=datos.nombre_completo,
+        nombre=datos.nombre,
+        apellido=datos.apellido,
         razon_social=datos.razon_social,
         telefono=datos.telefono,
         telefono_secundario=datos.telefono_secundario,
@@ -225,10 +228,15 @@ def actualizar_cliente(
 
     usuario = buscar_usuario_cliente(db, cliente)
 
-    if datos.nombre_completo is not None:
-        cliente.nombre_completo = datos.nombre_completo
+    if datos.nombre is not None:
+        cliente.nombre = datos.nombre
         if usuario is not None:
-            usuario.nombre_completo = datos.nombre_completo
+            usuario.nombre = datos.nombre
+
+    if datos.apellido is not None:
+        cliente.apellido = datos.apellido
+        if usuario is not None:
+            usuario.apellido = datos.apellido
 
     tipo_documento_final = datos.tipo_documento or cliente.tipo_documento
     numero_documento_final = datos.numero_documento or cliente.numero_documento

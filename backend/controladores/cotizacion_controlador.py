@@ -12,6 +12,7 @@ from modelos.cotizacion_linea_modelo import CotizacionLinea
 from modelos.cotizacion_modelo import Cotizacion
 from modelos.destino_modelo import Destino
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
+from utilidades.nombre_utilidad import nombre_completo_de
 from utilidades.cliente_utilidad import es_rol_cliente, obtener_cliente_por_usuario_id
 from utilidades.permisos_constantes import (
     PERMISO_BORRAR_COTIZACIONES,
@@ -116,7 +117,7 @@ def _cotizacion_a_dict(db: Session, cotizacion: Cotizacion, incluir_lineas: bool
     resultado = {
         "id": cotizacion.id,
         "cliente_id": cotizacion.cliente_id,
-        "cliente_nombre": cliente.nombre_completo if cliente is not None else None,
+        "cliente_nombre": nombre_completo_de(cliente.nombre, cliente.apellido) if cliente is not None else None,
         "cliente_razon_social": cliente.razon_social if cliente is not None else None,
         "destino_id": cotizacion.destino_id,
         "destino_nombre": destino.nombre if destino is not None else None,

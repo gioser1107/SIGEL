@@ -10,7 +10,8 @@ class ReservaCliente(Base):
     reserva_id = Column(BigInteger, ForeignKey("reservas.id"), nullable=False, index=True)
     cliente_id = Column(BigInteger, ForeignKey("clientes.id"), nullable=True, index=True)
     
-    nombre_completo = Column(String(160), nullable=True)
+    nombre = Column(String(80), nullable=True)
+    apellido = Column(String(80), nullable=True)
     tipo_documento = Column(String(20), nullable=True)
     numero_documento = Column(String(40), nullable=True)
 

@@ -7,6 +7,7 @@ def usuario_a_dict(usuario: Usuario, nombre_rol: str) -> dict:
         "rol_id": usuario.rol_id,
         "rol": nombre_rol,
         "correo": usuario.correo,
-        "nombre_completo": usuario.nombre_completo,
+        "nombre": usuario.nombre,
+        "apellido": usuario.apellido,
         "telefono": usuario.telefono,
     }

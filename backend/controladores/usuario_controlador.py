@@ -22,7 +22,8 @@ router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
 
 class DatosUsuarioNuevo(BaseModel):
-    nombre_completo: str
+    nombre: str
+    apellido: str
     correo: str
     contrasena: str
     rol_id: int
@@ -34,13 +35,15 @@ class DatosAsignarRol(BaseModel):
 
 
 class DatosActualizarUsuario(BaseModel):
-    nombre_completo: str | None = None
+    nombre: str | None = None
+    apellido: str | None = None
     correo: str | None = None
     telefono: str | None = None
 
 
 class DatosActualizarMiPerfil(BaseModel):
-    nombre_completo: str | None = None
+    nombre: str | None = None
+    apellido: str | None = None
     telefono: str | None = None
 
 
@@ -84,8 +87,11 @@ def actualizar_mi_perfil(
     if usuario is None:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
-    if datos.nombre_completo is not None:
-        usuario.nombre_completo = datos.nombre_completo
+    if datos.nombre is not None:
+        usuario.nombre = datos.nombre
+
+    if datos.apellido is not None:
+        usuario.apellido = datos.apellido
 
     if datos.telefono is not None:
         usuario.telefono = datos.telefono
@@ -199,7 +205,8 @@ def crear_usuario(
         rol_id=datos.rol_id,
         correo=datos.correo,
         hash_contrasena=hash_contrasena,
-        nombre_completo=datos.nombre_completo,
+        nombre=datos.nombre,
+        apellido=datos.apellido,
         telefono=datos.telefono,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -239,8 +246,11 @@ def actualizar_usuario(
 
         usuario.correo = datos.correo
 
-    if datos.nombre_completo is not None:
-        usuario.nombre_completo = datos.nombre_completo
+    if datos.nombre is not None:
+        usuario.nombre = datos.nombre
+
+    if datos.apellido is not None:
+        usuario.apellido = datos.apellido
 
     if datos.telefono is not None:
         usuario.telefono = datos.telefono
