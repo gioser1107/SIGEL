@@ -1,11 +1,17 @@
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
+
+from utilidades.archivo_imagen_utilidad import UPLOAD_ROOT, asegurar_carpeta_uploads
 
 from controladores.auth_controlador import router as router_auth
 from controladores.bitacora_controlador import router as router_bitacora
 from controladores.catalogo_controlador import router as router_catalogo
+from controladores.destino_controlador import router as router_destinos
 from controladores.cliente_controlador import router as router_clientes
 from controladores.cotizacion_controlador import router as router_cotizaciones
 from controladores.permiso_controlador import router as router_permisos
@@ -18,6 +24,9 @@ from controladores.asiento_controlador import router as router_asientos
 from controladores.unidad_transporte_controlador import router as router_unidades
 
 app = FastAPI(title="API Travel BQTO", version="1.1.0")
+
+asegurar_carpeta_uploads()
+app.mount("/api/archivos", StaticFiles(directory=Path(UPLOAD_ROOT)), name="archivos")
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -62,6 +71,7 @@ app.add_middleware(
 
 app.include_router(router_auth, prefix="/api")
 app.include_router(router_catalogo, prefix="/api")
+app.include_router(router_destinos, prefix="/api")
 app.include_router(router_clientes, prefix="/api")
 app.include_router(router_permisos, prefix="/api")
 app.include_router(router_usuarios, prefix="/api")
@@ -83,6 +93,7 @@ def ruta_raiz_api():
         "modulos": {
             "auth": "/api/auth",
             "catalogo": "/api/catalogo",
+            "destinos": "/api/destinos",
             "clientes": "/api/clientes",
             "usuarios": "/api/usuarios",
             "roles": "/api/roles",
