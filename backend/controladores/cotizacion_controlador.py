@@ -179,7 +179,7 @@ def obtener_cotizacion(
 ):
     cotizacion = _obtener_cotizacion_activa(db, cotizacion_id)
     _validar_acceso_cotizacion(usuario_actual, cotizacion, db)
-    incluir_lineas = not es_rol_cliente(usuario_actual.get("rol", "")) or cotizacion.estado in ("enviada", "aceptada")
+    incluir_lineas = not es_rol_cliente(usuario_actual.get("rol", "")) or cotizacion.estado in ("pendiente", "aceptada")
     return _cotizacion_a_dict(db, cotizacion, incluir_lineas=incluir_lineas)
 
 

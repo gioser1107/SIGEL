@@ -13,7 +13,7 @@ class Cotizacion(Base):
     precio_cotizado_eur = Column(Numeric(12, 2), nullable=True)
     valida_hasta = Column(DateTime, nullable=True)
     estado = Column(
-        Enum("solicitada", "enviada", "aceptada", "vencida", "cancelada"),
+        Enum("solicitada", "pendiente", "aceptada", "vencida", "cancelada"),
         nullable=False,
         default="solicitada",
     )
