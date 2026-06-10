@@ -136,6 +136,7 @@ def _viaje_a_dict(db: Session, viaje: Viaje) -> dict:
         "id": viaje.id,
         "destino_id": viaje.destino_id,
         "destino_nombre": destino.nombre if destino is not None else None,
+        "precio_base": float(destino.precio_base_eur) if destino is not None else 0.0,
         "unidad_id": viaje.unidad_id,
         "unidad_placa": unidad.placa if unidad is not None else None,
         "guia_id": viaje.guia_id,
@@ -777,7 +778,6 @@ def eliminar_costo(
         "mensaje": "Costo operativo eliminado con éxito",
         "costo_id": costo_id,
     }
-
 
 # ─── Asientos por Viaje ───
 

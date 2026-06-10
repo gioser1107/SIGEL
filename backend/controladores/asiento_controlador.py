@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.asiento_modelo import Asiento
+from modelos.unidad_transporte_modelo import UnidadTransporte
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
 from utilidades.permisos_constantes import (
     PERMISO_BORRAR_TRANSPORTE_FLOTA,
@@ -65,6 +66,13 @@ def crear_asiento(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_TRANSPORTE_FLOTA)),
 ):
+    unidad = db.query(UnidadTransporte).filter(
+        UnidadTransporte.id == datos.unidad_id,
+        UnidadTransporte.eliminado_en.is_(None)
+    ).first()
+    if not unidad:
+        raise HTTPException(status_code=404, detail="Unidad de transporte no encontrada o está eliminada")
+
     ahora = datetime.now()
     nuevo_asiento = Asiento(
         unidad_id=datos.unidad_id,
