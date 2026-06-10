@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
+from modelos.asiento_modelo import Asiento
+from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.costo_operativo_modelo import CostoOperativo
 from modelos.destino_modelo import Destino
 from modelos.punto_recogida_modelo import PuntoRecogida
@@ -20,6 +22,7 @@ from utilidades.permisos_constantes import (
     PERMISO_CREAR_PLANIFICACION,
     PERMISO_EDITAR_PLANIFICACION,
     PERMISO_LEER_PLANIFICACION,
+    PERMISO_LEER_RESERVAS,
 )
 
 router = APIRouter(prefix="/viajes", tags=["Planificación - Viajes"])
@@ -772,4 +775,50 @@ def eliminar_costo(
     return {
         "mensaje": "Costo operativo eliminado con éxito",
         "costo_id": costo_id,
+    }
+
+
+# ─── Asientos por Viaje ───
+
+@router.get("/{viaje_id}/asientos-disponibles")
+def listar_asientos_viaje(
+    viaje_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
+):
+    """
+    Devuelve todos los asientos de la unidad asignada al viaje,
+    indicando cuáles están ocupados (ya reservados).
+    """
+    viaje = _obtener_viaje_activo(db, viaje_id)
+
+    # Obtener todos los asientos de la unidad del viaje
+    asientos = db.query(Asiento).filter(
+        Asiento.unidad_id == viaje.unidad_id,
+        Asiento.eliminado_en.is_(None),
+    ).order_by(Asiento.id).all()
+
+    # Obtener los asiento_id que ya están reservados para este viaje
+    reservados = db.query(AsientoReservado.asiento_id).filter(
+        AsientoReservado.viaje_id == viaje_id,
+        AsientoReservado.eliminado_en.is_(None),
+    ).all()
+    ids_ocupados = {r.asiento_id for r in reservados}
+
+    resultado = []
+    for a in asientos:
+        resultado.append({
+            "id": a.id,
+            "numero": a.numero,
+            "posicion": a.posicion,
+            "ocupado": a.id in ids_ocupados,
+        })
+
+    return {
+        "viaje_id": viaje_id,
+        "unidad_id": viaje.unidad_id,
+        "total_asientos": len(asientos),
+        "total_ocupados": len(ids_ocupados),
+        "total_disponibles": len(asientos) - len(ids_ocupados),
+        "asientos": resultado,
     }
