@@ -19,7 +19,6 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/puntos-venta", tags=["Puntos de venta"])
 
-
 class DatosPuntoVentaNuevo(BaseModel):
     banco_id: int
     codigo: str
@@ -27,14 +26,12 @@ class DatosPuntoVentaNuevo(BaseModel):
     numero_terminal: str | None = None
     activo: bool = True
 
-
 class DatosPuntoVentaActualizar(BaseModel):
     banco_id: int | None = None
     codigo: str | None = None
     nombre: str | None = None
     numero_terminal: str | None = None
     activo: bool | None = None
-
 
 def _buscar_punto_activo(db: Session, punto_id: int) -> PuntoVenta:
     punto = db.query(PuntoVenta).filter(
@@ -44,7 +41,6 @@ def _buscar_punto_activo(db: Session, punto_id: int) -> PuntoVenta:
     if not punto:
         raise HTTPException(status_code=404, detail="Punto de venta no encontrado")
     return punto
-
 
 def _validar_banco(db: Session, banco_id: int) -> Banco:
     banco = db.query(Banco).filter(
@@ -56,14 +52,12 @@ def _validar_banco(db: Session, banco_id: int) -> Banco:
         raise HTTPException(status_code=400, detail="Banco invalido")
     return banco
 
-
 def _punto_a_respuesta(db: Session, punto: PuntoVenta) -> dict:
     resultado = punto_venta_a_dict(punto)
     banco = db.query(Banco).filter(Banco.id == punto.banco_id).first()
     if banco:
         resultado["banco"] = banco_a_dict(banco)
     return resultado
-
 
 @router.get("")
 def listar_puntos_venta(
@@ -78,7 +72,6 @@ def listar_puntos_venta(
     puntos = consulta.order_by(PuntoVenta.nombre).all()
     return [_punto_a_respuesta(db, p) for p in puntos]
 
-
 @router.get("/{punto_id}")
 def obtener_punto_venta(
     punto_id: int,
@@ -87,7 +80,6 @@ def obtener_punto_venta(
 ):
     punto = _buscar_punto_activo(db, punto_id)
     return _punto_a_respuesta(db, punto)
-
 
 @router.post("")
 def crear_punto_venta(
@@ -115,7 +107,6 @@ def crear_punto_venta(
     db.commit()
     db.refresh(nuevo)
     return {"mensaje": "Punto de venta creado", "punto_venta": _punto_a_respuesta(db, nuevo)}
-
 
 @router.put("/{punto_id}")
 def actualizar_punto_venta(
@@ -154,7 +145,6 @@ def actualizar_punto_venta(
     db.commit()
     db.refresh(punto)
     return {"mensaje": "Punto de venta actualizado", "punto_venta": _punto_a_respuesta(db, punto)}
-
 
 @router.delete("/{punto_id}")
 def eliminar_punto_venta(

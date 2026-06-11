@@ -19,25 +19,21 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/bancos", tags=["Bancos"])
 
-
 class DatosBancoNuevo(BaseModel):
     codigo: str
     nombre: str
     activo: bool = True
-
 
 class DatosBancoActualizar(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
     activo: bool | None = None
 
-
 def _buscar_banco_activo(db: Session, banco_id: int) -> Banco:
     banco = db.query(Banco).filter(Banco.id == banco_id, Banco.eliminado_en.is_(None)).first()
     if not banco:
         raise HTTPException(status_code=404, detail="Banco no encontrado")
     return banco
-
 
 @router.get("")
 def listar_bancos(
@@ -52,7 +48,6 @@ def listar_bancos(
     )
     return [banco_a_dict(b) for b in bancos]
 
-
 @router.get("/{banco_id}")
 def obtener_banco(
     banco_id: int,
@@ -61,7 +56,6 @@ def obtener_banco(
 ):
     banco = _buscar_banco_activo(db, banco_id)
     return banco_a_dict(banco)
-
 
 @router.post("")
 def crear_banco(
@@ -86,7 +80,6 @@ def crear_banco(
     db.commit()
     db.refresh(nuevo)
     return {"mensaje": "Banco creado", "banco": banco_a_dict(nuevo)}
-
 
 @router.put("/{banco_id}")
 def actualizar_banco(
@@ -118,7 +111,6 @@ def actualizar_banco(
     db.commit()
     db.refresh(banco)
     return {"mensaje": "Banco actualizado", "banco": banco_a_dict(banco)}
-
 
 @router.delete("/{banco_id}")
 def eliminar_banco(

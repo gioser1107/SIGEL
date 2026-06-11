@@ -20,7 +20,6 @@ from utilidades.usuario_respuesta_utilidad import usuario_a_dict
 
 router = APIRouter(prefix="/usuarios", tags=["Usuarios"])
 
-
 class DatosUsuarioNuevo(BaseModel):
     nombre: str
     apellido: str
@@ -29,10 +28,8 @@ class DatosUsuarioNuevo(BaseModel):
     rol_id: int
     telefono: str | None = None
 
-
 class DatosAsignarRol(BaseModel):
     rol_id: int
-
 
 class DatosActualizarUsuario(BaseModel):
     nombre: str | None = None
@@ -40,27 +37,22 @@ class DatosActualizarUsuario(BaseModel):
     correo: str | None = None
     telefono: str | None = None
 
-
 class DatosActualizarMiPerfil(BaseModel):
     nombre: str | None = None
     apellido: str | None = None
     telefono: str | None = None
 
-
 class DatosCambiarContrasena(BaseModel):
     contrasena_actual: str
     contrasena_nueva: str
 
-
 class DatosResetearContrasena(BaseModel):
     contrasena_nueva: str
-
 
 def obtener_nombre_rol(db: Session, rol_id: int) -> str:
     consulta_rol = db.query(Rol).filter(Rol.id == rol_id)
     rol = consulta_rol.first()
     return rol.nombre if rol is not None else ""
-
 
 def buscar_usuario_activo(db: Session, usuario_id: int) -> Usuario | None:
     consulta = db.query(Usuario).filter(
@@ -69,12 +61,9 @@ def buscar_usuario_activo(db: Session, usuario_id: int) -> Usuario | None:
     )
     return consulta.first()
 
-
 @router.get("/mi-perfil")
 def obtener_mi_perfil(usuario_actual: dict = Depends(obtener_usuario_actual)):
-    """Alias explícito para el frontend: datos del usuario en sesión."""
     return {"usuario": usuario_actual}
-
 
 @router.put("/mi-perfil")
 def actualizar_mi_perfil(
@@ -107,7 +96,6 @@ def actualizar_mi_perfil(
         "usuario": usuario_a_dict(usuario, nombre_rol),
     }
 
-
 @router.put("/mi-contrasena")
 def cambiar_mi_contrasena(
     datos: DatosCambiarContrasena,
@@ -132,7 +120,6 @@ def cambiar_mi_contrasena(
 
     return {"mensaje": "Contraseña actualizada con éxito"}
 
-
 @router.get("/")
 def obtener_todos_los_usuarios(
     db: Session = Depends(get_db),
@@ -147,7 +134,6 @@ def obtener_todos_los_usuarios(
         resultado.append(usuario_a_dict(usuario, nombre_rol))
 
     return resultado
-
 
 @router.get("/{usuario_id}")
 def obtener_usuario_por_id(
@@ -172,7 +158,6 @@ def obtener_usuario_por_id(
     nombre_rol = obtener_nombre_rol(db, usuario.rol_id)
 
     return {"usuario": usuario_a_dict(usuario, nombre_rol)}
-
 
 @router.post("/")
 def crear_usuario(
@@ -221,7 +206,6 @@ def crear_usuario(
         "usuario": usuario_a_dict(nuevo_usuario, rol.nombre),
     }
 
-
 @router.put("/{usuario_id}")
 def actualizar_usuario(
     usuario_id: int,
@@ -266,7 +250,6 @@ def actualizar_usuario(
         "usuario": usuario_a_dict(usuario, nombre_rol),
     }
 
-
 @router.put("/{usuario_id}/rol")
 def asignar_rol_a_usuario(
     usuario_id: int,
@@ -298,7 +281,6 @@ def asignar_rol_a_usuario(
         "usuario": usuario_a_dict(usuario, rol.nombre),
     }
 
-
 @router.put("/{usuario_id}/contrasena")
 def resetear_contrasena_de_usuario(
     usuario_id: int,
@@ -316,7 +298,6 @@ def resetear_contrasena_de_usuario(
     db.commit()
 
     return {"mensaje": "Contraseña del usuario restablecida con éxito"}
-
 
 @router.delete("/{usuario_id}")
 def eliminar_usuario(

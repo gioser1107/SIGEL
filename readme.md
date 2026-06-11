@@ -1,4 +1,4 @@
-# Sistema Travel BQTO 🚌
+# Sistema Travel BQTO
 
 Repositorio principal del sistema integral para la gestión logística turística.
 

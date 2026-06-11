@@ -22,11 +22,9 @@ from utilidades.usuario_respuesta_utilidad import usuario_a_dict
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
-
 class DatosLogin(BaseModel):
     correo: str
     contrasena: str
-
 
 class DatosRegistroCliente(BaseModel):
     nombre: str
@@ -42,7 +40,6 @@ class DatosRegistroCliente(BaseModel):
     direccion: str | None = None
     estado_id: int | None = None
     ciudad_id: int | None = None
-
 
 @router.post("/login")
 def iniciar_sesion(datos: DatosLogin, request: Request, db: Session = Depends(get_db)):
@@ -90,10 +87,8 @@ def iniciar_sesion(datos: DatosLogin, request: Request, db: Session = Depends(ge
         "usuario": usuario_dict,
     }
 
-
 @router.post("/registro")
 def registrar_cliente_portal(datos: DatosRegistroCliente, db: Session = Depends(get_db)):
-    """Registro público: el cliente crea su propia cuenta para el portal web."""
     rol_cliente = obtener_rol_cliente(db)
     if rol_cliente is None:
         raise HTTPException(status_code=500, detail="El rol Cliente no existe en el sistema")
@@ -228,10 +223,8 @@ def registrar_cliente_portal(datos: DatosRegistroCliente, db: Session = Depends(
         "usuario": usuario_dict,
     }
 
-
 @router.get("/perfil")
 def obtener_perfil(usuario_actual: dict = Depends(obtener_usuario_actual)):
-    """Devuelve el usuario autenticado y sus permisos (para menús del frontend)."""
     return {
         "mensaje": "Sesión activa",
         "usuario": usuario_actual,

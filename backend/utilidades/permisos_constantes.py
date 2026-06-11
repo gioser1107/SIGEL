@@ -1,4 +1,3 @@
-# Permisos CRUD por módulo.
 
 PERMISO_CREAR_USUARIOS = "crear_usuarios"
 PERMISO_LEER_USUARIOS = "leer_usuarios"

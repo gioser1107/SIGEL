@@ -36,7 +36,6 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(tags=["Pagos"])
 
-
 class DatosPagoCrear(BaseModel):
     metodo_pago_id: int
     tasa_id: int
@@ -51,7 +50,6 @@ class DatosPagoCrear(BaseModel):
     correo_origen: Optional[str] = None
     comprobante_url: Optional[str] = None
     notas: Optional[str] = None
-
 
 class DatosPagoActualizar(BaseModel):
     metodo_pago_id: Optional[int] = None
@@ -69,7 +67,6 @@ class DatosPagoActualizar(BaseModel):
     comprobante_url: Optional[str] = None
     notas: Optional[str] = None
 
-
 def _obtener_reserva_activa(db: Session, reserva_id: int) -> Reserva:
     reserva = db.query(Reserva).filter(
         Reserva.id == reserva_id,
@@ -78,7 +75,6 @@ def _obtener_reserva_activa(db: Session, reserva_id: int) -> Reserva:
     if not reserva:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     return reserva
-
 
 def _obtener_pago_activo(db: Session, reserva_id: int, pago_id: int) -> Pago:
     pago = db.query(Pago).filter(
@@ -90,20 +86,17 @@ def _obtener_pago_activo(db: Session, reserva_id: int, pago_id: int) -> Pago:
         raise HTTPException(status_code=404, detail="Pago no encontrado en esta reserva")
     return pago
 
-
 def _validar_metodo_pago(db: Session, metodo_pago_id: int) -> MetodoPago:
     metodo = db.query(MetodoPago).filter(MetodoPago.id == metodo_pago_id).first()
     if not metodo:
         raise HTTPException(status_code=400, detail="Metodo de pago invalido")
     return metodo
 
-
 def _validar_tasa(db: Session, tasa_id: int) -> Tasa:
     tasa = db.query(Tasa).filter(Tasa.id == tasa_id).first()
     if not tasa:
         raise HTTPException(status_code=400, detail="Tasa invalida")
     return tasa
-
 
 def _validar_banco(db: Session, banco_id: int | None, campo: str) -> None:
     if banco_id is None:
@@ -116,7 +109,6 @@ def _validar_banco(db: Session, banco_id: int | None, campo: str) -> None:
     if not banco:
         raise HTTPException(status_code=400, detail=f"{campo} invalido")
 
-
 def _validar_punto_venta(db: Session, punto_venta_id: int | None) -> None:
     if punto_venta_id is None:
         return
@@ -128,16 +120,13 @@ def _validar_punto_venta(db: Session, punto_venta_id: int | None) -> None:
     if not punto:
         raise HTTPException(status_code=400, detail="Punto de venta invalido")
 
-
 def _validar_tipo_pago(tipo: str) -> None:
     if tipo not in ("total", "cuota"):
         raise HTTPException(status_code=400, detail="tipo debe ser total o cuota")
 
-
 def _validar_estado_pago(estado: str) -> None:
     if estado not in ("en_validacion", "aprobado", "rechazado"):
         raise HTTPException(status_code=400, detail="estado invalido")
-
 
 @router.get("/pagos")
 def listar_todos_los_pagos(
@@ -173,7 +162,6 @@ def listar_todos_los_pagos(
         resultado.append(detalle)
 
     return resultado
-
 
 @router.get("/pagos/catalogo")
 def obtener_catalogo_pagos(
@@ -232,7 +220,6 @@ def obtener_catalogo_pagos(
         "tasas": lista_tasas,
     }
 
-
 @router.get("/reservas/{reserva_id}/pagos")
 def listar_pagos_reserva(
     reserva_id: int,
@@ -253,7 +240,6 @@ def listar_pagos_reserva(
         resultado.append(cargar_datos_pago(db, pago))
     return resultado
 
-
 @router.get("/reservas/{reserva_id}/pagos/resumen")
 def obtener_resumen_pagos_reserva(
     reserva_id: int,
@@ -266,7 +252,6 @@ def obtener_resumen_pagos_reserva(
     except ValueError as error:
         raise HTTPException(status_code=404, detail=str(error))
 
-
 @router.get("/reservas/{reserva_id}/pagos/{pago_id}")
 def obtener_pago_reserva(
     reserva_id: int,
@@ -276,7 +261,6 @@ def obtener_pago_reserva(
 ):
     pago = _obtener_pago_activo(db, reserva_id, pago_id)
     return cargar_datos_pago(db, pago)
-
 
 @router.post("/reservas/{reserva_id}/pagos")
 def registrar_pago_reserva(
@@ -334,7 +318,6 @@ def registrar_pago_reserva(
         "mensaje": "Pago registrado con exito",
         "pago": cargar_datos_pago(db, nuevo_pago),
     }
-
 
 @router.put("/reservas/{reserva_id}/pagos/{pago_id}")
 def actualizar_pago_reserva(
@@ -423,7 +406,6 @@ def actualizar_pago_reserva(
         "mensaje": "Pago actualizado con exito",
         "pago": cargar_datos_pago(db, pago),
     }
-
 
 @router.delete("/reservas/{reserva_id}/pagos/{pago_id}")
 def eliminar_pago_reserva(

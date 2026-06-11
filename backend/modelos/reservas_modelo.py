@@ -1,7 +1,6 @@
 from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey
 from database import Base
 
-
 class Reserva(Base):
     __tablename__ = "reservas"
 

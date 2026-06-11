@@ -11,7 +11,6 @@ from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
 
 router = APIRouter(prefix="/puntos-recogida", tags=["Puntos de Recogida"])
 
-
 class DatosPuntoRecogidaPublico(BaseModel):
     nombre: str
     direccion: str | None = None
@@ -19,10 +18,8 @@ class DatosPuntoRecogidaPublico(BaseModel):
     estado: str | None = None
     notas_referencia: str | None = None
 
-
 @router.get("")
 def listar_puntos_recogida(db: Session = Depends(get_db)):
-    """Lista todos los puntos de recogida activos. Endpoint público."""
     puntos = (
         db.query(PuntoRecogida)
         .filter(
@@ -44,7 +41,6 @@ def listar_puntos_recogida(db: Session = Depends(get_db)):
         for p in puntos
     ]
 
-
 @router.post("/publico")
 def crear_punto_recogida_publico(
     datos: DatosPuntoRecogidaPublico,
@@ -52,7 +48,6 @@ def crear_punto_recogida_publico(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
-    """Permite a un usuario autenticado registrar un nuevo punto de recogida desde la landing."""
     nombre_limpio = datos.nombre.strip()
     if not nombre_limpio:
         raise HTTPException(status_code=422, detail="El nombre del punto de recogida es requerido")

@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, Numeric, String, T
 
 from database import Base
 
-
 class Destino(Base):
     __tablename__ = "destinos"
 

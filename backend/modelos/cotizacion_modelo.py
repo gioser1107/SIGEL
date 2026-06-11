@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Numeric, 
 
 from database import Base
 
-
 class Cotizacion(Base):
     __tablename__ = "cotizaciones"
 

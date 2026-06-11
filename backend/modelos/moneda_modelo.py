@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, String
 
 from database import Base
 
-
 class Moneda(Base):
     __tablename__ = "monedas"
 

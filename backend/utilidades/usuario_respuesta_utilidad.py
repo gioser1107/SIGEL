@@ -1,6 +1,5 @@
 from modelos.usuario_modelo import Usuario
 
-
 def usuario_a_dict(usuario: Usuario, nombre_rol: str) -> dict:
     return {
         "id": usuario.id,

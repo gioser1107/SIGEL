@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, SmallI
 
 from database import Base
 
-
 class DestinoImagen(Base):
     __tablename__ = "destino_imagenes"
 

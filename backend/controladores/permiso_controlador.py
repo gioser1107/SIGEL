@@ -16,14 +16,11 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/permisos", tags=["Permisos"])
 
-
 class DatosPermisoNuevo(BaseModel):
     descripcion: str
 
-
 class DatosPermisoActualizar(BaseModel):
     descripcion: str
-
 
 @router.get("/")
 def obtener_todos_los_permisos(
@@ -42,7 +39,6 @@ def obtener_todos_los_permisos(
         resultado.append(permiso_dict)
 
     return resultado
-
 
 @router.get("/{permiso_id}")
 def obtener_permiso_por_id(
@@ -65,7 +61,6 @@ def obtener_permiso_por_id(
             "descripcion": permiso.descripcion,
         }
     }
-
 
 @router.post("/")
 def crear_permiso(
@@ -92,7 +87,6 @@ def crear_permiso(
             "descripcion": nuevo_permiso.descripcion,
         },
     }
-
 
 @router.put("/{permiso_id}")
 def actualizar_permiso(
@@ -122,7 +116,6 @@ def actualizar_permiso(
             "descripcion": permiso.descripcion,
         },
     }
-
 
 @router.delete("/{permiso_id}")
 def eliminar_permiso(

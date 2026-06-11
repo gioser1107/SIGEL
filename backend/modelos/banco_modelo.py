@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 
 from database import Base
 
-
 class Banco(Base):
     __tablename__ = "bancos"
 

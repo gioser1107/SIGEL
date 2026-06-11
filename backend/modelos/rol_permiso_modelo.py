@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, ForeignKey
 
 from database import Base
 
-
 class RolPermiso(Base):
     __tablename__ = "roles_permisos"
 

@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Numeric, 
 
 from database import Base
 
-
 class Pago(Base):
     __tablename__ = "pagos"
 

@@ -2,7 +2,6 @@ from sqlalchemy import Column, BigInteger, DateTime, String, Text
 
 from database import Base
 
-
 class Rol(Base):
     __tablename__ = "roles"
 

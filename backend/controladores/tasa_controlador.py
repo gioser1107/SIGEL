@@ -21,18 +21,15 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/tasas", tags=["Tasas"])
 
-
 class DatosTasaNueva(BaseModel):
     fecha: date
     valor: Decimal = Field(gt=0)
     moneda_id: int
 
-
 class DatosTasaActualizar(BaseModel):
     fecha: date | None = None
     valor: Decimal | None = Field(default=None, gt=0)
     moneda_id: int | None = None
-
 
 def _buscar_tasa(db: Session, tasa_id: int) -> Tasa:
     tasa = db.query(Tasa).filter(Tasa.id == tasa_id).first()
@@ -40,20 +37,17 @@ def _buscar_tasa(db: Session, tasa_id: int) -> Tasa:
         raise HTTPException(status_code=404, detail="Tasa no encontrada")
     return tasa
 
-
 def _validar_moneda(db: Session, moneda_id: int) -> Moneda:
     moneda = db.query(Moneda).filter(Moneda.id == moneda_id).first()
     if not moneda:
         raise HTTPException(status_code=400, detail="Moneda invalida")
     return moneda
 
-
 def _tasa_a_respuesta(db: Session, tasa: Tasa) -> dict:
     moneda = db.query(Moneda).filter(Moneda.id == tasa.moneda_id).first()
     if not moneda:
         raise HTTPException(status_code=500, detail="Moneda de la tasa no encontrada")
     return tasa_a_dict(tasa, moneda)
-
 
 @router.get("")
 def listar_tasas(
@@ -71,7 +65,6 @@ def listar_tasas(
     tasas = consulta.order_by(Tasa.fecha.desc(), Tasa.id.desc()).all()
     return [_tasa_a_respuesta(db, t) for t in tasas]
 
-
 @router.get("/del-dia")
 def obtener_tasa_del_dia(
     db: Session = Depends(get_db),
@@ -79,15 +72,10 @@ def obtener_tasa_del_dia(
         requiere_alguno_de_permisos(PERMISO_LEER_REPORTES_PAGO, PERMISO_LEER_RESERVAS)
     ),
 ):
-    """
-    Tasa EUR vigente para hoy (para calcular monto en Bs en reservas).
-    Si no hay tasa de hoy, devuelve la mas reciente con es_del_dia=false.
-    """
     resultado = obtener_tasa_eur_del_dia(db)
     if resultado is None:
         raise HTTPException(status_code=404, detail="No hay tasa EUR registrada en el sistema")
     return resultado
-
 
 @router.get("/hoy")
 def obtener_tasas_hoy(
@@ -98,7 +86,6 @@ def obtener_tasas_hoy(
     tasas = db.query(Tasa).filter(Tasa.fecha == hoy).order_by(Tasa.id.desc()).all()
     return [_tasa_a_respuesta(db, t) for t in tasas]
 
-
 @router.get("/{tasa_id}")
 def obtener_tasa(
     tasa_id: int,
@@ -107,7 +94,6 @@ def obtener_tasa(
 ):
     tasa = _buscar_tasa(db, tasa_id)
     return _tasa_a_respuesta(db, tasa)
-
 
 @router.post("")
 def crear_tasa(
@@ -122,7 +108,6 @@ def crear_tasa(
     db.commit()
     db.refresh(nueva)
     return {"mensaje": "Tasa creada", "tasa": _tasa_a_respuesta(db, nueva)}
-
 
 @router.put("/{tasa_id}")
 def actualizar_tasa(
@@ -146,7 +131,6 @@ def actualizar_tasa(
     db.commit()
     db.refresh(tasa)
     return {"mensaje": "Tasa actualizada", "tasa": _tasa_a_respuesta(db, tasa)}
-
 
 @router.delete("/{tasa_id}")
 def eliminar_tasa(

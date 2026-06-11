@@ -19,18 +19,15 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/unidades", tags=["Flota - Unidades de Transporte"])
 
-
 class DatosUnidadCrear(BaseModel):
     placa: str
     modelo: Optional[str] = None
     capacidad: int
 
-
 class DatosUnidadActualizar(BaseModel):
     placa: Optional[str] = None
     modelo: Optional[str] = None
     capacidad: Optional[int] = None
-
 
 def _obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
     consulta = db.query(UnidadTransporte).filter(
@@ -41,7 +38,6 @@ def _obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
     if not unidad:
         raise HTTPException(status_code=404, detail="Unidad de transporte no encontrada")
     return unidad
-
 
 @router.get("")
 def listar_unidades(
@@ -61,7 +57,6 @@ def listar_unidades(
         })
     return resultado
 
-
 @router.post("")
 def crear_unidad(
     datos: DatosUnidadCrear,
@@ -69,7 +64,6 @@ def crear_unidad(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_TRANSPORTE_FLOTA)),
 ):
-    # Validar placa única
     existente = db.query(UnidadTransporte).filter(
         UnidadTransporte.placa == datos.placa,
         UnidadTransporte.eliminado_en.is_(None)
@@ -98,7 +92,6 @@ def crear_unidad(
 
     return {"mensaje": "Unidad de transporte creada con éxito", "unidad_id": nueva_unidad.id}
 
-
 @router.get("/{unidad_id}")
 def obtener_unidad(
     unidad_id: int,
@@ -115,7 +108,6 @@ def obtener_unidad(
         "actualizado_en": unidad.actualizado_en,
     }
 
-
 @router.put("/{unidad_id}")
 def actualizar_unidad(
     unidad_id: int,
@@ -127,7 +119,6 @@ def actualizar_unidad(
     unidad = _obtener_unidad_activa(db, unidad_id)
 
     if datos.placa is not None:
-        # Validar placa única si cambia
         if datos.placa != unidad.placa:
             existente = db.query(UnidadTransporte).filter(
                 UnidadTransporte.placa == datos.placa,
@@ -155,7 +146,6 @@ def actualizar_unidad(
 
     return {"mensaje": "Unidad de transporte actualizada con éxito"}
 
-
 @router.delete("/{unidad_id}")
 def eliminar_unidad(
     unidad_id: int,
@@ -165,7 +155,6 @@ def eliminar_unidad(
 ):
     unidad = _obtener_unidad_activa(db, unidad_id)
 
-    # Validar que no tenga viajes planificados pendientes o activos
     viajes_activos = db.query(Viaje).filter(
         Viaje.unidad_id == unidad_id,
         Viaje.eliminado_en.is_(None),

@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Carga backend/.env siempre desde esta carpeta (no depende de dónde ejecutes uvicorn)
 directorio_backend = Path(__file__).resolve().parent
 load_dotenv(directorio_backend / ".env")
 
@@ -25,9 +24,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-
 def get_db():
-    """Abre y cierra la conexión a la base de datos en cada petición."""
     db = SessionLocal()
     try:
         yield db

@@ -17,25 +17,21 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/monedas", tags=["Monedas"])
 
-
 class DatosMonedaNueva(BaseModel):
     codigo: str
     nombre: str
     simbolo: str
-
 
 class DatosMonedaActualizar(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
     simbolo: str | None = None
 
-
 def _buscar_moneda(db: Session, moneda_id: int) -> Moneda:
     moneda = db.query(Moneda).filter(Moneda.id == moneda_id).first()
     if not moneda:
         raise HTTPException(status_code=404, detail="Moneda no encontrada")
     return moneda
-
 
 @router.get("")
 def listar_monedas(
@@ -45,7 +41,6 @@ def listar_monedas(
     monedas = db.query(Moneda).order_by(Moneda.nombre).all()
     return [moneda_a_dict(m) for m in monedas]
 
-
 @router.get("/{moneda_id}")
 def obtener_moneda(
     moneda_id: int,
@@ -54,7 +49,6 @@ def obtener_moneda(
 ):
     moneda = _buscar_moneda(db, moneda_id)
     return moneda_a_dict(moneda)
-
 
 @router.post("")
 def crear_moneda(
@@ -72,7 +66,6 @@ def crear_moneda(
     db.commit()
     db.refresh(nueva)
     return {"mensaje": "Moneda creada", "moneda": moneda_a_dict(nueva)}
-
 
 @router.put("/{moneda_id}")
 def actualizar_moneda(
@@ -99,7 +92,6 @@ def actualizar_moneda(
     db.commit()
     db.refresh(moneda)
     return {"mensaje": "Moneda actualizada", "moneda": moneda_a_dict(moneda)}
-
 
 @router.delete("/{moneda_id}")
 def eliminar_moneda(

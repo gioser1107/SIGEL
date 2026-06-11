@@ -17,18 +17,15 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/metodos-pago", tags=["Metodos de pago"])
 
-
 class DatosMetodoPagoNuevo(BaseModel):
     codigo: str
     nombre: str
     moneda_id: int
 
-
 class DatosMetodoPagoActualizar(BaseModel):
     codigo: str | None = None
     nombre: str | None = None
     moneda_id: int | None = None
-
 
 def _buscar_metodo(db: Session, metodo_id: int) -> MetodoPago:
     metodo = db.query(MetodoPago).filter(MetodoPago.id == metodo_id).first()
@@ -36,20 +33,17 @@ def _buscar_metodo(db: Session, metodo_id: int) -> MetodoPago:
         raise HTTPException(status_code=404, detail="Metodo de pago no encontrado")
     return metodo
 
-
 def _validar_moneda(db: Session, moneda_id: int) -> Moneda:
     moneda = db.query(Moneda).filter(Moneda.id == moneda_id).first()
     if not moneda:
         raise HTTPException(status_code=400, detail="Moneda invalida")
     return moneda
 
-
 def _metodo_a_respuesta(db: Session, metodo: MetodoPago) -> dict:
     moneda = db.query(Moneda).filter(Moneda.id == metodo.moneda_id).first()
     if not moneda:
         raise HTTPException(status_code=500, detail="Moneda del metodo no encontrada")
     return metodo_pago_a_dict(metodo, moneda)
-
 
 @router.get("")
 def listar_metodos_pago(
@@ -62,7 +56,6 @@ def listar_metodos_pago(
         resultado.append(_metodo_a_respuesta(db, metodo))
     return resultado
 
-
 @router.get("/{metodo_id}")
 def obtener_metodo_pago(
     metodo_id: int,
@@ -71,7 +64,6 @@ def obtener_metodo_pago(
 ):
     metodo = _buscar_metodo(db, metodo_id)
     return _metodo_a_respuesta(db, metodo)
-
 
 @router.post("")
 def crear_metodo_pago(
@@ -90,7 +82,6 @@ def crear_metodo_pago(
     db.commit()
     db.refresh(nuevo)
     return {"mensaje": "Metodo de pago creado", "metodo_pago": _metodo_a_respuesta(db, nuevo)}
-
 
 @router.put("/{metodo_id}")
 def actualizar_metodo_pago(
@@ -118,7 +109,6 @@ def actualizar_metodo_pago(
     db.commit()
     db.refresh(metodo)
     return {"mensaje": "Metodo de pago actualizado", "metodo_pago": _metodo_a_respuesta(db, metodo)}
-
 
 @router.delete("/{metodo_id}")
 def eliminar_metodo_pago(

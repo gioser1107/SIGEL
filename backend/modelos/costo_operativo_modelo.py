@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Numeric, 
 
 from database import Base
 
-
 class CostoOperativo(Base):
     __tablename__ = "costos_operativos"
 

@@ -31,14 +31,12 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/destinos", tags=["Destinos"])
 
-
 class DatosDestinoCrear(BaseModel):
     nombre: str
     descripcion: str | None = None
     precio_base_eur: Decimal = Field(default=Decimal("0.00"), ge=0)
     activo: bool = True
     url_portada: str | None = None
-
 
 class DatosDestinoActualizar(BaseModel):
     nombre: str | None = None
@@ -47,16 +45,13 @@ class DatosDestinoActualizar(BaseModel):
     activo: bool | None = None
     url_portada: str | None = None
 
-
 class DatosImagenDestinoCrear(BaseModel):
     url: str
     es_portada: bool = False
 
-
 class DatosImagenDestinoActualizar(BaseModel):
     url: str | None = None
     es_portada: bool | None = None
-
 
 def buscar_destino_activo(db: Session, destino_id: int) -> Destino | None:
     consulta = db.query(Destino).filter(
@@ -64,7 +59,6 @@ def buscar_destino_activo(db: Session, destino_id: int) -> Destino | None:
         Destino.eliminado_en.is_(None),
     )
     return consulta.first()
-
 
 def validar_nombre_no_repetido(
     db: Session,
@@ -82,7 +76,6 @@ def validar_nombre_no_repetido(
             detail="Ya existe un destino con ese nombre",
         )
 
-
 @router.get("")
 def listar_destinos(
     db: Session = Depends(get_db),
@@ -96,7 +89,6 @@ def listar_destinos(
     lista = consulta.all()
     return [destino_a_dict(db, destino) for destino in lista]
 
-
 @router.get("/{destino_id}")
 def obtener_destino(
     destino_id: int,
@@ -107,7 +99,6 @@ def obtener_destino(
     if destino is None:
         raise HTTPException(status_code=404, detail="Destino no encontrado")
     return {"destino": destino_a_dict(db, destino, incluir_galeria=True)}
-
 
 @router.post("")
 def crear_destino(
@@ -160,7 +151,6 @@ def crear_destino(
         "mensaje": "Destino creado con éxito",
         "destino": destino_a_dict(db, nuevo_destino),
     }
-
 
 @router.put("/{destino_id}")
 def actualizar_destino(
@@ -229,7 +219,6 @@ def actualizar_destino(
         "destino": destino_a_dict(db, destino),
     }
 
-
 @router.delete("/{destino_id}")
 def anular_destino(
     destino_id: int,
@@ -262,7 +251,6 @@ def anular_destino(
         "destino_id": destino_id,
     }
 
-
 @router.get("/{destino_id}/imagenes")
 def listar_imagenes_destino(
     destino_id: int,
@@ -275,7 +263,6 @@ def listar_imagenes_destino(
 
     _, imagenes = imagenes_destino(db, destino_id)
     return {"imagenes": imagenes}
-
 
 @router.post("/{destino_id}/imagenes/upload")
 async def subir_imagen_destino(
@@ -318,7 +305,6 @@ async def subir_imagen_destino(
         },
     }
 
-
 @router.post("/{destino_id}/imagenes")
 def agregar_imagen_destino(
     destino_id: int,
@@ -357,7 +343,6 @@ def agregar_imagen_destino(
             "es_portada": bool(nueva.es_portada),
         },
     }
-
 
 @router.put("/{destino_id}/imagenes/{imagen_id}")
 def actualizar_imagen_destino(
@@ -410,7 +395,6 @@ def actualizar_imagen_destino(
             "es_portada": bool(imagen.es_portada),
         },
     }
-
 
 @router.delete("/{destino_id}/imagenes/{imagen_id}")
 def quitar_imagen_destino(

@@ -13,7 +13,6 @@ from modelos.reservas_modelo import Reserva
 from modelos.tasa_modelo import Tasa
 from modelos.viaje_modelo import Viaje
 
-
 def moneda_a_dict(moneda: Moneda) -> dict:
     return {
         "id": moneda.id,
@@ -21,7 +20,6 @@ def moneda_a_dict(moneda: Moneda) -> dict:
         "nombre": moneda.nombre,
         "simbolo": moneda.simbolo,
     }
-
 
 def metodo_pago_a_dict(metodo: MetodoPago, moneda: Moneda) -> dict:
     return {
@@ -31,14 +29,12 @@ def metodo_pago_a_dict(metodo: MetodoPago, moneda: Moneda) -> dict:
         "moneda": moneda_a_dict(moneda),
     }
 
-
 def banco_a_dict(banco: Banco) -> dict:
     return {
         "id": banco.id,
         "codigo": banco.codigo,
         "nombre": banco.nombre,
     }
-
 
 def punto_venta_a_dict(punto: PuntoVenta) -> dict:
     return {
@@ -49,7 +45,6 @@ def punto_venta_a_dict(punto: PuntoVenta) -> dict:
         "numero_terminal": punto.numero_terminal,
     }
 
-
 def tasa_a_dict(tasa: Tasa, moneda: Moneda) -> dict:
     return {
         "id": tasa.id,
@@ -57,7 +52,6 @@ def tasa_a_dict(tasa: Tasa, moneda: Moneda) -> dict:
         "valor": float(tasa.valor),
         "moneda": moneda_a_dict(moneda),
     }
-
 
 def pago_a_dict(
     pago: Pago,
@@ -94,14 +88,11 @@ def pago_a_dict(
     }
     return resultado
 
-
 def buscar_moneda_por_id(db: Session, moneda_id: int) -> Moneda | None:
     return db.query(Moneda).filter(Moneda.id == moneda_id).first()
 
-
 def buscar_moneda_por_codigo(db: Session, codigo: str) -> Moneda | None:
     return db.query(Moneda).filter(Moneda.codigo == codigo).first()
-
 
 def obtener_tasa_eur_reciente(db: Session) -> tuple[Tasa, Moneda] | None:
     moneda_eur = buscar_moneda_por_codigo(db, "EUR")
@@ -119,9 +110,7 @@ def obtener_tasa_eur_reciente(db: Session) -> tuple[Tasa, Moneda] | None:
 
     return tasa, moneda_eur
 
-
 def obtener_tasa_eur_del_dia(db: Session) -> dict | None:
-    """Tasa EUR de hoy; si no hay, usa la mas reciente."""
     moneda_eur = buscar_moneda_por_codigo(db, "EUR")
     if not moneda_eur:
         return None
@@ -153,7 +142,6 @@ def obtener_tasa_eur_del_dia(db: Session) -> dict | None:
         "valor": float(tasa.valor),
         "es_del_dia": False,
     }
-
 
 def cargar_datos_pago(
     db: Session,
@@ -198,10 +186,8 @@ def cargar_datos_pago(
         punto_venta,
     )
 
-
 def _redondear_eur(valor: float) -> float:
     return round(valor, 2)
-
 
 def calcular_total_reserva_eur(db: Session, reserva: Reserva) -> dict:
     viaje = (
@@ -264,7 +250,6 @@ def calcular_total_reserva_eur(db: Session, reserva: Reserva) -> dict:
         "origen_total": origen_total,
     }
 
-
 def convertir_monto_pago_a_eur(db: Session, pago: Pago) -> tuple[float, bool]:
     metodo = db.query(MetodoPago).filter(MetodoPago.id == pago.metodo_pago_id).first()
     if not metodo:
@@ -318,7 +303,6 @@ def convertir_monto_pago_a_eur(db: Session, pago: Pago) -> tuple[float, bool]:
         return _redondear_eur(monto), True
 
     return _redondear_eur(monto), True
-
 
 def calcular_resumen_pagos_reserva(db: Session, reserva: Reserva) -> dict:
     info_reserva = calcular_total_reserva_eur(db, reserva)
@@ -375,7 +359,6 @@ def calcular_resumen_pagos_reserva(db: Session, reserva: Reserva) -> dict:
         "cantidad_en_validacion": cantidad_en_validacion,
         "cantidad_rechazados": cantidad_rechazados,
     }
-
 
 def actualizar_estado_reserva_por_pagos(db: Session, reserva: Reserva) -> None:
     if reserva.estado == "cancelada":

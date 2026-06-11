@@ -13,14 +13,11 @@ MAX_LADO_THUMB_PX = 600         # thumb: tarjetas del catálogo
 CALIDAD_WEBP = 82
 TIPOS_PERMITIDOS = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
 
-
 def asegurar_carpeta_uploads() -> None:
     UPLOAD_ROOT.mkdir(parents=True, exist_ok=True)
 
-
 def es_url_archivo_local(url: str) -> bool:
     return url.startswith(f"{PREFIJO_ARCHIVOS}/")
-
 
 def ruta_fisica_desde_url(url: str) -> Path | None:
     if not es_url_archivo_local(url):
@@ -35,12 +32,10 @@ def ruta_fisica_desde_url(url: str) -> Path | None:
 
     return ruta
 
-
 def eliminar_archivo_imagen(url: str) -> None:
     ruta = ruta_fisica_desde_url(url)
     if ruta is not None and ruta.is_file():
         ruta.unlink()
-
 
 async def procesar_y_guardar_imagen_destino(
     destino_id: int,
@@ -83,13 +78,11 @@ async def procesar_y_guardar_imagen_destino(
 
     base = uuid4().hex
 
-    # Versión full (hero / portada catálogo)
     nombre_full = f"{base}.webp"
     imagen_full = imagen.copy()
     imagen_full.thumbnail((MAX_LADO_PX, MAX_LADO_PX))
     imagen_full.save(carpeta / nombre_full, "WEBP", quality=CALIDAD_WEBP, method=6)
 
-    # Versión thumb (tarjetas, miniaturas admin)
     nombre_thumb = f"{base}_thumb.webp"
     imagen_thumb = imagen.copy()
     imagen_thumb.thumbnail((MAX_LADO_THUMB_PX, MAX_LADO_THUMB_PX))

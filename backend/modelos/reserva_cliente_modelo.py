@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Numeri
 
 from database import Base
 
-
 class ReservaCliente(Base):
     __tablename__ = "reserva_clientes"
 
@@ -21,7 +20,6 @@ class ReservaCliente(Base):
     recargo_eur = Column(Numeric(12, 2), nullable=False, default=0.00)
     notas_tarifa = Column(String(255), nullable=True)
 
-    # Dirección snapshot (datos congelados al momento de la reserva)
     direccion = Column(String(255), nullable=True)
     ciudad = Column(String(100), nullable=True)
     estado_region = Column(String(100), nullable=True)

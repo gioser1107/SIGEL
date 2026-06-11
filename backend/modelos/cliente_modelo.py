@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text
 
 from database import Base
 
-
 class Cliente(Base):
     __tablename__ = "clientes"
 

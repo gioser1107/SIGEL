@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 
 from database import Base
 
-
 class PuntoRecogida(Base):
     __tablename__ = "puntos_recogida"
 

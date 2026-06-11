@@ -13,9 +13,7 @@ from utilidades.jwt_utilidad import verificar_token
 
 esquema_bearer = HTTPBearer()
 
-
 def obtener_permisos_del_rol(db: Session, rol_id: int) -> list[str]:
-    """Lista las descripciones de permisos activos asignados a un rol."""
     consulta_asignaciones = db.query(RolPermiso).filter(
         RolPermiso.rol_id == rol_id,
         RolPermiso.eliminado_en.is_(None),
@@ -35,12 +33,10 @@ def obtener_permisos_del_rol(db: Session, rol_id: int) -> list[str]:
 
     return resultado
 
-
 def obtener_usuario_actual(
     credenciales: HTTPAuthorizationCredentials = Depends(esquema_bearer),
     db: Session = Depends(get_db),
 ) -> dict:
-    """Lee el Bearer token, lo valida y devuelve los datos del usuario autenticado."""
     token = credenciales.credentials
 
     try:

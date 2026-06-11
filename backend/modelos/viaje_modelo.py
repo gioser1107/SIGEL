@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey
 
 from database import Base
 
-
 class Viaje(Base):
     __tablename__ = "viajes"
 

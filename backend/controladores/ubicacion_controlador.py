@@ -7,7 +7,6 @@ from modelos.estado_modelo import Estado
 
 router = APIRouter(prefix="/ubicaciones", tags=["Ubicaciones"])
 
-
 @router.get("/estados")
 def listar_estados(db: Session = Depends(get_db)):
     consulta = db.query(Estado).filter(Estado.eliminado_en.is_(None)).order_by(Estado.nombre)
@@ -23,7 +22,6 @@ def listar_estados(db: Session = Depends(get_db)):
         )
 
     return resultado
-
 
 @router.get("/estados/{estado_id}/ciudades")
 def listar_ciudades_por_estado(estado_id: int, db: Session = Depends(get_db)):

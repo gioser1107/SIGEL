@@ -28,7 +28,6 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/viajes", tags=["Planificación - Viajes"])
 
-
 class DatosViajeCrear(BaseModel):
     destino_id: int
     unidad_id: int
@@ -36,7 +35,6 @@ class DatosViajeCrear(BaseModel):
     fecha_salida: datetime
     fecha_regreso: datetime | None = None
     estado: str = "planificado"
-
 
 class DatosViajeActualizar(BaseModel):
     destino_id: int | None = None
@@ -46,31 +44,26 @@ class DatosViajeActualizar(BaseModel):
     fecha_regreso: datetime | None = None
     estado: str | None = None
 
-
 class DatosParadaCrear(BaseModel):
     punto_recogida_id: int
     orden: int = Field(gt=0)
     hora_programada: datetime | None = None
     notas: str | None = None
 
-
 class DatosParadaActualizar(BaseModel):
     punto_recogida_id: int | None = None
     hora_programada: datetime | None = None
     notas: str | None = None
-
 
 class DatosCostoCrear(BaseModel):
     categoria: str = "otro"
     monto_eur: Decimal = Field(ge=0)
     descripcion: str | None = None
 
-
 class DatosCostoActualizar(BaseModel):
     categoria: str | None = None
     monto_eur: Decimal | None = Field(default=None, ge=0)
     descripcion: str | None = None
-
 
 def _obtener_destino_activo(db: Session, destino_id: int) -> Destino:
     consulta = db.query(Destino).filter(
@@ -82,7 +75,6 @@ def _obtener_destino_activo(db: Session, destino_id: int) -> Destino:
         raise HTTPException(status_code=404, detail="Destino no encontrado")
     return destino
 
-
 def _obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
     consulta = db.query(UnidadTransporte).filter(
         UnidadTransporte.id == unidad_id,
@@ -92,7 +84,6 @@ def _obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
     if unidad is None:
         raise HTTPException(status_code=404, detail="Unidad de transporte no encontrada")
     return unidad
-
 
 def _validar_guia_opcional(db: Session, guia_id: int | None) -> None:
     if guia_id is None:
@@ -105,14 +96,12 @@ def _validar_guia_opcional(db: Session, guia_id: int | None) -> None:
     if guia is None:
         raise HTTPException(status_code=404, detail="Guía no encontrado")
 
-
 def _validar_fechas_viaje(fecha_salida: datetime, fecha_regreso: datetime | None) -> None:
     if fecha_regreso is not None and fecha_regreso < fecha_salida:
         raise HTTPException(
             status_code=400,
             detail="La fecha de regreso no puede ser anterior a la fecha de salida",
         )
-
 
 def _obtener_viaje_activo(db: Session, viaje_id: int) -> Viaje:
     consulta = db.query(Viaje).filter(
@@ -123,7 +112,6 @@ def _obtener_viaje_activo(db: Session, viaje_id: int) -> Viaje:
     if viaje is None:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     return viaje
-
 
 def _viaje_a_dict(db: Session, viaje: Viaje) -> dict:
     destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
@@ -148,7 +136,6 @@ def _viaje_a_dict(db: Session, viaje: Viaje) -> dict:
         "actualizado_en": viaje.actualizado_en,
     }
 
-
 def _obtener_punto_recogida_activo(db: Session, punto_id: int) -> PuntoRecogida:
     consulta = db.query(PuntoRecogida).filter(
         PuntoRecogida.id == punto_id,
@@ -158,7 +145,6 @@ def _obtener_punto_recogida_activo(db: Session, punto_id: int) -> PuntoRecogida:
     if punto is None:
         raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
     return punto
-
 
 @router.get("")
 def listar_viajes(
@@ -188,7 +174,6 @@ def listar_viajes(
         resultado.append(_viaje_a_dict(db, viaje))
 
     return resultado
-
 
 @router.get("/{viaje_id}")
 def obtener_viaje(
@@ -232,7 +217,6 @@ def obtener_viaje(
     detalle["paradas"] = paradas
     detalle["costos"] = costos
     return detalle
-
 
 @router.post("")
 def crear_viaje(
@@ -278,7 +262,6 @@ def crear_viaje(
         "mensaje": "Viaje creado con éxito",
         "viaje": _viaje_a_dict(db, nuevo_viaje),
     }
-
 
 @router.put("/{viaje_id}")
 def actualizar_viaje(
@@ -335,7 +318,6 @@ def actualizar_viaje(
         "viaje": _viaje_a_dict(db, viaje),
     }
 
-
 @router.delete("/{viaje_id}")
 def eliminar_viaje(
     viaje_id: int,
@@ -365,7 +347,6 @@ def eliminar_viaje(
         "viaje_id": viaje_id,
     }
 
-
 @router.get("/{viaje_id}/paradas")
 def listar_paradas(
     viaje_id: int,
@@ -392,7 +373,6 @@ def listar_paradas(
         })
 
     return resultado
-
 
 @router.post("/{viaje_id}/paradas")
 def crear_parada(
@@ -461,7 +441,6 @@ def crear_parada(
         },
     }
 
-
 @router.put("/{viaje_id}/paradas/{orden}")
 def actualizar_parada(
     viaje_id: int,
@@ -528,7 +507,6 @@ def actualizar_parada(
         },
     }
 
-
 @router.delete("/{viaje_id}/paradas/{orden}")
 def eliminar_parada(
     viaje_id: int,
@@ -570,7 +548,6 @@ def eliminar_parada(
         "orden": orden,
     }
 
-
 @router.get("/{viaje_id}/costos")
 def listar_costos(
     viaje_id: int,
@@ -595,7 +572,6 @@ def listar_costos(
         })
 
     return resultado
-
 
 @router.get("/{viaje_id}/costos/resumen")
 def resumen_costos(
@@ -634,7 +610,6 @@ def resumen_costos(
         "total_eur": float(total_eur),
         "por_categoria": detalle,
     }
-
 
 @router.post("/{viaje_id}/costos")
 def crear_costo(
@@ -682,7 +657,6 @@ def crear_costo(
             "descripcion": nuevo_costo.descripcion,
         },
     }
-
 
 @router.put("/{viaje_id}/costos/{costo_id}")
 def actualizar_costo(
@@ -738,7 +712,6 @@ def actualizar_costo(
         },
     }
 
-
 @router.delete("/{viaje_id}/costos/{costo_id}")
 def eliminar_costo(
     viaje_id: int,
@@ -779,27 +752,19 @@ def eliminar_costo(
         "costo_id": costo_id,
     }
 
-# ─── Asientos por Viaje ───
-
 @router.get("/{viaje_id}/asientos-disponibles")
 def listar_asientos_viaje(
     viaje_id: int,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
 ):
-    """
-    Devuelve todos los asientos de la unidad asignada al viaje,
-    indicando cuáles están ocupados (ya reservados).
-    """
     viaje = _obtener_viaje_activo(db, viaje_id)
 
-    # Obtener todos los asientos de la unidad del viaje
     asientos = db.query(Asiento).filter(
         Asiento.unidad_id == viaje.unidad_id,
         Asiento.eliminado_en.is_(None),
     ).order_by(Asiento.id).all()
 
-    # Obtener los asiento_id que ya están reservados para este viaje
     reservados = db.query(AsientoReservado.asiento_id).filter(
         AsientoReservado.viaje_id == viaje_id,
         AsientoReservado.eliminado_en.is_(None),

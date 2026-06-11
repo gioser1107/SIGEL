@@ -35,7 +35,6 @@ app = FastAPI(title="API Travel BQTO", version="1.3.0")
 asegurar_carpeta_uploads()
 app.mount("/api/archivos", StaticFiles(directory=Path(UPLOAD_ROOT)), name="archivos")
 
-
 @app.exception_handler(SQLAlchemyError)
 def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
     return JSONResponse(
@@ -46,7 +45,6 @@ def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
             "sugerencia": "Revisa backend/.env con usuario y contraseña correctos de MySQL",
         },
     )
-
 
 @app.exception_handler(Exception)
 def manejar_error_general(request: Request, error: Exception):
@@ -59,8 +57,6 @@ def manejar_error_general(request: Request, error: Exception):
         },
     )
 
-
-# Permite que React (Vite) consuma la API desde el navegador
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -97,7 +93,6 @@ app.include_router(router_metodos_pago, prefix="/api")
 app.include_router(router_tasas, prefix="/api")
 app.include_router(router_bancos, prefix="/api")
 app.include_router(router_puntos_venta, prefix="/api")
-
 
 @app.get("/api")
 def ruta_raiz_api():

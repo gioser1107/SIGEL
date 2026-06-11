@@ -6,14 +6,12 @@ from modelos.destino_modelo import Destino
 from modelos.unidad_transporte_modelo import UnidadTransporte
 from modelos.viaje_modelo import Viaje
 
-
 def contar_asientos_activos_unidad(db: Session, unidad_id: int) -> int:
     return (
         db.query(Asiento)
         .filter(Asiento.unidad_id == unidad_id, Asiento.eliminado_en.is_(None))
         .count()
     )
-
 
 def contar_asientos_ocupados_viaje(db: Session, viaje_id: int) -> int:
     return (
@@ -24,7 +22,6 @@ def contar_asientos_ocupados_viaje(db: Session, viaje_id: int) -> int:
         )
         .count()
     )
-
 
 def obtener_unidad_activa_viaje(db: Session, viaje: Viaje) -> UnidadTransporte | None:
     if viaje.unidad_id is None:
@@ -38,7 +35,6 @@ def obtener_unidad_activa_viaje(db: Session, viaje: Viaje) -> UnidadTransporte |
         )
         .first()
     )
-
 
 def calcular_disponibilidad_viaje(db: Session, viaje: Viaje) -> dict:
     unidad = obtener_unidad_activa_viaje(db, viaje)
@@ -86,11 +82,9 @@ def calcular_disponibilidad_viaje(db: Session, viaje: Viaje) -> dict:
         "motivo_no_disponible": motivo,
     }
 
-
 def viaje_disponible_para_reserva(db: Session, viaje: Viaje) -> bool:
     info = calcular_disponibilidad_viaje(db, viaje)
     return info["disponible_para_reserva"]
-
 
 def viaje_reserva_a_dict(db: Session, viaje: Viaje) -> dict:
     destino = (

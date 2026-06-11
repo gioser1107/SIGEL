@@ -4,7 +4,6 @@ from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, JSON, Str
 
 from database import Base
 
-
 class Bitacora(Base):
     __tablename__ = "bitacora"
 

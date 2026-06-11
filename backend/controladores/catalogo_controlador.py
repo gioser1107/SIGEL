@@ -15,7 +15,6 @@ router = APIRouter(prefix="/catalogo", tags=["Catálogo público"])
 
 IMAGEN_DEFAULT = "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop"
 
-
 def _imagen_a_dict(img: DestinoImagen) -> dict:
     return {
         "id": img.id,
@@ -23,7 +22,6 @@ def _imagen_a_dict(img: DestinoImagen) -> dict:
         "orden": img.orden,
         "es_portada": bool(img.es_portada),
     }
-
 
 def _imagenes_destino(db: Session, destino_id: int) -> tuple[str, list[dict]]:
     filas = (
@@ -42,7 +40,6 @@ def _imagenes_destino(db: Session, destino_id: int) -> tuple[str, list[dict]]:
     portada = next((f.url for f in filas if f.es_portada), filas[0].url)
     return portada, lista
 
-
 def _destino_a_dict(db: Session, destino: Destino, incluir_galeria: bool = False) -> dict:
     precio = destino.precio_base_eur
     portada, imagenes = _imagenes_destino(db, destino.id)
@@ -58,10 +55,8 @@ def _destino_a_dict(db: Session, destino: Destino, incluir_galeria: bool = False
         resultado["imagenes"] = imagenes
     return resultado
 
-
 def _formatear_hora(fecha: datetime) -> str:
     return fecha.strftime("%I:%M %p").lstrip("0").replace("AM", " AM").replace("PM", " PM")
-
 
 def _calcular_duracion(fecha_salida: datetime, fecha_regreso: datetime | None) -> str:
     if fecha_regreso is None:
@@ -75,7 +70,6 @@ def _calcular_duracion(fecha_salida: datetime, fecha_regreso: datetime | None) -
     if horas >= 10:
         return f"{int(horas)} horas"
     return f"{int(horas)} horas"
-
 
 def _viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
     destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
@@ -132,7 +126,6 @@ def _viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
         "paradas": paradas_resumen,
     }
 
-
 @router.get("/estadisticas")
 def estadisticas_catalogo(db: Session = Depends(get_db)):
     ahora = datetime.now()
@@ -150,7 +143,6 @@ def estadisticas_catalogo(db: Session = Depends(get_db)):
         "viajes_proximos": viajes_proximos,
     }
 
-
 @router.get("/destinos")
 def listar_destinos_catalogo(db: Session = Depends(get_db)):
     consulta = db.query(Destino).filter(
@@ -158,7 +150,6 @@ def listar_destinos_catalogo(db: Session = Depends(get_db)):
         Destino.eliminado_en.is_(None),
     ).order_by(Destino.nombre)
     return [_destino_a_dict(db, d) for d in consulta.all()]
-
 
 @router.get("/destinos/{destino_id}")
 def obtener_destino_catalogo(destino_id: int, db: Session = Depends(get_db)):
@@ -170,7 +161,6 @@ def obtener_destino_catalogo(destino_id: int, db: Session = Depends(get_db)):
     if destino is None:
         raise HTTPException(status_code=404, detail="Destino no encontrado")
     return _destino_a_dict(db, destino, incluir_galeria=True)
-
 
 @router.get("/viajes")
 def listar_viajes_catalogo(
@@ -209,7 +199,6 @@ def listar_viajes_catalogo(
     consulta = consulta.order_by(Viaje.fecha_salida.asc())
     return [_viaje_catalogo_dict(db, v) for v in consulta.all()]
 
-
 @router.get("/viajes/{viaje_id}")
 def obtener_viaje_catalogo(viaje_id: int, db: Session = Depends(get_db)):
     viaje = db.query(Viaje).filter(
@@ -220,7 +209,6 @@ def obtener_viaje_catalogo(viaje_id: int, db: Session = Depends(get_db)):
     if viaje is None:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     return _viaje_catalogo_dict(db, viaje)
-
 
 @router.get("/viajes/{viaje_id}/paradas")
 def obtener_paradas_viaje_publico(viaje_id: int, db: Session = Depends(get_db)):

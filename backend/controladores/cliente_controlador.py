@@ -20,7 +20,6 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
-
 class DatosClienteNuevo(BaseModel):
     nombre: str
     apellido: str
@@ -34,7 +33,6 @@ class DatosClienteNuevo(BaseModel):
     estado_id: int | None = None
     ciudad_id: int | None = None
     notas: str | None = None
-
 
 class DatosClienteActualizar(BaseModel):
     nombre: str | None = None
@@ -50,14 +48,12 @@ class DatosClienteActualizar(BaseModel):
     ciudad_id: int | None = None
     notas: str | None = None
 
-
 def buscar_cliente_activo(db: Session, cliente_id: int) -> Cliente | None:
     consulta = db.query(Cliente).filter(
         Cliente.id == cliente_id,
         Cliente.eliminado_en.is_(None),
     )
     return consulta.first()
-
 
 def buscar_usuario_cliente(db: Session, cliente: Cliente) -> Usuario | None:
     if cliente.usuario_id is None:
@@ -69,7 +65,6 @@ def buscar_usuario_cliente(db: Session, cliente: Cliente) -> Usuario | None:
     )
     return consulta.first()
 
-
 def buscar_estado(db: Session, estado_id: int | None) -> Estado | None:
     if estado_id is None:
         return None
@@ -80,7 +75,6 @@ def buscar_estado(db: Session, estado_id: int | None) -> Estado | None:
     )
     return consulta.first()
 
-
 def buscar_ciudad(db: Session, ciudad_id: int | None) -> Ciudad | None:
     if ciudad_id is None:
         return None
@@ -90,7 +84,6 @@ def buscar_ciudad(db: Session, ciudad_id: int | None) -> Ciudad | None:
         Ciudad.eliminado_en.is_(None),
     )
     return consulta.first()
-
 
 def validar_ubicacion(db: Session, estado_id: int | None, ciudad_id: int | None) -> None:
     estado = buscar_estado(db, estado_id)
@@ -108,12 +101,10 @@ def validar_ubicacion(db: Session, estado_id: int | None, ciudad_id: int | None)
             detail="La ciudad seleccionada no pertenece al estado indicado",
         )
 
-
 def cliente_respuesta(db: Session, cliente: Cliente, usuario: Usuario | None) -> dict:
     estado = buscar_estado(db, cliente.estado_id)
     ciudad = buscar_ciudad(db, cliente.ciudad_id)
     return cliente_a_dict(cliente, usuario, estado, ciudad)
-
 
 def validar_documento_no_repetido(
     db: Session,
@@ -134,13 +125,11 @@ def validar_documento_no_repetido(
             detail="Ya existe un cliente con ese documento",
         )
 
-
 @router.get("/")
 def listar_clientes(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_CLIENTES)),
 ):
-    """Lista fichas de clientes registradas. Usado por ATC/Admin."""
     consulta = db.query(Cliente).filter(Cliente.eliminado_en.is_(None))
     lista = consulta.all()
 
@@ -150,7 +139,6 @@ def listar_clientes(
         resultado.append(cliente_respuesta(db, cliente, usuario))
 
     return resultado
-
 
 @router.get("/{cliente_id}")
 def obtener_cliente(
@@ -167,14 +155,12 @@ def obtener_cliente(
 
     return {"cliente": cliente_respuesta(db, cliente, usuario)}
 
-
 @router.post("/")
 def crear_cliente_desde_admin(
     datos: DatosClienteNuevo,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_CLIENTES)),
 ):
-    """ATC o Admin registra una ficha de cliente sin obligarlo a tener usuario."""
     validar_documento_no_repetido(
         db,
         datos.tipo_documento,
@@ -212,7 +198,6 @@ def crear_cliente_desde_admin(
         "mensaje": "Cliente registrado con éxito",
         "cliente": cliente_respuesta(db, nuevo_cliente, None),
     }
-
 
 @router.put("/{cliente_id}")
 def actualizar_cliente(
@@ -293,7 +278,6 @@ def actualizar_cliente(
         "mensaje": "Cliente actualizado con éxito",
         "cliente": cliente_respuesta(db, cliente, usuario),
     }
-
 
 @router.delete("/{cliente_id}")
 def desactivar_cliente(

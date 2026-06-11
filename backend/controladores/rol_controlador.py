@@ -18,20 +18,16 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
-
 class DatosRolNuevo(BaseModel):
     nombre: str
     descripcion: str | None = None
-
 
 class DatosRolActualizar(BaseModel):
     nombre: str | None = None
     descripcion: str | None = None
 
-
 class DatosAsignarPermiso(BaseModel):
     permiso_id: int
-
 
 @router.get("/")
 def obtener_todos_los_roles(
@@ -51,7 +47,6 @@ def obtener_todos_los_roles(
         resultado.append(rol_dict)
 
     return resultado
-
 
 @router.get("/{rol_id}")
 def obtener_rol_por_id(
@@ -75,7 +70,6 @@ def obtener_rol_por_id(
             "descripcion": rol.descripcion,
         }
     }
-
 
 @router.post("/")
 def crear_rol(
@@ -113,7 +107,6 @@ def crear_rol(
             "descripcion": nuevo_rol.descripcion,
         },
     }
-
 
 @router.put("/{rol_id}")
 def actualizar_rol(
@@ -159,7 +152,6 @@ def actualizar_rol(
         },
     }
 
-
 @router.delete("/{rol_id}")
 def eliminar_rol(
     rol_id: int,
@@ -184,7 +176,6 @@ def eliminar_rol(
         "mensaje": "Rol eliminado con éxito",
         "rol_id": rol_id,
     }
-
 
 @router.get("/{rol_id}/permisos")
 def obtener_permisos_del_rol(
@@ -224,7 +215,6 @@ def obtener_permisos_del_rol(
         "rol": rol.nombre,
         "permisos": resultado,
     }
-
 
 @router.post("/{rol_id}/permisos")
 def asignar_permiso_a_rol(
@@ -291,7 +281,6 @@ def asignar_permiso_a_rol(
         "rol_id": rol_id,
         "permiso_id": datos.permiso_id,
     }
-
 
 @router.delete("/{rol_id}/permisos/{permiso_id}")
 def quitar_permiso_de_rol(

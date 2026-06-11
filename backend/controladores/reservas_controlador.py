@@ -29,7 +29,6 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/reservas", tags=["Reservas y Pasajeros"])
 
-# --- Schemas Reservas ---
 class DatosReservaCrear(BaseModel):
     cliente_id: int
     viaje_id: int
@@ -38,7 +37,6 @@ class DatosReservaCrear(BaseModel):
 class DatosReservaActualizar(BaseModel):
     estado: Optional[str] = None
 
-# --- Schemas Pasajeros (ReservaCliente) ---
 class DatosPasajeroCrear(BaseModel):
     cliente_id: Optional[int] = None
     nombre: str
@@ -71,12 +69,9 @@ class DatosPasajeroActualizar(BaseModel):
     estado_region: Optional[str] = None
     punto_recogida_id: Optional[int] = None
 
-# --- Schemas Asientos Reservados ---
 class DatosAsientoReservadoCrear(BaseModel):
     asiento_id: int
 
-
-# --- Schema para reserva desde la landing (cliente autenticado) ---
 class DatosPasajeroExtraPublico(BaseModel):
     nombre: str
     apellido: str
@@ -90,7 +85,6 @@ class DatosReservaClientePublico(BaseModel):
     viaje_id: int
     titular_punto_recogida_id: Optional[int] = None
     pasajeros_extra: List[DatosPasajeroExtraPublico] = []
-
 
 def _obtener_reserva_activa(db: Session, reserva_id: int) -> Reserva:
     consulta = db.query(Reserva).filter(
@@ -127,16 +121,11 @@ def _validar_viaje_para_reserva(db: Session, viaje_id: int) -> Viaje:
         )
     return viaje
 
-# ==========================================
-# RUTAS DE RESERVA
-# ==========================================
-
 @router.get("/viajes-disponibles")
 def listar_viajes_disponibles_para_reserva(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
 ):
-    """Viajes que se pueden seleccionar al crear una reserva."""
     viajes = (
         db.query(Viaje)
         .filter(
@@ -154,7 +143,6 @@ def listar_viajes_disponibles_para_reserva(
 
     return resultado
 
-
 @router.post("/cliente")
 def crear_reserva_desde_landing(
     datos: DatosReservaClientePublico,
@@ -162,7 +150,6 @@ def crear_reserva_desde_landing(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
-    """Crea una reserva completa desde la landing. Solo para usuarios con perfil de cliente."""
     cliente_id = usuario_actual.get("cliente_id")
     if not cliente_id:
         raise HTTPException(status_code=403, detail="Solo clientes registrados pueden crear reservas")
@@ -184,7 +171,6 @@ def crear_reserva_desde_landing(
         if not punto:
             raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
 
-    # Resolver ciudad/estado del cliente para el snapshot
     ciudad_nombre = None
     estado_nombre = None
     if cliente.ciudad_id:
@@ -261,7 +247,6 @@ def crear_reserva_desde_landing(
 
     return {"mensaje": "Reserva creada con éxito", "reserva_id": nueva_reserva.id}
 
-
 @router.get("")
 def listar_reservas(
     viaje_id: Optional[int] = Query(default=None),
@@ -292,7 +277,6 @@ def listar_reservas(
             "actualizado_en": r.actualizado_en
         })
     return resultado
-
 
 @router.post("")
 def crear_reserva(
@@ -334,7 +318,6 @@ def crear_reserva(
         }
     }
 
-
 @router.get("/{reserva_id}")
 def obtener_reserva(
     reserva_id: int,
@@ -350,7 +333,6 @@ def obtener_reserva(
         "estado": reserva.estado,
         "creado_en": reserva.creado_en,
     }
-
 
 @router.put("/{reserva_id}")
 def actualizar_reserva(
@@ -378,7 +360,6 @@ def actualizar_reserva(
 
     return {"mensaje": "Reserva actualizada con éxito"}
 
-
 @router.delete("/{reserva_id}")
 def eliminar_reserva(
     reserva_id: int,
@@ -400,11 +381,6 @@ def eliminar_reserva(
     )
 
     return {"mensaje": "Reserva eliminada"}
-
-
-# ==========================================
-# RUTAS DE PASAJEROS (Manifiesto)
-# ==========================================
 
 @router.get("/{reserva_id}/pasajeros")
 def listar_pasajeros(
@@ -446,7 +422,6 @@ def listar_pasajeros(
         })
     return resultado
 
-
 @router.post("/{reserva_id}/pasajeros")
 def agregar_pasajero(
     reserva_id: int,
@@ -457,7 +432,6 @@ def agregar_pasajero(
 ):
     _obtener_reserva_activa(db, reserva_id)
 
-    # Auto-rellenar dirección desde la tabla clientes si se proporciona cliente_id
     direccion = datos.direccion
     ciudad = datos.ciudad
     estado_region = datos.estado_region
@@ -474,7 +448,6 @@ def agregar_pasajero(
                 estado_obj = db.query(Estado).filter(Estado.id == cliente.estado_id).first()
                 estado_region = estado_obj.nombre if estado_obj else None
 
-    # Validar punto de recogida si se proporcionó
     if datos.punto_recogida_id:
         punto = db.query(PuntoRecogida).filter(
             PuntoRecogida.id == datos.punto_recogida_id,
@@ -515,7 +488,6 @@ def agregar_pasajero(
     )
 
     return {"mensaje": "Pasajero agregado", "pasajero_id": nuevo_pasajero.id}
-
 
 @router.put("/{reserva_id}/pasajeros/{pasajero_id}")
 def actualizar_pasajero(
@@ -591,11 +563,6 @@ def eliminar_pasajero(
 
     return {"mensaje": "Pasajero eliminado"}
 
-
-# ==========================================
-# RUTAS DE ASIENTOS RESERVADOS
-# ==========================================
-
 @router.get("/{reserva_id}/pasajeros/{pasajero_id}/asientos")
 def listar_asientos_pasajero(
     reserva_id: int,
@@ -630,14 +597,12 @@ def asignar_asiento_pasajero(
     reserva = _obtener_reserva_activa(db, reserva_id)
     _obtener_pasajero_activo(db, reserva_id, pasajero_id)
 
-    # Validar que el asiento exista y no esté eliminado
     asiento = db.query(Asiento).filter(
         Asiento.id == datos.asiento_id, Asiento.eliminado_en.is_(None)
     ).first()
     if not asiento:
         raise HTTPException(status_code=404, detail="El asiento seleccionado no existe o está eliminado")
 
-    # Validar que no esté ocupado en el MISMO VIAJE
     ocupado = db.query(AsientoReservado).filter(
         AsientoReservado.asiento_id == datos.asiento_id,
         AsientoReservado.viaje_id == reserva.viaje_id,

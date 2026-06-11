@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String
 
 from database import Base
 
-
 class Usuario(Base):
     __tablename__ = "usuarios"
 

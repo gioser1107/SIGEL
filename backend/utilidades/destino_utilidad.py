@@ -11,7 +11,6 @@ IMAGEN_DEFAULT = (
     "?q=80&w=800&auto=format&fit=crop"
 )
 
-
 def _imagen_a_dict(img: DestinoImagen) -> dict:
     return {
         "id": img.id,
@@ -19,7 +18,6 @@ def _imagen_a_dict(img: DestinoImagen) -> dict:
         "orden": img.orden,
         "es_portada": bool(img.es_portada),
     }
-
 
 def imagenes_destino(db: Session, destino_id: int) -> tuple[str, list[dict]]:
     filas = (
@@ -42,7 +40,6 @@ def imagenes_destino(db: Session, destino_id: int) -> tuple[str, list[dict]]:
     portada = next((f.url for f in filas if f.es_portada), filas[0].url)
     return portada, lista
 
-
 def destino_a_dict(
     db: Session,
     destino: Destino,
@@ -64,7 +61,6 @@ def destino_a_dict(
         resultado["imagenes"] = imagenes
     return resultado
 
-
 def validar_url_imagen(url: str) -> str:
     url_limpia = url.strip()
     if not url_limpia:
@@ -82,7 +78,6 @@ def validar_url_imagen(url: str) -> str:
         raise HTTPException(status_code=400, detail="La URL no puede superar 512 caracteres")
     return url_limpia
 
-
 def buscar_imagen_activa(
     db: Session,
     destino_id: int,
@@ -94,7 +89,6 @@ def buscar_imagen_activa(
         DestinoImagen.eliminado_en.is_(None),
     )
     return consulta.first()
-
 
 def siguiente_orden_imagen(db: Session, destino_id: int) -> int:
     ultima = (
@@ -110,14 +104,12 @@ def siguiente_orden_imagen(db: Session, destino_id: int) -> int:
         return 0
     return int(ultima.orden) + 1
 
-
 def tiene_imagenes_activas(db: Session, destino_id: int) -> bool:
     consulta = db.query(DestinoImagen).filter(
         DestinoImagen.destino_id == destino_id,
         DestinoImagen.eliminado_en.is_(None),
     )
     return consulta.first() is not None
-
 
 def marcar_como_portada(db: Session, destino_id: int, imagen_id: int) -> None:
     ahora = datetime.now()
@@ -132,7 +124,6 @@ def marcar_como_portada(db: Session, destino_id: int, imagen_id: int) -> None:
     for fila in filas:
         fila.es_portada = fila.id == imagen_id
         fila.actualizado_en = ahora
-
 
 def crear_imagen_destino(
     db: Session,

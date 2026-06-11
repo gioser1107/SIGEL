@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, ForeignKey, String
 
 from database import Base
 
-
 class MetodoPago(Base):
     __tablename__ = "metodos_pago"
 

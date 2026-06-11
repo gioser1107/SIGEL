@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, Integer, String
 
 from database import Base
 
-
 class UnidadTransporte(Base):
     __tablename__ = "unidades_transporte"
 

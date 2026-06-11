@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, String
 
 from database import Base
 
-
 class Estado(Base):
     __tablename__ = "estados"
 

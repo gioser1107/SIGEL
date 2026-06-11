@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, Date, ForeignKey, Numeric
 
 from database import Base
 
-
 class Tasa(Base):
     __tablename__ = "tasas"
 

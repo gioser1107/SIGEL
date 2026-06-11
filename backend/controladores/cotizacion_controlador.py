@@ -23,7 +23,6 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/cotizaciones", tags=["Cotizaciones"])
 
-
 class DatosCotizacionCrear(BaseModel):
     cliente_id: int | None = None
     destino_id: int
@@ -32,25 +31,21 @@ class DatosCotizacionCrear(BaseModel):
     valida_hasta: datetime | None = None
     estado: str = "solicitada"
 
-
 class DatosCotizacionActualizar(BaseModel):
     requisitos: str | None = None
     precio_cotizado_eur: Decimal | None = Field(default=None, ge=0)
     valida_hasta: datetime | None = None
     estado: str | None = None
 
-
 class DatosLineaCrear(BaseModel):
     categoria: str = "otro"
     monto_eur: Decimal = Field(ge=0)
     descripcion: str | None = None
 
-
 class DatosLineaActualizar(BaseModel):
     categoria: str | None = None
     monto_eur: Decimal | None = Field(default=None, ge=0)
     descripcion: str | None = None
-
 
 def _obtener_cliente_activo(db: Session, cliente_id: int) -> Cliente:
     consulta = db.query(Cliente).filter(
@@ -62,7 +57,6 @@ def _obtener_cliente_activo(db: Session, cliente_id: int) -> Cliente:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return cliente
 
-
 def _obtener_destino_activo(db: Session, destino_id: int) -> Destino:
     consulta = db.query(Destino).filter(
         Destino.id == destino_id,
@@ -72,7 +66,6 @@ def _obtener_destino_activo(db: Session, destino_id: int) -> Destino:
     if destino is None:
         raise HTTPException(status_code=404, detail="Destino no encontrado")
     return destino
-
 
 def _obtener_cotizacion_activa(db: Session, cotizacion_id: int) -> Cotizacion:
     consulta = db.query(Cotizacion).filter(
@@ -84,7 +77,6 @@ def _obtener_cotizacion_activa(db: Session, cotizacion_id: int) -> Cotizacion:
         raise HTTPException(status_code=404, detail="Cotización no encontrada")
     return cotizacion
 
-
 def _linea_a_dict(linea: CotizacionLinea) -> dict:
     return {
         "id": linea.id,
@@ -93,7 +85,6 @@ def _linea_a_dict(linea: CotizacionLinea) -> dict:
         "monto_eur": float(linea.monto_eur),
         "descripcion": linea.descripcion,
     }
-
 
 def _recalcular_precio_cotizacion(db: Session, cotizacion: Cotizacion) -> None:
     lineas = db.query(CotizacionLinea).filter(
@@ -105,7 +96,6 @@ def _recalcular_precio_cotizacion(db: Session, cotizacion: Cotizacion) -> None:
     total = sum(float(l.monto_eur) for l in lineas)
     cotizacion.precio_cotizado_eur = Decimal(str(total))
     cotizacion.actualizado_en = datetime.now()
-
 
 def _cotizacion_a_dict(db: Session, cotizacion: Cotizacion, incluir_lineas: bool = False) -> dict:
     cliente = db.query(Cliente).filter(Cliente.id == cotizacion.cliente_id).first()
@@ -138,14 +128,12 @@ def _cotizacion_a_dict(db: Session, cotizacion: Cotizacion, incluir_lineas: bool
 
     return resultado
 
-
 def _validar_acceso_cotizacion(usuario_actual: dict, cotizacion: Cotizacion, db: Session) -> None:
     if not es_rol_cliente(usuario_actual.get("rol", "")):
         return
     cliente = obtener_cliente_por_usuario_id(db, usuario_actual["id"])
     if cliente is None or cotizacion.cliente_id != cliente.id:
         raise HTTPException(status_code=403, detail="No tienes acceso a esta cotización")
-
 
 @router.get("")
 def listar_cotizaciones(
@@ -170,7 +158,6 @@ def listar_cotizaciones(
     consulta = consulta.order_by(Cotizacion.creado_en.desc())
     return [_cotizacion_a_dict(db, c) for c in consulta.all()]
 
-
 @router.get("/{cotizacion_id}")
 def obtener_cotizacion(
     cotizacion_id: int,
@@ -181,7 +168,6 @@ def obtener_cotizacion(
     _validar_acceso_cotizacion(usuario_actual, cotizacion, db)
     incluir_lineas = not es_rol_cliente(usuario_actual.get("rol", "")) or cotizacion.estado in ("pendiente", "aceptada")
     return _cotizacion_a_dict(db, cotizacion, incluir_lineas=incluir_lineas)
-
 
 @router.post("")
 def crear_cotizacion(
@@ -239,7 +225,6 @@ def crear_cotizacion(
         "mensaje": "Cotización creada con éxito",
         "cotizacion": _cotizacion_a_dict(db, nueva_cotizacion),
     }
-
 
 @router.put("/{cotizacion_id}")
 def actualizar_cotizacion(
@@ -305,7 +290,6 @@ def actualizar_cotizacion(
         "cotizacion": _cotizacion_a_dict(db, cotizacion),
     }
 
-
 @router.delete("/{cotizacion_id}")
 def eliminar_cotizacion(
     cotizacion_id: int,
@@ -339,7 +323,6 @@ def eliminar_cotizacion(
         "cotizacion_id": cotizacion_id,
     }
 
-
 @router.get("/{cotizacion_id}/lineas")
 def listar_lineas_cotizacion(
     cotizacion_id: int,
@@ -355,7 +338,6 @@ def listar_lineas_cotizacion(
     ).order_by(CotizacionLinea.id).all()
 
     return [_linea_a_dict(l) for l in lineas]
-
 
 @router.get("/{cotizacion_id}/lineas/resumen")
 def resumen_lineas_cotizacion(
@@ -382,7 +364,6 @@ def resumen_lineas_cotizacion(
         "total_eur": total,
         "por_categoria": [{"categoria": k, "monto_eur": v} for k, v in por_categoria.items()],
     }
-
 
 @router.post("/{cotizacion_id}/lineas")
 def crear_linea_cotizacion(
@@ -430,7 +411,6 @@ def crear_linea_cotizacion(
         "linea": _linea_a_dict(nueva_linea),
         "cotizacion": _cotizacion_a_dict(db, cotizacion),
     }
-
 
 @router.put("/{cotizacion_id}/lineas/{linea_id}")
 def actualizar_linea_cotizacion(
@@ -485,7 +465,6 @@ def actualizar_linea_cotizacion(
         "linea": _linea_a_dict(linea),
         "cotizacion": _cotizacion_a_dict(db, cotizacion),
     }
-
 
 @router.delete("/{cotizacion_id}/lineas/{linea_id}")
 def eliminar_linea_cotizacion(

@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String
 
 from database import Base
 
-
 class Ciudad(Base):
     __tablename__ = "ciudades"
 

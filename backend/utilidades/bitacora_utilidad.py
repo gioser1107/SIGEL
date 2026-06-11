@@ -5,14 +5,12 @@ from sqlalchemy.orm import Session
 
 from modelos.bitacora_modelo import Bitacora
 
-
 def obtener_ip_origen(request: Request | None) -> str | None:
     if request is None:
         return None
     if request.client is not None:
         return request.client.host
     return None
-
 
 def registrar_evento(
     db: Session,
@@ -25,7 +23,6 @@ def registrar_evento(
     detalle: dict | None = None,
     ip_origen: str | None = None,
 ) -> None:
-    """Inserta un evento en bitácora. Llámala desde cualquier controlador."""
     try:
         registro_texto = str(registro_id) if registro_id is not None else None
         entrada = Bitacora(

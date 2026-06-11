@@ -2,7 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Numeric, 
 
 from database import Base
 
-
 class CotizacionLinea(Base):
     __tablename__ = "cotizacion_lineas"
 
