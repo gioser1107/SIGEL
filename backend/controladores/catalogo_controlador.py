@@ -220,3 +220,34 @@ def obtener_viaje_catalogo(viaje_id: int, db: Session = Depends(get_db)):
     if viaje is None:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     return _viaje_catalogo_dict(db, viaje)
+
+
+@router.get("/viajes/{viaje_id}/paradas")
+def obtener_paradas_viaje_publico(viaje_id: int, db: Session = Depends(get_db)):
+    viaje = db.query(Viaje).filter(
+        Viaje.id == viaje_id,
+        Viaje.eliminado_en.is_(None),
+    ).first()
+    if viaje is None:
+        raise HTTPException(status_code=404, detail="Viaje no encontrado")
+
+    paradas = (
+        db.query(ViajeParadaRecogida, PuntoRecogida)
+        .join(PuntoRecogida, PuntoRecogida.id == ViajeParadaRecogida.punto_recogida_id)
+        .filter(
+            ViajeParadaRecogida.viaje_id == viaje_id,
+            ViajeParadaRecogida.eliminado_en.is_(None),
+        )
+        .order_by(ViajeParadaRecogida.orden)
+        .all()
+    )
+
+    return [
+        {
+            "punto_recogida_id": p.punto_recogida_id,
+            "punto_nombre": punto.nombre,
+            "orden": p.orden,
+            "hora_programada": p.hora_programada,
+        }
+        for p, punto in paradas
+    ]

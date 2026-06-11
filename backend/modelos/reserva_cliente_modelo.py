@@ -20,6 +20,12 @@ class ReservaCliente(Base):
     precio_pasajero_eur = Column(Numeric(12, 2), nullable=False, default=0.00)
     recargo_eur = Column(Numeric(12, 2), nullable=False, default=0.00)
     notas_tarifa = Column(String(255), nullable=True)
+
+    # Dirección snapshot (datos congelados al momento de la reserva)
+    direccion = Column(String(255), nullable=True)
+    ciudad = Column(String(100), nullable=True)
+    estado_region = Column(String(100), nullable=True)
+    punto_recogida_id = Column(BigInteger, ForeignKey("puntos_recogida.id"), nullable=True, index=True)
     
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)

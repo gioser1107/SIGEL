@@ -12,6 +12,10 @@ from modelos.reservas_modelo import Reserva
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.asiento_modelo import Asiento
+from modelos.cliente_modelo import Cliente
+from modelos.punto_recogida_modelo import PuntoRecogida
+from modelos.ciudad_modelo import Ciudad
+from modelos.estado_modelo import Estado
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
 from utilidades.permisos_constantes import (
     PERMISO_BORRAR_RESERVAS,
@@ -43,6 +47,10 @@ class DatosPasajeroCrear(BaseModel):
     precio_pasajero_eur: Decimal = Field(default=0.00, ge=0)
     recargo_eur: Decimal = Field(default=0.00, ge=0)
     notas_tarifa: Optional[str] = None
+    direccion: Optional[str] = None
+    ciudad: Optional[str] = None
+    estado_region: Optional[str] = None
+    punto_recogida_id: Optional[int] = None
 
 class DatosPasajeroActualizar(BaseModel):
     cliente_id: Optional[int] = None
@@ -55,6 +63,10 @@ class DatosPasajeroActualizar(BaseModel):
     precio_pasajero_eur: Optional[Decimal] = Field(default=None, ge=0)
     recargo_eur: Optional[Decimal] = Field(default=None, ge=0)
     notas_tarifa: Optional[str] = None
+    direccion: Optional[str] = None
+    ciudad: Optional[str] = None
+    estado_region: Optional[str] = None
+    punto_recogida_id: Optional[int] = None
 
 # --- Schemas Asientos Reservados ---
 class DatosAsientoReservadoCrear(BaseModel):
@@ -235,8 +247,15 @@ def listar_pasajeros(
 ):
     _obtener_reserva_activa(db, reserva_id)
     pasajeros = db.query(ReservaCliente).filter(
-        ReservaCliente.reserva_id == reserva_id
+        ReservaCliente.reserva_id == reserva_id,
+        ReservaCliente.eliminado_en.is_(None)
     ).order_by(ReservaCliente.creado_en).all()
+
+    punto_ids = {p.punto_recogida_id for p in pasajeros if p.punto_recogida_id}
+    puntos = {}
+    if punto_ids:
+        for pr in db.query(PuntoRecogida).filter(PuntoRecogida.id.in_(punto_ids)).all():
+            puntos[pr.id] = pr.nombre
 
     resultado = []
     for p in pasajeros:
@@ -252,6 +271,11 @@ def listar_pasajeros(
             "precio_pasajero_eur": float(p.precio_pasajero_eur),
             "recargo_eur": float(p.recargo_eur),
             "notas_tarifa": p.notas_tarifa,
+            "direccion": p.direccion,
+            "ciudad": p.ciudad,
+            "estado_region": p.estado_region,
+            "punto_recogida_id": p.punto_recogida_id,
+            "punto_recogida_nombre": puntos.get(p.punto_recogida_id),
         })
     return resultado
 
@@ -265,7 +289,33 @@ def agregar_pasajero(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
 ):
     _obtener_reserva_activa(db, reserva_id)
-    
+
+    # Auto-rellenar dirección desde la tabla clientes si se proporciona cliente_id
+    direccion = datos.direccion
+    ciudad = datos.ciudad
+    estado_region = datos.estado_region
+
+    if datos.cliente_id:
+        cliente = db.query(Cliente).filter(Cliente.id == datos.cliente_id).first()
+        if cliente:
+            if not direccion and cliente.direccion:
+                direccion = cliente.direccion
+            if not ciudad and cliente.ciudad_id:
+                ciudad_obj = db.query(Ciudad).filter(Ciudad.id == cliente.ciudad_id).first()
+                ciudad = ciudad_obj.nombre if ciudad_obj else None
+            if not estado_region and cliente.estado_id:
+                estado_obj = db.query(Estado).filter(Estado.id == cliente.estado_id).first()
+                estado_region = estado_obj.nombre if estado_obj else None
+
+    # Validar punto de recogida si se proporcionó
+    if datos.punto_recogida_id:
+        punto = db.query(PuntoRecogida).filter(
+            PuntoRecogida.id == datos.punto_recogida_id,
+            PuntoRecogida.eliminado_en.is_(None)
+        ).first()
+        if not punto:
+            raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
+
     ahora = datetime.now()
     nuevo_pasajero = ReservaCliente(
         reserva_id=reserva_id,
@@ -279,6 +329,10 @@ def agregar_pasajero(
         precio_pasajero_eur=datos.precio_pasajero_eur,
         recargo_eur=datos.recargo_eur,
         notas_tarifa=datos.notas_tarifa,
+        direccion=direccion,
+        ciudad=ciudad,
+        estado_region=estado_region,
+        punto_recogida_id=datos.punto_recogida_id,
         creado_en=ahora,
         actualizado_en=ahora
     )
@@ -317,7 +371,20 @@ def actualizar_pasajero(
     if datos.precio_pasajero_eur is not None: pasajero.precio_pasajero_eur = datos.precio_pasajero_eur
     if datos.recargo_eur is not None: pasajero.recargo_eur = datos.recargo_eur
     if datos.notas_tarifa is not None: pasajero.notas_tarifa = datos.notas_tarifa
+    if datos.direccion is not None: pasajero.direccion = datos.direccion
+    if datos.ciudad is not None: pasajero.ciudad = datos.ciudad
+    if datos.estado_region is not None: pasajero.estado_region = datos.estado_region
+    if "punto_recogida_id" in datos.model_fields_set:
+        if datos.punto_recogida_id is not None:
+            punto = db.query(PuntoRecogida).filter(
+                PuntoRecogida.id == datos.punto_recogida_id,
+                PuntoRecogida.eliminado_en.is_(None)
+            ).first()
+            if not punto:
+                raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
+        pasajero.punto_recogida_id = datos.punto_recogida_id
 
+    pasajero.actualizado_en = datetime.now()
     db.commit()
     
     registrar_evento(
@@ -338,10 +405,14 @@ def eliminar_pasajero(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
 ):
     pasajero = _obtener_pasajero_activo(db, reserva_id, pasajero_id)
-    
-    # Eliminar asientos reservados primero para evitar constraint fk error
-    db.query(AsientoReservado).filter(AsientoReservado.reserva_cliente_id == pasajero_id).delete()
-    db.delete(pasajero)
+
+    ahora = datetime.now()
+    db.query(AsientoReservado).filter(
+        AsientoReservado.reserva_cliente_id == pasajero_id,
+        AsientoReservado.eliminado_en.is_(None)
+    ).update({"eliminado_en": ahora, "actualizado_en": ahora}, synchronize_session=False)
+    pasajero.eliminado_en = ahora
+    pasajero.actualizado_en = ahora
     db.commit()
 
     registrar_evento(
