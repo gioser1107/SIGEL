@@ -13,6 +13,15 @@ from modelos.reservas_modelo import Reserva
 from modelos.tasa_modelo import Tasa
 from modelos.viaje_modelo import Viaje
 
+METODOS_PAGO_REQUIEREN_VALIDACION = ("pago_movil", "zelle")
+
+def determinar_estado_inicial_pago(codigo_metodo: str, registro_desde_admin: bool) -> str:
+    if registro_desde_admin:
+        return "aprobado"
+    if codigo_metodo in METODOS_PAGO_REQUIEREN_VALIDACION:
+        return "en_validacion"
+    return "aprobado"
+
 def moneda_a_dict(moneda: Moneda) -> dict:
     return {
         "id": moneda.id,

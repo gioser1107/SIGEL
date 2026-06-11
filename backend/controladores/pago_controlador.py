@@ -22,6 +22,7 @@ from utilidades.pago_utilidad import (
     calcular_resumen_pagos_reserva,
     cargar_datos_pago,
     convertir_monto_pago_a_eur,
+    determinar_estado_inicial_pago,
     metodo_pago_a_dict,
     obtener_tasa_eur_reciente,
     punto_venta_a_dict,
@@ -270,8 +271,8 @@ def registrar_pago_reserva(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_REPORTES_PAGO)),
 ):
-    _obtener_reserva_activa(db, reserva_id)
-    _validar_metodo_pago(db, datos.metodo_pago_id)
+    reserva = _obtener_reserva_activa(db, reserva_id)
+    metodo = _validar_metodo_pago(db, datos.metodo_pago_id)
     _validar_tasa(db, datos.tasa_id)
     _validar_banco(db, datos.banco_origen_id, "banco_origen_id")
     _validar_banco(db, datos.banco_destino_id, "banco_destino_id")
@@ -279,13 +280,14 @@ def registrar_pago_reserva(
     _validar_tipo_pago(datos.tipo)
 
     ahora = datetime.now()
+    estado_inicial = determinar_estado_inicial_pago(metodo.codigo, registro_desde_admin=True)
     nuevo_pago = Pago(
         reserva_id=reserva_id,
         metodo_pago_id=datos.metodo_pago_id,
         tasa_id=datos.tasa_id,
         monto=datos.monto,
         tipo=datos.tipo,
-        estado="en_validacion",
+        estado=estado_inicial,
         fecha_pago=datos.fecha_pago or date.today(),
         referencia=datos.referencia,
         banco_origen_id=datos.banco_origen_id,
@@ -299,7 +301,14 @@ def registrar_pago_reserva(
         creado_en=ahora,
         actualizado_en=ahora,
     )
+    if estado_inicial == "aprobado":
+        nuevo_pago.validado_por = usuario_actual["id"]
+        nuevo_pago.validado_en = ahora
+
     db.add(nuevo_pago)
+    db.flush()
+    actualizar_estado_reserva_por_pagos(db, reserva)
+    reserva.actualizado_en = ahora
     db.commit()
     db.refresh(nuevo_pago)
 
