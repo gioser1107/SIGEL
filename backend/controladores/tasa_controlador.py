@@ -6,16 +6,17 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
-from dependencias.permiso_dependencia import requiere_permiso
+from dependencias.permiso_dependencia import requiere_alguno_de_permisos, requiere_permiso
 from modelos.moneda_modelo import Moneda
 from modelos.pago_modelo import Pago
 from modelos.tasa_modelo import Tasa
-from utilidades.pago_utilidad import moneda_a_dict, tasa_a_dict
+from utilidades.pago_utilidad import moneda_a_dict, obtener_tasa_eur_del_dia, tasa_a_dict
 from utilidades.permisos_constantes import (
     PERMISO_BORRAR_REPORTES_PAGO,
     PERMISO_CREAR_REPORTES_PAGO,
     PERMISO_EDITAR_REPORTES_PAGO,
     PERMISO_LEER_REPORTES_PAGO,
+    PERMISO_LEER_RESERVAS,
 )
 
 router = APIRouter(prefix="/tasas", tags=["Tasas"])
@@ -69,6 +70,23 @@ def listar_tasas(
 
     tasas = consulta.order_by(Tasa.fecha.desc(), Tasa.id.desc()).all()
     return [_tasa_a_respuesta(db, t) for t in tasas]
+
+
+@router.get("/del-dia")
+def obtener_tasa_del_dia(
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(
+        requiere_alguno_de_permisos(PERMISO_LEER_REPORTES_PAGO, PERMISO_LEER_RESERVAS)
+    ),
+):
+    """
+    Tasa EUR vigente para hoy (para calcular monto en Bs en reservas).
+    Si no hay tasa de hoy, devuelve la mas reciente con es_del_dia=false.
+    """
+    resultado = obtener_tasa_eur_del_dia(db)
+    if resultado is None:
+        raise HTTPException(status_code=404, detail="No hay tasa EUR registrada en el sistema")
+    return resultado
 
 
 @router.get("/hoy")

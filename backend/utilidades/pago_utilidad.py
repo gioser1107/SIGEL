@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy.orm import Session
 
 from modelos.banco_modelo import Banco
@@ -118,6 +120,41 @@ def obtener_tasa_eur_reciente(db: Session) -> tuple[Tasa, Moneda] | None:
     return tasa, moneda_eur
 
 
+def obtener_tasa_eur_del_dia(db: Session) -> dict | None:
+    """Tasa EUR de hoy; si no hay, usa la mas reciente."""
+    moneda_eur = buscar_moneda_por_codigo(db, "EUR")
+    if not moneda_eur:
+        return None
+
+    hoy = date.today()
+    tasa_hoy = (
+        db.query(Tasa)
+        .filter(Tasa.moneda_id == moneda_eur.id, Tasa.fecha == hoy)
+        .order_by(Tasa.id.desc())
+        .first()
+    )
+
+    if tasa_hoy:
+        return {
+            "tasa": tasa_a_dict(tasa_hoy, moneda_eur),
+            "fecha": hoy.isoformat(),
+            "valor": float(tasa_hoy.valor),
+            "es_del_dia": True,
+        }
+
+    tasa_reciente = obtener_tasa_eur_reciente(db)
+    if not tasa_reciente:
+        return None
+
+    tasa, moneda = tasa_reciente
+    return {
+        "tasa": tasa_a_dict(tasa, moneda),
+        "fecha": tasa.fecha.isoformat() if tasa.fecha else None,
+        "valor": float(tasa.valor),
+        "es_del_dia": False,
+    }
+
+
 def cargar_datos_pago(
     db: Session,
     pago: Pago,
@@ -195,13 +232,25 @@ def calcular_total_reserva_eur(db: Session, reserva: Reserva) -> dict:
     cantidad_pasajeros = len(pasajeros)
     precio_unitario_eur = float(destino.precio_base_eur or 0)
     recargos_eur = sum(float(p.recargo_eur or 0) for p in pasajeros)
-    suma_precios_pasajeros = sum(float(p.precio_pasajero_eur or 0) for p in pasajeros)
 
-    if suma_precios_pasajeros > 0:
-        total_reserva_eur = suma_precios_pasajeros + recargos_eur
+    total_reserva_eur = 0.0
+    pasajeros_con_tarifa_custom = 0
+
+    for pasajero in pasajeros:
+        precio_linea = float(pasajero.precio_pasajero_eur or 0)
+        if precio_linea > 0:
+            pasajeros_con_tarifa_custom += 1
+        else:
+            precio_linea = precio_unitario_eur
+        total_reserva_eur += precio_linea + float(pasajero.recargo_eur or 0)
+
+    if cantidad_pasajeros == 0:
+        origen_total = "destino"
+    elif pasajeros_con_tarifa_custom == cantidad_pasajeros:
         origen_total = "pasajeros"
+    elif pasajeros_con_tarifa_custom > 0:
+        origen_total = "mixto"
     else:
-        total_reserva_eur = (precio_unitario_eur * cantidad_pasajeros) + recargos_eur
         origen_total = "destino"
 
     return {

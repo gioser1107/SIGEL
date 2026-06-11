@@ -19,6 +19,7 @@ from modelos.punto_recogida_modelo import PuntoRecogida
 from modelos.ciudad_modelo import Ciudad
 from modelos.estado_modelo import Estado
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
+from utilidades.viaje_utilidad import viaje_disponible_para_reserva, viaje_reserva_a_dict
 from utilidades.permisos_constantes import (
     PERMISO_BORRAR_RESERVAS,
     PERMISO_CREAR_RESERVAS,
@@ -111,9 +112,48 @@ def _obtener_pasajero_activo(db: Session, reserva_id: int, pasajero_id: int) -> 
         raise HTTPException(status_code=404, detail="Pasajero no encontrado en esta reserva")
     return pasajero
 
+def _validar_viaje_para_reserva(db: Session, viaje_id: int) -> Viaje:
+    viaje = db.query(Viaje).filter(
+        Viaje.id == viaje_id,
+        Viaje.eliminado_en.is_(None),
+    ).first()
+    if not viaje:
+        raise HTTPException(status_code=404, detail="Viaje no encontrado")
+
+    if not viaje_disponible_para_reserva(db, viaje):
+        raise HTTPException(
+            status_code=400,
+            detail="El viaje no esta disponible para reservar (sin unidad, sin asientos o cupo completo)",
+        )
+    return viaje
+
 # ==========================================
 # RUTAS DE RESERVA
 # ==========================================
+
+@router.get("/viajes-disponibles")
+def listar_viajes_disponibles_para_reserva(
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
+):
+    """Viajes que se pueden seleccionar al crear una reserva."""
+    viajes = (
+        db.query(Viaje)
+        .filter(
+            Viaje.eliminado_en.is_(None),
+            Viaje.estado.notin_(("finalizado", "cancelado")),
+        )
+        .order_by(Viaje.fecha_salida.asc())
+        .all()
+    )
+
+    resultado = []
+    for viaje in viajes:
+        if viaje_disponible_para_reserva(db, viaje):
+            resultado.append(viaje_reserva_a_dict(db, viaje))
+
+    return resultado
+
 
 @router.post("/cliente")
 def crear_reserva_desde_landing(
@@ -134,12 +174,7 @@ def crear_reserva_desde_landing(
     if not cliente:
         raise HTTPException(status_code=404, detail="Perfil de cliente no encontrado")
 
-    viaje = db.query(Viaje).filter(
-        Viaje.id == datos.viaje_id,
-        Viaje.eliminado_en.is_(None)
-    ).first()
-    if not viaje:
-        raise HTTPException(status_code=404, detail="Viaje no encontrado")
+    viaje = _validar_viaje_para_reserva(db, datos.viaje_id)
 
     if datos.titular_punto_recogida_id:
         punto = db.query(PuntoRecogida).filter(
@@ -266,6 +301,8 @@ def crear_reserva(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_RESERVAS)),
 ):
+    _validar_viaje_para_reserva(db, datos.viaje_id)
+
     ahora = datetime.now()
     nueva_reserva = Reserva(
         cliente_id=datos.cliente_id,
