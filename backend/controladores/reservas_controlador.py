@@ -7,8 +7,10 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
+from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.reservas_modelo import Reserva
+from modelos.viaje_modelo import Viaje
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.asiento_modelo import Asiento
@@ -73,6 +75,22 @@ class DatosAsientoReservadoCrear(BaseModel):
     asiento_id: int
 
 
+# --- Schema para reserva desde la landing (cliente autenticado) ---
+class DatosPasajeroExtraPublico(BaseModel):
+    nombre: str
+    apellido: str
+    numero_documento: Optional[str] = None
+    direccion: Optional[str] = None
+    ciudad: Optional[str] = None
+    estado_region: Optional[str] = None
+    punto_recogida_id: Optional[int] = None
+
+class DatosReservaClientePublico(BaseModel):
+    viaje_id: int
+    titular_punto_recogida_id: Optional[int] = None
+    pasajeros_extra: List[DatosPasajeroExtraPublico] = []
+
+
 def _obtener_reserva_activa(db: Session, reserva_id: int) -> Reserva:
     consulta = db.query(Reserva).filter(
         Reserva.id == reserva_id,
@@ -96,6 +114,118 @@ def _obtener_pasajero_activo(db: Session, reserva_id: int, pasajero_id: int) -> 
 # ==========================================
 # RUTAS DE RESERVA
 # ==========================================
+
+@router.post("/cliente")
+def crear_reserva_desde_landing(
+    datos: DatosReservaClientePublico,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    """Crea una reserva completa desde la landing. Solo para usuarios con perfil de cliente."""
+    cliente_id = usuario_actual.get("cliente_id")
+    if not cliente_id:
+        raise HTTPException(status_code=403, detail="Solo clientes registrados pueden crear reservas")
+
+    cliente = db.query(Cliente).filter(
+        Cliente.id == cliente_id,
+        Cliente.eliminado_en.is_(None)
+    ).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Perfil de cliente no encontrado")
+
+    viaje = db.query(Viaje).filter(
+        Viaje.id == datos.viaje_id,
+        Viaje.eliminado_en.is_(None)
+    ).first()
+    if not viaje:
+        raise HTTPException(status_code=404, detail="Viaje no encontrado")
+
+    if datos.titular_punto_recogida_id:
+        punto = db.query(PuntoRecogida).filter(
+            PuntoRecogida.id == datos.titular_punto_recogida_id,
+            PuntoRecogida.eliminado_en.is_(None)
+        ).first()
+        if not punto:
+            raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
+
+    # Resolver ciudad/estado del cliente para el snapshot
+    ciudad_nombre = None
+    estado_nombre = None
+    if cliente.ciudad_id:
+        ciudad_obj = db.query(Ciudad).filter(Ciudad.id == cliente.ciudad_id).first()
+        ciudad_nombre = ciudad_obj.nombre if ciudad_obj else None
+    if cliente.estado_id:
+        estado_obj = db.query(Estado).filter(Estado.id == cliente.estado_id).first()
+        estado_nombre = estado_obj.nombre if estado_obj else None
+
+    ahora = datetime.now()
+
+    nueva_reserva = Reserva(
+        cliente_id=cliente_id,
+        viaje_id=datos.viaje_id,
+        fecha_reserva=ahora,
+        estado="pendiente",
+        creado_por=usuario_actual["id"],
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    db.add(nueva_reserva)
+    db.flush()
+
+    titular = ReservaCliente(
+        reserva_id=nueva_reserva.id,
+        cliente_id=cliente_id,
+        nombre=cliente.nombre,
+        apellido=cliente.apellido,
+        tipo_documento=cliente.tipo_documento,
+        numero_documento=cliente.numero_documento,
+        es_menor=False,
+        ocupa_asiento=True,
+        precio_pasajero_eur=0,
+        recargo_eur=0,
+        direccion=cliente.direccion,
+        ciudad=ciudad_nombre,
+        estado_region=estado_nombre,
+        punto_recogida_id=datos.titular_punto_recogida_id,
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    db.add(titular)
+
+    for p in datos.pasajeros_extra:
+        pasajero = ReservaCliente(
+            reserva_id=nueva_reserva.id,
+            cliente_id=None,
+            nombre=p.nombre,
+            apellido=p.apellido,
+            tipo_documento=None,
+            numero_documento=p.numero_documento,
+            es_menor=False,
+            ocupa_asiento=True,
+            precio_pasajero_eur=0,
+            recargo_eur=0,
+            direccion=p.direccion,
+            ciudad=p.ciudad,
+            estado_region=p.estado_region,
+            punto_recogida_id=p.punto_recogida_id,
+            creado_en=ahora,
+            actualizado_en=ahora,
+        )
+        db.add(pasajero)
+
+    db.commit()
+    db.refresh(nueva_reserva)
+
+    registrar_evento(
+        db, modulo="reservas", accion="INSERT",
+        resumen=f"Reserva {nueva_reserva.id} creada desde landing (viaje {datos.viaje_id}, cliente {cliente_id})",
+        usuario_id=usuario_actual["id"], tabla_afectada="reservas",
+        registro_id=nueva_reserva.id, ip_origen=obtener_ip_origen(request),
+    )
+
+    return {"mensaje": "Reserva creada con éxito", "reserva_id": nueva_reserva.id}
+
 
 @router.get("")
 def listar_reservas(
