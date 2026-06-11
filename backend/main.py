@@ -23,8 +23,14 @@ from controladores.reservas_controlador import router as router_reservas
 from controladores.asiento_controlador import router as router_asientos
 from controladores.unidad_transporte_controlador import router as router_unidades
 from controladores.puntos_recogida_controlador import router as router_puntos_recogida
+from controladores.pago_controlador import router as router_pagos
+from controladores.moneda_controlador import router as router_monedas
+from controladores.metodo_pago_controlador import router as router_metodos_pago
+from controladores.tasa_controlador import router as router_tasas
+from controladores.banco_controlador import router as router_bancos
+from controladores.punto_venta_controlador import router as router_puntos_venta
 
-app = FastAPI(title="API Travel BQTO", version="1.1.0")
+app = FastAPI(title="API Travel BQTO", version="1.3.0")
 
 asegurar_carpeta_uploads()
 app.mount("/api/archivos", StaticFiles(directory=Path(UPLOAD_ROOT)), name="archivos")
@@ -85,6 +91,12 @@ app.include_router(router_reservas, prefix="/api")
 app.include_router(router_asientos, prefix="/api")
 app.include_router(router_unidades, prefix="/api")
 app.include_router(router_puntos_recogida, prefix="/api")
+app.include_router(router_pagos, prefix="/api")
+app.include_router(router_monedas, prefix="/api")
+app.include_router(router_metodos_pago, prefix="/api")
+app.include_router(router_tasas, prefix="/api")
+app.include_router(router_bancos, prefix="/api")
+app.include_router(router_puntos_venta, prefix="/api")
 
 
 @app.get("/api")
@@ -108,5 +120,11 @@ def ruta_raiz_api():
             "asientos": "/api/asientos",
             "unidades": "/api/unidades",
             "puntos_recogida": "/api/puntos-recogida",
+            "pagos": "/api/pagos",
+            "monedas": "/api/monedas",
+            "metodos_pago": "/api/metodos-pago",
+            "tasas": "/api/tasas",
+            "bancos": "/api/bancos",
+            "puntos_venta": "/api/puntos-venta",
         },
     }
