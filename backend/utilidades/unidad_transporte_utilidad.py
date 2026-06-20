@@ -1,0 +1,119 @@
+from datetime import datetime
+from typing import Optional
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from modelos.unidad_transporte_modelo import UnidadTransporte
+from modelos.viaje_modelo import Viaje
+
+
+def unidad_a_dict(unidad: UnidadTransporte) -> dict:
+    return {
+        "id": unidad.id,
+        "placa": unidad.placa,
+        "modelo": unidad.modelo,
+        "capacidad": unidad.capacidad,
+        "creado_en": unidad.creado_en,
+        "actualizado_en": unidad.actualizado_en,
+    }
+
+
+def obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
+    unidad = db.query(UnidadTransporte).filter(
+        UnidadTransporte.id == unidad_id,
+        UnidadTransporte.eliminado_en.is_(None),
+    ).first()
+    if not unidad:
+        raise HTTPException(status_code=404, detail="Unidad de transporte no encontrada")
+    return unidad
+
+
+def _validar_placa_no_repetida(db: Session, placa: str, unidad_id_actual: int | None = None) -> None:
+    existente = db.query(UnidadTransporte).filter(
+        UnidadTransporte.placa == placa,
+        UnidadTransporte.eliminado_en.is_(None),
+    ).first()
+    if existente and existente.id != unidad_id_actual:
+        raise HTTPException(
+            status_code=400,
+            detail="Ya existe una unidad de transporte activa con esta placa",
+        )
+
+
+def listar_unidades(db: Session) -> list[dict]:
+    unidades = (
+        db.query(UnidadTransporte)
+        .filter(UnidadTransporte.eliminado_en.is_(None))
+        .order_by(UnidadTransporte.id)
+        .all()
+    )
+    return [unidad_a_dict(u) for u in unidades]
+
+
+def crear_unidad(
+    db: Session,
+    placa: str,
+    modelo: Optional[str],
+    capacidad: int,
+) -> UnidadTransporte:
+    _validar_placa_no_repetida(db, placa)
+
+    ahora = datetime.now()
+    nueva_unidad = UnidadTransporte(
+        placa=placa,
+        modelo=modelo,
+        capacidad=capacidad,
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    db.add(nueva_unidad)
+    db.commit()
+    db.refresh(nueva_unidad)
+    return nueva_unidad
+
+
+def actualizar_unidad(
+    db: Session,
+    unidad_id: int,
+    placa: Optional[str],
+    modelo: Optional[str],
+    capacidad: Optional[int],
+) -> UnidadTransporte:
+    unidad = obtener_unidad_activa(db, unidad_id)
+
+    if placa is not None:
+        if placa != unidad.placa:
+            _validar_placa_no_repetida(db, placa, unidad_id)
+        unidad.placa = placa
+
+    if modelo is not None:
+        unidad.modelo = modelo
+
+    if capacidad is not None:
+        unidad.capacidad = capacidad
+
+    unidad.actualizado_en = datetime.now()
+    db.commit()
+    return unidad
+
+
+def eliminar_unidad(db: Session, unidad_id: int) -> None:
+    unidad = obtener_unidad_activa(db, unidad_id)
+
+    viajes_activos = db.query(Viaje).filter(
+        Viaje.unidad_id == unidad_id,
+        Viaje.eliminado_en.is_(None),
+        Viaje.estado.in_(["planificado", "en_progreso"]),
+    ).first()
+
+    if viajes_activos:
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar la unidad de transporte porque tiene viajes activos o planificados asociados.",
+        )
+
+    ahora = datetime.now()
+    unidad.eliminado_en = ahora
+    unidad.actualizado_en = ahora
+    db.commit()

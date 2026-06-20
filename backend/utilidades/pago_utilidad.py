@@ -1,5 +1,8 @@
-from datetime import date
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from modelos.banco_modelo import Banco
@@ -14,6 +17,18 @@ from modelos.tasa_modelo import Tasa
 from modelos.viaje_modelo import Viaje
 
 METODOS_PAGO_REQUIEREN_VALIDACION = ("pago_movil", "zelle")
+
+
+def obtener_pago_activo(db: Session, reserva_id: int, pago_id: int) -> Pago:
+    pago = db.query(Pago).filter(
+        Pago.id == pago_id,
+        Pago.reserva_id == reserva_id,
+        Pago.eliminado_en.is_(None),
+    ).first()
+    if not pago:
+        raise HTTPException(status_code=404, detail="Pago no encontrado en esta reserva")
+    return pago
+
 
 def determinar_estado_inicial_pago(codigo_metodo: str, registro_desde_admin: bool) -> str:
     if registro_desde_admin:
@@ -381,4 +396,298 @@ def actualizar_estado_reserva_por_pagos(db: Session, reserva: Reserva) -> None:
         reserva.estado = "confirmada"
     elif reserva.estado in ("abonada", "confirmada"):
         reserva.estado = "pendiente"
+
+
+def validar_metodo_pago(db: Session, metodo_pago_id: int) -> MetodoPago:
+    metodo = db.query(MetodoPago).filter(MetodoPago.id == metodo_pago_id).first()
+    if not metodo:
+        raise HTTPException(status_code=400, detail="Metodo de pago invalido")
+    return metodo
+
+
+def validar_tasa(db: Session, tasa_id: int) -> Tasa:
+    tasa = db.query(Tasa).filter(Tasa.id == tasa_id).first()
+    if not tasa:
+        raise HTTPException(status_code=400, detail="Tasa invalida")
+    return tasa
+
+
+def validar_banco(db: Session, banco_id: int | None, campo: str) -> None:
+    if banco_id is None:
+        return
+    banco = db.query(Banco).filter(
+        Banco.id == banco_id,
+        Banco.eliminado_en.is_(None),
+        Banco.activo.is_(True),
+    ).first()
+    if not banco:
+        raise HTTPException(status_code=400, detail=f"{campo} invalido")
+
+
+def validar_punto_venta(db: Session, punto_venta_id: int | None) -> None:
+    if punto_venta_id is None:
+        return
+    punto = db.query(PuntoVenta).filter(
+        PuntoVenta.id == punto_venta_id,
+        PuntoVenta.eliminado_en.is_(None),
+        PuntoVenta.activo.is_(True),
+    ).first()
+    if not punto:
+        raise HTTPException(status_code=400, detail="Punto de venta invalido")
+
+
+def validar_tipo_pago(tipo: str) -> None:
+    if tipo not in ("total", "cuota"):
+        raise HTTPException(status_code=400, detail="tipo debe ser total o cuota")
+
+
+def validar_estado_pago(estado: str) -> None:
+    if estado not in ("en_validacion", "aprobado", "rechazado"):
+        raise HTTPException(status_code=400, detail="estado invalido")
+
+
+def listar_todos_los_pagos(
+    db: Session,
+    reserva_id: Optional[int] = None,
+    estado: Optional[str] = None,
+    metodo_pago_id: Optional[int] = None,
+    fecha_desde: Optional[date] = None,
+    fecha_hasta: Optional[date] = None,
+) -> list[dict]:
+    consulta = db.query(Pago).filter(Pago.eliminado_en.is_(None))
+
+    if reserva_id is not None:
+        consulta = consulta.filter(Pago.reserva_id == reserva_id)
+    if estado is not None:
+        consulta = consulta.filter(Pago.estado == estado)
+    if metodo_pago_id is not None:
+        consulta = consulta.filter(Pago.metodo_pago_id == metodo_pago_id)
+    if fecha_desde is not None:
+        consulta = consulta.filter(Pago.fecha_pago >= fecha_desde)
+    if fecha_hasta is not None:
+        consulta = consulta.filter(Pago.fecha_pago <= fecha_hasta)
+
+    pagos = consulta.order_by(Pago.creado_en.desc()).all()
+
+    resultado = []
+    for pago in pagos:
+        detalle = cargar_datos_pago(db, pago)
+        monto_eur, aproximado = convertir_monto_pago_a_eur(db, pago)
+        detalle["monto_eur"] = monto_eur
+        detalle["conversion_aproximada"] = aproximado
+        resultado.append(detalle)
+    return resultado
+
+
+def obtener_catalogo_pagos(db: Session) -> dict:
+    metodos = db.query(MetodoPago).order_by(MetodoPago.nombre).all()
+    monedas = db.query(Moneda).all()
+    monedas_por_id = {m.id: m for m in monedas}
+
+    lista_metodos = []
+    for metodo in metodos:
+        moneda = monedas_por_id.get(metodo.moneda_id)
+        if not moneda:
+            continue
+        lista_metodos.append(metodo_pago_a_dict(metodo, moneda))
+
+    bancos = (
+        db.query(Banco)
+        .filter(Banco.eliminado_en.is_(None), Banco.activo.is_(True))
+        .order_by(Banco.nombre)
+        .all()
+    )
+
+    puntos = (
+        db.query(PuntoVenta)
+        .filter(PuntoVenta.eliminado_en.is_(None), PuntoVenta.activo.is_(True))
+        .order_by(PuntoVenta.nombre)
+        .all()
+    )
+
+    tasas = (
+        db.query(Tasa)
+        .order_by(Tasa.fecha.desc(), Tasa.id.desc())
+        .limit(30)
+        .all()
+    )
+
+    tasa_eur = obtener_tasa_eur_reciente(db)
+    tasa_eur_dict = None
+    if tasa_eur:
+        tasa_eur_dict = tasa_a_dict(tasa_eur[0], tasa_eur[1])
+
+    lista_tasas = []
+    for tasa in tasas:
+        moneda = monedas_por_id.get(tasa.moneda_id)
+        if not moneda:
+            continue
+        lista_tasas.append(tasa_a_dict(tasa, moneda))
+
+    return {
+        "metodos_pago": lista_metodos,
+        "bancos": [banco_a_dict(b) for b in bancos],
+        "puntos_venta": [punto_venta_a_dict(p) for p in puntos],
+        "tasa_eur_reciente": tasa_eur_dict,
+        "tasas": lista_tasas,
+    }
+
+
+def listar_pagos_reserva(db: Session, reserva_id: int) -> list[dict]:
+    pagos = (
+        db.query(Pago)
+        .filter(Pago.reserva_id == reserva_id, Pago.eliminado_en.is_(None))
+        .order_by(Pago.creado_en.desc())
+        .all()
+    )
+    return [cargar_datos_pago(db, pago) for pago in pagos]
+
+
+def registrar_pago_reserva(
+    db: Session,
+    reserva: Reserva,
+    metodo_pago_id: int,
+    tasa_id: int,
+    monto: Decimal,
+    tipo: str,
+    fecha_pago: Optional[date],
+    referencia: Optional[str],
+    banco_origen_id: Optional[int],
+    banco_destino_id: Optional[int],
+    punto_venta_id: Optional[int],
+    telefono_origen: Optional[str],
+    correo_origen: Optional[str],
+    comprobante_url: Optional[str],
+    notas: Optional[str],
+    usuario_id: int,
+) -> Pago:
+    metodo = validar_metodo_pago(db, metodo_pago_id)
+    validar_tasa(db, tasa_id)
+    validar_banco(db, banco_origen_id, "banco_origen_id")
+    validar_banco(db, banco_destino_id, "banco_destino_id")
+    validar_punto_venta(db, punto_venta_id)
+    validar_tipo_pago(tipo)
+
+    ahora = datetime.now()
+    estado_inicial = determinar_estado_inicial_pago(metodo.codigo, registro_desde_admin=True)
+    nuevo_pago = Pago(
+        reserva_id=reserva.id,
+        metodo_pago_id=metodo_pago_id,
+        tasa_id=tasa_id,
+        monto=monto,
+        tipo=tipo,
+        estado=estado_inicial,
+        fecha_pago=fecha_pago or date.today(),
+        referencia=referencia,
+        banco_origen_id=banco_origen_id,
+        banco_destino_id=banco_destino_id,
+        punto_venta_id=punto_venta_id,
+        telefono_origen=telefono_origen,
+        correo_origen=correo_origen,
+        comprobante_url=comprobante_url,
+        notas=notas,
+        creado_por=usuario_id,
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    if estado_inicial == "aprobado":
+        nuevo_pago.validado_por = usuario_id
+        nuevo_pago.validado_en = ahora
+
+    db.add(nuevo_pago)
+    db.flush()
+    actualizar_estado_reserva_por_pagos(db, reserva)
+    reserva.actualizado_en = ahora
+    db.commit()
+    db.refresh(nuevo_pago)
+    return nuevo_pago
+
+
+def actualizar_pago_reserva(
+    db: Session,
+    reserva: Reserva,
+    pago: Pago,
+    metodo_pago_id: Optional[int],
+    tasa_id: Optional[int],
+    monto: Optional[Decimal],
+    tipo: Optional[str],
+    estado: Optional[str],
+    fecha_pago: Optional[date],
+    referencia: Optional[str],
+    banco_origen_id: Optional[int],
+    banco_destino_id: Optional[int],
+    punto_venta_id: Optional[int],
+    telefono_origen: Optional[str],
+    correo_origen: Optional[str],
+    comprobante_url: Optional[str],
+    notas: Optional[str],
+    usuario_id: int,
+) -> Pago:
+    if metodo_pago_id is not None:
+        validar_metodo_pago(db, metodo_pago_id)
+        pago.metodo_pago_id = metodo_pago_id
+
+    if tasa_id is not None:
+        validar_tasa(db, tasa_id)
+        pago.tasa_id = tasa_id
+
+    if monto is not None:
+        pago.monto = monto
+
+    if tipo is not None:
+        validar_tipo_pago(tipo)
+        pago.tipo = tipo
+
+    if estado is not None:
+        validar_estado_pago(estado)
+        pago.estado = estado
+        if estado in ("aprobado", "rechazado"):
+            pago.validado_por = usuario_id
+            pago.validado_en = datetime.now()
+
+    if fecha_pago is not None:
+        pago.fecha_pago = fecha_pago
+
+    if referencia is not None:
+        pago.referencia = referencia
+
+    if banco_origen_id is not None:
+        validar_banco(db, banco_origen_id, "banco_origen_id")
+        pago.banco_origen_id = banco_origen_id
+
+    if banco_destino_id is not None:
+        validar_banco(db, banco_destino_id, "banco_destino_id")
+        pago.banco_destino_id = banco_destino_id
+
+    if punto_venta_id is not None:
+        validar_punto_venta(db, punto_venta_id)
+        pago.punto_venta_id = punto_venta_id
+
+    if telefono_origen is not None:
+        pago.telefono_origen = telefono_origen
+
+    if correo_origen is not None:
+        pago.correo_origen = correo_origen
+
+    if comprobante_url is not None:
+        pago.comprobante_url = comprobante_url
+
+    if notas is not None:
+        pago.notas = notas
+
+    pago.actualizado_en = datetime.now()
+    actualizar_estado_reserva_por_pagos(db, reserva)
+    reserva.actualizado_en = datetime.now()
+    db.commit()
+    db.refresh(pago)
+    return pago
+
+
+def eliminar_pago_reserva(db: Session, reserva: Reserva, pago: Pago) -> None:
+    ahora = datetime.now()
+    pago.eliminado_en = ahora
+    pago.actualizado_en = ahora
+    actualizar_estado_reserva_por_pagos(db, reserva)
+    reserva.actualizado_en = ahora
+    db.commit()
 
