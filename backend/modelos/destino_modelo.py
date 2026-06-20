@@ -9,6 +9,7 @@ class Destino(Base):
     nombre = Column(String(120), unique=True, nullable=False)
     descripcion = Column(Text, nullable=True)
     precio_base_eur = Column(Numeric(12, 2), nullable=False, default=0)
+    recargo_menor_eur = Column(Numeric(12, 2), nullable=False, default=0)
     activo = Column(Boolean, nullable=False, default=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)

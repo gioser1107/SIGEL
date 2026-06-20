@@ -35,6 +35,7 @@ class DatosDestinoCrear(BaseModel):
     nombre: str
     descripcion: str | None = None
     precio_base_eur: Decimal = Field(default=Decimal("0.00"), ge=0)
+    recargo_menor_eur: Decimal = Field(default=Decimal("0.00"), ge=0)
     activo: bool = True
     url_portada: str | None = None
 
@@ -42,6 +43,7 @@ class DatosDestinoActualizar(BaseModel):
     nombre: str | None = None
     descripcion: str | None = None
     precio_base_eur: Decimal | None = Field(default=None, ge=0)
+    recargo_menor_eur: Decimal | None = Field(default=None, ge=0)
     activo: bool | None = None
     url_portada: str | None = None
 
@@ -118,6 +120,7 @@ def crear_destino(
         nombre=nombre,
         descripcion=datos.descripcion,
         precio_base_eur=datos.precio_base_eur,
+        recargo_menor_eur=datos.recargo_menor_eur,
         activo=datos.activo,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -176,6 +179,9 @@ def actualizar_destino(
 
     if datos.precio_base_eur is not None:
         destino.precio_base_eur = datos.precio_base_eur
+
+    if datos.recargo_menor_eur is not None:
+        destino.recargo_menor_eur = datos.recargo_menor_eur
 
     if datos.activo is not None:
         destino.activo = datos.activo

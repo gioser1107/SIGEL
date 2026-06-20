@@ -52,6 +52,7 @@ def destino_a_dict(
         "nombre": destino.nombre,
         "descripcion": destino.descripcion,
         "precio_base_eur": float(precio) if precio is not None else 0.0,
+        "recargo_menor_eur": float(destino.recargo_menor_eur) if destino.recargo_menor_eur is not None else 0.0,
         "imagen": portada,
         "activo": destino.activo,
         "creado_en": destino.creado_en,

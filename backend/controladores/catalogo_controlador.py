@@ -77,6 +77,7 @@ def _viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
     nombre_destino = destino.nombre if destino is not None else "Viaje"
     descripcion_destino = destino.descripcion if destino is not None else ""
     precio = float(destino.precio_base_eur) if destino is not None and destino.precio_base_eur is not None else 0
+    recargo_menor = float(destino.recargo_menor_eur) if destino is not None and destino.recargo_menor_eur is not None else 0
     portada, _ = _imagenes_destino(db, viaje.destino_id) if destino is not None else (IMAGEN_DEFAULT, [])
 
     paradas = (
@@ -112,6 +113,7 @@ def _viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
         "titulo": nombre_destino,
         "ubicacion": descripcion_destino[:120] if descripcion_destino else "Venezuela",
         "precio": precio,
+        "recargo_menor_eur": recargo_menor,
         "imagen": portada,
         "hora": _formatear_hora(viaje.fecha_salida),
         "cupos": unidad.capacidad if unidad is not None else 0,

@@ -67,6 +67,7 @@ class DatosPasajeroExtraPublico(BaseModel):
     numero_documento: str
     nombre: str
     apellido: str
+    es_menor: bool = False
     punto_recogida_id: Optional[int] = None
 
 
@@ -114,6 +115,7 @@ def _validar_viaje_para_reserva(db: Session, viaje_id: int) -> Viaje:
 def _buscar_o_crear_cliente(db: Session, tipo_doc: str, num_doc: str, nombre: str, apellido: str) -> Cliente:
     """Busca un cliente por documento. Si no existe lo crea como cliente natural."""
     cliente = db.query(Cliente).filter(
+        Cliente.tipo_documento == tipo_doc,
         Cliente.numero_documento == num_doc.strip(),
         Cliente.eliminado_en.is_(None)
     ).first()
@@ -192,6 +194,10 @@ def crear_reserva_desde_landing(
 
     viaje = _validar_viaje_para_reserva(db, datos.viaje_id)
 
+    from modelos.destino_modelo import Destino
+    destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
+    recargo_menor = float(destino.recargo_menor_eur) if destino and destino.recargo_menor_eur else 0.0
+
     if datos.titular_punto_recogida_id:
         punto = db.query(PuntoRecogida).filter(
             PuntoRecogida.id == datos.titular_punto_recogida_id,
@@ -245,10 +251,10 @@ def crear_reserva_desde_landing(
             reserva_id=nueva_reserva.id,
             cliente_id=acomp.id,
             es_titular=False,
-            es_menor=False,
-            ocupa_asiento=True,
+            es_menor=p.es_menor,
+            ocupa_asiento=not p.es_menor,
             precio_pasajero_eur=0,
-            recargo_eur=0,
+            recargo_eur=recargo_menor if p.es_menor else 0,
             punto_recogida_id=p.punto_recogida_id,
             creado_en=ahora,
             actualizado_en=ahora,
