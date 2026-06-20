@@ -30,6 +30,7 @@ from controladores.tasa_controlador import router as router_tasas
 from controladores.banco_controlador import router as router_bancos
 from controladores.punto_venta_controlador import router as router_puntos_venta
 from controladores.abordaje_controlador import router as router_abordajes
+from controladores.resena_controlador import router as router_resenas
 
 app = FastAPI(title="API Travel BQTO", version="1.3.0")
 
@@ -95,6 +96,7 @@ app.include_router(router_tasas, prefix="/api")
 app.include_router(router_bancos, prefix="/api")
 app.include_router(router_puntos_venta, prefix="/api")
 app.include_router(router_abordajes, prefix="/api")
+app.include_router(router_resenas, prefix="/api")
 
 @app.get("/api")
 def ruta_raiz_api():

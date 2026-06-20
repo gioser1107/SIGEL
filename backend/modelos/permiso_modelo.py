@@ -68,6 +68,11 @@ PERMISO_LEER_PUNTOS_RECOGIDA = "leer_puntos_recogida"
 PERMISO_EDITAR_PUNTOS_RECOGIDA = "editar_puntos_recogida"
 PERMISO_BORRAR_PUNTOS_RECOGIDA = "borrar_puntos_recogida"
 
+PERMISO_CREAR_RESENAS = "crear_resenas"
+PERMISO_LEER_RESENAS = "leer_resenas"
+PERMISO_EDITAR_RESENAS = "editar_resenas"
+PERMISO_BORRAR_RESENAS = "borrar_resenas"
+
 NOMBRE_ROL_CLIENTE = "Cliente"
 
 from datetime import datetime
