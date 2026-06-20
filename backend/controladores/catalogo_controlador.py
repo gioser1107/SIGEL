@@ -4,11 +4,13 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
-from utilidades.catalogo_utilidad import (
-    estadisticas_catalogo,
+from modelos.destino_modelo import (
     listar_destinos_catalogo,
-    listar_viajes_catalogo,
     obtener_destino_catalogo,
+)
+from modelos.viaje_modelo import (
+    estadisticas_catalogo,
+    listar_viajes_catalogo,
     obtener_paradas_viaje_publico,
     obtener_viaje_catalogo,
 )

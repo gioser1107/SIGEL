@@ -4,13 +4,13 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.permisos_constantes import (
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_ROLES,
     PERMISO_CREAR_ROLES,
     PERMISO_EDITAR_ROLES,
     PERMISO_LEER_ROLES,
 )
-from utilidades.rol_utilidad import (
+from modelos.rol_modelo import (
     actualizar_rol,
     asignar_permiso_a_rol,
     crear_rol,

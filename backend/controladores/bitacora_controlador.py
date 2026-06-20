@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
-from utilidades.bitacora_utilidad import (
+from modelos.bitacora_modelo import (
     listar_bitacora,
     obtener_detalle_bitacora,
     verificar_permiso_bitacora,

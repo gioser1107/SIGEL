@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
-from utilidades.punto_recogida_utilidad import (
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from modelos.punto_recogida_modelo import (
     crear_punto_recogida_publico,
     listar_puntos_recogida_activos,
 )

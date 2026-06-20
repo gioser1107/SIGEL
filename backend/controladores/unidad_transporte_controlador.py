@@ -6,20 +6,20 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
-from utilidades.permisos_constantes import (
-    PERMISO_BORRAR_TRANSPORTE_FLOTA,
-    PERMISO_CREAR_TRANSPORTE_FLOTA,
-    PERMISO_EDITAR_TRANSPORTE_FLOTA,
-    PERMISO_LEER_TRANSPORTE_FLOTA,
-)
-from utilidades.unidad_transporte_utilidad import (
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from modelos.unidad_transporte_modelo import (
     actualizar_unidad,
     crear_unidad,
     eliminar_unidad,
     listar_unidades,
     obtener_unidad_activa,
     unidad_a_dict,
+)
+from modelos.permiso_modelo import (
+    PERMISO_BORRAR_TRANSPORTE_FLOTA,
+    PERMISO_CREAR_TRANSPORTE_FLOTA,
+    PERMISO_EDITAR_TRANSPORTE_FLOTA,
+    PERMISO_LEER_TRANSPORTE_FLOTA,
 )
 
 router = APIRouter(prefix="/unidades", tags=["Flota - Unidades de Transporte"])

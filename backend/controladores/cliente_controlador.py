@@ -4,14 +4,14 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.cliente_utilidad import (
+from modelos.cliente_modelo import (
     actualizar_cliente as actualizar_cliente_util,
     crear_cliente as crear_cliente_util,
     desactivar_cliente as desactivar_cliente_util,
     listar_clientes as listar_clientes_util,
     obtener_cliente as obtener_cliente_util,
 )
-from utilidades.permisos_constantes import (
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_CLIENTES,
     PERMISO_CREAR_CLIENTES,
     PERMISO_EDITAR_CLIENTES,

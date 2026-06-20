@@ -7,15 +7,15 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
-from utilidades.permisos_constantes import (
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_PLANIFICACION,
     PERMISO_CREAR_PLANIFICACION,
     PERMISO_EDITAR_PLANIFICACION,
     PERMISO_LEER_PLANIFICACION,
     PERMISO_LEER_RESERVAS,
 )
-from utilidades.viaje_utilidad import (
+from modelos.viaje_modelo import (
     actualizar_costo,
     actualizar_parada,
     actualizar_viaje,

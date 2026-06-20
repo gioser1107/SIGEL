@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
-from utilidades.pago_utilidad import (
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from modelos.pago_modelo import (
     actualizar_pago_reserva,
     calcular_resumen_pagos_reserva,
     cargar_datos_pago,
@@ -20,8 +20,8 @@ from utilidades.pago_utilidad import (
     obtener_pago_activo,
     registrar_pago_reserva,
 )
-from utilidades.reserva_utilidad import obtener_reserva_activa
-from utilidades.permisos_constantes import (
+from modelos.reservas_modelo import obtener_reserva_activa
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_REPORTES_PAGO,
     PERMISO_CREAR_REPORTES_PAGO,
     PERMISO_EDITAR_REPORTES_PAGO,

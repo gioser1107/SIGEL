@@ -4,8 +4,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
-from utilidades.auth_utilidad import iniciar_sesion, registrar_cliente_portal
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
+from modelos.usuario_modelo import iniciar_sesion, registrar_cliente_portal
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 

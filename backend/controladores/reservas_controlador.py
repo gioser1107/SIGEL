@@ -8,14 +8,14 @@ from sqlalchemy.orm import Session
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
-from utilidades.permisos_constantes import (
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_RESERVAS,
     PERMISO_CREAR_RESERVAS,
     PERMISO_EDITAR_RESERVAS,
     PERMISO_LEER_RESERVAS,
 )
-from utilidades.reserva_utilidad import (
+from modelos.reservas_modelo import (
     actualizar_pasajero,
     actualizar_reserva,
     agregar_pasajero,

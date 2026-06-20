@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 
-from utilidades.archivo_imagen_utilidad import UPLOAD_ROOT, asegurar_carpeta_uploads
+from modelos.destino_imagen_modelo import UPLOAD_ROOT, asegurar_carpeta_uploads
 
 from controladores.auth_controlador import router as router_auth
 from controladores.bitacora_controlador import router as router_bitacora

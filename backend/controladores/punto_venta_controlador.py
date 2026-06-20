@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.finanzas_utilidad import (
+from modelos.punto_venta_modelo import (
     actualizar_punto_venta,
     crear_punto_venta,
     eliminar_punto_venta,
@@ -12,7 +12,7 @@ from utilidades.finanzas_utilidad import (
     obtener_punto_venta_activo,
     punto_venta_a_respuesta,
 )
-from utilidades.permisos_constantes import (
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_REPORTES_PAGO,
     PERMISO_CREAR_REPORTES_PAGO,
     PERMISO_EDITAR_REPORTES_PAGO,

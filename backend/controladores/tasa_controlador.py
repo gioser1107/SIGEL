@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_alguno_de_permisos, requiere_permiso
-from utilidades.finanzas_utilidad import (
+from modelos.tasa_modelo import (
     actualizar_tasa,
     crear_tasa,
     eliminar_tasa,
@@ -17,7 +17,7 @@ from utilidades.finanzas_utilidad import (
     obtener_tasa_eur_del_dia_o_error,
     tasa_a_respuesta,
 )
-from utilidades.permisos_constantes import (
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_REPORTES_PAGO,
     PERMISO_CREAR_REPORTES_PAGO,
     PERMISO_EDITAR_REPORTES_PAGO,

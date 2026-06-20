@@ -4,19 +4,17 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.permiso_utilidad import (
+from modelos.permiso_modelo import (
+    PERMISO_BORRAR_PERMISOS,
+    PERMISO_CREAR_PERMISOS,
+    PERMISO_EDITAR_PERMISOS,
+    PERMISO_LEER_PERMISOS,
     actualizar_permiso,
     crear_permiso,
     eliminar_permiso,
     listar_permisos,
     obtener_permiso_activo,
     permiso_a_dict,
-)
-from utilidades.permisos_constantes import (
-    PERMISO_BORRAR_PERMISOS,
-    PERMISO_CREAR_PERMISOS,
-    PERMISO_EDITAR_PERMISOS,
-    PERMISO_LEER_PERMISOS,
 )
 
 router = APIRouter(prefix="/permisos", tags=["Permisos"])

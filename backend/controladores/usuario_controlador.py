@@ -5,13 +5,13 @@ from sqlalchemy.orm import Session
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.permisos_constantes import (
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_USUARIOS,
     PERMISO_CREAR_USUARIOS,
     PERMISO_EDITAR_USUARIOS,
     PERMISO_LEER_USUARIOS,
 )
-from utilidades.usuario_utilidad import (
+from modelos.usuario_modelo import (
     actualizar_mi_perfil,
     actualizar_usuario,
     asignar_rol_a_usuario,

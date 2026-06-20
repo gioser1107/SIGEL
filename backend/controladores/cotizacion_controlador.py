@@ -7,23 +7,25 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
-from utilidades.cliente_utilidad import es_rol_cliente
-from utilidades.cotizacion_utilidad import (
-    actualizar_cotizacion,
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from modelos.cliente_modelo import es_rol_cliente
+from modelos.cotizacion_linea_modelo import (
     actualizar_linea_cotizacion,
-    cotizacion_a_dict,
-    crear_cotizacion,
     crear_linea_cotizacion,
-    eliminar_cotizacion,
     eliminar_linea_cotizacion,
     linea_a_dict,
-    listar_cotizaciones,
     listar_lineas_cotizacion,
-    obtener_cotizacion_detalle,
     resumen_lineas_cotizacion,
 )
-from utilidades.permisos_constantes import (
+from modelos.cotizacion_modelo import (
+    actualizar_cotizacion,
+    cotizacion_a_dict,
+    crear_cotizacion,
+    eliminar_cotizacion,
+    listar_cotizaciones,
+    obtener_cotizacion_detalle,
+)
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_COTIZACIONES,
     PERMISO_CREAR_COTIZACIONES,
     PERMISO_EDITAR_COTIZACIONES,

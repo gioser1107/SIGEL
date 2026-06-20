@@ -8,8 +8,8 @@ from modelos.permiso_modelo import Permiso
 from modelos.rol_modelo import Rol
 from modelos.rol_permiso_modelo import RolPermiso
 from modelos.usuario_modelo import Usuario
-from utilidades.cliente_utilidad import obtener_cliente_por_usuario_id
-from utilidades.jwt_utilidad import verificar_token
+from modelos.cliente_modelo import obtener_cliente_por_usuario_id
+from modelos.usuario_modelo import verificar_token
 
 esquema_bearer = HTTPBearer()
 

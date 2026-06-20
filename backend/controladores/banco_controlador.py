@@ -4,15 +4,15 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.finanzas_utilidad import (
+from modelos.banco_modelo import (
     actualizar_banco,
+    banco_a_dict,
     crear_banco,
     eliminar_banco,
     listar_bancos,
     obtener_banco_activo,
 )
-from utilidades.pago_utilidad import banco_a_dict
-from utilidades.permisos_constantes import (
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_REPORTES_PAGO,
     PERMISO_CREAR_REPORTES_PAGO,
     PERMISO_EDITAR_REPORTES_PAGO,

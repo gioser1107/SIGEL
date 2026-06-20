@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.finanzas_utilidad import (
+from modelos.metodo_pago_modelo import (
     actualizar_metodo_pago,
     crear_metodo_pago,
     eliminar_metodo_pago,
@@ -12,7 +12,7 @@ from utilidades.finanzas_utilidad import (
     metodo_pago_a_respuesta,
     obtener_metodo_pago,
 )
-from utilidades.permisos_constantes import (
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_REPORTES_PAGO,
     PERMISO_CREAR_REPORTES_PAGO,
     PERMISO_EDITAR_REPORTES_PAGO,

@@ -6,9 +6,8 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
-from utilidades.archivo_imagen_utilidad import procesar_y_guardar_imagen_destino
-from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
-from utilidades.destino_utilidad import (
+from modelos.destino_imagen_modelo import procesar_y_guardar_imagen_destino
+from modelos.destino_modelo import (
     actualizar_destino,
     actualizar_imagen_destino,
     agregar_imagen_destino,
@@ -21,7 +20,8 @@ from utilidades.destino_utilidad import (
     listar_imagenes_destino,
     quitar_imagen_destino,
 )
-from utilidades.permisos_constantes import (
+from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from modelos.permiso_modelo import (
     PERMISO_BORRAR_DESTINOS,
     PERMISO_CREAR_DESTINOS,
     PERMISO_EDITAR_DESTINOS,

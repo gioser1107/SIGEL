@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from database import get_db
-from utilidades.ubicacion_utilidad import listar_ciudades_por_estado, listar_estados
+from modelos.ciudad_modelo import listar_ciudades_por_estado
+from modelos.estado_modelo import listar_estados
 
 router = APIRouter(prefix="/ubicaciones", tags=["Ubicaciones"])
 
