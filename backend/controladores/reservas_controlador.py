@@ -16,8 +16,6 @@ from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.asiento_modelo import Asiento
 from modelos.cliente_modelo import Cliente
 from modelos.punto_recogida_modelo import PuntoRecogida
-from modelos.ciudad_modelo import Ciudad
-from modelos.estado_modelo import Estado
 from utilidades.bitacora_utilidad import obtener_ip_origen, registrar_evento
 from utilidades.viaje_utilidad import viaje_disponible_para_reserva, viaje_reserva_a_dict
 from utilidades.permisos_constantes import (
@@ -29,82 +27,74 @@ from utilidades.permisos_constantes import (
 
 router = APIRouter(prefix="/reservas", tags=["Reservas y Pasajeros"])
 
+
 class DatosReservaCrear(BaseModel):
     cliente_id: int
     viaje_id: int
     estado: str = "pendiente"
 
+
 class DatosReservaActualizar(BaseModel):
     estado: Optional[str] = None
 
+
 class DatosPasajeroCrear(BaseModel):
-    cliente_id: Optional[int] = None
-    nombre: str
-    apellido: str
-    tipo_documento: str
-    numero_documento: str
+    cliente_id: int
     es_menor: bool = False
     ocupa_asiento: bool = True
     precio_pasajero_eur: Decimal = Field(default=0.00, ge=0)
     recargo_eur: Decimal = Field(default=0.00, ge=0)
     notas_tarifa: Optional[str] = None
-    direccion: Optional[str] = None
-    ciudad: Optional[str] = None
-    estado_region: Optional[str] = None
     punto_recogida_id: Optional[int] = None
 
+
 class DatosPasajeroActualizar(BaseModel):
-    cliente_id: Optional[int] = None
-    nombre: Optional[str] = None
-    apellido: Optional[str] = None
-    tipo_documento: Optional[str] = None
-    numero_documento: Optional[str] = None
     es_menor: Optional[bool] = None
     ocupa_asiento: Optional[bool] = None
     precio_pasajero_eur: Optional[Decimal] = Field(default=None, ge=0)
     recargo_eur: Optional[Decimal] = Field(default=None, ge=0)
     notas_tarifa: Optional[str] = None
-    direccion: Optional[str] = None
-    ciudad: Optional[str] = None
-    estado_region: Optional[str] = None
     punto_recogida_id: Optional[int] = None
+
 
 class DatosAsientoReservadoCrear(BaseModel):
     asiento_id: int
 
+
+# Acompañante desde el portal público: se busca por doc o se crea
 class DatosPasajeroExtraPublico(BaseModel):
+    tipo_documento: str = "V"
+    numero_documento: str
     nombre: str
     apellido: str
-    numero_documento: Optional[str] = None
-    direccion: Optional[str] = None
-    ciudad: Optional[str] = None
-    estado_region: Optional[str] = None
     punto_recogida_id: Optional[int] = None
+
 
 class DatosReservaClientePublico(BaseModel):
     viaje_id: int
     titular_punto_recogida_id: Optional[int] = None
     pasajeros_extra: List[DatosPasajeroExtraPublico] = []
 
+
 def _obtener_reserva_activa(db: Session, reserva_id: int) -> Reserva:
-    consulta = db.query(Reserva).filter(
+    reserva = db.query(Reserva).filter(
         Reserva.id == reserva_id,
         Reserva.eliminado_en.is_(None)
-    )
-    reserva = consulta.first()
+    ).first()
     if not reserva:
         raise HTTPException(status_code=404, detail="Reserva no encontrada")
     return reserva
 
+
 def _obtener_pasajero_activo(db: Session, reserva_id: int, pasajero_id: int) -> ReservaCliente:
-    consulta = db.query(ReservaCliente).filter(
+    pasajero = db.query(ReservaCliente).filter(
         ReservaCliente.id == pasajero_id,
         ReservaCliente.reserva_id == reserva_id
-    )
-    pasajero = consulta.first()
+    ).first()
     if not pasajero:
         raise HTTPException(status_code=404, detail="Pasajero no encontrado en esta reserva")
     return pasajero
+
 
 def _validar_viaje_para_reserva(db: Session, viaje_id: int) -> Viaje:
     viaje = db.query(Viaje).filter(
@@ -113,13 +103,57 @@ def _validar_viaje_para_reserva(db: Session, viaje_id: int) -> Viaje:
     ).first()
     if not viaje:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
-
     if not viaje_disponible_para_reserva(db, viaje):
         raise HTTPException(
             status_code=400,
-            detail="El viaje no esta disponible para reservar (sin unidad, sin asientos o cupo completo)",
+            detail="El viaje no está disponible para reservar (sin unidad, sin asientos o cupo completo)",
         )
     return viaje
+
+
+def _buscar_o_crear_cliente(db: Session, tipo_doc: str, num_doc: str, nombre: str, apellido: str) -> Cliente:
+    """Busca un cliente por documento. Si no existe lo crea como cliente natural."""
+    cliente = db.query(Cliente).filter(
+        Cliente.numero_documento == num_doc.strip(),
+        Cliente.eliminado_en.is_(None)
+    ).first()
+    if cliente:
+        return cliente
+
+    ahora = datetime.now()
+    nuevo = Cliente(
+        tipo_cliente="natural",
+        tipo_documento=tipo_doc or "V",
+        numero_documento=num_doc.strip(),
+        nombre=nombre,
+        apellido=apellido,
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    db.add(nuevo)
+    db.flush()
+    return nuevo
+
+
+def _pasajero_a_dict(p: ReservaCliente, cliente: Cliente, punto_nombre: Optional[str]) -> dict:
+    return {
+        "id": p.id,
+        "reserva_id": p.reserva_id,
+        "cliente_id": p.cliente_id,
+        "es_titular": p.es_titular,
+        "nombre": cliente.nombre,
+        "apellido": cliente.apellido,
+        "tipo_documento": cliente.tipo_documento,
+        "numero_documento": cliente.numero_documento,
+        "es_menor": p.es_menor,
+        "ocupa_asiento": p.ocupa_asiento,
+        "precio_pasajero_eur": float(p.precio_pasajero_eur),
+        "recargo_eur": float(p.recargo_eur),
+        "notas_tarifa": p.notas_tarifa,
+        "punto_recogida_id": p.punto_recogida_id,
+        "punto_recogida_nombre": punto_nombre,
+    }
+
 
 @router.get("/viajes-disponibles")
 def listar_viajes_disponibles_para_reserva(
@@ -135,13 +169,8 @@ def listar_viajes_disponibles_para_reserva(
         .order_by(Viaje.fecha_salida.asc())
         .all()
     )
+    return [viaje_reserva_a_dict(db, v) for v in viajes if viaje_disponible_para_reserva(db, v)]
 
-    resultado = []
-    for viaje in viajes:
-        if viaje_disponible_para_reserva(db, viaje):
-            resultado.append(viaje_reserva_a_dict(db, viaje))
-
-    return resultado
 
 @router.post("/cliente")
 def crear_reserva_desde_landing(
@@ -171,15 +200,6 @@ def crear_reserva_desde_landing(
         if not punto:
             raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
 
-    ciudad_nombre = None
-    estado_nombre = None
-    if cliente.ciudad_id:
-        ciudad_obj = db.query(Ciudad).filter(Ciudad.id == cliente.ciudad_id).first()
-        ciudad_nombre = ciudad_obj.nombre if ciudad_obj else None
-    if cliente.estado_id:
-        estado_obj = db.query(Estado).filter(Estado.id == cliente.estado_id).first()
-        estado_nombre = estado_obj.nombre if estado_obj else None
-
     ahora = datetime.now()
 
     nueva_reserva = Reserva(
@@ -197,17 +217,11 @@ def crear_reserva_desde_landing(
     titular = ReservaCliente(
         reserva_id=nueva_reserva.id,
         cliente_id=cliente_id,
-        nombre=cliente.nombre,
-        apellido=cliente.apellido,
-        tipo_documento=cliente.tipo_documento,
-        numero_documento=cliente.numero_documento,
+        es_titular=True,
         es_menor=False,
         ocupa_asiento=True,
         precio_pasajero_eur=0,
         recargo_eur=0,
-        direccion=cliente.direccion,
-        ciudad=ciudad_nombre,
-        estado_region=estado_nombre,
         punto_recogida_id=datos.titular_punto_recogida_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -215,25 +229,30 @@ def crear_reserva_desde_landing(
     db.add(titular)
 
     for p in datos.pasajeros_extra:
-        pasajero = ReservaCliente(
+        acomp = _buscar_o_crear_cliente(
+            db, p.tipo_documento, p.numero_documento, p.nombre, p.apellido
+        )
+        # Evitar duplicar al mismo cliente en la misma reserva
+        ya_existe = db.query(ReservaCliente).filter(
+            ReservaCliente.reserva_id == nueva_reserva.id,
+            ReservaCliente.cliente_id == acomp.id,
+            ReservaCliente.eliminado_en.is_(None)
+        ).first()
+        if ya_existe:
+            continue
+
+        db.add(ReservaCliente(
             reserva_id=nueva_reserva.id,
-            cliente_id=None,
-            nombre=p.nombre,
-            apellido=p.apellido,
-            tipo_documento=None,
-            numero_documento=p.numero_documento,
+            cliente_id=acomp.id,
+            es_titular=False,
             es_menor=False,
             ocupa_asiento=True,
             precio_pasajero_eur=0,
             recargo_eur=0,
-            direccion=p.direccion,
-            ciudad=p.ciudad,
-            estado_region=p.estado_region,
             punto_recogida_id=p.punto_recogida_id,
             creado_en=ahora,
             actualizado_en=ahora,
-        )
-        db.add(pasajero)
+        ))
 
     db.commit()
     db.refresh(nueva_reserva)
@@ -246,6 +265,7 @@ def crear_reserva_desde_landing(
     )
 
     return {"mensaje": "Reserva creada con éxito", "reserva_id": nueva_reserva.id}
+
 
 @router.get("")
 def listar_reservas(
@@ -263,20 +283,19 @@ def listar_reservas(
     if estado:
         consulta = consulta.filter(Reserva.estado == estado)
 
-    lista = consulta.order_by(Reserva.creado_en.desc()).all()
-    
-    resultado = []
-    for r in lista:
-        resultado.append({
+    return [
+        {
             "id": r.id,
             "cliente_id": r.cliente_id,
             "viaje_id": r.viaje_id,
             "fecha_reserva": r.fecha_reserva,
             "estado": r.estado,
             "creado_en": r.creado_en,
-            "actualizado_en": r.actualizado_en
-        })
-    return resultado
+            "actualizado_en": r.actualizado_en,
+        }
+        for r in consulta.order_by(Reserva.creado_en.desc()).all()
+    ]
+
 
 @router.post("")
 def crear_reserva(
@@ -318,6 +337,7 @@ def crear_reserva(
         }
     }
 
+
 @router.get("/{reserva_id}")
 def obtener_reserva(
     reserva_id: int,
@@ -333,6 +353,7 @@ def obtener_reserva(
         "estado": reserva.estado,
         "creado_en": reserva.creado_en,
     }
+
 
 @router.put("/{reserva_id}")
 def actualizar_reserva(
@@ -360,6 +381,7 @@ def actualizar_reserva(
 
     return {"mensaje": "Reserva actualizada con éxito"}
 
+
 @router.delete("/{reserva_id}")
 def eliminar_reserva(
     reserva_id: int,
@@ -382,6 +404,7 @@ def eliminar_reserva(
 
     return {"mensaje": "Reserva eliminada"}
 
+
 @router.get("/{reserva_id}/pasajeros")
 def listar_pasajeros(
     reserva_id: int,
@@ -389,10 +412,22 @@ def listar_pasajeros(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
 ):
     _obtener_reserva_activa(db, reserva_id)
-    pasajeros = db.query(ReservaCliente).filter(
-        ReservaCliente.reserva_id == reserva_id,
-        ReservaCliente.eliminado_en.is_(None)
-    ).order_by(ReservaCliente.creado_en).all()
+
+    pasajeros = (
+        db.query(ReservaCliente)
+        .filter(
+            ReservaCliente.reserva_id == reserva_id,
+            ReservaCliente.eliminado_en.is_(None)
+        )
+        .order_by(ReservaCliente.es_titular.desc(), ReservaCliente.creado_en)
+        .all()
+    )
+
+    cliente_ids = [p.cliente_id for p in pasajeros]
+    clientes = {
+        c.id: c
+        for c in db.query(Cliente).filter(Cliente.id.in_(cliente_ids)).all()
+    }
 
     punto_ids = {p.punto_recogida_id for p in pasajeros if p.punto_recogida_id}
     puntos = {}
@@ -402,25 +437,13 @@ def listar_pasajeros(
 
     resultado = []
     for p in pasajeros:
-        resultado.append({
-            "id": p.id,
-            "cliente_id": p.cliente_id,
-            "nombre": p.nombre,
-            "apellido": p.apellido,
-            "tipo_documento": p.tipo_documento,
-            "numero_documento": p.numero_documento,
-            "es_menor": p.es_menor,
-            "ocupa_asiento": p.ocupa_asiento,
-            "precio_pasajero_eur": float(p.precio_pasajero_eur),
-            "recargo_eur": float(p.recargo_eur),
-            "notas_tarifa": p.notas_tarifa,
-            "direccion": p.direccion,
-            "ciudad": p.ciudad,
-            "estado_region": p.estado_region,
-            "punto_recogida_id": p.punto_recogida_id,
-            "punto_recogida_nombre": puntos.get(p.punto_recogida_id),
-        })
+        cliente = clientes.get(p.cliente_id)
+        if not cliente:
+            continue
+        resultado.append(_pasajero_a_dict(p, cliente, puntos.get(p.punto_recogida_id)))
+
     return resultado
+
 
 @router.post("/{reserva_id}/pasajeros")
 def agregar_pasajero(
@@ -432,21 +455,20 @@ def agregar_pasajero(
 ):
     _obtener_reserva_activa(db, reserva_id)
 
-    direccion = datos.direccion
-    ciudad = datos.ciudad
-    estado_region = datos.estado_region
+    cliente = db.query(Cliente).filter(
+        Cliente.id == datos.cliente_id,
+        Cliente.eliminado_en.is_(None)
+    ).first()
+    if not cliente:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado. Debe estar registrado en el sistema.")
 
-    if datos.cliente_id:
-        cliente = db.query(Cliente).filter(Cliente.id == datos.cliente_id).first()
-        if cliente:
-            if not direccion and cliente.direccion:
-                direccion = cliente.direccion
-            if not ciudad and cliente.ciudad_id:
-                ciudad_obj = db.query(Ciudad).filter(Ciudad.id == cliente.ciudad_id).first()
-                ciudad = ciudad_obj.nombre if ciudad_obj else None
-            if not estado_region and cliente.estado_id:
-                estado_obj = db.query(Estado).filter(Estado.id == cliente.estado_id).first()
-                estado_region = estado_obj.nombre if estado_obj else None
+    duplicado = db.query(ReservaCliente).filter(
+        ReservaCliente.reserva_id == reserva_id,
+        ReservaCliente.cliente_id == datos.cliente_id,
+        ReservaCliente.eliminado_en.is_(None)
+    ).first()
+    if duplicado:
+        raise HTTPException(status_code=400, detail="Este cliente ya está registrado en esta reserva")
 
     if datos.punto_recogida_id:
         punto = db.query(PuntoRecogida).filter(
@@ -456,22 +478,20 @@ def agregar_pasajero(
         if not punto:
             raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
 
+    # Marca titular si el cliente coincide con el que hizo la reserva
+    reserva = _obtener_reserva_activa(db, reserva_id)
+    es_el_titular = (datos.cliente_id == reserva.cliente_id)
+
     ahora = datetime.now()
     nuevo_pasajero = ReservaCliente(
         reserva_id=reserva_id,
         cliente_id=datos.cliente_id,
-        nombre=datos.nombre,
-        apellido=datos.apellido,
-        tipo_documento=datos.tipo_documento,
-        numero_documento=datos.numero_documento,
+        es_titular=es_el_titular,
         es_menor=datos.es_menor,
         ocupa_asiento=datos.ocupa_asiento,
         precio_pasajero_eur=datos.precio_pasajero_eur,
         recargo_eur=datos.recargo_eur,
         notas_tarifa=datos.notas_tarifa,
-        direccion=direccion,
-        ciudad=ciudad,
-        estado_region=estado_region,
         punto_recogida_id=datos.punto_recogida_id,
         creado_en=ahora,
         actualizado_en=ahora
@@ -482,12 +502,13 @@ def agregar_pasajero(
 
     registrar_evento(
         db, modulo="reservas", accion="INSERT",
-        resumen=f"Pasajero {nuevo_pasajero.id} agregado a reserva {reserva_id}",
+        resumen=f"Pasajero {nuevo_pasajero.id} (cliente {datos.cliente_id}) agregado a reserva {reserva_id}",
         usuario_id=usuario_actual["id"], tabla_afectada="reserva_clientes",
         registro_id=nuevo_pasajero.id, ip_origen=obtener_ip_origen(request)
     )
 
     return {"mensaje": "Pasajero agregado", "pasajero_id": nuevo_pasajero.id}
+
 
 @router.put("/{reserva_id}/pasajeros/{pasajero_id}")
 def actualizar_pasajero(
@@ -500,19 +521,16 @@ def actualizar_pasajero(
 ):
     pasajero = _obtener_pasajero_activo(db, reserva_id, pasajero_id)
 
-    if datos.cliente_id is not None: pasajero.cliente_id = datos.cliente_id
-    if datos.nombre is not None: pasajero.nombre = datos.nombre
-    if datos.apellido is not None: pasajero.apellido = datos.apellido
-    if datos.tipo_documento is not None: pasajero.tipo_documento = datos.tipo_documento
-    if datos.numero_documento is not None: pasajero.numero_documento = datos.numero_documento
-    if datos.es_menor is not None: pasajero.es_menor = datos.es_menor
-    if datos.ocupa_asiento is not None: pasajero.ocupa_asiento = datos.ocupa_asiento
-    if datos.precio_pasajero_eur is not None: pasajero.precio_pasajero_eur = datos.precio_pasajero_eur
-    if datos.recargo_eur is not None: pasajero.recargo_eur = datos.recargo_eur
-    if datos.notas_tarifa is not None: pasajero.notas_tarifa = datos.notas_tarifa
-    if datos.direccion is not None: pasajero.direccion = datos.direccion
-    if datos.ciudad is not None: pasajero.ciudad = datos.ciudad
-    if datos.estado_region is not None: pasajero.estado_region = datos.estado_region
+    if datos.es_menor is not None:
+        pasajero.es_menor = datos.es_menor
+    if datos.ocupa_asiento is not None:
+        pasajero.ocupa_asiento = datos.ocupa_asiento
+    if datos.precio_pasajero_eur is not None:
+        pasajero.precio_pasajero_eur = datos.precio_pasajero_eur
+    if datos.recargo_eur is not None:
+        pasajero.recargo_eur = datos.recargo_eur
+    if datos.notas_tarifa is not None:
+        pasajero.notas_tarifa = datos.notas_tarifa
     if "punto_recogida_id" in datos.model_fields_set:
         if datos.punto_recogida_id is not None:
             punto = db.query(PuntoRecogida).filter(
@@ -525,7 +543,7 @@ def actualizar_pasajero(
 
     pasajero.actualizado_en = datetime.now()
     db.commit()
-    
+
     registrar_evento(
         db, modulo="reservas", accion="UPDATE",
         resumen=f"Pasajero {pasajero_id} de reserva {reserva_id} editado",
@@ -534,6 +552,7 @@ def actualizar_pasajero(
     )
 
     return {"mensaje": "Pasajero actualizado"}
+
 
 @router.delete("/{reserva_id}/pasajeros/{pasajero_id}")
 def eliminar_pasajero(
@@ -563,6 +582,7 @@ def eliminar_pasajero(
 
     return {"mensaje": "Pasajero eliminado"}
 
+
 @router.get("/{reserva_id}/pasajeros/{pasajero_id}/asientos")
 def listar_asientos_pasajero(
     reserva_id: int,
@@ -576,14 +596,8 @@ def listar_asientos_pasajero(
         AsientoReservado.eliminado_en.is_(None)
     ).all()
 
-    resultado = []
-    for a in asientos:
-        resultado.append({
-            "id": a.id,
-            "asiento_id": a.asiento_id,
-            "viaje_id": a.viaje_id,
-        })
-    return resultado
+    return [{"id": a.id, "asiento_id": a.asiento_id, "viaje_id": a.viaje_id} for a in asientos]
+
 
 @router.post("/{reserva_id}/pasajeros/{pasajero_id}/asientos")
 def asignar_asiento_pasajero(
@@ -631,6 +645,7 @@ def asignar_asiento_pasajero(
     )
 
     return {"mensaje": "Asiento asignado", "asiento_reservado_id": nuevo_asiento.id}
+
 
 @router.delete("/{reserva_id}/pasajeros/{pasajero_id}/asientos/{asiento_reservado_id}")
 def quitar_asiento_pasajero(
