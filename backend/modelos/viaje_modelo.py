@@ -11,10 +11,8 @@ from modelos.asiento_modelo import Asiento
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.costo_operativo_modelo import CostoOperativo
 from modelos.destino_modelo import Destino, IMAGEN_DEFAULT, imagenes_destino
-from modelos.punto_recogida_modelo import PuntoRecogida
 from modelos.unidad_transporte_modelo import UnidadTransporte
 from modelos.usuario_modelo import Usuario, nombre_completo_de
-from modelos.viaje_parada_modelo import ViajeParadaRecogida
 
 
 class Viaje(Base):
@@ -215,26 +213,24 @@ def viaje_a_dict(db: Session, viaje: Viaje) -> dict:
     }
 
 
-def obtener_punto_recogida_activo(db: Session, punto_id: int) -> PuntoRecogida:
-    punto = db.query(PuntoRecogida).filter(
-        PuntoRecogida.id == punto_id,
-        PuntoRecogida.eliminado_en.is_(None),
-    ).first()
-    if punto is None:
-        raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
-    return punto
+def obtener_viaje_detalle(db: Session, viaje_id: int) -> dict:
+    from modelos.viaje_ruta_recogida_modelo import listar_ruta_recogida
 
+    viaje = obtener_viaje_activo(db, viaje_id)
+    detalle = viaje_a_dict(db, viaje)
 
-def parada_a_dict(db: Session, parada: ViajeParadaRecogida) -> dict:
-    punto = db.query(PuntoRecogida).filter(PuntoRecogida.id == parada.punto_recogida_id).first()
-    return {
-        "viaje_id": parada.viaje_id,
-        "orden": parada.orden,
-        "punto_recogida_id": parada.punto_recogida_id,
-        "punto_nombre": punto.nombre if punto is not None else None,
-        "hora_programada": parada.hora_programada,
-        "notas": parada.notas,
-    }
+    costos = (
+        db.query(CostoOperativo)
+        .filter(
+            CostoOperativo.viaje_id == viaje_id,
+            CostoOperativo.eliminado_en.is_(None),
+        )
+        .all()
+    )
+
+    detalle["ruta_recogida"] = listar_ruta_recogida(db, viaje_id)
+    detalle["costos"] = [costo_a_dict(c) for c in costos]
+    return detalle
 
 
 def costo_a_dict(costo: CostoOperativo, incluir_viaje_id: bool = False) -> dict:
@@ -269,34 +265,6 @@ def listar_viajes(
 
     consulta = consulta.order_by(Viaje.fecha_salida.desc())
     return [viaje_a_dict(db, v) for v in consulta.all()]
-
-
-def obtener_viaje_detalle(db: Session, viaje_id: int) -> dict:
-    viaje = obtener_viaje_activo(db, viaje_id)
-    detalle = viaje_a_dict(db, viaje)
-
-    paradas = (
-        db.query(ViajeParadaRecogida)
-        .filter(
-            ViajeParadaRecogida.viaje_id == viaje_id,
-            ViajeParadaRecogida.eliminado_en.is_(None),
-        )
-        .order_by(ViajeParadaRecogida.orden)
-        .all()
-    )
-
-    costos = (
-        db.query(CostoOperativo)
-        .filter(
-            CostoOperativo.viaje_id == viaje_id,
-            CostoOperativo.eliminado_en.is_(None),
-        )
-        .all()
-    )
-
-    detalle["paradas"] = [parada_a_dict(db, p) for p in paradas]
-    detalle["costos"] = [costo_a_dict(c) for c in costos]
-    return detalle
 
 
 def crear_viaje(
@@ -378,120 +346,6 @@ def eliminar_viaje(db: Session, viaje_id: int) -> None:
     ahora = datetime.now()
     viaje.eliminado_en = ahora
     viaje.actualizado_en = ahora
-    db.commit()
-
-
-def listar_paradas(db: Session, viaje_id: int) -> list[dict]:
-    obtener_viaje_activo(db, viaje_id)
-
-    paradas = (
-        db.query(ViajeParadaRecogida)
-        .filter(
-            ViajeParadaRecogida.viaje_id == viaje_id,
-            ViajeParadaRecogida.eliminado_en.is_(None),
-        )
-        .order_by(ViajeParadaRecogida.orden)
-        .all()
-    )
-    return [parada_a_dict(db, p) for p in paradas]
-
-
-def crear_parada(
-    db: Session,
-    viaje_id: int,
-    punto_recogida_id: int,
-    orden: int,
-    hora_programada: Optional[datetime] = None,
-    notas: Optional[str] = None,
-) -> dict:
-    obtener_viaje_activo(db, viaje_id)
-    obtener_punto_recogida_activo(db, punto_recogida_id)
-
-    if db.query(ViajeParadaRecogida).filter(
-        ViajeParadaRecogida.viaje_id == viaje_id,
-        ViajeParadaRecogida.orden == orden,
-        ViajeParadaRecogida.eliminado_en.is_(None),
-    ).first() is not None:
-        raise HTTPException(status_code=400, detail="Ya existe una parada con ese orden en el viaje")
-
-    if db.query(ViajeParadaRecogida).filter(
-        ViajeParadaRecogida.viaje_id == viaje_id,
-        ViajeParadaRecogida.punto_recogida_id == punto_recogida_id,
-        ViajeParadaRecogida.eliminado_en.is_(None),
-    ).first() is not None:
-        raise HTTPException(status_code=400, detail="Ese punto de recogida ya está en la ruta del viaje")
-
-    ahora = datetime.now()
-    nueva_parada = ViajeParadaRecogida(
-        viaje_id=viaje_id,
-        orden=orden,
-        punto_recogida_id=punto_recogida_id,
-        hora_programada=hora_programada,
-        notas=notas,
-        creado_en=ahora,
-        actualizado_en=ahora,
-    )
-
-    db.add(nueva_parada)
-    db.commit()
-
-    return parada_a_dict(db, nueva_parada)
-
-
-def actualizar_parada(
-    db: Session,
-    viaje_id: int,
-    orden: int,
-    punto_recogida_id: Optional[int] = None,
-    hora_programada: Optional[datetime] = None,
-    notas: Optional[str] = None,
-) -> dict:
-    obtener_viaje_activo(db, viaje_id)
-
-    parada = db.query(ViajeParadaRecogida).filter(
-        ViajeParadaRecogida.viaje_id == viaje_id,
-        ViajeParadaRecogida.orden == orden,
-        ViajeParadaRecogida.eliminado_en.is_(None),
-    ).first()
-    if parada is None:
-        raise HTTPException(status_code=404, detail="Parada no encontrada")
-
-    if punto_recogida_id is not None:
-        obtener_punto_recogida_activo(db, punto_recogida_id)
-        if db.query(ViajeParadaRecogida).filter(
-            ViajeParadaRecogida.viaje_id == viaje_id,
-            ViajeParadaRecogida.punto_recogida_id == punto_recogida_id,
-            ViajeParadaRecogida.orden != orden,
-            ViajeParadaRecogida.eliminado_en.is_(None),
-        ).first() is not None:
-            raise HTTPException(status_code=400, detail="Ese punto ya está en la ruta del viaje")
-        parada.punto_recogida_id = punto_recogida_id
-
-    if hora_programada is not None:
-        parada.hora_programada = hora_programada
-    if notas is not None:
-        parada.notas = notas
-
-    parada.actualizado_en = datetime.now()
-    db.commit()
-
-    return parada_a_dict(db, parada)
-
-
-def eliminar_parada(db: Session, viaje_id: int, orden: int) -> None:
-    obtener_viaje_activo(db, viaje_id)
-
-    parada = db.query(ViajeParadaRecogida).filter(
-        ViajeParadaRecogida.viaje_id == viaje_id,
-        ViajeParadaRecogida.orden == orden,
-        ViajeParadaRecogida.eliminado_en.is_(None),
-    ).first()
-    if parada is None:
-        raise HTTPException(status_code=404, detail="Parada no encontrada")
-
-    ahora = datetime.now()
-    parada.eliminado_en = ahora
-    parada.actualizado_en = ahora
     db.commit()
 
 
@@ -664,31 +518,14 @@ def calcular_duracion(fecha_salida: datetime, fecha_regreso: datetime | None) ->
 
 def viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
     destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
-    unidad = db.query(UnidadTransporte).filter(UnidadTransporte.id == viaje.unidad_id).first()
     nombre_destino = destino.nombre if destino is not None else "Viaje"
     descripcion_destino = destino.descripcion if destino is not None else ""
     precio = float(destino.precio_base_eur) if destino is not None and destino.precio_base_eur is not None else 0
     recargo_menor = float(destino.recargo_menor_eur) if destino is not None and destino.recargo_menor_eur is not None else 0
     portada, _ = imagenes_destino(db, viaje.destino_id) if destino is not None else (IMAGEN_DEFAULT, [])
 
-    paradas = (
-        db.query(ViajeParadaRecogida, PuntoRecogida)
-        .join(PuntoRecogida, PuntoRecogida.id == ViajeParadaRecogida.punto_recogida_id)
-        .filter(
-            ViajeParadaRecogida.viaje_id == viaje.id,
-            ViajeParadaRecogida.eliminado_en.is_(None),
-        )
-        .order_by(ViajeParadaRecogida.orden)
-        .all()
-    )
-    paradas_resumen = [
-        {
-            "orden": p.orden,
-            "nombre": punto.nombre,
-            "hora_programada": p.hora_programada,
-        }
-        for p, punto in paradas
-    ]
+    disponibilidad = calcular_disponibilidad_viaje(db, viaje)
+    unidad_activa = obtener_unidad_activa_viaje(db, viaje)
 
     fecha_clave = viaje.fecha_salida.strftime("%Y-%m-%d")
     duracion = calcular_duracion(viaje.fecha_salida, viaje.fecha_regreso)
@@ -707,7 +544,9 @@ def viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
         "recargo_menor_eur": recargo_menor,
         "imagen": portada,
         "hora": formatear_hora(viaje.fecha_salida),
-        "cupos": unidad.capacidad if unidad is not None else 0,
+        "cupos": disponibilidad["asientos_disponibles"],
+        "cupos_totales": disponibilidad["total_asientos"],
+        "disponibilidad": disponibilidad,
         "duracion": duracion,
         "dificultad": dificultad,
         "descripcion": descripcion_destino or f"Salida programada a {nombre_destino}.",
@@ -715,8 +554,7 @@ def viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
         "fecha_salida": viaje.fecha_salida,
         "fecha_regreso": viaje.fecha_regreso,
         "estado": viaje.estado,
-        "unidad_placa": unidad.placa if unidad is not None else None,
-        "paradas": paradas_resumen,
+        "unidad_placa": unidad_activa.placa if unidad_activa is not None else None,
     }
 
 
@@ -726,11 +564,14 @@ def estadisticas_catalogo(db: Session) -> dict:
         Destino.activo.is_(True),
         Destino.eliminado_en.is_(None),
     ).count()
-    viajes_proximos = db.query(Viaje).filter(
+    viajes_candidatos = db.query(Viaje).filter(
         Viaje.eliminado_en.is_(None),
         Viaje.estado == "planificado",
         Viaje.fecha_salida >= ahora,
-    ).count()
+    ).all()
+    viajes_proximos = sum(
+        1 for viaje in viajes_candidatos if viaje_disponible_para_reserva(db, viaje)
+    )
     return {
         "destinos_activos": destinos_activos,
         "viajes_proximos": viajes_proximos,
@@ -771,7 +612,12 @@ def listar_viajes_catalogo(
         consulta = consulta.filter(Viaje.fecha_salida <= hasta)
 
     consulta = consulta.order_by(Viaje.fecha_salida.asc())
-    return [viaje_catalogo_dict(db, v) for v in consulta.all()]
+    viajes = consulta.all()
+    return [
+        viaje_catalogo_dict(db, v)
+        for v in viajes
+        if viaje_disponible_para_reserva(db, v)
+    ]
 
 
 def obtener_viaje_catalogo(db: Session, viaje_id: int) -> dict:
@@ -782,34 +628,6 @@ def obtener_viaje_catalogo(db: Session, viaje_id: int) -> dict:
     ).first()
     if viaje is None:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
+    if not viaje_disponible_para_reserva(db, viaje):
+        raise HTTPException(status_code=404, detail="Viaje no disponible para reservar")
     return viaje_catalogo_dict(db, viaje)
-
-
-def obtener_paradas_viaje_publico(db: Session, viaje_id: int) -> list[dict]:
-    viaje = db.query(Viaje).filter(
-        Viaje.id == viaje_id,
-        Viaje.eliminado_en.is_(None),
-    ).first()
-    if viaje is None:
-        raise HTTPException(status_code=404, detail="Viaje no encontrado")
-
-    paradas = (
-        db.query(ViajeParadaRecogida, PuntoRecogida)
-        .join(PuntoRecogida, PuntoRecogida.id == ViajeParadaRecogida.punto_recogida_id)
-        .filter(
-            ViajeParadaRecogida.viaje_id == viaje_id,
-            ViajeParadaRecogida.eliminado_en.is_(None),
-        )
-        .order_by(ViajeParadaRecogida.orden)
-        .all()
-    )
-
-    return [
-        {
-            "punto_recogida_id": p.punto_recogida_id,
-            "punto_nombre": punto.nombre,
-            "orden": p.orden,
-            "hora_programada": p.hora_programada,
-        }
-        for p, punto in paradas
-    ]

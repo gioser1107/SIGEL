@@ -9,9 +9,19 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.asiento_modelo import Asiento
 from modelos.asiento_reservado_modelo import AsientoReservado
-from modelos.cliente_modelo import Cliente
+from modelos.cliente_modelo import (
+    Cliente,
+    buscar_ciudad,
+    buscar_estado,
+    registrar_cliente_para_reserva,
+)
 from modelos.destino_modelo import Destino
-from modelos.punto_recogida_modelo import PuntoRecogida
+from modelos.punto_recogida_modelo import (
+    PuntoRecogida,
+    obtener_punto_predeterminado_cliente,
+    punto_recogida_a_dict,
+    validar_punto_recogida_del_cliente,
+)
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.viaje_modelo import Viaje, viaje_disponible_para_reserva, viaje_reserva_a_dict
 
@@ -69,49 +79,41 @@ def validar_viaje_para_reserva(db: Session, viaje_id: int) -> Viaje:
     return viaje
 
 
-def buscar_o_crear_cliente(
-    db: Session, tipo_doc: str, num_doc: str, nombre: str, apellido: str,
-) -> Cliente:
-    cliente = db.query(Cliente).filter(
-        Cliente.tipo_documento == tipo_doc,
-        Cliente.numero_documento == num_doc.strip(),
-        Cliente.eliminado_en.is_(None),
-    ).first()
-    if cliente:
-        return cliente
-
-    ahora = datetime.now()
-    nuevo = Cliente(
-        tipo_cliente="natural",
-        tipo_documento=tipo_doc or "V",
-        numero_documento=num_doc.strip(),
-        nombre=nombre,
-        apellido=apellido,
-        creado_en=ahora,
-        actualizado_en=ahora,
-    )
-    db.add(nuevo)
-    db.flush()
-    return nuevo
-
-
-def pasajero_a_dict(p: ReservaCliente, cliente: Cliente, punto_nombre: Optional[str]) -> dict:
+def pasajero_a_dict(
+    db: Session,
+    p: ReservaCliente,
+    cliente: Cliente,
+    punto: PuntoRecogida | None,
+) -> dict:
+    estado = buscar_estado(db, cliente.estado_id)
+    ciudad = buscar_ciudad(db, cliente.ciudad_id)
+    punto_dict = punto_recogida_a_dict(punto) if punto else None
     return {
         "id": p.id,
         "reserva_id": p.reserva_id,
         "cliente_id": p.cliente_id,
         "es_titular": p.es_titular,
-        "nombre": cliente.nombre,
-        "apellido": cliente.apellido,
+        "tipo_cliente": cliente.tipo_cliente,
         "tipo_documento": cliente.tipo_documento,
         "numero_documento": cliente.numero_documento,
+        "nombre": cliente.nombre,
+        "apellido": cliente.apellido,
+        "razon_social": cliente.razon_social,
+        "telefono": cliente.telefono,
+        "telefono_secundario": cliente.telefono_secundario,
+        "direccion": cliente.direccion,
+        "estado_id": cliente.estado_id,
+        "estado": estado.nombre if estado else None,
+        "ciudad_id": cliente.ciudad_id,
+        "ciudad": ciudad.nombre if ciudad else None,
         "es_menor": p.es_menor,
         "ocupa_asiento": p.ocupa_asiento,
         "precio_pasajero_eur": float(p.precio_pasajero_eur),
         "recargo_eur": float(p.recargo_eur),
         "notas_tarifa": p.notas_tarifa,
         "punto_recogida_id": p.punto_recogida_id,
-        "punto_recogida_nombre": punto_nombre,
+        "punto_recogida_nombre": punto.nombre if punto else None,
+        "punto_recogida": punto_dict,
     }
 
 
@@ -140,13 +142,8 @@ def listar_viajes_disponibles(db: Session) -> list[dict]:
     return [viaje_reserva_a_dict(db, v) for v in viajes if viaje_disponible_para_reserva(db, v)]
 
 
-def validar_punto_recogida(db: Session, punto_id: int) -> None:
-    punto = db.query(PuntoRecogida).filter(
-        PuntoRecogida.id == punto_id,
-        PuntoRecogida.eliminado_en.is_(None),
-    ).first()
-    if not punto:
-        raise HTTPException(status_code=404, detail="Punto de recogida no encontrado")
+def validar_punto_recogida(db: Session, cliente_id: int, punto_id: int) -> None:
+    validar_punto_recogida_del_cliente(db, cliente_id, punto_id)
 
 
 def crear_reserva_desde_landing(
@@ -169,8 +166,16 @@ def crear_reserva_desde_landing(
     destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
     recargo_menor = float(destino.recargo_menor_eur) if destino and destino.recargo_menor_eur else 0.0
 
-    if titular_punto_recogida_id:
-        validar_punto_recogida(db, titular_punto_recogida_id)
+    if titular_punto_recogida_id is None:
+        titular_punto_recogida_id = obtener_punto_predeterminado_cliente(db, cliente_id)
+
+    if titular_punto_recogida_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Debe registrar un domicilio de recogida en su perfil antes de reservar",
+        )
+
+    validar_punto_recogida(db, cliente_id, titular_punto_recogida_id)
 
     ahora = datetime.now()
     nueva_reserva = Reserva(
@@ -199,9 +204,14 @@ def crear_reserva_desde_landing(
     ))
 
     for p in pasajeros_extra:
-        acomp = buscar_o_crear_cliente(
-            db, p.tipo_documento, p.numero_documento, p.nombre, p.apellido,
-        )
+        acomp = registrar_cliente_para_reserva(db, p, creado_por_usuario_id=usuario_id)
+
+        if acomp.id == cliente_id:
+            raise HTTPException(
+                status_code=400,
+                detail="El titular de la reserva no puede agregarse como acompañante",
+            )
+
         ya_existe = db.query(ReservaCliente).filter(
             ReservaCliente.reserva_id == nueva_reserva.id,
             ReservaCliente.cliente_id == acomp.id,
@@ -210,16 +220,30 @@ def crear_reserva_desde_landing(
         if ya_existe:
             continue
 
-        es_menor = getattr(p, 'es_menor', False)
+        es_menor = getattr(p, "es_menor", False)
+        ocupa_asiento = getattr(p, "ocupa_asiento", None)
+        if ocupa_asiento is None:
+            ocupa_asiento = not es_menor
+
+        punto_id = getattr(p, "punto_recogida_id", None)
+        if punto_id is None:
+            punto_id = obtener_punto_predeterminado_cliente(db, acomp.id)
+        if punto_id is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"El viajero {acomp.nombre} debe tener un domicilio de recogida registrado",
+            )
+        validar_punto_recogida(db, acomp.id, punto_id)
+
         db.add(ReservaCliente(
             reserva_id=nueva_reserva.id,
             cliente_id=acomp.id,
             es_titular=False,
             es_menor=es_menor,
-            ocupa_asiento=not es_menor,
+            ocupa_asiento=ocupa_asiento,
             precio_pasajero_eur=0,
             recargo_eur=recargo_menor if es_menor else 0,
-            punto_recogida_id=p.punto_recogida_id,
+            punto_recogida_id=punto_id,
             creado_en=ahora,
             actualizado_en=ahora,
         ))
@@ -244,6 +268,54 @@ def listar_reservas(
         consulta = consulta.filter(Reserva.estado == estado)
 
     return [reserva_a_dict(r) for r in consulta.order_by(Reserva.creado_en.desc()).all()]
+
+
+def listar_mis_reservas_portal(db: Session, cliente_id: int) -> list[dict]:
+    from modelos.destino_modelo import Destino
+    from modelos.pago_modelo import calcular_resumen_pagos_reserva, listar_pagos_reserva_portal
+    from modelos.viaje_modelo import Viaje
+
+    reservas = (
+        db.query(Reserva)
+        .filter(
+            Reserva.cliente_id == cliente_id,
+            Reserva.eliminado_en.is_(None),
+        )
+        .order_by(Reserva.creado_en.desc())
+        .all()
+    )
+
+    resultado = []
+    for reserva in reservas:
+        item = reserva_a_dict(reserva)
+        item["fecha_reserva"] = (
+            reserva.fecha_reserva.isoformat() if reserva.fecha_reserva else None
+        )
+        item["creado_en"] = reserva.creado_en.isoformat() if reserva.creado_en else None
+
+        viaje = db.query(Viaje).filter(
+            Viaje.id == reserva.viaje_id,
+            Viaje.eliminado_en.is_(None),
+        ).first()
+        destino_nombre = None
+        if viaje:
+            destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
+            destino_nombre = destino.nombre if destino else None
+            item["viaje"] = {
+                "id": viaje.id,
+                "fecha_salida": viaje.fecha_salida.isoformat() if viaje.fecha_salida else None,
+                "destino_nombre": destino_nombre,
+            }
+
+        try:
+            item["resumen_pagos"] = calcular_resumen_pagos_reserva(db, reserva)
+        except ValueError:
+            item["resumen_pagos"] = None
+
+        item["pagos"] = listar_pagos_reserva_portal(db, reserva.id)
+        resultado.append(item)
+
+    return resultado
 
 
 def crear_reserva(
@@ -312,14 +384,14 @@ def listar_pasajeros_reserva(db: Session, reserva_id: int) -> list[dict]:
     puntos = {}
     if punto_ids:
         for pr in db.query(PuntoRecogida).filter(PuntoRecogida.id.in_(punto_ids)).all():
-            puntos[pr.id] = pr.nombre
+            puntos[pr.id] = pr
 
     resultado = []
     for p in pasajeros:
         cliente = clientes.get(p.cliente_id)
         if not cliente:
             continue
-        resultado.append(pasajero_a_dict(p, cliente, puntos.get(p.punto_recogida_id)))
+        resultado.append(pasajero_a_dict(db, p, cliente, puntos.get(p.punto_recogida_id)))
     return resultado
 
 
@@ -351,8 +423,14 @@ def agregar_pasajero(
     if duplicado:
         raise HTTPException(status_code=400, detail="Este cliente ya está registrado en esta reserva")
 
-    if punto_recogida_id:
-        validar_punto_recogida(db, punto_recogida_id)
+    if punto_recogida_id is None:
+        punto_recogida_id = obtener_punto_predeterminado_cliente(db, cliente_id)
+    if punto_recogida_id is None:
+        raise HTTPException(
+            status_code=400,
+            detail="El viajero debe tener un domicilio de recogida registrado",
+        )
+    validar_punto_recogida(db, cliente_id, punto_recogida_id)
 
     es_el_titular = cliente_id == reserva.cliente_id
     ahora = datetime.now()
@@ -388,6 +466,7 @@ def actualizar_pasajero(
     actualizar_punto: bool,
 ) -> ReservaCliente:
     pasajero = obtener_pasajero_activo(db, reserva_id, pasajero_id)
+    reserva = obtener_reserva_activa(db, reserva_id)
 
     if es_menor is not None:
         pasajero.es_menor = es_menor
@@ -401,7 +480,7 @@ def actualizar_pasajero(
         pasajero.notas_tarifa = notas_tarifa
     if actualizar_punto:
         if punto_recogida_id is not None:
-            validar_punto_recogida(db, punto_recogida_id)
+            validar_punto_recogida(db, pasajero.cliente_id, punto_recogida_id)
         pasajero.punto_recogida_id = punto_recogida_id
 
     pasajero.actualizado_en = datetime.now()

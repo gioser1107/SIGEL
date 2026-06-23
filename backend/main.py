@@ -114,7 +114,7 @@ def ruta_raiz_api():
             "reservas": "/api/reservas",
             "asientos": "/api/asientos",
             "unidades": "/api/unidades",
-            "puntos_recogida": "/api/puntos-recogida",
+            "puntos_recogida": "/api/puntos-recogida (solo consulta)",
             "pagos": "/api/pagos",
             "monedas": "/api/monedas",
             "metodos_pago": "/api/metodos-pago",

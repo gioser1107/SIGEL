@@ -1,56 +1,65 @@
-from fastapi import APIRouter, Depends, Request
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from database import get_db
-from dependencias.auth_dependencia import obtener_usuario_actual
-from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from dependencias.permiso_dependencia import requiere_permiso
+from modelos.permiso_modelo import PERMISO_LEER_PUNTOS_RECOGIDA
 from modelos.punto_recogida_modelo import (
-    crear_punto_recogida_publico,
-    listar_puntos_recogida_activos,
+    listar_domicilios_recogida,
+    listar_puntos_por_cliente,
+    obtener_domicilio_recogida,
 )
 
-router = APIRouter(prefix="/puntos-recogida", tags=["Puntos de Recogida"])
-
-
-class DatosPuntoRecogidaPublico(BaseModel):
-    nombre: str
-    direccion: str | None = None
-    ciudad: str | None = None
-    estado: str | None = None
-    notas_referencia: str | None = None
+router = APIRouter(
+    prefix="/puntos-recogida",
+    tags=["Puntos de recogida (solo consulta)"],
+)
 
 
 @router.get("")
-def listar_puntos_recogida(db: Session = Depends(get_db)):
-    return listar_puntos_recogida_activos(db)
-
-
-@router.post("/publico")
-def crear_punto_recogida_publico_endpoint(
-    datos: DatosPuntoRecogidaPublico,
-    request: Request,
+def listar_domicilios_recogida_endpoint(
+    cliente_id: int | None = Query(default=None, description="Filtrar por cliente"),
+    buscar: str | None = Query(
+        default=None,
+        description="Buscar por nombre, dirección, ciudad, cliente o documento",
+    ),
+    solo_activos: bool = Query(default=True),
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(obtener_usuario_actual),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PUNTOS_RECOGIDA)),
 ):
-    nuevo_punto = crear_punto_recogida_publico(
+    """
+    Consulta de domicilios de recogida vinculados a clientes.
+
+    Solo lectura. Para crear, editar o eliminar domicilios use:
+    - Admin: POST/PUT/DELETE /api/clientes/{cliente_id}/puntos-recogida
+    - Cliente: /api/clientes/mi-perfil/puntos-recogida
+    """
+    return listar_domicilios_recogida(
         db,
-        nombre=datos.nombre,
-        direccion=datos.direccion,
-        ciudad=datos.ciudad,
-        estado=datos.estado,
-        notas_referencia=datos.notas_referencia,
+        cliente_id=cliente_id,
+        buscar=buscar,
+        solo_activos=solo_activos,
     )
 
-    registrar_evento(
-        db,
-        modulo="puntos_recogida",
-        accion="INSERT",
-        resumen=f"Punto de recogida '{nuevo_punto.nombre}' creado desde landing por usuario {usuario_actual['id']}",
-        usuario_id=usuario_actual["id"],
-        tabla_afectada="puntos_recogida",
-        registro_id=nuevo_punto.id,
-        ip_origen=obtener_ip_origen(request),
-    )
 
-    return {"id": nuevo_punto.id, "nombre": nuevo_punto.nombre}
+@router.get("/cliente/{cliente_id}")
+def listar_domicilios_por_cliente_endpoint(
+    cliente_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PUNTOS_RECOGIDA)),
+):
+    domicilios = listar_puntos_por_cliente(db, cliente_id)
+    return {
+        "cliente_id": cliente_id,
+        "total": len(domicilios),
+        "domicilios": domicilios,
+    }
+
+
+@router.get("/{punto_recogida_id}")
+def obtener_domicilio_recogida_endpoint(
+    punto_recogida_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PUNTOS_RECOGIDA)),
+):
+    return obtener_domicilio_recogida(db, punto_recogida_id)

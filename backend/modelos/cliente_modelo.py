@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.ciudad_modelo import Ciudad
 from modelos.estado_modelo import Estado
+from modelos.punto_recogida_modelo import asignar_puntos_a_cliente, listar_puntos_por_cliente
 from modelos.rol_modelo import Rol
 
 if TYPE_CHECKING:
@@ -156,7 +157,96 @@ def validar_ubicacion(db: Session, estado_id: int | None, ciudad_id: int | None)
 def cliente_respuesta(db: Session, cliente: Cliente, usuario: Usuario | None) -> dict:
     estado = buscar_estado(db, cliente.estado_id)
     ciudad = buscar_ciudad(db, cliente.ciudad_id)
-    return cliente_a_dict(cliente, usuario, estado, ciudad)
+    respuesta = cliente_a_dict(cliente, usuario, estado, ciudad)
+    respuesta["puntos_recogida"] = listar_puntos_por_cliente(db, cliente.id)
+    return respuesta
+
+
+def buscar_cliente_por_documento(
+    db: Session,
+    tipo_documento: str,
+    numero_documento: str,
+) -> Cliente | None:
+    return db.query(Cliente).filter(
+        Cliente.tipo_documento == tipo_documento,
+        Cliente.numero_documento == numero_documento.strip(),
+        Cliente.eliminado_en.is_(None),
+    ).first()
+
+
+def buscar_cliente_por_documento_respuesta(
+    db: Session,
+    tipo_documento: str,
+    numero_documento: str,
+) -> dict | None:
+    cliente = buscar_cliente_por_documento(db, tipo_documento, numero_documento)
+    if cliente is None:
+        return None
+    usuario = buscar_usuario_cliente(db, cliente)
+    return {"cliente": cliente_respuesta(db, cliente, usuario)}
+
+
+def registrar_cliente_para_reserva(
+    db: Session,
+    datos,
+    creado_por_usuario_id: int | None,
+) -> Cliente:
+    tipo_documento = datos.tipo_documento or "V"
+    numero_documento = datos.numero_documento.strip()
+    if not numero_documento:
+        raise HTTPException(status_code=422, detail="El número de documento es requerido")
+
+    validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
+
+    cliente_existente = buscar_cliente_por_documento(db, tipo_documento, numero_documento)
+    if cliente_existente is not None:
+        punto_ids = getattr(datos, "punto_recogida_ids", None)
+        puntos_nuevos = getattr(datos, "puntos_recogida", None)
+        if punto_ids or puntos_nuevos:
+            asignar_puntos_a_cliente(
+                db,
+                cliente_existente.id,
+                punto_recogida_ids=punto_ids,
+                puntos_nuevos=puntos_nuevos,
+                creado_por_usuario_id=creado_por_usuario_id,
+            )
+        return cliente_existente
+
+    ahora = datetime.now()
+    nuevo_cliente = Cliente(
+        usuario_id=None,
+        tipo_cliente=getattr(datos, "tipo_cliente", None) or "natural",
+        tipo_documento=tipo_documento,
+        numero_documento=numero_documento,
+        nombre=datos.nombre,
+        apellido=datos.apellido,
+        razon_social=getattr(datos, "razon_social", None),
+        telefono=getattr(datos, "telefono", None),
+        telefono_secundario=getattr(datos, "telefono_secundario", None),
+        direccion=getattr(datos, "direccion", None),
+        estado_id=getattr(datos, "estado_id", None),
+        ciudad_id=getattr(datos, "ciudad_id", None),
+        notas=getattr(datos, "notas", None),
+        creado_por=creado_por_usuario_id,
+        actualizado_por=creado_por_usuario_id,
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    db.add(nuevo_cliente)
+    db.flush()
+
+    punto_ids = getattr(datos, "punto_recogida_ids", None)
+    puntos_nuevos = getattr(datos, "puntos_recogida", None)
+    if punto_ids or puntos_nuevos:
+        asignar_puntos_a_cliente(
+            db,
+            nuevo_cliente.id,
+            punto_recogida_ids=punto_ids,
+            puntos_nuevos=puntos_nuevos,
+            creado_por_usuario_id=creado_por_usuario_id,
+        )
+
+    return nuevo_cliente
 
 
 def validar_documento_no_repetido(
@@ -233,6 +323,19 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
     )
 
     db.add(nuevo_cliente)
+    db.flush()
+
+    punto_ids = getattr(datos, "punto_recogida_ids", None)
+    puntos_nuevos = getattr(datos, "puntos_recogida", None)
+    if punto_ids or puntos_nuevos:
+        asignar_puntos_a_cliente(
+            db,
+            nuevo_cliente.id,
+            punto_recogida_ids=punto_ids,
+            puntos_nuevos=puntos_nuevos,
+            creado_por_usuario_id=usuario_actual_id,
+        )
+
     db.commit()
     db.refresh(nuevo_cliente)
 
@@ -301,6 +404,17 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
 
     if datos.notas is not None:
         cliente.notas = datos.notas
+
+    punto_ids = getattr(datos, "punto_recogida_ids", None)
+    puntos_nuevos = getattr(datos, "puntos_recogida", None)
+    if punto_ids or puntos_nuevos:
+        asignar_puntos_a_cliente(
+            db,
+            cliente.id,
+            punto_recogida_ids=punto_ids,
+            puntos_nuevos=puntos_nuevos,
+            creado_por_usuario_id=usuario_actual_id,
+        )
 
     cliente.actualizado_en = datetime.now()
     cliente.actualizado_por = usuario_actual_id

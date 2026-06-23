@@ -15,20 +15,21 @@ from modelos.permiso_modelo import (
     PERMISO_LEER_PLANIFICACION,
     PERMISO_LEER_RESERVAS,
 )
+from modelos.viaje_ruta_recogida_modelo import (
+    guardar_ruta_recogida,
+    listar_candidatos_ruta_recogida,
+    listar_ruta_recogida,
+)
 from modelos.viaje_modelo import (
     actualizar_costo,
-    actualizar_parada,
     actualizar_viaje,
     asientos_disponibles,
     costo_a_dict,
     crear_costo,
-    crear_parada,
     crear_viaje,
     eliminar_costo,
-    eliminar_parada,
     eliminar_viaje,
     listar_costos,
-    listar_paradas,
     listar_viajes,
     obtener_viaje_detalle,
     resumen_costos,
@@ -56,17 +57,15 @@ class DatosViajeActualizar(BaseModel):
     estado: str | None = None
 
 
-class DatosParadaCrear(BaseModel):
-    punto_recogida_id: int
+class DatosRutaRecogidaItem(BaseModel):
+    reserva_cliente_id: int
     orden: int = Field(gt=0)
     hora_programada: datetime | None = None
     notas: str | None = None
 
 
-class DatosParadaActualizar(BaseModel):
-    punto_recogida_id: int | None = None
-    hora_programada: datetime | None = None
-    notas: str | None = None
+class DatosRutaRecogidaGuardar(BaseModel):
+    paradas: list[DatosRutaRecogidaItem] = []
 
 
 class DatosCostoCrear(BaseModel):
@@ -206,111 +205,49 @@ def eliminar_viaje_endpoint(
     }
 
 
-@router.get("/{viaje_id}/paradas")
-def listar_paradas_endpoint(
+@router.get("/{viaje_id}/ruta-recogida/candidatos")
+def listar_candidatos_ruta_recogida_endpoint(
     viaje_id: int,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
-    return listar_paradas(db, viaje_id)
+    return listar_candidatos_ruta_recogida(db, viaje_id)
 
 
-@router.post("/{viaje_id}/paradas")
-def crear_parada_endpoint(
+@router.get("/{viaje_id}/ruta-recogida")
+def listar_ruta_recogida_endpoint(
     viaje_id: int,
-    datos: DatosParadaCrear,
-    request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_PLANIFICACION)),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
-    parada = crear_parada(
-        db,
-        viaje_id,
-        punto_recogida_id=datos.punto_recogida_id,
-        orden=datos.orden,
-        hora_programada=datos.hora_programada,
-        notas=datos.notas,
-    )
-
-    registrar_evento(
-        db,
-        modulo="viajes",
-        accion="INSERT",
-        resumen=f"Parada creada en viaje {viaje_id} (orden {datos.orden})",
-        usuario_id=usuario_actual["id"],
-        tabla_afectada="viajes_paradas_recogida",
-        registro_id=f"{viaje_id}-{datos.orden}",
-        detalle={"viaje_id": viaje_id, "orden": datos.orden, "punto_recogida_id": datos.punto_recogida_id},
-        ip_origen=obtener_ip_origen(request),
-    )
-
-    return {
-        "mensaje": "Parada de recogida registrada con éxito",
-        "parada": parada,
-    }
+    return listar_ruta_recogida(db, viaje_id)
 
 
-@router.put("/{viaje_id}/paradas/{orden}")
-def actualizar_parada_endpoint(
+@router.put("/{viaje_id}/ruta-recogida")
+def guardar_ruta_recogida_endpoint(
     viaje_id: int,
-    orden: int,
-    datos: DatosParadaActualizar,
+    datos: DatosRutaRecogidaGuardar,
     request: Request,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_PLANIFICACION)),
 ):
-    parada = actualizar_parada(
-        db,
-        viaje_id,
-        orden,
-        punto_recogida_id=datos.punto_recogida_id,
-        hora_programada=datos.hora_programada,
-        notas=datos.notas,
-    )
+    resultado = guardar_ruta_recogida(db, viaje_id, datos.paradas)
 
     registrar_evento(
         db,
         modulo="viajes",
         accion="UPDATE",
-        resumen=f"Parada actualizada en viaje {viaje_id} (orden {orden})",
+        resumen=f"Ruta de recogida actualizada en viaje {viaje_id} ({len(datos.paradas)} paradas)",
         usuario_id=usuario_actual["id"],
-        tabla_afectada="viajes_paradas_recogida",
-        registro_id=f"{viaje_id}-{orden}",
-        detalle=datos.model_dump(exclude_none=True),
+        tabla_afectada="viajes_ruta_recogida",
+        registro_id=viaje_id,
+        detalle={"paradas": len(datos.paradas)},
         ip_origen=obtener_ip_origen(request),
     )
 
     return {
-        "mensaje": "Parada actualizada con éxito",
-        "parada": parada,
-    }
-
-
-@router.delete("/{viaje_id}/paradas/{orden}")
-def eliminar_parada_endpoint(
-    viaje_id: int,
-    orden: int,
-    request: Request,
-    db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_PLANIFICACION)),
-):
-    eliminar_parada(db, viaje_id, orden)
-
-    registrar_evento(
-        db,
-        modulo="viajes",
-        accion="DELETE",
-        resumen=f"Parada eliminada en viaje {viaje_id} (orden {orden})",
-        usuario_id=usuario_actual["id"],
-        tabla_afectada="viajes_paradas_recogida",
-        registro_id=f"{viaje_id}-{orden}",
-        ip_origen=obtener_ip_origen(request),
-    )
-
-    return {
-        "mensaje": "Parada eliminada con éxito",
-        "viaje_id": viaje_id,
-        "orden": orden,
+        "mensaje": "Ruta de recogida guardada",
+        **resultado,
     }
 
 

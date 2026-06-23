@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
+import base64
+import re
 
 from fastapi import HTTPException
 from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Numeric, String
@@ -9,6 +11,7 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.banco_modelo import Banco
 from modelos.destino_modelo import Destino
+from modelos.destino_imagen_modelo import PREFIJO_ARCHIVOS, procesar_y_guardar_bytes_comprobante
 from modelos.metodo_pago_modelo import MetodoPago
 from modelos.moneda_modelo import Moneda
 from modelos.punto_venta_modelo import PuntoVenta
@@ -17,7 +20,13 @@ from modelos.reservas_modelo import Reserva
 from modelos.tasa_modelo import Tasa
 from modelos.viaje_modelo import Viaje
 
-METODOS_PAGO_REQUIEREN_VALIDACION = ("pago_movil", "zelle")
+METODOS_PAGO_REQUIEREN_VALIDACION = ("pago_movil", "transferencia", "zelle")
+MAX_COMPROBANTE_URL = 500
+ETIQUETAS_ESTADO_PAGO = {
+    "en_validacion": "Pendiente de validacion",
+    "aprobado": "Aprobado",
+    "rechazado": "Rechazado",
+}
 
 
 class Pago(Base):
@@ -47,6 +56,42 @@ class Pago(Base):
     eliminado_en = Column(DateTime, nullable=True)
 
 
+def normalizar_comprobante_url(comprobante_url: Optional[str]) -> Optional[str]:
+    if comprobante_url is None:
+        return None
+
+    limpio = comprobante_url.strip()
+    if not limpio:
+        return None
+
+    if limpio.startswith("data:image"):
+        coincidencia = re.match(r"^data:image/[\w+.-]+;base64,(.+)$", limpio, re.DOTALL)
+        if not coincidencia:
+            raise HTTPException(status_code=400, detail="Formato de comprobante base64 invalido")
+        try:
+            contenido = base64.b64decode(coincidencia.group(1), validate=True)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Comprobante base64 invalido") from exc
+        return procesar_y_guardar_bytes_comprobante(contenido)
+
+    if len(limpio) > MAX_COMPROBANTE_URL:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "comprobante_url demasiado largo. Sube la imagen con "
+                "POST /api/pagos/portal/comprobante/upload y envia la URL corta"
+            ),
+        )
+
+    if limpio.startswith(PREFIJO_ARCHIVOS) or limpio.startswith("http://") or limpio.startswith("https://"):
+        return limpio
+
+    raise HTTPException(
+        status_code=400,
+        detail="comprobante_url debe ser una URL http(s) o ruta /api/archivos/...",
+    )
+
+
 def obtener_pago_activo(db: Session, reserva_id: int, pago_id: int) -> Pago:
     pago = db.query(Pago).filter(
         Pago.id == pago_id,
@@ -56,6 +101,92 @@ def obtener_pago_activo(db: Session, reserva_id: int, pago_id: int) -> Pago:
     if not pago:
         raise HTTPException(status_code=404, detail="Pago no encontrado en esta reserva")
     return pago
+
+
+def obtener_reserva_del_cliente(db: Session, reserva_id: int, cliente_id: int) -> Reserva:
+    reserva = db.query(Reserva).filter(
+        Reserva.id == reserva_id,
+        Reserva.eliminado_en.is_(None),
+    ).first()
+    if reserva is None:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    if reserva.cliente_id != cliente_id:
+        raise HTTPException(status_code=403, detail="No tienes acceso a esta reserva")
+    return reserva
+
+
+def calcular_monto_en_moneda_desde_eur(
+    db: Session,
+    monto_eur: float,
+    metodo_pago_id: int,
+    tasa_id: int,
+) -> dict:
+    if monto_eur <= 0:
+        raise HTTPException(status_code=400, detail="El monto en EUR debe ser mayor a cero")
+
+    metodo = validar_metodo_pago(db, metodo_pago_id)
+    tasa = validar_tasa(db, tasa_id)
+    moneda = buscar_moneda_por_id(db, metodo.moneda_id)
+    moneda_tasa = buscar_moneda_por_id(db, tasa.moneda_id)
+    if not moneda or not moneda_tasa:
+        raise HTTPException(status_code=400, detail="Moneda del metodo o tasa no encontrada")
+
+    valor_tasa = float(tasa.valor)
+    if valor_tasa <= 0:
+        raise HTTPException(status_code=400, detail="La tasa indicada no es valida")
+
+    if moneda.codigo == "EUR":
+        monto_moneda = monto_eur
+    elif moneda.codigo == "VES" and moneda_tasa.codigo == "EUR":
+        monto_moneda = round(monto_eur * valor_tasa, 2)
+    elif moneda.codigo == "USD":
+        tasa_eur_info = obtener_tasa_eur_reciente(db)
+        if not tasa_eur_info:
+            raise HTTPException(status_code=400, detail="No hay tasa EUR disponible para conversion")
+        valor_eur = float(tasa_eur_info[0].valor)
+        monto_moneda = round((monto_eur * valor_eur) / valor_tasa, 2) if valor_tasa > 0 else 0
+    else:
+        monto_moneda = round(monto_eur * valor_tasa, 2)
+
+    return {
+        "monto_eur": _redondear_eur(monto_eur),
+        "monto": monto_moneda,
+        "moneda": moneda_a_dict(moneda),
+        "tasa": tasa_a_dict(tasa, moneda_tasa),
+        "metodo_pago": metodo_pago_a_dict(metodo, moneda),
+    }
+
+
+def obtener_resumen_pago_portal(db: Session, reserva: Reserva) -> dict:
+    resumen = calcular_resumen_pagos_reserva(db, reserva)
+    tasa_dia = obtener_tasa_eur_del_dia(db)
+    catalogo = obtener_catalogo_pagos(db)
+
+    cotizaciones = []
+    saldo_eur = resumen["saldo_pendiente_eur"]
+    if tasa_dia and saldo_eur > 0:
+        for metodo in catalogo["metodos_pago"]:
+            if metodo["moneda"]["codigo"] == "VES":
+                try:
+                    cotizaciones.append(
+                        calcular_monto_en_moneda_desde_eur(
+                            db,
+                            saldo_eur,
+                            metodo["id"],
+                            tasa_dia["tasa"]["id"],
+                        )
+                    )
+                except HTTPException:
+                    continue
+
+    return {
+        "resumen": resumen,
+        "tasa_eur": tasa_dia,
+        "metodos_pago": catalogo["metodos_pago"],
+        "bancos": catalogo["bancos"],
+        "puntos_venta": catalogo["puntos_venta"],
+        "cotizacion_saldo_pendiente": cotizaciones,
+    }
 
 
 def determinar_estado_inicial_pago(codigo_metodo: str, registro_desde_admin: bool) -> str:
@@ -137,13 +268,23 @@ def pago_a_dict(
         "telefono_origen": pago.telefono_origen,
         "correo_origen": pago.correo_origen,
         "comprobante_url": pago.comprobante_url,
+        "tiene_comprobante": bool(pago.comprobante_url),
         "validado_por": pago.validado_por,
-        "validado_en": pago.validado_en,
+        "validado_en": pago.validado_en.isoformat() if pago.validado_en else None,
         "notas": pago.notas,
         "creado_por": pago.creado_por,
-        "creado_en": pago.creado_en,
-        "actualizado_en": pago.actualizado_en,
+        "creado_en": pago.creado_en.isoformat() if pago.creado_en else None,
+        "actualizado_en": pago.actualizado_en.isoformat() if pago.actualizado_en else None,
     }
+
+
+def cargar_datos_pago_portal(db: Session, pago: Pago) -> dict:
+    detalle = cargar_datos_pago(db, pago)
+    monto_eur, conversion_aproximada = convertir_monto_pago_a_eur(db, pago)
+    detalle["monto_eur"] = monto_eur
+    detalle["conversion_aproximada"] = conversion_aproximada
+    detalle["estado_etiqueta"] = ETIQUETAS_ESTADO_PAGO.get(pago.estado, pago.estado)
+    return detalle
 
 
 def buscar_moneda_por_id(db: Session, moneda_id: int) -> Moneda | None:
@@ -586,6 +727,52 @@ def listar_pagos_reserva(db: Session, reserva_id: int) -> list[dict]:
     return [cargar_datos_pago(db, pago) for pago in pagos]
 
 
+def listar_pagos_reserva_portal(db: Session, reserva_id: int) -> list[dict]:
+    pagos = (
+        db.query(Pago)
+        .filter(Pago.reserva_id == reserva_id, Pago.eliminado_en.is_(None))
+        .order_by(Pago.creado_en.desc())
+        .all()
+    )
+    return [cargar_datos_pago_portal(db, pago) for pago in pagos]
+
+
+def obtener_pago_portal_cliente(
+    db: Session,
+    reserva_id: int,
+    pago_id: int,
+    cliente_id: int,
+) -> dict:
+    obtener_reserva_del_cliente(db, reserva_id, cliente_id)
+    pago = obtener_pago_activo(db, reserva_id, pago_id)
+    return cargar_datos_pago_portal(db, pago)
+
+
+def listar_pagos_cliente_portal(db: Session, cliente_id: int) -> list[dict]:
+    filas = (
+        db.query(Pago, Reserva)
+        .join(Reserva, Reserva.id == Pago.reserva_id)
+        .filter(
+            Reserva.cliente_id == cliente_id,
+            Reserva.eliminado_en.is_(None),
+            Pago.eliminado_en.is_(None),
+        )
+        .order_by(Pago.creado_en.desc())
+        .all()
+    )
+
+    resultado = []
+    for pago, reserva in filas:
+        detalle = cargar_datos_pago_portal(db, pago)
+        detalle["reserva"] = {
+            "id": reserva.id,
+            "estado": reserva.estado,
+            "viaje_id": reserva.viaje_id,
+        }
+        resultado.append(detalle)
+    return resultado
+
+
 def registrar_pago_reserva(
     db: Session,
     reserva: Reserva,
@@ -603,6 +790,7 @@ def registrar_pago_reserva(
     comprobante_url: Optional[str],
     notas: Optional[str],
     usuario_id: int,
+    registro_desde_admin: bool = True,
 ) -> Pago:
     metodo = validar_metodo_pago(db, metodo_pago_id)
     validar_tasa(db, tasa_id)
@@ -610,9 +798,10 @@ def registrar_pago_reserva(
     validar_banco(db, banco_destino_id, "banco_destino_id")
     validar_punto_venta(db, punto_venta_id)
     validar_tipo_pago(tipo)
+    comprobante_url = normalizar_comprobante_url(comprobante_url)
 
     ahora = datetime.now()
-    estado_inicial = determinar_estado_inicial_pago(metodo.codigo, registro_desde_admin=True)
+    estado_inicial = determinar_estado_inicial_pago(metodo.codigo, registro_desde_admin)
     nuevo_pago = Pago(
         reserva_id=reserva.id,
         metodo_pago_id=metodo_pago_id,
@@ -713,7 +902,7 @@ def actualizar_pago_reserva(
         pago.correo_origen = correo_origen
 
     if comprobante_url is not None:
-        pago.comprobante_url = comprobante_url
+        pago.comprobante_url = normalizar_comprobante_url(comprobante_url)
 
     if notas is not None:
         pago.notas = notas

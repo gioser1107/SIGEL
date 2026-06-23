@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from controladores.cliente_controlador import DatosPuntoRecogidaInline
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from modelos.usuario_modelo import iniciar_sesion, registrar_cliente_portal
@@ -29,6 +30,8 @@ class DatosRegistroCliente(BaseModel):
     direccion: str | None = None
     estado_id: int | None = None
     ciudad_id: int | None = None
+    punto_recogida_ids: list[int] | None = None
+    puntos_recogida: list[DatosPuntoRecogidaInline] | None = None
 
 
 @router.post("/login")

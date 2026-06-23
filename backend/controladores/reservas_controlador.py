@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from controladores.cliente_controlador import DatosPuntoRecogidaInline
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
@@ -15,6 +16,7 @@ from modelos.permiso_modelo import (
     PERMISO_EDITAR_RESERVAS,
     PERMISO_LEER_RESERVAS,
 )
+from modelos.cliente_modelo import es_rol_cliente, registrar_cliente_para_reserva
 from modelos.reservas_modelo import (
     actualizar_pasajero,
     actualizar_reserva,
@@ -25,6 +27,7 @@ from modelos.reservas_modelo import (
     eliminar_pasajero,
     eliminar_reserva,
     listar_asientos_pasajero,
+    listar_mis_reservas_portal,
     listar_pasajeros_reserva,
     listar_reservas,
     listar_viajes_disponibles,
@@ -33,7 +36,24 @@ from modelos.reservas_modelo import (
     reserva_a_dict,
 )
 
-router = APIRouter(prefix="/reservas", tags=["Reservas y Pasajeros"])
+router = APIRouter(prefix="/reservas", tags=["Reservas y Viajeros"])
+
+
+class DatosViajeroRegistro(BaseModel):
+    tipo_cliente: str = "natural"
+    tipo_documento: str
+    numero_documento: str
+    nombre: str
+    apellido: str
+    razon_social: Optional[str] = None
+    telefono: Optional[str] = None
+    telefono_secundario: Optional[str] = None
+    direccion: Optional[str] = None
+    estado_id: Optional[int] = None
+    ciudad_id: Optional[int] = None
+    notas: Optional[str] = None
+    punto_recogida_ids: Optional[List[int]] = None
+    puntos_recogida: Optional[List[DatosPuntoRecogidaInline]] = None
 
 
 class DatosReservaCrear(BaseModel):
@@ -47,9 +67,10 @@ class DatosReservaActualizar(BaseModel):
 
 
 class DatosPasajeroCrear(BaseModel):
-    cliente_id: int
+    cliente_id: Optional[int] = None
+    cliente: Optional[DatosViajeroRegistro] = None
     es_menor: bool = False
-    ocupa_asiento: bool = True
+    ocupa_asiento: Optional[bool] = None
     precio_pasajero_eur: Decimal = Field(default=0.00, ge=0)
     recargo_eur: Decimal = Field(default=0.00, ge=0)
     notas_tarifa: Optional[str] = None
@@ -69,19 +90,57 @@ class DatosAsientoReservadoCrear(BaseModel):
     asiento_id: int
 
 
-class DatosPasajeroExtraPublico(BaseModel):
-    tipo_documento: str = "V"
-    numero_documento: str
-    nombre: str
-    apellido: str
+class DatosPasajeroExtraPublico(DatosViajeroRegistro):
     es_menor: bool = False
+    ocupa_asiento: Optional[bool] = None
     punto_recogida_id: Optional[int] = None
 
 
 class DatosReservaClientePublico(BaseModel):
     viaje_id: int
     titular_punto_recogida_id: Optional[int] = None
+    acompanantes: List[DatosPasajeroExtraPublico] = []
     pasajeros_extra: List[DatosPasajeroExtraPublico] = []
+
+
+def _acompanantes_de_reserva(datos: DatosReservaClientePublico) -> List[DatosPasajeroExtraPublico]:
+    if datos.acompanantes:
+        return datos.acompanantes
+    return datos.pasajeros_extra
+
+
+def _resolver_cliente_id_pasajero(
+    db: Session,
+    datos: DatosPasajeroCrear,
+    usuario_actual_id: int,
+) -> int:
+    if datos.cliente_id is not None:
+        return datos.cliente_id
+    if datos.cliente is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Indica cliente_id o los datos completos del cliente en 'cliente'",
+        )
+    cliente = registrar_cliente_para_reserva(db, datos.cliente, usuario_actual_id)
+    db.commit()
+    db.refresh(cliente)
+    return cliente.id
+
+
+def _requiere_cliente_sesion_reserva(usuario_actual: dict) -> int:
+    cliente_id = usuario_actual.get("cliente_id")
+    if cliente_id is None or not es_rol_cliente(usuario_actual.get("rol", "")):
+        raise HTTPException(status_code=403, detail="Solo clientes pueden usar este recurso")
+    return cliente_id
+
+
+@router.get("/portal/mis-reservas")
+def listar_mis_reservas_portal_endpoint(
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    cliente_id = _requiere_cliente_sesion_reserva(usuario_actual)
+    return listar_mis_reservas_portal(db, cliente_id)
 
 
 @router.get("/viajes-disponibles")
@@ -109,7 +168,7 @@ def crear_reserva_desde_landing_endpoint(
         cliente_id=cliente_id,
         usuario_id=usuario_actual["id"],
         titular_punto_recogida_id=datos.titular_punto_recogida_id,
-        pasajeros_extra=datos.pasajeros_extra,
+        pasajeros_extra=_acompanantes_de_reserva(datos),
     )
 
     registrar_evento(
@@ -232,11 +291,14 @@ def agregar_pasajero_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
 ):
+    cliente_id = _resolver_cliente_id_pasajero(db, datos, usuario_actual["id"])
+    ocupa_asiento = datos.ocupa_asiento if datos.ocupa_asiento is not None else not datos.es_menor
+
     nuevo_pasajero = agregar_pasajero(
         db, reserva_id,
-        cliente_id=datos.cliente_id,
+        cliente_id=cliente_id,
         es_menor=datos.es_menor,
-        ocupa_asiento=datos.ocupa_asiento,
+        ocupa_asiento=ocupa_asiento,
         precio_pasajero_eur=datos.precio_pasajero_eur,
         recargo_eur=datos.recargo_eur,
         notas_tarifa=datos.notas_tarifa,
@@ -250,7 +312,7 @@ def agregar_pasajero_endpoint(
         registro_id=nuevo_pasajero.id, ip_origen=obtener_ip_origen(request),
     )
 
-    return {"mensaje": "Pasajero agregado", "pasajero_id": nuevo_pasajero.id}
+    return {"mensaje": "Viajero agregado", "pasajero_id": nuevo_pasajero.id, "cliente_id": cliente_id}
 
 
 @router.put("/{reserva_id}/pasajeros/{pasajero_id}")

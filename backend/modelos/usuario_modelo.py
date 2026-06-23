@@ -12,13 +12,12 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.cliente_modelo import (
     Cliente,
-    buscar_ciudad,
-    buscar_estado,
-    cliente_a_dict,
     obtener_cliente_por_usuario_id,
     obtener_rol_cliente,
     validar_ubicacion,
 )
+from modelos.punto_recogida_modelo import asignar_puntos_a_cliente
+from modelos.cliente_modelo import cliente_respuesta
 from modelos.rol_modelo import Rol
 
 directorio_backend = Path(__file__).resolve().parent.parent
@@ -333,8 +332,6 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
         )
 
     validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
-    estado = buscar_estado(db, datos.estado_id)
-    ciudad = buscar_ciudad(db, datos.ciudad_id)
 
     ahora = datetime.now()
     hash_contrasena = hashear_contrasena(datos.contrasena)
@@ -391,6 +388,19 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
         if nuevo_cliente.creado_por is None:
             nuevo_cliente.creado_por = nuevo_usuario.id
 
+    db.flush()
+
+    punto_ids = getattr(datos, "punto_recogida_ids", None)
+    puntos_nuevos = getattr(datos, "puntos_recogida", None)
+    if punto_ids or puntos_nuevos:
+        asignar_puntos_a_cliente(
+            db,
+            nuevo_cliente.id,
+            punto_recogida_ids=punto_ids,
+            puntos_nuevos=puntos_nuevos,
+            creado_por_usuario_id=nuevo_usuario.id,
+        )
+
     db.commit()
     db.refresh(nuevo_cliente)
     db.refresh(nuevo_usuario)
@@ -401,7 +411,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
         nuevo_usuario.rol_id,
     )
 
-    cliente_dict = cliente_a_dict(nuevo_cliente, nuevo_usuario, estado, ciudad)
+    cliente_dict = cliente_respuesta(db, nuevo_cliente, nuevo_usuario)
     cliente_dict["rol"] = rol_cliente.nombre
     cliente_dict["permisos"] = obtener_permisos_del_rol(db, nuevo_usuario.rol_id)
     cliente_dict["cliente_id"] = nuevo_cliente.id

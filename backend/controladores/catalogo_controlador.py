@@ -11,7 +11,6 @@ from modelos.destino_modelo import (
 from modelos.viaje_modelo import (
     estadisticas_catalogo,
     listar_viajes_catalogo,
-    obtener_paradas_viaje_publico,
     obtener_viaje_catalogo,
 )
 
@@ -53,8 +52,3 @@ def listar_viajes_catalogo_endpoint(
 @router.get("/viajes/{viaje_id}")
 def obtener_viaje_catalogo_endpoint(viaje_id: int, db: Session = Depends(get_db)):
     return obtener_viaje_catalogo(db, viaje_id)
-
-
-@router.get("/viajes/{viaje_id}/paradas")
-def obtener_paradas_viaje_publico_endpoint(viaje_id: int, db: Session = Depends(get_db)):
-    return obtener_paradas_viaje_publico(db, viaje_id)

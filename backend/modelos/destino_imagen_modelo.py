@@ -110,3 +110,47 @@ async def procesar_y_guardar_imagen_destino(
     imagen_thumb.save(carpeta / nombre_thumb, "WEBP", quality=CALIDAD_WEBP, method=6)
 
     return f"{PREFIJO_ARCHIVOS}/destinos/{destino_id}/{nombre_full}"
+
+
+def procesar_y_guardar_bytes_comprobante(contenido: bytes) -> str:
+    if not contenido:
+        raise HTTPException(status_code=400, detail="El comprobante esta vacio")
+
+    if len(contenido) > MAX_BYTES:
+        raise HTTPException(status_code=400, detail="El comprobante no puede superar 10 MB")
+
+    try:
+        imagen = Image.open(io.BytesIO(contenido))
+        imagen = ImageOps.exif_transpose(imagen)
+
+        if imagen.mode == "RGBA":
+            fondo = Image.new("RGB", imagen.size, (255, 255, 255))
+            fondo.paste(imagen, mask=imagen.split()[3])
+            imagen = fondo
+        elif imagen.mode != "RGB":
+            imagen = imagen.convert("RGB")
+
+        imagen.thumbnail((MAX_LADO_PX, MAX_LADO_PX))
+    except UnidentifiedImageError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="El comprobante no es una imagen valida",
+        ) from exc
+
+    carpeta = UPLOAD_ROOT / "comprobantes"
+    carpeta.mkdir(parents=True, exist_ok=True)
+
+    nombre = f"{uuid4().hex}.webp"
+    imagen.save(carpeta / nombre, "WEBP", quality=CALIDAD_WEBP, method=6)
+    return f"{PREFIJO_ARCHIVOS}/comprobantes/{nombre}"
+
+
+async def procesar_y_guardar_comprobante_pago(archivo: UploadFile) -> str:
+    contenido = await archivo.read()
+    tipo = (archivo.content_type or "").lower()
+    if tipo and tipo not in TIPOS_PERMITIDOS:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato no permitido. Usa JPG, PNG o WebP.",
+        )
+    return procesar_y_guardar_bytes_comprobante(contenido)
