@@ -19,6 +19,7 @@ from modelos.cliente_modelo import (
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente
 from modelos.cliente_modelo import cliente_respuesta
 from modelos.rol_modelo import Rol
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 directorio_backend = Path(__file__).resolve().parent.parent
 load_dotenv(directorio_backend / ".env")
@@ -112,9 +113,15 @@ def usuario_a_dict_con_rol(db: Session, usuario: Usuario) -> dict:
     return usuario_a_dict(usuario, nombre_rol)
 
 
-def listar_usuarios(db: Session) -> list[dict]:
-    usuarios = db.query(Usuario).filter(Usuario.eliminado_en.is_(None)).all()
-    return [usuario_a_dict_con_rol(db, usuario) for usuario in usuarios]
+def listar_usuarios(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = (
+        db.query(Usuario)
+        .filter(Usuario.eliminado_en.is_(None))
+        .order_by(Usuario.apellido.asc(), Usuario.nombre.asc())
+    )
+    usuarios, total = paginar_consulta(consulta, pagina, limite)
+    items = [usuario_a_dict_con_rol(db, usuario) for usuario in usuarios]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def actualizar_mi_perfil(

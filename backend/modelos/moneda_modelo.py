@@ -5,6 +5,7 @@ from sqlalchemy import BigInteger, Column, String
 from sqlalchemy.orm import Session
 
 from database import Base
+from utilidades.paginacion import offset_pagina, paginar_consulta, respuesta_paginada
 
 
 class Moneda(Base):
@@ -40,9 +41,11 @@ def obtener_moneda(db: Session, moneda_id: int) -> Moneda:
     return moneda
 
 
-def listar_monedas(db: Session) -> list[dict]:
-    monedas = db.query(Moneda).order_by(Moneda.nombre).all()
-    return [moneda_a_dict(m) for m in monedas]
+def listar_monedas(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = db.query(Moneda).order_by(Moneda.nombre)
+    monedas, total = paginar_consulta(consulta, pagina, limite)
+    items = [moneda_a_dict(m) for m in monedas]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_moneda(db: Session, codigo: str, nombre: str, simbolo: str) -> Moneda:

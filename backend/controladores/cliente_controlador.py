@@ -418,12 +418,15 @@ def quitar_domicilio_recogida_cliente(
     return resultado
 
 
-@router.get("/")
+@router.get("")
 def listar_clientes_endpoint(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
+    buscar: str | None = Query(default=None, description="Nombre, apellido, documento, teléfono"),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_CLIENTES)),
 ):
-    return listar_clientes(db)
+    return listar_clientes(db, pagina=pagina, limite=limite, buscar=buscar)
 
 
 @router.get("/{cliente_id}")

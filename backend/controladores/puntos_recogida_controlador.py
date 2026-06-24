@@ -24,6 +24,8 @@ def listar_domicilios_recogida_endpoint(
         description="Buscar por nombre, dirección, ciudad, cliente o documento",
     ),
     solo_activos: bool = Query(default=True),
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PUNTOS_RECOGIDA)),
 ):
@@ -34,12 +36,19 @@ def listar_domicilios_recogida_endpoint(
     - Admin: POST/PUT/DELETE /api/clientes/{cliente_id}/puntos-recogida
     - Cliente: /api/clientes/mi-perfil/puntos-recogida
     """
-    return listar_domicilios_recogida(
+    resultado = listar_domicilios_recogida(
         db,
         cliente_id=cliente_id,
         buscar=buscar,
         solo_activos=solo_activos,
+        pagina=pagina,
+        limite=limite,
     )
+    return {
+        **resultado,
+        "domicilios": resultado["items"],
+        "puntos_recogida": resultado["items"],
+    }
 
 
 @router.get("/cliente/{cliente_id}")

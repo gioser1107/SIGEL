@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -61,10 +61,12 @@ class DatosImagenDestinoActualizar(BaseModel):
 
 @router.get("")
 def listar_destinos_endpoint(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_DESTINOS)),
 ):
-    return listar_destinos(db)
+    return listar_destinos(db, pagina=pagina, limite=limite)
 
 
 @router.get("/{destino_id}")

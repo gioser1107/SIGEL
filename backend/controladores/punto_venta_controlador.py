@@ -41,10 +41,12 @@ class DatosPuntoVentaActualizar(BaseModel):
 @router.get("")
 def listar_puntos_venta_endpoint(
     banco_id: int | None = Query(default=None),
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_REPORTES_PAGO)),
 ):
-    return listar_puntos_venta(db, banco_id=banco_id)
+    return listar_puntos_venta(db, banco_id=banco_id, pagina=pagina, limite=limite)
 
 
 @router.get("/{punto_id}")

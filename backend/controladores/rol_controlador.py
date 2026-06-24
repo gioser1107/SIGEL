@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -41,10 +41,12 @@ class DatosAsignarPermiso(BaseModel):
 
 @router.get("/")
 def obtener_todos_los_roles(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ROLES)),
 ):
-    return listar_roles(db)
+    return listar_roles(db, pagina=pagina, limite=limite)
 
 
 @router.get("/{rol_id}")

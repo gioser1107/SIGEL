@@ -5,6 +5,7 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String
 from sqlalchemy.orm import Session
 
 from database import Base
+from utilidades.paginacion import offset_pagina, respuesta_paginada
 
 TIPO_DOMICILIO = "domicilio"
 TIPO_PARADA = "parada"
@@ -184,7 +185,6 @@ def listar_puntos_por_cliente(db: Session, cliente_id: int) -> list[dict]:
             ClientePuntoRecogida.cliente_id == cliente_id,
             ClientePuntoRecogida.eliminado_en.is_(None),
             PuntoRecogida.eliminado_en.is_(None),
-            PuntoRecogida.tipo == TIPO_DOMICILIO,
         )
         .order_by(
             ClientePuntoRecogida.es_predeterminado.desc(),
@@ -556,10 +556,20 @@ def _cliente_resumen_domicilio(cliente) -> dict:
     }
 
 
-def _domicilio_listado_dict(vinculo: ClientePuntoRecogida, punto: PuntoRecogida, cliente) -> dict:
-    data = punto_recogida_a_dict(punto, es_predeterminado=vinculo.es_predeterminado)
-    data["cliente"] = _cliente_resumen_domicilio(cliente)
-    data["vinculo_id"] = vinculo.id
+def _domicilio_listado_dict(
+    punto: PuntoRecogida,
+    vinculo: ClientePuntoRecogida | None = None,
+    cliente=None,
+) -> dict:
+    es_predeterminado = vinculo.es_predeterminado if vinculo is not None else False
+    data = punto_recogida_a_dict(punto, es_predeterminado=es_predeterminado)
+    if vinculo is not None:
+        data["vinculo_id"] = vinculo.id
+    if cliente is not None:
+        data["cliente"] = _cliente_resumen_domicilio(cliente)
+    else:
+        data["cliente"] = None
+        data["sin_cliente"] = True
     return data
 
 
@@ -568,6 +578,9 @@ def listar_domicilios_recogida(
     cliente_id: int | None = None,
     buscar: str | None = None,
     solo_activos: bool = True,
+    incluir_sin_cliente: bool = True,
+    pagina: int = 1,
+    limite: int = 10,
 ) -> dict:
     from modelos.cliente_modelo import Cliente
     from sqlalchemy import or_
@@ -579,7 +592,6 @@ def listar_domicilios_recogida(
         .filter(
             ClientePuntoRecogida.eliminado_en.is_(None),
             PuntoRecogida.eliminado_en.is_(None),
-            PuntoRecogida.tipo == TIPO_DOMICILIO,
             Cliente.eliminado_en.is_(None),
         )
     )
@@ -609,10 +621,37 @@ def listar_domicilios_recogida(
     ).all()
 
     domicilios = [
-        _domicilio_listado_dict(vinculo, punto, cliente)
+        _domicilio_listado_dict(punto, vinculo, cliente)
         for vinculo, punto, cliente in filas
     ]
-    return {"total": len(domicilios), "domicilios": domicilios}
+    ids_listados = {item["id"] for item in domicilios}
+
+    if incluir_sin_cliente and cliente_id is None and not buscar:
+        huerfanos = (
+            db.query(PuntoRecogida)
+            .filter(
+                PuntoRecogida.eliminado_en.is_(None),
+                PuntoRecogida.tipo == TIPO_DOMICILIO,
+            )
+            .all()
+        )
+        for punto in huerfanos:
+            if punto.id in ids_listados:
+                continue
+            tiene_vinculo = db.query(ClientePuntoRecogida).filter(
+                ClientePuntoRecogida.punto_recogida_id == punto.id,
+                ClientePuntoRecogida.eliminado_en.is_(None),
+            ).first()
+            if tiene_vinculo is not None:
+                continue
+            if solo_activos and not punto.activo:
+                continue
+            domicilios.append(_domicilio_listado_dict(punto))
+
+    total = len(domicilios)
+    inicio = offset_pagina(pagina, limite)
+    items = domicilios[inicio:inicio + limite]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def obtener_domicilio_recogida(db: Session, punto_recogida_id: int) -> dict:
@@ -621,7 +660,6 @@ def obtener_domicilio_recogida(db: Session, punto_recogida_id: int) -> dict:
     punto = db.query(PuntoRecogida).filter(
         PuntoRecogida.id == punto_recogida_id,
         PuntoRecogida.eliminado_en.is_(None),
-        PuntoRecogida.tipo == TIPO_DOMICILIO,
     ).first()
     if punto is None:
         raise HTTPException(status_code=404, detail="Domicilio de recogida no encontrado")
@@ -638,12 +676,6 @@ def obtener_domicilio_recogida(db: Session, punto_recogida_id: int) -> dict:
         .all()
     )
 
-    if not filas:
-        raise HTTPException(
-            status_code=404,
-            detail="El domicilio no está vinculado a ningún cliente activo",
-        )
-
     clientes = [
         {
             **_cliente_resumen_domicilio(cliente),
@@ -655,4 +687,5 @@ def obtener_domicilio_recogida(db: Session, punto_recogida_id: int) -> dict:
 
     domicilio = punto_recogida_a_dict(punto)
     domicilio["clientes"] = clientes
+    domicilio["sin_cliente"] = len(clientes) == 0
     return {"domicilio": domicilio}

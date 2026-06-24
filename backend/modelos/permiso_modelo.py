@@ -77,6 +77,7 @@ from sqlalchemy import BigInteger, Column, DateTime, Text
 from sqlalchemy.orm import Session
 
 from database import Base
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class Permiso(Base):
@@ -106,9 +107,15 @@ def obtener_permiso_activo(db: Session, permiso_id: int) -> Permiso:
     return permiso
 
 
-def listar_permisos(db: Session) -> list[dict]:
-    permisos = db.query(Permiso).filter(Permiso.eliminado_en.is_(None)).all()
-    return [permiso_a_dict(permiso) for permiso in permisos]
+def listar_permisos(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = (
+        db.query(Permiso)
+        .filter(Permiso.eliminado_en.is_(None))
+        .order_by(Permiso.descripcion.asc())
+    )
+    permisos, total = paginar_consulta(consulta, pagina, limite)
+    items = [permiso_a_dict(permiso) for permiso in permisos]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_permiso(db: Session, descripcion: str) -> Permiso:

@@ -6,6 +6,7 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, String
 from sqlalchemy.orm import Session
 
 from database import Base
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class Banco(Base):
@@ -35,14 +36,15 @@ def obtener_banco_activo(db: Session, banco_id: int) -> Banco:
     return banco
 
 
-def listar_bancos(db: Session) -> list[dict]:
-    bancos = (
+def listar_bancos(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = (
         db.query(Banco)
         .filter(Banco.eliminado_en.is_(None))
         .order_by(Banco.nombre)
-        .all()
     )
-    return [banco_a_dict(b) for b in bancos]
+    bancos, total = paginar_consulta(consulta, pagina, limite)
+    items = [banco_a_dict(b) for b in bancos]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_banco(db: Session, codigo: str, nombre: str, activo: bool) -> Banco:

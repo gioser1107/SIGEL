@@ -11,6 +11,7 @@ from modelos.cliente_modelo import Cliente
 from modelos.destino_modelo import Destino
 from modelos.cliente_modelo import es_rol_cliente, obtener_cliente_por_usuario_id
 from modelos.usuario_modelo import nombre_completo_de
+from utilidades.paginacion import offset_pagina, respuesta_paginada
 
 
 class Cotizacion(Base):
@@ -109,13 +110,15 @@ def listar_cotizaciones(
     usuario_actual: dict,
     estado: Optional[str] = None,
     cliente_id: Optional[int] = None,
-) -> list[dict]:
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
     consulta = db.query(Cotizacion).filter(Cotizacion.eliminado_en.is_(None))
 
     if es_rol_cliente(usuario_actual.get("rol", "")):
         cliente = obtener_cliente_por_usuario_id(db, usuario_actual["id"])
         if cliente is None:
-            return []
+            return respuesta_paginada([], 0, pagina, limite)
         consulta = consulta.filter(Cotizacion.cliente_id == cliente.id)
     elif cliente_id is not None:
         consulta = consulta.filter(Cotizacion.cliente_id == cliente_id)
@@ -123,8 +126,15 @@ def listar_cotizaciones(
     if estado is not None:
         consulta = consulta.filter(Cotizacion.estado == estado)
 
-    consulta = consulta.order_by(Cotizacion.creado_en.desc())
-    return [cotizacion_a_dict(db, c) for c in consulta.all()]
+    total = consulta.count()
+    cotizaciones = (
+        consulta.order_by(Cotizacion.creado_en.desc())
+        .offset(offset_pagina(pagina, limite))
+        .limit(limite)
+        .all()
+    )
+    items = [cotizacion_a_dict(db, c) for c in cotizaciones]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def obtener_cotizacion_detalle(

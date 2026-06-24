@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from modelos.destino_imagen_modelo import DestinoImagen, eliminar_archivo_imagen
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 IMAGEN_DEFAULT = (
     "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800"
@@ -215,14 +216,15 @@ def imagen_destino_a_dict(imagen: DestinoImagen) -> dict:
     }
 
 
-def listar_destinos(db: Session) -> list[dict]:
-    destinos = (
+def listar_destinos(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = (
         db.query(Destino)
         .filter(Destino.eliminado_en.is_(None))
         .order_by(Destino.nombre.asc())
-        .all()
     )
-    return [destino_a_dict(db, destino) for destino in destinos]
+    destinos, total = paginar_consulta(consulta, pagina, limite)
+    items = [destino_a_dict(db, destino) for destino in destinos]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_destino(

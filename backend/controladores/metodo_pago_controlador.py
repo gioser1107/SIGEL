@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -36,10 +36,12 @@ class DatosMetodoPagoActualizar(BaseModel):
 
 @router.get("")
 def listar_metodos_pago_endpoint(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_REPORTES_PAGO)),
 ):
-    return listar_metodos_pago(db)
+    return listar_metodos_pago(db, pagina=pagina, limite=limite)
 
 
 @router.get("/{metodo_id}")

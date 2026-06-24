@@ -44,10 +44,12 @@ class DatosTasaActualizar(BaseModel):
 def listar_tasas_endpoint(
     moneda_id: int | None = Query(default=None),
     fecha: date | None = Query(default=None),
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_REPORTES_PAGO)),
 ):
-    return listar_tasas(db, moneda_id=moneda_id, fecha=fecha)
+    return listar_tasas(db, moneda_id=moneda_id, fecha=fecha, pagina=pagina, limite=limite)
 
 
 @router.get("/del-dia")
@@ -62,10 +64,12 @@ def obtener_tasa_del_dia(
 
 @router.get("/hoy")
 def obtener_tasas_hoy_endpoint(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_REPORTES_PAGO)),
 ):
-    return listar_tasas_hoy(db)
+    return listar_tasas_hoy(db, pagina=pagina, limite=limite)
 
 
 @router.get("/{tasa_id}")

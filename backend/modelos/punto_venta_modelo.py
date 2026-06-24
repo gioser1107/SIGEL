@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from modelos.banco_modelo import Banco, banco_a_dict, validar_banco_activo
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class PuntoVenta(Base):
@@ -51,13 +52,20 @@ def punto_venta_a_respuesta(db: Session, punto: PuntoVenta) -> dict:
     return resultado
 
 
-def listar_puntos_venta(db: Session, banco_id: Optional[int] = None) -> list[dict]:
+def listar_puntos_venta(
+    db: Session,
+    banco_id: Optional[int] = None,
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
     consulta = db.query(PuntoVenta).filter(PuntoVenta.eliminado_en.is_(None))
     if banco_id is not None:
         consulta = consulta.filter(PuntoVenta.banco_id == banco_id)
 
-    puntos = consulta.order_by(PuntoVenta.nombre).all()
-    return [punto_venta_a_respuesta(db, p) for p in puntos]
+    consulta = consulta.order_by(PuntoVenta.nombre)
+    puntos, total = paginar_consulta(consulta, pagina, limite)
+    items = [punto_venta_a_respuesta(db, p) for p in puntos]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_punto_venta(

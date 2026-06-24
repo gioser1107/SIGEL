@@ -67,10 +67,19 @@ class DatosLineaActualizar(BaseModel):
 def listar_cotizaciones_endpoint(
     estado: str | None = Query(default=None),
     cliente_id: int | None = Query(default=None),
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_COTIZACIONES)),
 ):
-    return listar_cotizaciones(db, usuario_actual, estado=estado, cliente_id=cliente_id)
+    return listar_cotizaciones(
+        db,
+        usuario_actual,
+        estado=estado,
+        cliente_id=cliente_id,
+        pagina=pagina,
+        limite=limite,
+    )
 
 
 @router.get("/{cotizacion_id}")

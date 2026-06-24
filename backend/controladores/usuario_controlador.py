@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -103,10 +103,12 @@ def cambiar_mi_contrasena_endpoint(
 
 @router.get("/")
 def obtener_todos_los_usuarios(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_USUARIOS)),
 ):
-    return listar_usuarios(db)
+    return listar_usuarios(db, pagina=pagina, limite=limite)
 
 
 @router.get("/{usuario_id}")

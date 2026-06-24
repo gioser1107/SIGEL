@@ -19,6 +19,7 @@ from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
 from modelos.tasa_modelo import Tasa
 from modelos.viaje_modelo import Viaje
+from utilidades.paginacion import offset_pagina, paginar_consulta, respuesta_paginada
 
 METODOS_PAGO_REQUIEREN_VALIDACION = ("pago_movil", "transferencia", "zelle")
 MAX_COMPROBANTE_URL = 500
@@ -637,7 +638,9 @@ def listar_todos_los_pagos(
     metodo_pago_id: Optional[int] = None,
     fecha_desde: Optional[date] = None,
     fecha_hasta: Optional[date] = None,
-) -> list[dict]:
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
     consulta = db.query(Pago).filter(Pago.eliminado_en.is_(None))
 
     if reserva_id is not None:
@@ -651,16 +654,23 @@ def listar_todos_los_pagos(
     if fecha_hasta is not None:
         consulta = consulta.filter(Pago.fecha_pago <= fecha_hasta)
 
-    pagos = consulta.order_by(Pago.creado_en.desc()).all()
+    total = consulta.count()
+    pagos = (
+        consulta.order_by(Pago.creado_en.desc())
+        .offset(offset_pagina(pagina, limite))
+        .limit(limite)
+        .all()
+    )
 
-    resultado = []
+    items = []
     for pago in pagos:
         detalle = cargar_datos_pago(db, pago)
         monto_eur, aproximado = convertir_monto_pago_a_eur(db, pago)
         detalle["monto_eur"] = monto_eur
         detalle["conversion_aproximada"] = aproximado
-        resultado.append(detalle)
-    return resultado
+        items.append(detalle)
+
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def obtener_catalogo_pagos(db: Session) -> dict:
@@ -717,24 +727,36 @@ def obtener_catalogo_pagos(db: Session) -> dict:
     }
 
 
-def listar_pagos_reserva(db: Session, reserva_id: int) -> list[dict]:
-    pagos = (
+def listar_pagos_reserva(
+    db: Session,
+    reserva_id: int,
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
+    consulta = (
         db.query(Pago)
         .filter(Pago.reserva_id == reserva_id, Pago.eliminado_en.is_(None))
         .order_by(Pago.creado_en.desc())
-        .all()
     )
-    return [cargar_datos_pago(db, pago) for pago in pagos]
+    pagos, total = paginar_consulta(consulta, pagina, limite)
+    items = [cargar_datos_pago(db, pago) for pago in pagos]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
-def listar_pagos_reserva_portal(db: Session, reserva_id: int) -> list[dict]:
-    pagos = (
+def listar_pagos_reserva_portal(
+    db: Session,
+    reserva_id: int,
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
+    consulta = (
         db.query(Pago)
         .filter(Pago.reserva_id == reserva_id, Pago.eliminado_en.is_(None))
         .order_by(Pago.creado_en.desc())
-        .all()
     )
-    return [cargar_datos_pago_portal(db, pago) for pago in pagos]
+    pagos, total = paginar_consulta(consulta, pagina, limite)
+    items = [cargar_datos_pago_portal(db, pago) for pago in pagos]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def obtener_pago_portal_cliente(
@@ -748,8 +770,13 @@ def obtener_pago_portal_cliente(
     return cargar_datos_pago_portal(db, pago)
 
 
-def listar_pagos_cliente_portal(db: Session, cliente_id: int) -> list[dict]:
-    filas = (
+def listar_pagos_cliente_portal(
+    db: Session,
+    cliente_id: int,
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
+    consulta = (
         db.query(Pago, Reserva)
         .join(Reserva, Reserva.id == Pago.reserva_id)
         .filter(
@@ -758,10 +785,15 @@ def listar_pagos_cliente_portal(db: Session, cliente_id: int) -> list[dict]:
             Pago.eliminado_en.is_(None),
         )
         .order_by(Pago.creado_en.desc())
+    )
+    total = consulta.count()
+    filas = (
+        consulta.offset(offset_pagina(pagina, limite))
+        .limit(limite)
         .all()
     )
 
-    resultado = []
+    items = []
     for pago, reserva in filas:
         detalle = cargar_datos_pago_portal(db, pago)
         detalle["reserva"] = {
@@ -769,8 +801,8 @@ def listar_pagos_cliente_portal(db: Session, cliente_id: int) -> list[dict]:
             "estado": reserva.estado,
             "viaje_id": reserva.viaje_id,
         }
-        resultado.append(detalle)
-    return resultado
+        items.append(detalle)
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def registrar_pago_reserva(

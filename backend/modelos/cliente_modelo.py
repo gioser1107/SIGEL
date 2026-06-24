@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text, or_
 from sqlalchemy.orm import Session
 
 from database import Base
@@ -12,6 +12,7 @@ from modelos.ciudad_modelo import Ciudad
 from modelos.estado_modelo import Estado
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente, listar_puntos_por_cliente
 from modelos.rol_modelo import Rol
+from utilidades.paginacion import offset_pagina, respuesta_paginada
 
 if TYPE_CHECKING:
     from modelos.usuario_modelo import Usuario
@@ -269,16 +270,40 @@ def validar_documento_no_repetido(
         )
 
 
-def listar_clientes(db: Session) -> list[dict]:
+def listar_clientes(
+    db: Session,
+    pagina: int = 1,
+    limite: int = 10,
+    buscar: str | None = None,
+) -> dict:
     consulta = db.query(Cliente).filter(Cliente.eliminado_en.is_(None))
-    lista = consulta.all()
 
-    resultado = []
-    for cliente in lista:
+    if buscar is not None and buscar.strip():
+        termino = f"%{buscar.strip()}%"
+        consulta = consulta.filter(
+            or_(
+                Cliente.nombre.ilike(termino),
+                Cliente.apellido.ilike(termino),
+                Cliente.numero_documento.ilike(termino),
+                Cliente.telefono.ilike(termino),
+                Cliente.razon_social.ilike(termino),
+            )
+        )
+
+    total = consulta.count()
+    clientes = (
+        consulta.order_by(Cliente.apellido.asc(), Cliente.nombre.asc())
+        .offset(offset_pagina(pagina, limite))
+        .limit(limite)
+        .all()
+    )
+
+    items = []
+    for cliente in clientes:
         usuario = buscar_usuario_cliente(db, cliente)
-        resultado.append(cliente_respuesta(db, cliente, usuario))
+        items.append(cliente_respuesta(db, cliente, usuario))
 
-    return resultado
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def obtener_cliente(db: Session, cliente_id: int) -> dict:

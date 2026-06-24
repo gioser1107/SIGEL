@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from modelos.moneda_modelo import Moneda, moneda_a_dict, validar_moneda_existente
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class MetodoPago(Base):
@@ -40,9 +41,11 @@ def metodo_pago_a_respuesta(db: Session, metodo: MetodoPago) -> dict:
     return metodo_pago_a_dict(metodo, moneda)
 
 
-def listar_metodos_pago(db: Session) -> list[dict]:
-    metodos = db.query(MetodoPago).order_by(MetodoPago.nombre).all()
-    return [metodo_pago_a_respuesta(db, m) for m in metodos]
+def listar_metodos_pago(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = db.query(MetodoPago).order_by(MetodoPago.nombre)
+    metodos, total = paginar_consulta(consulta, pagina, limite)
+    items = [metodo_pago_a_respuesta(db, m) for m in metodos]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_metodo_pago(db: Session, codigo: str, nombre: str, moneda_id: int) -> MetodoPago:

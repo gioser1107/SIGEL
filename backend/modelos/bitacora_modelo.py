@@ -126,7 +126,7 @@ def listar_bitacora(
     fecha_desde: datetime | None = None,
     fecha_hasta: datetime | None = None,
     q: str | None = None,
-    limite: int = 50,
+    limite: int = 10,
     pagina: int = 1,
 ) -> dict:
     condiciones = ["1 = 1"]

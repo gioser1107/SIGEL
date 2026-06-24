@@ -109,11 +109,13 @@ async def subir_comprobante_pago_portal(
 
 @router.get("/pagos/portal/mis-pagos")
 def listar_mis_pagos_portal(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
     cliente_id = _requiere_cliente_sesion(usuario_actual)
-    return listar_pagos_cliente_portal(db, cliente_id)
+    return listar_pagos_cliente_portal(db, cliente_id, pagina=pagina, limite=limite)
 
 
 @router.get("/pagos/catalogo/portal")
@@ -161,12 +163,14 @@ def cotizar_pago_portal_endpoint(
 @router.get("/reservas/{reserva_id}/pagos/portal")
 def listar_mis_pagos_reserva_endpoint(
     reserva_id: int,
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
     cliente_id = _requiere_cliente_sesion(usuario_actual)
     obtener_reserva_del_cliente(db, reserva_id, cliente_id)
-    return listar_pagos_reserva_portal(db, reserva_id)
+    return listar_pagos_reserva_portal(db, reserva_id, pagina=pagina, limite=limite)
 
 
 @router.get("/reservas/{reserva_id}/pagos/portal/{pago_id}")
@@ -235,6 +239,8 @@ def listar_todos_los_pagos_endpoint(
     metodo_pago_id: Optional[int] = Query(default=None),
     fecha_desde: Optional[date] = Query(default=None),
     fecha_hasta: Optional[date] = Query(default=None),
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_REPORTES_PAGO)),
 ):
@@ -245,6 +251,8 @@ def listar_todos_los_pagos_endpoint(
         metodo_pago_id=metodo_pago_id,
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
+        pagina=pagina,
+        limite=limite,
     )
 
 
@@ -259,11 +267,13 @@ def obtener_catalogo_pagos_endpoint(
 @router.get("/reservas/{reserva_id}/pagos")
 def listar_pagos_reserva_endpoint(
     reserva_id: int,
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_REPORTES_PAGO)),
 ):
     obtener_reserva_activa(db, reserva_id)
-    return listar_pagos_reserva(db, reserva_id)
+    return listar_pagos_reserva(db, reserva_id, pagina=pagina, limite=limite)
 
 
 @router.get("/reservas/{reserva_id}/pagos/resumen")

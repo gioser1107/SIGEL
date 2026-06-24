@@ -186,10 +186,19 @@ def listar_reservas_endpoint(
     viaje_id: Optional[int] = Query(default=None),
     cliente_id: Optional[int] = Query(default=None),
     estado: Optional[str] = Query(default=None),
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
 ):
-    return listar_reservas(db, viaje_id=viaje_id, cliente_id=cliente_id, estado=estado)
+    return listar_reservas(
+        db,
+        viaje_id=viaje_id,
+        cliente_id=cliente_id,
+        estado=estado,
+        pagina=pagina,
+        limite=limite,
+    )
 
 
 @router.post("")

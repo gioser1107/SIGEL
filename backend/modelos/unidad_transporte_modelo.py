@@ -6,6 +6,7 @@ from sqlalchemy import BigInteger, Column, DateTime, Integer, String
 from sqlalchemy.orm import Session
 
 from database import Base
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class UnidadTransporte(Base):
@@ -53,14 +54,15 @@ def _validar_placa_no_repetida(db: Session, placa: str, unidad_id_actual: int | 
         )
 
 
-def listar_unidades(db: Session) -> list[dict]:
-    unidades = (
+def listar_unidades(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = (
         db.query(UnidadTransporte)
         .filter(UnidadTransporte.eliminado_en.is_(None))
         .order_by(UnidadTransporte.id)
-        .all()
     )
-    return [unidad_a_dict(u) for u in unidades]
+    unidades, total = paginar_consulta(consulta, pagina, limite)
+    items = [unidad_a_dict(u) for u in unidades]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_unidad(

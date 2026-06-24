@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -39,10 +39,12 @@ class DatosUnidadActualizar(BaseModel):
 
 @router.get("")
 def listar_unidades_endpoint(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_TRANSPORTE_FLOTA)),
 ):
-    return listar_unidades(db)
+    return listar_unidades(db, pagina=pagina, limite=limite)
 
 
 @router.post("")

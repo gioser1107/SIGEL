@@ -11,8 +11,10 @@ from modelos.asiento_modelo import Asiento
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.costo_operativo_modelo import CostoOperativo
 from modelos.destino_modelo import Destino, IMAGEN_DEFAULT, imagenes_destino
+from modelos.rol_modelo import Rol
 from modelos.unidad_transporte_modelo import UnidadTransporte
 from modelos.usuario_modelo import Usuario, nombre_completo_de
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class Viaje(Base):
@@ -163,12 +165,47 @@ def obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
 def validar_guia_opcional(db: Session, guia_id: int | None) -> None:
     if guia_id is None:
         return
-    guia = db.query(Usuario).filter(
-        Usuario.id == guia_id,
-        Usuario.eliminado_en.is_(None),
-    ).first()
+    guia = (
+        db.query(Usuario, Rol)
+        .join(Rol, Rol.id == Usuario.rol_id)
+        .filter(
+            Usuario.id == guia_id,
+            Usuario.eliminado_en.is_(None),
+            Rol.eliminado_en.is_(None),
+        )
+        .first()
+    )
     if guia is None:
         raise HTTPException(status_code=404, detail="Guía no encontrado")
+    _, rol = guia
+    if rol.nombre != "Guia":
+        raise HTTPException(
+            status_code=400,
+            detail="El usuario indicado no tiene rol de Guía",
+        )
+
+
+def listar_guias_disponibles(db: Session) -> list[dict]:
+    filas = (
+        db.query(Usuario)
+        .join(Rol, Rol.id == Usuario.rol_id)
+        .filter(
+            Usuario.eliminado_en.is_(None),
+            Rol.eliminado_en.is_(None),
+            Rol.nombre == "Guia",
+        )
+        .order_by(Usuario.apellido.asc(), Usuario.nombre.asc())
+        .all()
+    )
+    return [
+        {
+            "id": guia.id,
+            "nombre": nombre_completo_de(guia.nombre, guia.apellido),
+            "correo": guia.correo,
+            "telefono": guia.telefono,
+        }
+        for guia in filas
+    ]
 
 
 def validar_fechas_viaje(fecha_salida: datetime, fecha_regreso: datetime | None) -> None:
@@ -251,7 +288,9 @@ def listar_viajes(
     destino_id: Optional[int] = None,
     fecha_desde: Optional[datetime] = None,
     fecha_hasta: Optional[datetime] = None,
-) -> list[dict]:
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
     consulta = db.query(Viaje).filter(Viaje.eliminado_en.is_(None))
 
     if estado is not None:
@@ -264,7 +303,9 @@ def listar_viajes(
         consulta = consulta.filter(Viaje.fecha_salida <= fecha_hasta)
 
     consulta = consulta.order_by(Viaje.fecha_salida.desc())
-    return [viaje_a_dict(db, v) for v in consulta.all()]
+    viajes, total = paginar_consulta(consulta, pagina, limite)
+    items = [viaje_a_dict(db, v) for v in viajes]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_viaje(

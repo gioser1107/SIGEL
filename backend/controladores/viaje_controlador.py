@@ -30,6 +30,7 @@ from modelos.viaje_modelo import (
     eliminar_costo,
     eliminar_viaje,
     listar_costos,
+    listar_guias_disponibles,
     listar_viajes,
     obtener_viaje_detalle,
     resumen_costos,
@@ -86,6 +87,8 @@ def listar_viajes_endpoint(
     destino_id: int | None = Query(default=None),
     fecha_desde: datetime | None = Query(default=None),
     fecha_hasta: datetime | None = Query(default=None),
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
@@ -95,7 +98,18 @@ def listar_viajes_endpoint(
         destino_id=destino_id,
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
+        pagina=pagina,
+        limite=limite,
     )
+
+
+@router.get("/guias-disponibles")
+def listar_guias_disponibles_endpoint(
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
+):
+    """Usuarios con rol Guía, para asignar en crear/editar viaje."""
+    return listar_guias_disponibles(db)
 
 
 @router.get("/{viaje_id}")

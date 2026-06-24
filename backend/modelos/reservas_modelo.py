@@ -24,6 +24,7 @@ from modelos.punto_recogida_modelo import (
 )
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.viaje_modelo import Viaje, viaje_disponible_para_reserva, viaje_reserva_a_dict
+from utilidades.paginacion import offset_pagina, respuesta_paginada
 
 
 class Reserva(Base):
@@ -258,7 +259,9 @@ def listar_reservas(
     viaje_id: Optional[int] = None,
     cliente_id: Optional[int] = None,
     estado: Optional[str] = None,
-) -> list[dict]:
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
     consulta = db.query(Reserva).filter(Reserva.eliminado_en.is_(None))
     if viaje_id:
         consulta = consulta.filter(Reserva.viaje_id == viaje_id)
@@ -267,7 +270,15 @@ def listar_reservas(
     if estado:
         consulta = consulta.filter(Reserva.estado == estado)
 
-    return [reserva_a_dict(r) for r in consulta.order_by(Reserva.creado_en.desc()).all()]
+    total = consulta.count()
+    reservas = (
+        consulta.order_by(Reserva.creado_en.desc())
+        .offset(offset_pagina(pagina, limite))
+        .limit(limite)
+        .all()
+    )
+    items = [reserva_a_dict(r) for r in reservas]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def listar_mis_reservas_portal(db: Session, cliente_id: int) -> list[dict]:
@@ -312,7 +323,7 @@ def listar_mis_reservas_portal(db: Session, cliente_id: int) -> list[dict]:
         except ValueError:
             item["resumen_pagos"] = None
 
-        item["pagos"] = listar_pagos_reserva_portal(db, reserva.id)
+        item["pagos"] = listar_pagos_reserva_portal(db, reserva.id, pagina=1, limite=100)["items"]
         resultado.append(item)
 
     return resultado

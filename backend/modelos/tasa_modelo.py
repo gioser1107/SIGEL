@@ -13,6 +13,7 @@ from modelos.moneda_modelo import (
     moneda_a_dict,
     validar_moneda_existente,
 )
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class Tasa(Base):
@@ -102,15 +103,19 @@ def listar_tasas(
     db: Session,
     moneda_id: Optional[int] = None,
     fecha: Optional[date] = None,
-) -> list[dict]:
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
     consulta = db.query(Tasa)
     if moneda_id is not None:
         consulta = consulta.filter(Tasa.moneda_id == moneda_id)
     if fecha is not None:
         consulta = consulta.filter(Tasa.fecha == fecha)
 
-    tasas = consulta.order_by(Tasa.fecha.desc(), Tasa.id.desc()).all()
-    return [tasa_a_respuesta(db, t) for t in tasas]
+    consulta = consulta.order_by(Tasa.fecha.desc(), Tasa.id.desc())
+    tasas, total = paginar_consulta(consulta, pagina, limite)
+    items = [tasa_a_respuesta(db, t) for t in tasas]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def obtener_tasa_eur_del_dia_o_error(db: Session) -> dict:
@@ -120,10 +125,16 @@ def obtener_tasa_eur_del_dia_o_error(db: Session) -> dict:
     return resultado
 
 
-def listar_tasas_hoy(db: Session) -> list[dict]:
+def listar_tasas_hoy(db: Session, pagina: int = 1, limite: int = 10) -> dict:
     hoy = date.today()
-    tasas = db.query(Tasa).filter(Tasa.fecha == hoy).order_by(Tasa.id.desc()).all()
-    return [tasa_a_respuesta(db, t) for t in tasas]
+    consulta = (
+        db.query(Tasa)
+        .filter(Tasa.fecha == hoy)
+        .order_by(Tasa.id.desc())
+    )
+    tasas, total = paginar_consulta(consulta, pagina, limite)
+    items = [tasa_a_respuesta(db, t) for t in tasas]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_tasa(db: Session, fecha: date, valor: Decimal, moneda_id: int) -> Tasa:

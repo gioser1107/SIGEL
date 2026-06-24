@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.permiso_modelo import Permiso
 from modelos.rol_permiso_modelo import RolPermiso
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
 class Rol(Base):
@@ -38,9 +39,15 @@ def obtener_rol_activo(db: Session, rol_id: int) -> Rol:
     return rol
 
 
-def listar_roles(db: Session) -> list[dict]:
-    roles = db.query(Rol).filter(Rol.eliminado_en.is_(None)).all()
-    return [rol_a_dict(rol) for rol in roles]
+def listar_roles(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+    consulta = (
+        db.query(Rol)
+        .filter(Rol.eliminado_en.is_(None))
+        .order_by(Rol.nombre.asc())
+    )
+    roles, total = paginar_consulta(consulta, pagina, limite)
+    items = [rol_a_dict(rol) for rol in roles]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def crear_rol(db: Session, nombre: str, descripcion: str | None) -> Rol:
