@@ -11,9 +11,8 @@ from modelos.asiento_modelo import Asiento
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.costo_operativo_modelo import CostoOperativo
 from modelos.destino_modelo import Destino, IMAGEN_DEFAULT, imagenes_destino
-from modelos.rol_modelo import Rol
 from modelos.unidad_transporte_modelo import UnidadTransporte
-from modelos.usuario_modelo import Usuario, nombre_completo_de
+from modelos.viaje_guia_modelo import asignar_guias_si_provisto, guias_en_respuesta_viaje
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
 
 
@@ -23,7 +22,6 @@ class Viaje(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     destino_id = Column(BigInteger, ForeignKey("destinos.id"), nullable=False, index=True)
     unidad_id = Column(BigInteger, ForeignKey("unidades_transporte.id"), nullable=False, index=True)
-    guia_id = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, index=True)
     fecha_salida = Column(DateTime, nullable=False)
     fecha_regreso = Column(DateTime, nullable=True)
     estado = Column(
@@ -162,52 +160,6 @@ def obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
     return unidad
 
 
-def validar_guia_opcional(db: Session, guia_id: int | None) -> None:
-    if guia_id is None:
-        return
-    guia = (
-        db.query(Usuario, Rol)
-        .join(Rol, Rol.id == Usuario.rol_id)
-        .filter(
-            Usuario.id == guia_id,
-            Usuario.eliminado_en.is_(None),
-            Rol.eliminado_en.is_(None),
-        )
-        .first()
-    )
-    if guia is None:
-        raise HTTPException(status_code=404, detail="Guía no encontrado")
-    _, rol = guia
-    if rol.nombre != "Guia":
-        raise HTTPException(
-            status_code=400,
-            detail="El usuario indicado no tiene rol de Guía",
-        )
-
-
-def listar_guias_disponibles(db: Session) -> list[dict]:
-    filas = (
-        db.query(Usuario)
-        .join(Rol, Rol.id == Usuario.rol_id)
-        .filter(
-            Usuario.eliminado_en.is_(None),
-            Rol.eliminado_en.is_(None),
-            Rol.nombre == "Guia",
-        )
-        .order_by(Usuario.apellido.asc(), Usuario.nombre.asc())
-        .all()
-    )
-    return [
-        {
-            "id": guia.id,
-            "nombre": nombre_completo_de(guia.nombre, guia.apellido),
-            "correo": guia.correo,
-            "telefono": guia.telefono,
-        }
-        for guia in filas
-    ]
-
-
 def validar_fechas_viaje(fecha_salida: datetime, fecha_regreso: datetime | None) -> None:
     if fecha_regreso is not None and fecha_regreso < fecha_salida:
         raise HTTPException(
@@ -229,25 +181,22 @@ def obtener_viaje_activo(db: Session, viaje_id: int) -> Viaje:
 def viaje_a_dict(db: Session, viaje: Viaje) -> dict:
     destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
     unidad = db.query(UnidadTransporte).filter(UnidadTransporte.id == viaje.unidad_id).first()
-    guia = None
-    if viaje.guia_id is not None:
-        guia = db.query(Usuario).filter(Usuario.id == viaje.guia_id).first()
 
-    return {
+    resultado = {
         "id": viaje.id,
         "destino_id": viaje.destino_id,
         "destino_nombre": destino.nombre if destino is not None else None,
         "precio_base": float(destino.precio_base_eur) if destino is not None else 0.0,
         "unidad_id": viaje.unidad_id,
         "unidad_placa": unidad.placa if unidad is not None else None,
-        "guia_id": viaje.guia_id,
-        "guia_nombre": nombre_completo_de(guia.nombre, guia.apellido) if guia is not None else None,
         "fecha_salida": viaje.fecha_salida,
         "fecha_regreso": viaje.fecha_regreso,
         "estado": viaje.estado,
         "creado_en": viaje.creado_en,
         "actualizado_en": viaje.actualizado_en,
     }
+    resultado.update(guias_en_respuesta_viaje(db, viaje.id))
+    return resultado
 
 
 def obtener_viaje_detalle(db: Session, viaje_id: int) -> dict:
@@ -313,20 +262,20 @@ def crear_viaje(
     destino_id: int,
     unidad_id: int,
     fecha_salida: datetime,
-    guia_id: Optional[int] = None,
     fecha_regreso: Optional[datetime] = None,
     estado: str = "planificado",
+    guias_ids: Optional[list[int]] = None,
+    guia_principal_id: Optional[int] = None,
+    guia_id: Optional[int] = None,
 ) -> Viaje:
     obtener_destino_activo(db, destino_id)
     obtener_unidad_activa(db, unidad_id)
-    validar_guia_opcional(db, guia_id)
     validar_fechas_viaje(fecha_salida, fecha_regreso)
 
     ahora = datetime.now()
     nuevo_viaje = Viaje(
         destino_id=destino_id,
         unidad_id=unidad_id,
-        guia_id=guia_id,
         fecha_salida=fecha_salida,
         fecha_regreso=fecha_regreso,
         estado=estado,
@@ -337,6 +286,14 @@ def crear_viaje(
     db.add(nuevo_viaje)
     db.commit()
     db.refresh(nuevo_viaje)
+
+    asignar_guias_si_provisto(
+        db,
+        nuevo_viaje.id,
+        guias_ids=guias_ids,
+        guia_principal_id=guia_principal_id,
+        guia_id_legacy=guia_id,
+    )
     return nuevo_viaje
 
 
@@ -345,10 +302,12 @@ def actualizar_viaje(
     viaje_id: int,
     destino_id: Optional[int] = None,
     unidad_id: Optional[int] = None,
-    guia_id: Optional[int] = None,
     fecha_salida: Optional[datetime] = None,
     fecha_regreso: Optional[datetime] = None,
     estado: Optional[str] = None,
+    guias_ids: Optional[list[int]] = None,
+    guia_principal_id: Optional[int] = None,
+    guia_id: Optional[int] = None,
 ) -> Viaje:
     viaje = obtener_viaje_activo(db, viaje_id)
 
@@ -364,9 +323,6 @@ def actualizar_viaje(
     if unidad_id is not None:
         obtener_unidad_activa(db, unidad_id)
         viaje.unidad_id = unidad_id
-    if guia_id is not None:
-        validar_guia_opcional(db, guia_id)
-        viaje.guia_id = guia_id
     if fecha_salida is not None:
         viaje.fecha_salida = fecha_salida
     if fecha_regreso is not None:
@@ -379,6 +335,14 @@ def actualizar_viaje(
     viaje.actualizado_en = datetime.now()
     db.commit()
     db.refresh(viaje)
+
+    asignar_guias_si_provisto(
+        db,
+        viaje_id,
+        guias_ids=guias_ids,
+        guia_principal_id=guia_principal_id,
+        guia_id_legacy=guia_id,
+    )
     return viaje
 
 

@@ -15,6 +15,11 @@ from modelos.permiso_modelo import (
     PERMISO_LEER_PLANIFICACION,
     PERMISO_LEER_RESERVAS,
 )
+from modelos.viaje_guia_modelo import (
+    guardar_guias_viaje,
+    listar_guias_disponibles,
+    listar_guias_viaje,
+)
 from modelos.viaje_ruta_recogida_modelo import (
     guardar_ruta_recogida,
     listar_candidatos_ruta_recogida,
@@ -30,7 +35,6 @@ from modelos.viaje_modelo import (
     eliminar_costo,
     eliminar_viaje,
     listar_costos,
-    listar_guias_disponibles,
     listar_viajes,
     obtener_viaje_detalle,
     resumen_costos,
@@ -43,7 +47,9 @@ router = APIRouter(prefix="/viajes", tags=["Planificación - Viajes"])
 class DatosViajeCrear(BaseModel):
     destino_id: int
     unidad_id: int
-    guia_id: int | None = None
+    guias_ids: list[int] = Field(default_factory=list)
+    guia_principal_id: int | None = None
+    guia_id: int | None = None  # legacy: un solo guía
     fecha_salida: datetime
     fecha_regreso: datetime | None = None
     estado: str = "planificado"
@@ -52,10 +58,17 @@ class DatosViajeCrear(BaseModel):
 class DatosViajeActualizar(BaseModel):
     destino_id: int | None = None
     unidad_id: int | None = None
-    guia_id: int | None = None
+    guias_ids: list[int] | None = None
+    guia_principal_id: int | None = None
+    guia_id: int | None = None  # legacy
     fecha_salida: datetime | None = None
     fecha_regreso: datetime | None = None
     estado: str | None = None
+
+
+class DatosGuiasViajeGuardar(BaseModel):
+    guias_ids: list[int] = Field(default_factory=list)
+    guia_principal_id: int | None = None
 
 
 class DatosRutaRecogidaItem(BaseModel):
@@ -132,6 +145,8 @@ def crear_viaje_endpoint(
         db,
         destino_id=datos.destino_id,
         unidad_id=datos.unidad_id,
+        guias_ids=datos.guias_ids if datos.guias_ids else None,
+        guia_principal_id=datos.guia_principal_id,
         guia_id=datos.guia_id,
         fecha_salida=datos.fecha_salida,
         fecha_regreso=datos.fecha_regreso,
@@ -169,6 +184,8 @@ def actualizar_viaje_endpoint(
         viaje_id,
         destino_id=datos.destino_id,
         unidad_id=datos.unidad_id,
+        guias_ids=datos.guias_ids,
+        guia_principal_id=datos.guia_principal_id,
         guia_id=datos.guia_id,
         fecha_salida=datos.fecha_salida,
         fecha_regreso=datos.fecha_regreso,
@@ -216,6 +233,48 @@ def eliminar_viaje_endpoint(
     return {
         "mensaje": "Viaje eliminado con éxito",
         "viaje_id": viaje_id,
+    }
+
+
+@router.get("/{viaje_id}/guias")
+def listar_guias_viaje_endpoint(
+    viaje_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
+):
+    return listar_guias_viaje(db, viaje_id)
+
+
+@router.put("/{viaje_id}/guias")
+def guardar_guias_viaje_endpoint(
+    viaje_id: int,
+    datos: DatosGuiasViajeGuardar,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_PLANIFICACION)),
+):
+    resultado = guardar_guias_viaje(
+        db,
+        viaje_id,
+        guias_ids=datos.guias_ids,
+        guia_principal_id=datos.guia_principal_id,
+    )
+
+    registrar_evento(
+        db,
+        modulo="viajes",
+        accion="UPDATE",
+        resumen=f"Guías actualizados en viaje {viaje_id} ({resultado['total']} guías)",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viajes_guias",
+        registro_id=viaje_id,
+        detalle={"guias_ids": datos.guias_ids, "guia_principal_id": datos.guia_principal_id},
+        ip_origen=obtener_ip_origen(request),
+    )
+
+    return {
+        "mensaje": "Guías del viaje actualizados",
+        **resultado,
     }
 
 
