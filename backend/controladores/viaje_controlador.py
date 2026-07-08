@@ -1,12 +1,14 @@
 from datetime import datetime
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
+from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
+from modelos.cliente_modelo import es_rol_cliente
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 from modelos.permiso_modelo import (
     PERMISO_BORRAR_PLANIFICACION,
@@ -97,6 +99,7 @@ class DatosCostoActualizar(BaseModel):
 @router.get("")
 def listar_viajes_endpoint(
     estado: str | None = Query(default=None),
+    filtro: str | None = Query(default=None, pattern="^(todos|planificado|en_curso|finalizado|cancelado|anulado)$"),
     destino_id: int | None = Query(default=None),
     fecha_desde: datetime | None = Query(default=None),
     fecha_hasta: datetime | None = Query(default=None),
@@ -108,6 +111,7 @@ def listar_viajes_endpoint(
     return listar_viajes(
         db,
         estado=estado,
+        filtro=filtro,
         destino_id=destino_id,
         fecha_desde=fecha_desde,
         fecha_hasta=fecha_hasta,
@@ -437,6 +441,17 @@ def eliminar_costo_endpoint(
         "mensaje": "Costo operativo eliminado con éxito",
         "costo_id": costo_id,
     }
+
+
+@router.get("/{viaje_id}/portal/asientos-disponibles")
+def listar_asientos_viaje_portal_endpoint(
+    viaje_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    if not es_rol_cliente(usuario_actual.get("rol", "")):
+        raise HTTPException(status_code=403, detail="Solo clientes pueden consultar asientos del portal")
+    return asientos_disponibles(db, viaje_id)
 
 
 @router.get("/{viaje_id}/asientos-disponibles")

@@ -179,7 +179,17 @@ def guardar_guias_viaje(
         validar_usuario_es_guia(db, usuario_id)
 
     ahora = datetime.now()
-    db.query(ViajeGuia).filter(ViajeGuia.viaje_id == viaje_id).delete(synchronize_session=False)
+    filas = (
+        db.query(ViajeGuia)
+        .filter(
+            ViajeGuia.viaje_id == viaje_id,
+            ViajeGuia.eliminado_en.is_(None),
+        )
+        .all()
+    )
+    for fila in filas:
+        fila.eliminado_en = ahora
+        fila.actualizado_en = ahora
 
     for usuario_id in ids:
         db.add(

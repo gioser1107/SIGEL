@@ -196,6 +196,8 @@ def viaje_a_dict(db: Session, viaje: Viaje) -> dict:
         "actualizado_en": viaje.actualizado_en,
     }
     resultado.update(guias_en_respuesta_viaje(db, viaje.id))
+    if viaje.eliminado_en is not None:
+        resultado["eliminado_en"] = viaje.eliminado_en
     return resultado
 
 
@@ -234,16 +236,28 @@ def costo_a_dict(costo: CostoOperativo, incluir_viaje_id: bool = False) -> dict:
 def listar_viajes(
     db: Session,
     estado: Optional[str] = None,
+    filtro: Optional[str] = None,
     destino_id: Optional[int] = None,
     fecha_desde: Optional[datetime] = None,
     fecha_hasta: Optional[datetime] = None,
     pagina: int = 1,
     limite: int = 10,
 ) -> dict:
-    consulta = db.query(Viaje).filter(Viaje.eliminado_en.is_(None))
+    filtro_efectivo = filtro or estado or "todos"
+    estados_validos = {"planificado", "en_curso", "finalizado", "cancelado"}
 
-    if estado is not None:
-        consulta = consulta.filter(Viaje.estado == estado)
+    if filtro_efectivo == "anulado":
+        consulta = (
+            db.query(Viaje)
+            .filter(Viaje.eliminado_en.isnot(None))
+            .order_by(Viaje.eliminado_en.desc(), Viaje.fecha_salida.desc())
+        )
+    else:
+        consulta = db.query(Viaje).filter(Viaje.eliminado_en.is_(None))
+        if filtro_efectivo in estados_validos:
+            consulta = consulta.filter(Viaje.estado == filtro_efectivo)
+        consulta = consulta.order_by(Viaje.fecha_salida.desc())
+
     if destino_id is not None:
         consulta = consulta.filter(Viaje.destino_id == destino_id)
     if fecha_desde is not None:
@@ -251,7 +265,6 @@ def listar_viajes(
     if fecha_hasta is not None:
         consulta = consulta.filter(Viaje.fecha_salida <= fecha_hasta)
 
-    consulta = consulta.order_by(Viaje.fecha_salida.desc())
     viajes, total = paginar_consulta(consulta, pagina, limite)
     items = [viaje_a_dict(db, v) for v in viajes]
     return respuesta_paginada(items, total, pagina, limite)
@@ -350,6 +363,7 @@ def eliminar_viaje(db: Session, viaje_id: int) -> None:
     viaje = obtener_viaje_activo(db, viaje_id)
     ahora = datetime.now()
     viaje.eliminado_en = ahora
+    viaje.estado = "cancelado"
     viaje.actualizado_en = ahora
     db.commit()
 

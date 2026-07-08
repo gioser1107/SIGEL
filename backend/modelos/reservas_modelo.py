@@ -15,7 +15,7 @@ from modelos.cliente_modelo import (
     buscar_estado,
     registrar_cliente_para_reserva,
 )
-from modelos.destino_modelo import Destino
+from modelos.destino_modelo import Destino, imagenes_destino
 from modelos.punto_recogida_modelo import (
     PuntoRecogida,
     obtener_punto_predeterminado_cliente,
@@ -119,7 +119,7 @@ def pasajero_a_dict(
 
 
 def reserva_a_dict(reserva: Reserva) -> dict:
-    return {
+    resultado = {
         "id": reserva.id,
         "cliente_id": reserva.cliente_id,
         "viaje_id": reserva.viaje_id,
@@ -128,6 +128,9 @@ def reserva_a_dict(reserva: Reserva) -> dict:
         "creado_en": reserva.creado_en,
         "actualizado_en": reserva.actualizado_en,
     }
+    if reserva.eliminado_en is not None:
+        resultado["eliminado_en"] = reserva.eliminado_en
+    return resultado
 
 
 def listar_viajes_disponibles(db: Session) -> list[dict]:
@@ -259,20 +262,33 @@ def listar_reservas(
     viaje_id: Optional[int] = None,
     cliente_id: Optional[int] = None,
     estado: Optional[str] = None,
+    filtro: Optional[str] = None,
     pagina: int = 1,
     limite: int = 10,
 ) -> dict:
-    consulta = db.query(Reserva).filter(Reserva.eliminado_en.is_(None))
+    filtro_efectivo = filtro or estado or "todos"
+
+    if filtro_efectivo == "anulado":
+        consulta = db.query(Reserva).filter(Reserva.eliminado_en.isnot(None))
+    else:
+        consulta = db.query(Reserva).filter(Reserva.eliminado_en.is_(None))
+        if filtro_efectivo not in ("todos", None):
+            consulta = consulta.filter(Reserva.estado == filtro_efectivo)
     if viaje_id:
         consulta = consulta.filter(Reserva.viaje_id == viaje_id)
     if cliente_id:
         consulta = consulta.filter(Reserva.cliente_id == cliente_id)
-    if estado:
+    if estado and filtro_efectivo == "todos":
         consulta = consulta.filter(Reserva.estado == estado)
 
     total = consulta.count()
+    orden = (
+        Reserva.eliminado_en.desc()
+        if filtro_efectivo == "anulado"
+        else Reserva.creado_en.desc()
+    )
     reservas = (
-        consulta.order_by(Reserva.creado_en.desc())
+        consulta.order_by(orden)
         .offset(offset_pagina(pagina, limite))
         .limit(limite)
         .all()
@@ -281,20 +297,81 @@ def listar_reservas(
     return respuesta_paginada(items, total, pagina, limite)
 
 
-def listar_mis_reservas_portal(db: Session, cliente_id: int) -> list[dict]:
-    from modelos.destino_modelo import Destino
+def _numeros_asientos_reserva(db: Session, reserva_id: int) -> list:
+    filas = (
+        db.query(Asiento.numero)
+        .join(AsientoReservado, AsientoReservado.asiento_id == Asiento.id)
+        .join(ReservaCliente, ReservaCliente.id == AsientoReservado.reserva_cliente_id)
+        .filter(
+            ReservaCliente.reserva_id == reserva_id,
+            ReservaCliente.eliminado_en.is_(None),
+            AsientoReservado.eliminado_en.is_(None),
+            Asiento.eliminado_en.is_(None),
+        )
+        .all()
+    )
+
+    def clave_orden(numero: str) -> tuple:
+        try:
+            return (0, int(numero))
+        except (TypeError, ValueError):
+            return (1, str(numero))
+
+    numeros = [str(numero) for (numero,) in filas if numero is not None and str(numero).strip()]
+    return sorted(set(numeros), key=clave_orden)
+
+
+def _ubicacion_titular_reserva(db: Session, reserva_id: int) -> str | None:
+    pasajeros = (
+        db.query(ReservaCliente)
+        .filter(
+            ReservaCliente.reserva_id == reserva_id,
+            ReservaCliente.eliminado_en.is_(None),
+        )
+        .order_by(ReservaCliente.es_titular.desc(), ReservaCliente.creado_en)
+        .all()
+    )
+    if not pasajeros:
+        return None
+
+    titular = next((p for p in pasajeros if p.es_titular), pasajeros[0])
+    if titular.punto_recogida_id:
+        punto = db.query(PuntoRecogida).filter(PuntoRecogida.id == titular.punto_recogida_id).first()
+        if punto and punto.nombre:
+            return punto.nombre
+
+    cliente = db.query(Cliente).filter(Cliente.id == titular.cliente_id).first()
+    if cliente is None:
+        return None
+
+    ciudad = buscar_ciudad(db, cliente.ciudad_id)
+    estado = buscar_estado(db, cliente.estado_id)
+    partes = [p for p in (ciudad.nombre if ciudad else None, estado.nombre if estado else None) if p]
+    return ", ".join(partes) if partes else None
+
+
+def listar_mis_reservas_portal(
+    db: Session,
+    cliente_id: int,
+    pagina: int = 1,
+    limite: int = 10,
+) -> dict:
     from modelos.pago_modelo import calcular_resumen_pagos_reserva, listar_pagos_reserva_portal
     from modelos.viaje_modelo import Viaje
+    from utilidades.paginacion import normalizar_paginacion, paginar_consulta, respuesta_paginada
 
-    reservas = (
+    pagina, limite = normalizar_paginacion(pagina, limite, limite_max=50)
+
+    consulta = (
         db.query(Reserva)
         .filter(
             Reserva.cliente_id == cliente_id,
             Reserva.eliminado_en.is_(None),
         )
-        .order_by(Reserva.creado_en.desc())
-        .all()
+        .order_by(Reserva.creado_en.desc(), Reserva.id.desc())
     )
+
+    reservas, total = paginar_consulta(consulta, pagina, limite)
 
     resultado = []
     for reserva in reservas:
@@ -304,19 +381,36 @@ def listar_mis_reservas_portal(db: Session, cliente_id: int) -> list[dict]:
         )
         item["creado_en"] = reserva.creado_en.isoformat() if reserva.creado_en else None
 
-        viaje = db.query(Viaje).filter(
-            Viaje.id == reserva.viaje_id,
-            Viaje.eliminado_en.is_(None),
-        ).first()
+        viaje = db.query(Viaje).filter(Viaje.id == reserva.viaje_id).first()
         destino_nombre = None
+        destino_imagen = None
+        fecha_salida = None
+        hora_salida = None
+
         if viaje:
             destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
-            destino_nombre = destino.nombre if destino else None
+            if destino:
+                destino_nombre = destino.nombre
+                portada, _ = imagenes_destino(db, destino.id)
+                destino_imagen = portada or None
+
+            if viaje.fecha_salida:
+                fecha_salida = viaje.fecha_salida.isoformat()
+                hora_salida = viaje.fecha_salida.strftime("%H:%M")
+
             item["viaje"] = {
                 "id": viaje.id,
-                "fecha_salida": viaje.fecha_salida.isoformat() if viaje.fecha_salida else None,
+                "fecha_salida": fecha_salida,
                 "destino_nombre": destino_nombre,
             }
+
+        item["viaje_id"] = reserva.viaje_id
+        item["destino_nombre"] = destino_nombre
+        item["destino_imagen"] = destino_imagen
+        item["ubicacion"] = _ubicacion_titular_reserva(db, reserva.id)
+        item["fecha_salida"] = fecha_salida
+        item["hora_salida"] = hora_salida
+        item["asientos"] = _numeros_asientos_reserva(db, reserva.id)
 
         try:
             item["resumen_pagos"] = calcular_resumen_pagos_reserva(db, reserva)
@@ -326,7 +420,7 @@ def listar_mis_reservas_portal(db: Session, cliente_id: int) -> list[dict]:
         item["pagos"] = listar_pagos_reserva_portal(db, reserva.id, pagina=1, limite=100)["items"]
         resultado.append(item)
 
-    return resultado
+    return respuesta_paginada(resultado, total, pagina, limite)
 
 
 def crear_reserva(
@@ -518,6 +612,56 @@ def listar_asientos_pasajero(db: Session, reserva_id: int, pasajero_id: int) -> 
         AsientoReservado.eliminado_en.is_(None),
     ).all()
     return [{"id": a.id, "asiento_id": a.asiento_id, "viaje_id": a.viaje_id} for a in asientos]
+
+
+def asignar_asientos_reserva_portal(
+    db: Session,
+    reserva_id: int,
+    cliente_id: int,
+    asientos_ids: list[int],
+) -> dict:
+    from modelos.pago_modelo import obtener_reserva_del_cliente
+
+    obtener_reserva_del_cliente(db, reserva_id, cliente_id)
+
+    pasajeros = (
+        db.query(ReservaCliente)
+        .filter(
+            ReservaCliente.reserva_id == reserva_id,
+            ReservaCliente.eliminado_en.is_(None),
+            ReservaCliente.ocupa_asiento.is_(True),
+        )
+        .order_by(ReservaCliente.es_titular.desc(), ReservaCliente.creado_en)
+        .all()
+    )
+
+    if not pasajeros:
+        raise HTTPException(status_code=400, detail="No hay pasajeros con asiento en esta reserva")
+
+    if len(asientos_ids) != len(pasajeros):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Debe seleccionar {len(pasajeros)} asiento(s)",
+        )
+
+    for pasajero, asiento_id in zip(pasajeros, asientos_ids):
+        existente = db.query(AsientoReservado).filter(
+            AsientoReservado.reserva_cliente_id == pasajero.id,
+            AsientoReservado.eliminado_en.is_(None),
+        ).first()
+        if existente:
+            if existente.asiento_id == asiento_id:
+                continue
+            raise HTTPException(
+                status_code=400,
+                detail="Los asientos ya fueron asignados para esta reserva",
+            )
+        asignar_asiento_pasajero(db, reserva_id, pasajero.id, asiento_id)
+
+    return {
+        "mensaje": "Asientos asignados",
+        "asientos": _numeros_asientos_reserva(db, reserva_id),
+    }
 
 
 def asignar_asiento_pasajero(

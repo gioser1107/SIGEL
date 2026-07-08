@@ -63,10 +63,11 @@ class DatosImagenDestinoActualizar(BaseModel):
 def listar_destinos_endpoint(
     pagina: int = Query(default=1, ge=1),
     limite: int = Query(default=10, ge=1, le=200),
+    filtro: str = Query(default="todos", pattern="^(todos|activo|anulado)$"),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_DESTINOS)),
 ):
-    return listar_destinos(db, pagina=pagina, limite=limite)
+    return listar_destinos(db, pagina=pagina, limite=limite, filtro=filtro)
 
 
 @router.get("/{destino_id}")

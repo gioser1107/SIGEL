@@ -228,17 +228,30 @@ def listar_ruta_recogida(db: Session, viaje_id: int) -> dict:
     }
 
 
+def _anular_ruta_recogida_viaje(db: Session, viaje_id: int, ahora: datetime) -> None:
+    filas = (
+        db.query(ViajeRutaRecogida)
+        .filter(
+            ViajeRutaRecogida.viaje_id == viaje_id,
+            ViajeRutaRecogida.eliminado_en.is_(None),
+        )
+        .all()
+    )
+    for fila in filas:
+        fila.eliminado_en = ahora
+        fila.actualizado_en = ahora
+
+
 def guardar_ruta_recogida(
     db: Session,
     viaje_id: int,
     paradas: list,
 ) -> dict:
     _validar_viaje(db, viaje_id)
+    ahora = datetime.now()
 
     if not paradas:
-        db.query(ViajeRutaRecogida).filter(
-            ViajeRutaRecogida.viaje_id == viaje_id,
-        ).delete(synchronize_session=False)
+        _anular_ruta_recogida_viaje(db, viaje_id, ahora)
         db.commit()
         return listar_ruta_recogida(db, viaje_id)
 
@@ -261,10 +274,7 @@ def guardar_ruta_recogida(
                 detail=f"El viajero {nombre} no tiene domicilio de recogida registrado",
             )
 
-    ahora = datetime.now()
-    db.query(ViajeRutaRecogida).filter(
-        ViajeRutaRecogida.viaje_id == viaje_id,
-    ).delete(synchronize_session=False)
+    _anular_ruta_recogida_viaje(db, viaje_id, ahora)
 
     for item in sorted(paradas, key=lambda p: p.orden):
         db.add(

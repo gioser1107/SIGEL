@@ -4,7 +4,12 @@ frontend/dist/
 .env
 .env.*
 
+# Sistema operativo
+.DS_Store
+
 # Entorno Backend (Python/FastAPI)
+venv/
+.venv/
 backend/venv/
 backend/env/
 backend/__pycache__/

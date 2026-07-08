@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import Optional
 import base64
 import re
@@ -17,7 +18,12 @@ from modelos.moneda_modelo import Moneda
 from modelos.punto_venta_modelo import PuntoVenta
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
-from modelos.tasa_modelo import Tasa
+from modelos.tasa_modelo import (
+    Tasa,
+    obtener_tasa_eur_del_dia_o_error,
+    obtener_tasa_eur_reciente,
+    validar_tasa_eur_es_del_dia,
+)
 from modelos.viaje_modelo import Viaje
 from utilidades.paginacion import offset_pagina, paginar_consulta, respuesta_paginada
 
@@ -28,6 +34,8 @@ ETIQUETAS_ESTADO_PAGO = {
     "aprobado": "Aprobado",
     "rechazado": "Rechazado",
 }
+DEPOSITO_MINIMO_EUR = Decimal("5.00")
+TOLERANCIA_EUR = 0.01
 
 
 class Pago(Base):
@@ -125,12 +133,17 @@ def calcular_monto_en_moneda_desde_eur(
     if monto_eur <= 0:
         raise HTTPException(status_code=400, detail="El monto en EUR debe ser mayor a cero")
 
+    obtener_tasa_eur_del_dia_o_error(db)
+
     metodo = validar_metodo_pago(db, metodo_pago_id)
     tasa = validar_tasa(db, tasa_id)
     moneda = buscar_moneda_por_id(db, metodo.moneda_id)
     moneda_tasa = buscar_moneda_por_id(db, tasa.moneda_id)
     if not moneda or not moneda_tasa:
         raise HTTPException(status_code=400, detail="Moneda del metodo o tasa no encontrada")
+
+    if moneda_tasa.codigo == "EUR":
+        validar_tasa_eur_es_del_dia(db, tasa_id)
 
     valor_tasa = float(tasa.valor)
     if valor_tasa <= 0:
@@ -141,10 +154,8 @@ def calcular_monto_en_moneda_desde_eur(
     elif moneda.codigo == "VES" and moneda_tasa.codigo == "EUR":
         monto_moneda = round(monto_eur * valor_tasa, 2)
     elif moneda.codigo == "USD":
-        tasa_eur_info = obtener_tasa_eur_reciente(db)
-        if not tasa_eur_info:
-            raise HTTPException(status_code=400, detail="No hay tasa EUR disponible para conversion")
-        valor_eur = float(tasa_eur_info[0].valor)
+        tasa_eur_dia = obtener_tasa_eur_del_dia_o_error(db)
+        valor_eur = float(tasa_eur_dia["valor"])
         monto_moneda = round((monto_eur * valor_eur) / valor_tasa, 2) if valor_tasa > 0 else 0
     else:
         monto_moneda = round(monto_eur * valor_tasa, 2)
@@ -160,25 +171,30 @@ def calcular_monto_en_moneda_desde_eur(
 
 def obtener_resumen_pago_portal(db: Session, reserva: Reserva) -> dict:
     resumen = calcular_resumen_pagos_reserva(db, reserva)
-    tasa_dia = obtener_tasa_eur_del_dia(db)
+    tasa_dia = obtener_tasa_eur_del_dia_o_error(db)
     catalogo = obtener_catalogo_pagos(db)
 
     cotizaciones = []
     saldo_eur = resumen["saldo_pendiente_eur"]
-    if tasa_dia and saldo_eur > 0:
-        for metodo in catalogo["metodos_pago"]:
-            if metodo["moneda"]["codigo"] == "VES":
-                try:
-                    cotizaciones.append(
-                        calcular_monto_en_moneda_desde_eur(
-                            db,
-                            saldo_eur,
-                            metodo["id"],
-                            tasa_dia["tasa"]["id"],
+    monto_sugerido_eur = resumen.get("monto_sugerido_eur", 0)
+    if saldo_eur > 0:
+        montos_a_cotizar = {saldo_eur}
+        if monto_sugerido_eur > 0 and monto_sugerido_eur < saldo_eur - TOLERANCIA_EUR:
+            montos_a_cotizar.add(monto_sugerido_eur)
+        for monto_cotizar in montos_a_cotizar:
+            for metodo in catalogo["metodos_pago"]:
+                if metodo["moneda"]["codigo"] == "VES":
+                    try:
+                        cotizaciones.append(
+                            calcular_monto_en_moneda_desde_eur(
+                                db,
+                                monto_cotizar,
+                                metodo["id"],
+                                tasa_dia["tasa"]["id"],
+                            )
                         )
-                    )
-                except HTTPException:
-                    continue
+                    except HTTPException:
+                        continue
 
     return {
         "resumen": resumen,
@@ -187,6 +203,7 @@ def obtener_resumen_pago_portal(db: Session, reserva: Reserva) -> dict:
         "bancos": catalogo["bancos"],
         "puntos_venta": catalogo["puntos_venta"],
         "cotizacion_saldo_pendiente": cotizaciones,
+        "deposito_minimo_eur": float(DEPOSITO_MINIMO_EUR),
     }
 
 
@@ -294,57 +311,6 @@ def buscar_moneda_por_id(db: Session, moneda_id: int) -> Moneda | None:
 
 def buscar_moneda_por_codigo(db: Session, codigo: str) -> Moneda | None:
     return db.query(Moneda).filter(Moneda.codigo == codigo).first()
-
-
-def obtener_tasa_eur_reciente(db: Session) -> tuple[Tasa, Moneda] | None:
-    moneda_eur = buscar_moneda_por_codigo(db, "EUR")
-    if not moneda_eur:
-        return None
-
-    tasa = (
-        db.query(Tasa)
-        .filter(Tasa.moneda_id == moneda_eur.id)
-        .order_by(Tasa.fecha.desc(), Tasa.id.desc())
-        .first()
-    )
-    if not tasa:
-        return None
-
-    return tasa, moneda_eur
-
-
-def obtener_tasa_eur_del_dia(db: Session) -> dict | None:
-    moneda_eur = buscar_moneda_por_codigo(db, "EUR")
-    if not moneda_eur:
-        return None
-
-    hoy = date.today()
-    tasa_hoy = (
-        db.query(Tasa)
-        .filter(Tasa.moneda_id == moneda_eur.id, Tasa.fecha == hoy)
-        .order_by(Tasa.id.desc())
-        .first()
-    )
-
-    if tasa_hoy:
-        return {
-            "tasa": tasa_a_dict(tasa_hoy, moneda_eur),
-            "fecha": hoy.isoformat(),
-            "valor": float(tasa_hoy.valor),
-            "es_del_dia": True,
-        }
-
-    tasa_reciente = obtener_tasa_eur_reciente(db)
-    if not tasa_reciente:
-        return None
-
-    tasa, moneda = tasa_reciente
-    return {
-        "tasa": tasa_a_dict(tasa, moneda),
-        "fecha": tasa.fecha.isoformat() if tasa.fecha else None,
-        "valor": float(tasa.valor),
-        "es_del_dia": False,
-    }
 
 
 def cargar_datos_pago(
@@ -544,6 +510,16 @@ def calcular_resumen_pagos_reserva(db: Session, reserva: Reserva) -> dict:
     total_reserva_eur = info_reserva["total_reserva_eur"]
     saldo_pendiente_eur = _redondear_eur(max(total_reserva_eur - total_aprobado_eur, 0))
     pagado_completo = saldo_pendiente_eur <= 0 and total_reserva_eur > 0
+    deposito_minimo_eur = float(DEPOSITO_MINIMO_EUR)
+    deposito_minimo_cumplido = (
+        total_aprobado_eur >= deposito_minimo_eur - TOLERANCIA_EUR
+        or total_reserva_eur <= deposito_minimo_eur + TOLERANCIA_EUR
+    )
+    monto_sugerido_eur = (
+        _redondear_eur(min(saldo_pendiente_eur, deposito_minimo_eur))
+        if saldo_pendiente_eur > 0
+        else 0.0
+    )
 
     return {
         "reserva_id": reserva.id,
@@ -562,6 +538,9 @@ def calcular_resumen_pagos_reserva(db: Session, reserva: Reserva) -> dict:
         "total_rechazado_eur": _redondear_eur(total_rechazado_eur),
         "saldo_pendiente_eur": saldo_pendiente_eur,
         "pagado_completo": pagado_completo,
+        "deposito_minimo_eur": deposito_minimo_eur,
+        "deposito_minimo_cumplido": deposito_minimo_cumplido,
+        "monto_sugerido_eur": monto_sugerido_eur,
         "cantidad_pagos": len(pagos),
         "cantidad_aprobados": cantidad_aprobados,
         "cantidad_en_validacion": cantidad_en_validacion,
@@ -624,6 +603,54 @@ def validar_punto_venta(db: Session, punto_venta_id: int | None) -> None:
 def validar_tipo_pago(tipo: str) -> None:
     if tipo not in ("total", "cuota"):
         raise HTTPException(status_code=400, detail="tipo debe ser total o cuota")
+
+
+def validar_monto_pago_reserva(
+    db: Session,
+    reserva: Reserva,
+    metodo_pago_id: int,
+    tasa_id: int,
+    monto: Decimal,
+) -> None:
+    resumen = calcular_resumen_pagos_reserva(db, reserva)
+
+    if resumen["pagado_completo"]:
+        raise HTTPException(status_code=400, detail="La reserva ya esta pagada en su totalidad.")
+
+    if float(monto) <= 0:
+        raise HTTPException(status_code=400, detail="El monto debe ser mayor a cero.")
+
+    monto_eur, _ = convertir_monto_pago_a_eur(
+        db,
+        SimpleNamespace(metodo_pago_id=metodo_pago_id, tasa_id=tasa_id, monto=monto),
+    )
+    if monto_eur <= 0:
+        raise HTTPException(status_code=400, detail="No se pudo convertir el monto a EUR.")
+
+    saldo_disponible = _redondear_eur(
+        max(
+            resumen["saldo_pendiente_eur"] - resumen["total_pendiente_validacion_eur"],
+            0,
+        )
+    )
+
+    if monto_eur > saldo_disponible + TOLERANCIA_EUR:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El monto supera el saldo disponible ({saldo_disponible:.2f} EUR).",
+        )
+
+    saldo_restante = _redondear_eur(saldo_disponible - monto_eur)
+    minimo_requerido = min(float(DEPOSITO_MINIMO_EUR), saldo_disponible)
+
+    if saldo_restante > TOLERANCIA_EUR and monto_eur + TOLERANCIA_EUR < minimo_requerido:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"El deposito minimo es {float(DEPOSITO_MINIMO_EUR):.2f} EUR. "
+                "Puede abonar el resto en pagos posteriores."
+            ),
+        )
 
 
 def validar_estado_pago(estado: str) -> None:
@@ -706,10 +733,7 @@ def obtener_catalogo_pagos(db: Session) -> dict:
         .all()
     )
 
-    tasa_eur = obtener_tasa_eur_reciente(db)
-    tasa_eur_dict = None
-    if tasa_eur:
-        tasa_eur_dict = tasa_a_dict(tasa_eur[0], tasa_eur[1])
+    tasa_eur_dia = obtener_tasa_eur_del_dia_o_error(db)
 
     lista_tasas = []
     for tasa in tasas:
@@ -722,7 +746,8 @@ def obtener_catalogo_pagos(db: Session) -> dict:
         "metodos_pago": lista_metodos,
         "bancos": [banco_a_dict(b) for b in bancos],
         "puntos_venta": [punto_venta_a_dict(p) for p in puntos],
-        "tasa_eur_reciente": tasa_eur_dict,
+        "tasa_eur_reciente": tasa_eur_dia["tasa"],
+        "tasa_eur_del_dia": tasa_eur_dia,
         "tasas": lista_tasas,
     }
 
@@ -824,13 +849,19 @@ def registrar_pago_reserva(
     usuario_id: int,
     registro_desde_admin: bool = True,
 ) -> Pago:
+    obtener_tasa_eur_del_dia_o_error(db)
+
     metodo = validar_metodo_pago(db, metodo_pago_id)
     validar_tasa(db, tasa_id)
+    moneda = buscar_moneda_por_id(db, metodo.moneda_id)
+    if moneda and moneda.codigo in ("VES", "EUR"):
+        validar_tasa_eur_es_del_dia(db, tasa_id)
     validar_banco(db, banco_origen_id, "banco_origen_id")
     validar_banco(db, banco_destino_id, "banco_destino_id")
     validar_punto_venta(db, punto_venta_id)
     validar_tipo_pago(tipo)
     comprobante_url = normalizar_comprobante_url(comprobante_url)
+    validar_monto_pago_reserva(db, reserva, metodo_pago_id, tasa_id, monto)
 
     ahora = datetime.now()
     estado_inicial = determinar_estado_inicial_pago(metodo.codigo, registro_desde_admin)
@@ -893,6 +924,13 @@ def actualizar_pago_reserva(
 
     if tasa_id is not None:
         validar_tasa(db, tasa_id)
+        if tasa_id != pago.tasa_id:
+            obtener_tasa_eur_del_dia_o_error(db)
+            metodo = db.query(MetodoPago).filter(MetodoPago.id == pago.metodo_pago_id).first()
+            if metodo:
+                moneda = buscar_moneda_por_id(db, metodo.moneda_id)
+                if moneda and moneda.codigo in ("VES", "EUR"):
+                    validar_tasa_eur_es_del_dia(db, tasa_id)
         pago.tasa_id = tasa_id
 
     if monto is not None:

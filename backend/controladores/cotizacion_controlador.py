@@ -66,6 +66,10 @@ class DatosLineaActualizar(BaseModel):
 @router.get("")
 def listar_cotizaciones_endpoint(
     estado: str | None = Query(default=None),
+    filtro: str | None = Query(
+        default=None,
+        pattern="^(todos|pendientes|activas|vencidas|anulado|solicitada|pendiente|aceptada|vencida|cancelada)$",
+    ),
     cliente_id: int | None = Query(default=None),
     pagina: int = Query(default=1, ge=1),
     limite: int = Query(default=10, ge=1, le=200),
@@ -76,6 +80,7 @@ def listar_cotizaciones_endpoint(
         db,
         usuario_actual,
         estado=estado,
+        filtro=filtro,
         cliente_id=cliente_id,
         pagina=pagina,
         limite=limite,

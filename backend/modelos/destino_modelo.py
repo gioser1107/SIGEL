@@ -80,6 +80,8 @@ def destino_a_dict(
     }
     if incluir_galeria:
         resultado["imagenes"] = imagenes
+    if destino.eliminado_en is not None:
+        resultado["eliminado_en"] = destino.eliminado_en
     return resultado
 
 
@@ -216,12 +218,25 @@ def imagen_destino_a_dict(imagen: DestinoImagen) -> dict:
     }
 
 
-def listar_destinos(db: Session, pagina: int = 1, limite: int = 10) -> dict:
-    consulta = (
-        db.query(Destino)
-        .filter(Destino.eliminado_en.is_(None))
-        .order_by(Destino.nombre.asc())
-    )
+def listar_destinos(
+    db: Session,
+    pagina: int = 1,
+    limite: int = 10,
+    filtro: str = "todos",
+) -> dict:
+    consulta = db.query(Destino)
+
+    if filtro == "anulado":
+        consulta = consulta.filter(Destino.eliminado_en.isnot(None)).order_by(
+            Destino.eliminado_en.desc(),
+            Destino.nombre.asc(),
+        )
+    else:
+        consulta = consulta.filter(Destino.eliminado_en.is_(None))
+        if filtro == "activo":
+            consulta = consulta.filter(Destino.activo.is_(True))
+        consulta = consulta.order_by(Destino.nombre.asc())
+
     destinos, total = paginar_consulta(consulta, pagina, limite)
     items = [destino_a_dict(db, destino) for destino in destinos]
     return respuesta_paginada(items, total, pagina, limite)
@@ -322,6 +337,7 @@ def anular_destino(db: Session, destino_id: int) -> Destino:
     destino = buscar_destino_activo(db, destino_id)
     ahora = datetime.now()
     destino.eliminado_en = ahora
+    destino.activo = False
     destino.actualizado_en = ahora
     db.commit()
     return destino

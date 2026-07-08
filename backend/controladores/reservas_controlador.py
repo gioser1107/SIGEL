@@ -22,6 +22,7 @@ from modelos.reservas_modelo import (
     actualizar_reserva,
     agregar_pasajero,
     asignar_asiento_pasajero,
+    asignar_asientos_reserva_portal,
     crear_reserva,
     crear_reserva_desde_landing,
     eliminar_pasajero,
@@ -90,6 +91,10 @@ class DatosAsientoReservadoCrear(BaseModel):
     asiento_id: int
 
 
+class DatosAsientosPortalCrear(BaseModel):
+    asientos_ids: List[int] = Field(..., min_length=1)
+
+
 class DatosPasajeroExtraPublico(DatosViajeroRegistro):
     es_menor: bool = False
     ocupa_asiento: Optional[bool] = None
@@ -136,11 +141,13 @@ def _requiere_cliente_sesion_reserva(usuario_actual: dict) -> int:
 
 @router.get("/portal/mis-reservas")
 def listar_mis_reservas_portal_endpoint(
+    pagina: int = Query(1, ge=1),
+    limite: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
     cliente_id = _requiere_cliente_sesion_reserva(usuario_actual)
-    return listar_mis_reservas_portal(db, cliente_id)
+    return listar_mis_reservas_portal(db, cliente_id, pagina, limite)
 
 
 @router.get("/viajes-disponibles")
@@ -149,6 +156,17 @@ def listar_viajes_disponibles_para_reserva(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
 ):
     return listar_viajes_disponibles(db)
+
+
+@router.post("/{reserva_id}/portal/asientos")
+def asignar_asientos_portal_endpoint(
+    reserva_id: int,
+    datos: DatosAsientosPortalCrear,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    cliente_id = _requiere_cliente_sesion_reserva(usuario_actual)
+    return asignar_asientos_reserva_portal(db, reserva_id, cliente_id, datos.asientos_ids)
 
 
 @router.post("/cliente")
@@ -186,6 +204,10 @@ def listar_reservas_endpoint(
     viaje_id: Optional[int] = Query(default=None),
     cliente_id: Optional[int] = Query(default=None),
     estado: Optional[str] = Query(default=None),
+    filtro: Optional[str] = Query(
+        default=None,
+        pattern="^(todos|pendiente|confirmada|abonada|cancelada|anulado)$",
+    ),
     pagina: int = Query(default=1, ge=1),
     limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
@@ -196,6 +218,7 @@ def listar_reservas_endpoint(
         viaje_id=viaje_id,
         cliente_id=cliente_id,
         estado=estado,
+        filtro=filtro,
         pagina=pagina,
         limite=limite,
     )

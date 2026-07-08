@@ -135,7 +135,7 @@ def buscar_cliente_por_documento_endpoint(
 ):
     resultado = buscar_cliente_por_documento_respuesta(db, tipo_documento, numero_documento)
     if resultado is None:
-        raise HTTPException(status_code=404, detail="No hay un cliente registrado con ese documento")
+        return {"cliente": None}
     return resultado
 
 

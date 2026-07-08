@@ -1,15 +1,16 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, Date, ForeignKey, Numeric
+from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Numeric
 from sqlalchemy.orm import Session
 
 from database import Base
 from modelos.moneda_modelo import (
     Moneda,
     buscar_moneda_por_codigo,
+    buscar_moneda_por_id,
     moneda_a_dict,
     validar_moneda_existente,
 )
@@ -23,6 +24,7 @@ class Tasa(Base):
     fecha = Column(Date, nullable=False, index=True)
     valor = Column(Numeric(14, 4), nullable=False)
     moneda_id = Column(BigInteger, ForeignKey("monedas.id"), nullable=False, index=True)
+    eliminado_en = Column(DateTime, nullable=True)
 
 
 def tasa_a_dict(tasa: Tasa, moneda: Moneda) -> dict:
@@ -41,7 +43,7 @@ def obtener_tasa_eur_reciente(db: Session) -> tuple[Tasa, Moneda] | None:
 
     tasa = (
         db.query(Tasa)
-        .filter(Tasa.moneda_id == moneda_eur.id)
+        .filter(Tasa.moneda_id == moneda_eur.id, Tasa.eliminado_en.is_(None))
         .order_by(Tasa.fecha.desc(), Tasa.id.desc())
         .first()
     )
@@ -59,41 +61,38 @@ def obtener_tasa_eur_del_dia(db: Session) -> dict | None:
     hoy = date.today()
     tasa_hoy = (
         db.query(Tasa)
-        .filter(Tasa.moneda_id == moneda_eur.id, Tasa.fecha == hoy)
+        .filter(
+            Tasa.moneda_id == moneda_eur.id,
+            Tasa.fecha == hoy,
+            Tasa.eliminado_en.is_(None),
+        )
         .order_by(Tasa.id.desc())
         .first()
     )
 
-    if tasa_hoy:
-        return {
-            "tasa": tasa_a_dict(tasa_hoy, moneda_eur),
-            "fecha": hoy.isoformat(),
-            "valor": float(tasa_hoy.valor),
-            "es_del_dia": True,
-        }
-
-    tasa_reciente = obtener_tasa_eur_reciente(db)
-    if not tasa_reciente:
+    if not tasa_hoy:
         return None
 
-    tasa, moneda = tasa_reciente
     return {
-        "tasa": tasa_a_dict(tasa, moneda),
-        "fecha": tasa.fecha.isoformat() if tasa.fecha else None,
-        "valor": float(tasa.valor),
-        "es_del_dia": False,
+        "tasa": tasa_a_dict(tasa_hoy, moneda_eur),
+        "fecha": hoy.isoformat(),
+        "valor": float(tasa_hoy.valor),
+        "es_del_dia": True,
     }
 
 
 def obtener_tasa(db: Session, tasa_id: int) -> Tasa:
-    tasa = db.query(Tasa).filter(Tasa.id == tasa_id).first()
+    tasa = db.query(Tasa).filter(
+        Tasa.id == tasa_id,
+        Tasa.eliminado_en.is_(None),
+    ).first()
     if not tasa:
         raise HTTPException(status_code=404, detail="Tasa no encontrada")
     return tasa
 
 
 def tasa_a_respuesta(db: Session, tasa: Tasa) -> dict:
-    moneda = db.query(Moneda).filter(Moneda.id == tasa.moneda_id).first()
+    moneda = buscar_moneda_por_id(db, tasa.moneda_id)
     if not moneda:
         raise HTTPException(status_code=500, detail="Moneda de la tasa no encontrada")
     return tasa_a_dict(tasa, moneda)
@@ -106,7 +105,7 @@ def listar_tasas(
     pagina: int = 1,
     limite: int = 10,
 ) -> dict:
-    consulta = db.query(Tasa)
+    consulta = db.query(Tasa).filter(Tasa.eliminado_en.is_(None))
     if moneda_id is not None:
         consulta = consulta.filter(Tasa.moneda_id == moneda_id)
     if fecha is not None:
@@ -119,17 +118,50 @@ def listar_tasas(
 
 
 def obtener_tasa_eur_del_dia_o_error(db: Session) -> dict:
+    hoy = date.today()
+    moneda_eur = buscar_moneda_por_codigo(db, "EUR")
+    if not moneda_eur:
+        raise HTTPException(status_code=503, detail="Moneda EUR no configurada en el sistema")
+
     resultado = obtener_tasa_eur_del_dia(db)
     if resultado is None:
-        raise HTTPException(status_code=404, detail="No hay tasa EUR registrada en el sistema")
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"No hay tasa EUR cargada para el dia de hoy ({hoy.isoformat()}). "
+                "Registre la tasa del dia antes de continuar."
+            ),
+        )
     return resultado
+
+
+def validar_tasa_eur_es_del_dia(db: Session, tasa_id: int) -> Tasa:
+    tasa = obtener_tasa(db, tasa_id)
+    moneda = buscar_moneda_por_id(db, tasa.moneda_id)
+    if not moneda or moneda.codigo != "EUR":
+        raise HTTPException(
+            status_code=400,
+            detail="La tasa indicada debe ser la tasa EUR del dia de hoy",
+        )
+
+    hoy = date.today()
+    if tasa.fecha != hoy:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                f"No hay tasa EUR cargada para el dia de hoy ({hoy.isoformat()}). "
+                "Registre la tasa del dia antes de continuar."
+            ),
+        )
+
+    return tasa
 
 
 def listar_tasas_hoy(db: Session, pagina: int = 1, limite: int = 10) -> dict:
     hoy = date.today()
     consulta = (
         db.query(Tasa)
-        .filter(Tasa.fecha == hoy)
+        .filter(Tasa.fecha == hoy, Tasa.eliminado_en.is_(None))
         .order_by(Tasa.id.desc())
     )
     tasas, total = paginar_consulta(consulta, pagina, limite)
@@ -178,5 +210,6 @@ def eliminar_tasa(db: Session, tasa_id: int) -> None:
     if en_pago:
         raise HTTPException(status_code=400, detail="No se puede eliminar: la tasa esta en uso por un pago")
 
-    db.delete(tasa)
+    ahora = datetime.now()
+    tasa.eliminado_en = ahora
     db.commit()

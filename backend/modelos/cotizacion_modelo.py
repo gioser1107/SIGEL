@@ -86,6 +86,8 @@ def cotizacion_a_dict(db: Session, cotizacion: Cotizacion, incluir_lineas: bool 
         "creado_en": cotizacion.creado_en,
         "actualizado_en": cotizacion.actualizado_en,
     }
+    if cotizacion.eliminado_en is not None:
+        resultado["eliminado_en"] = cotizacion.eliminado_en
 
     if incluir_lineas:
         lineas = db.query(CotizacionLinea).filter(
@@ -109,11 +111,27 @@ def listar_cotizaciones(
     db: Session,
     usuario_actual: dict,
     estado: Optional[str] = None,
+    filtro: Optional[str] = None,
     cliente_id: Optional[int] = None,
     pagina: int = 1,
     limite: int = 10,
 ) -> dict:
-    consulta = db.query(Cotizacion).filter(Cotizacion.eliminado_en.is_(None))
+    filtro_efectivo = filtro or estado or "todos"
+
+    if filtro_efectivo == "anulado":
+        consulta = db.query(Cotizacion).filter(Cotizacion.eliminado_en.isnot(None))
+    else:
+        consulta = db.query(Cotizacion).filter(Cotizacion.eliminado_en.is_(None))
+        if filtro_efectivo == "pendientes":
+            consulta = consulta.filter(Cotizacion.estado == "pendiente")
+        elif filtro_efectivo == "vencidas":
+            consulta = consulta.filter(Cotizacion.estado == "vencida")
+        elif filtro_efectivo == "activas":
+            consulta = consulta.filter(Cotizacion.estado.in_(["pendiente", "aceptada"]))
+        elif filtro_efectivo not in ("todos", None) and filtro_efectivo in (
+            "solicitada", "pendiente", "aceptada", "vencida", "cancelada"
+        ):
+            consulta = consulta.filter(Cotizacion.estado == filtro_efectivo)
 
     if es_rol_cliente(usuario_actual.get("rol", "")):
         cliente = obtener_cliente_por_usuario_id(db, usuario_actual["id"])
@@ -123,12 +141,17 @@ def listar_cotizaciones(
     elif cliente_id is not None:
         consulta = consulta.filter(Cotizacion.cliente_id == cliente_id)
 
-    if estado is not None:
+    if estado is not None and filtro_efectivo == "todos":
         consulta = consulta.filter(Cotizacion.estado == estado)
 
     total = consulta.count()
+    orden = (
+        Cotizacion.eliminado_en.desc()
+        if filtro_efectivo == "anulado"
+        else Cotizacion.creado_en.desc()
+    )
     cotizaciones = (
-        consulta.order_by(Cotizacion.creado_en.desc())
+        consulta.order_by(orden)
         .offset(offset_pagina(pagina, limite))
         .limit(limite)
         .all()
