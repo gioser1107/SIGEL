@@ -237,7 +237,10 @@ def crear_reserva_desde_landing(
                 status_code=400,
                 detail=f"El viajero {acomp.nombre} debe tener un domicilio de recogida registrado",
             )
-        validar_punto_recogida(db, acomp.id, punto_id)
+        if punto_id == titular_punto_recogida_id:
+            validar_punto_recogida(db, cliente_id, punto_id)
+        else:
+            validar_punto_recogida(db, acomp.id, punto_id)
 
         db.add(ReservaCliente(
             reserva_id=nueva_reserva.id,
@@ -350,14 +353,69 @@ def _ubicacion_titular_reserva(db: Session, reserva_id: int) -> str | None:
     return ", ".join(partes) if partes else None
 
 
+def _reserva_a_item_portal(db: Session, reserva: Reserva) -> dict:
+    from modelos.pago_modelo import calcular_resumen_pagos_reserva, listar_pagos_reserva_portal
+    from modelos.viaje_modelo import Viaje
+
+    item = reserva_a_dict(reserva)
+    item["fecha_reserva"] = (
+        reserva.fecha_reserva.isoformat() if reserva.fecha_reserva else None
+    )
+    item["creado_en"] = reserva.creado_en.isoformat() if reserva.creado_en else None
+
+    viaje = db.query(Viaje).filter(Viaje.id == reserva.viaje_id).first()
+    destino_nombre = None
+    destino_imagen = None
+    fecha_salida = None
+    hora_salida = None
+
+    if viaje:
+        destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
+        if destino:
+            destino_nombre = destino.nombre
+            portada, _ = imagenes_destino(db, destino.id)
+            destino_imagen = portada or None
+
+        if viaje.fecha_salida:
+            fecha_salida = viaje.fecha_salida.isoformat()
+            hora_salida = viaje.fecha_salida.strftime("%H:%M")
+
+        item["viaje"] = {
+            "id": viaje.id,
+            "fecha_salida": fecha_salida,
+            "destino_nombre": destino_nombre,
+        }
+
+    item["viaje_id"] = reserva.viaje_id
+    item["destino_nombre"] = destino_nombre
+    item["destino_imagen"] = destino_imagen
+    item["ubicacion"] = _ubicacion_titular_reserva(db, reserva.id)
+    item["fecha_salida"] = fecha_salida
+    item["hora_salida"] = hora_salida
+    item["asientos"] = _numeros_asientos_reserva(db, reserva.id)
+
+    try:
+        item["resumen_pagos"] = calcular_resumen_pagos_reserva(db, reserva)
+    except ValueError:
+        item["resumen_pagos"] = None
+
+    item["pagos"] = listar_pagos_reserva_portal(db, reserva.id, pagina=1, limite=100)["items"]
+    return item
+
+
+def obtener_mi_reserva_portal(db: Session, cliente_id: int, reserva_id: int) -> dict:
+    from modelos.pago_modelo import obtener_reserva_del_cliente
+
+    reserva = obtener_reserva_del_cliente(db, reserva_id, cliente_id)
+    return _reserva_a_item_portal(db, reserva)
+
+
 def listar_mis_reservas_portal(
     db: Session,
     cliente_id: int,
     pagina: int = 1,
     limite: int = 10,
 ) -> dict:
-    from modelos.pago_modelo import calcular_resumen_pagos_reserva, listar_pagos_reserva_portal
-    from modelos.viaje_modelo import Viaje
     from utilidades.paginacion import normalizar_paginacion, paginar_consulta, respuesta_paginada
 
     pagina, limite = normalizar_paginacion(pagina, limite, limite_max=50)
@@ -373,52 +431,7 @@ def listar_mis_reservas_portal(
 
     reservas, total = paginar_consulta(consulta, pagina, limite)
 
-    resultado = []
-    for reserva in reservas:
-        item = reserva_a_dict(reserva)
-        item["fecha_reserva"] = (
-            reserva.fecha_reserva.isoformat() if reserva.fecha_reserva else None
-        )
-        item["creado_en"] = reserva.creado_en.isoformat() if reserva.creado_en else None
-
-        viaje = db.query(Viaje).filter(Viaje.id == reserva.viaje_id).first()
-        destino_nombre = None
-        destino_imagen = None
-        fecha_salida = None
-        hora_salida = None
-
-        if viaje:
-            destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
-            if destino:
-                destino_nombre = destino.nombre
-                portada, _ = imagenes_destino(db, destino.id)
-                destino_imagen = portada or None
-
-            if viaje.fecha_salida:
-                fecha_salida = viaje.fecha_salida.isoformat()
-                hora_salida = viaje.fecha_salida.strftime("%H:%M")
-
-            item["viaje"] = {
-                "id": viaje.id,
-                "fecha_salida": fecha_salida,
-                "destino_nombre": destino_nombre,
-            }
-
-        item["viaje_id"] = reserva.viaje_id
-        item["destino_nombre"] = destino_nombre
-        item["destino_imagen"] = destino_imagen
-        item["ubicacion"] = _ubicacion_titular_reserva(db, reserva.id)
-        item["fecha_salida"] = fecha_salida
-        item["hora_salida"] = hora_salida
-        item["asientos"] = _numeros_asientos_reserva(db, reserva.id)
-
-        try:
-            item["resumen_pagos"] = calcular_resumen_pagos_reserva(db, reserva)
-        except ValueError:
-            item["resumen_pagos"] = None
-
-        item["pagos"] = listar_pagos_reserva_portal(db, reserva.id, pagina=1, limite=100)["items"]
-        resultado.append(item)
+    resultado = [_reserva_a_item_portal(db, reserva) for reserva in reservas]
 
     return respuesta_paginada(resultado, total, pagina, limite)
 

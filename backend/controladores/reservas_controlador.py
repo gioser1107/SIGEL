@@ -32,6 +32,7 @@ from modelos.reservas_modelo import (
     listar_pasajeros_reserva,
     listar_reservas,
     listar_viajes_disponibles,
+    obtener_mi_reserva_portal,
     obtener_reserva_activa,
     quitar_asiento_pasajero,
     reserva_a_dict,
@@ -148,6 +149,16 @@ def listar_mis_reservas_portal_endpoint(
 ):
     cliente_id = _requiere_cliente_sesion_reserva(usuario_actual)
     return listar_mis_reservas_portal(db, cliente_id, pagina, limite)
+
+
+@router.get("/portal/mis-reservas/{reserva_id}")
+def obtener_mi_reserva_portal_endpoint(
+    reserva_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    cliente_id = _requiere_cliente_sesion_reserva(usuario_actual)
+    return {"reserva": obtener_mi_reserva_portal(db, cliente_id, reserva_id)}
 
 
 @router.get("/viajes-disponibles")
