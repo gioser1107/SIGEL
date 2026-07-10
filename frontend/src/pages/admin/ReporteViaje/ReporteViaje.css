@@ -1,0 +1,89 @@
+.reporte-viaje__resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.reporte-viaje__tarjeta {
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--color-border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--color-bg-card, #fff);
+}
+
+.reporte-viaje__tarjeta-valor {
+  display: block;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #1e293b);
+}
+
+.reporte-viaje__tarjeta-etiqueta {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.reporte-viaje__tarjeta--ok .reporte-viaje__tarjeta-valor {
+  color: #059669;
+}
+
+.reporte-viaje__tarjeta--aviso .reporte-viaje__tarjeta-valor {
+  color: #d97706;
+}
+
+.reporte-viaje__cabecera-detalle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.reporte-viaje__titulo-viaje {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.reporte-viaje__meta-viaje {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.reporte-viaje__pago {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.8125rem;
+}
+
+.reporte-viaje__pago--completo {
+  color: #059669;
+  font-weight: 600;
+}
+
+.reporte-viaje__pago--pendiente {
+  color: #d97706;
+}
+
+.reporte-viaje__badge {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: rgba(0, 85, 160, 0.1);
+  color: var(--color-primary, #0055a0);
+}
+
+.reporte-viaje__badge--menor {
+  background: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}

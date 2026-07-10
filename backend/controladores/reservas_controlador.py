@@ -107,6 +107,7 @@ class DatosReservaClientePublico(BaseModel):
     titular_punto_recogida_id: Optional[int] = None
     acompanantes: List[DatosPasajeroExtraPublico] = []
     pasajeros_extra: List[DatosPasajeroExtraPublico] = []
+    asientos_ids: Optional[List[int]] = None
 
 
 def _acompanantes_de_reserva(datos: DatosReservaClientePublico) -> List[DatosPasajeroExtraPublico]:
@@ -198,6 +199,7 @@ def crear_reserva_desde_landing_endpoint(
         usuario_id=usuario_actual["id"],
         titular_punto_recogida_id=datos.titular_punto_recogida_id,
         pasajeros_extra=_acompanantes_de_reserva(datos),
+        asientos_ids=datos.asientos_ids,
     )
 
     registrar_evento(

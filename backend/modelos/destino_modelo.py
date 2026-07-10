@@ -86,21 +86,9 @@ def destino_a_dict(
 
 
 def validar_url_imagen(url: str) -> str:
-    url_limpia = url.strip()
-    if not url_limpia:
-        raise HTTPException(status_code=400, detail="La URL de la imagen es obligatoria")
-    if url_limpia.startswith("/api/archivos/"):
-        if len(url_limpia) > 512:
-            raise HTTPException(status_code=400, detail="La ruta no puede superar 512 caracteres")
-        return url_limpia
-    if not url_limpia.startswith(("http://", "https://")):
-        raise HTTPException(
-            status_code=400,
-            detail="La URL debe comenzar con http://, https:// o ser una ruta de archivo subido",
-        )
-    if len(url_limpia) > 512:
-        raise HTTPException(status_code=400, detail="La URL no puede superar 512 caracteres")
-    return url_limpia
+    from utilidades.validaciones import ValidadorEntrada
+
+    return ValidadorEntrada.url_imagen(url, obligatorio=True)
 
 
 def buscar_destino_activo(db: Session, destino_id: int) -> Destino:
@@ -251,10 +239,9 @@ def crear_destino(
     activo: bool = True,
     url_portada: str | None = None,
 ) -> Destino:
-    nombre_limpio = nombre.strip()
-    if not nombre_limpio:
-        raise HTTPException(status_code=400, detail="El nombre es obligatorio")
+    from utilidades.validaciones import ValidadorEntrada
 
+    nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
     validar_nombre_no_repetido(db, nombre_limpio)
 
     ahora = datetime.now()
@@ -291,9 +278,9 @@ def actualizar_destino(
     destino = buscar_destino_activo(db, destino_id)
 
     if nombre is not None:
-        nombre_limpio = nombre.strip()
-        if not nombre_limpio:
-            raise HTTPException(status_code=400, detail="El nombre es obligatorio")
+        from utilidades.validaciones import ValidadorEntrada
+
+        nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
         validar_nombre_no_repetido(db, nombre_limpio, destino_id)
         destino.nombre = nombre_limpio
 

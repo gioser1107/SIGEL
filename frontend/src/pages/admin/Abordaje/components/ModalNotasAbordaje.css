@@ -1,0 +1,54 @@
+.modal-notas-abordaje__superposicion {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(18, 40, 75, 0.45);
+}
+
+.modal-notas-abordaje {
+  width: min(100%, 28rem);
+  padding: 1.5rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-notas-abordaje__titulo {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--color-text-primary);
+}
+
+.modal-notas-abordaje__mensaje {
+  margin: 0 0 1rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.modal-notas-abordaje__label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.modal-notas-abordaje__textarea {
+  width: 100%;
+  min-height: 5rem;
+  resize: vertical;
+}
+
+.modal-notas-abordaje__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

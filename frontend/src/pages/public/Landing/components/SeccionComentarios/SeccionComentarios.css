@@ -1,0 +1,195 @@
+/* ============================================
+   SECCIÓN COMENTARIOS — Testimonios de viajeros
+   ============================================ */
+.seccion-comentarios {
+    padding: 4rem 2rem 5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* ── Header ── */
+.seccion-comentarios__header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.seccion-comentarios__eyebrow {
+    display: inline-block;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    margin-bottom: 0.6rem;
+}
+
+.seccion-comentarios__titulo {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 0 0.5rem;
+    line-height: 1.15;
+}
+
+.seccion-comentarios__descripcion {
+    font-size: var(--font-size-base);
+    color: var(--color-text-muted);
+    max-width: 520px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+.seccion-comentarios__cargando {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 2rem 0;
+}
+
+/* ── Grid ── */
+.seccion-comentarios__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+/* ── Tarjeta ── */
+.tarjeta-comentario {
+    background: #ffffff;
+    border-radius: var(--radius-xl, 16px);
+    padding: 1.75rem 1.5rem 1.5rem;
+    border: 1.5px solid var(--color-border-light, #f0f0f0);
+    box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.04));
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: all var(--transition-base, 0.25s ease);
+    animation: comentarioEntrada 0.5s ease both;
+    position: relative;
+}
+
+@keyframes comentarioEntrada {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.tarjeta-comentario:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.08));
+    border-color: rgba(0, 85, 160, 0.18);
+}
+
+/* ── Comillas ── */
+.tarjeta-comentario__icono-comillas {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-primary-glow, rgba(0, 85, 160, 0.1));
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ── Texto ── */
+.tarjeta-comentario__texto {
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--color-text-secondary, #475569);
+    line-height: 1.7;
+    margin: 0;
+    flex-grow: 1;
+    font-style: italic;
+}
+
+/* ── Valoración ── */
+.tarjeta-comentario__valoracion {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.tarjeta-comentario__estrellas {
+    display: flex;
+    gap: 2px;
+}
+
+.tarjeta-comentario__nota {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+/* ── Separador ── */
+.tarjeta-comentario__separador {
+    width: 100%;
+    height: 1px;
+    background: var(--color-border-light, #f0f0f0);
+}
+
+/* ── Autor ── */
+.tarjeta-comentario__autor {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.tarjeta-comentario__autor-inicial {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--gradient-primary, linear-gradient(135deg, #0055A0 0%, #1F5BD6 100%));
+    color: #ffffff;
+    font-family: var(--font-heading);
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 3px 8px rgba(0, 85, 160, 0.25);
+}
+
+.tarjeta-comentario__autor-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.tarjeta-comentario__autor-nombre {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.tarjeta-comentario__autor-rol {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 1024px) {
+    .seccion-comentarios__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .seccion-comentarios__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .seccion-comentarios__titulo {
+        font-size: var(--font-size-3xl);
+    }
+}

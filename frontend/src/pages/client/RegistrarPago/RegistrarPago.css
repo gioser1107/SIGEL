@@ -1,0 +1,586 @@
+/* =============================================
+   Dashboard.css — Portal del Cliente
+   Diseño tipo Boarding Pass / Ticket de Viaje
+   ============================================= */
+
+.registrar-pago {
+  max-width: 600px;
+  margin: 0 auto;
+  padding-bottom: var(--spacing-3xl);
+}
+
+/* ─────────────────────────────────────────────
+   BOARDING PASS — Ticket del viaje
+   ───────────────────────────────────────────── */
+.ticket {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+  position: relative;
+}
+
+.ticket__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.ticket__tag {
+  display: inline-block;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-primary-dark);
+  border-radius: var(--radius-sm);
+  color: white;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.ticket__badge {
+  padding: 4px 14px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ticket__badge--pending {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+.ticket__badge--confirmed {
+  background: var(--color-success);
+  color: #ffffff;
+}
+
+/* Ruta: Origen → Destino (estilo boarding pass) */
+.ticket__route {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+}
+
+.ticket__point {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 70px;
+}
+
+.ticket__point-code {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.ticket__point-name {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.ticket__route-line {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+
+.ticket__route-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary-dark);
+  flex-shrink: 0;
+}
+
+.ticket__route-dash {
+  flex: 1;
+  height: 2px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--color-border) 0px,
+    var(--color-border) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+.ticket__route-icon {
+  font-size: var(--font-size-xl);
+  margin: 0 var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+/* Línea de corte con muescas */
+.ticket__tear {
+  display: flex;
+  align-items: center;
+  margin: var(--spacing-md) calc(-1 * var(--spacing-xl));
+  position: relative;
+}
+
+.ticket__notch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.ticket__notch--left {
+  margin-left: -10px;
+  border-right: 1px solid var(--color-border);
+}
+
+.ticket__notch--right {
+  margin-right: -10px;
+  border-left: 1px solid var(--color-border);
+}
+
+.ticket__tear-line {
+  flex: 1;
+  height: 0;
+  border-top: 2px dashed var(--color-border);
+}
+
+/* Detalles del boarding pass */
+.ticket__details {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-md);
+}
+
+.ticket__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ticket__detail-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.ticket__detail-value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 576px) {
+  .ticket__point-code {
+    font-size: var(--font-size-2xl);
+  }
+  .ticket__route {
+    gap: var(--spacing-sm);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   STEPPER — Indicador de pasos
+   ───────────────────────────────────────────── */
+.registrar-pago__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 500px;
+  margin: 0 auto var(--spacing-2xl);
+  padding: 0 var(--spacing-md);
+}
+
+.registrar-pago__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  z-index: 2;
+  position: relative;
+}
+
+.registrar-pago__step-number {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(18, 40, 75, 0.1);
+  border: 2px solid rgba(18, 40, 75, 0.15);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-base);
+}
+
+.registrar-pago__step-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.registrar-pago__step-connector {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+  margin-bottom: 22px;
+}
+
+.registrar-pago__step--active .registrar-pago__step-number {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: #ffffff;
+}
+
+.registrar-pago__step--active .registrar-pago__step-label {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.registrar-pago__step--completed .registrar-pago__step-number {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: white;
+}
+
+.registrar-pago__step--completed .registrar-pago__step-label {
+  color: var(--color-text-secondary);
+}
+
+/* ─────────────────────────────────────────────
+   RECEIPT TICKET — Confirmación estilo factura
+   ───────────────────────────────────────────── */
+.receipt-ticket {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: visible;
+  position: relative;
+  animation: ticketSlideIn 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes ticketSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Celebración */
+.receipt-ticket__celebration {
+  text-align: center;
+  padding: var(--spacing-2xl) var(--spacing-xl) var(--spacing-lg);
+}
+
+.receipt-ticket__emoji {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: var(--spacing-md);
+  animation: emojiPop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) 200ms both;
+}
+
+@keyframes emojiPop {
+  from {
+    opacity: 0;
+    transform: scale(0.3) rotate(-15deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.receipt-ticket__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+}
+
+.receipt-ticket__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* Línea de corte con muescas */
+.receipt-ticket__tear {
+  display: flex;
+  align-items: center;
+  position: relative;
+  margin: 0;
+}
+
+.receipt-ticket__notch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.receipt-ticket__notch--left {
+  margin-left: -11px;
+  border-right: 1px solid var(--color-border);
+}
+
+.receipt-ticket__notch--right {
+  margin-right: -11px;
+  border-left: 1px solid var(--color-border);
+}
+
+.receipt-ticket__tear-line {
+  flex: 1;
+  height: 0;
+  border-top: 2px dashed var(--color-border);
+}
+
+/* Itinerario estilo timeline */
+.receipt-ticket__itinerary {
+  padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+.receipt-ticket__section-title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-lg);
+}
+
+.receipt-ticket__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.receipt-ticket__timeline-item {
+  display: grid;
+  grid-template-columns: 60px 24px 1fr;
+  gap: var(--spacing-md);
+  align-items: start;
+  min-height: 50px;
+}
+
+.receipt-ticket__timeline-time {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  text-align: right;
+  padding-top: 2px;
+}
+
+.receipt-ticket__timeline-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  height: 100%;
+  position: relative;
+}
+
+.receipt-ticket__timeline-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary-dark);
+  border: 3px solid rgba(0, 85, 160, 0.15);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.receipt-ticket__timeline-dot--end {
+  background: var(--color-accent);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.receipt-ticket__timeline-line {
+  width: 2px;
+  flex: 1;
+  min-height: 30px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-primary-dark) 0px,
+    var(--color-primary-dark) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.receipt-ticket__timeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: var(--spacing-md);
+}
+
+.receipt-ticket__timeline-place {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.receipt-ticket__timeline-detail {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* Factura / Invoice */
+.receipt-ticket__invoice {
+  padding: var(--spacing-md) var(--spacing-xl) var(--spacing-lg);
+}
+
+.receipt-ticket__invoice-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--spacing-sm) 0;
+}
+
+.receipt-ticket__invoice-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.receipt-ticket__invoice-value {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: right;
+  max-width: 55%;
+}
+
+.receipt-ticket__invoice-value--highlight {
+  color: var(--color-primary-dark);
+  font-weight: 700;
+}
+
+.receipt-ticket__invoice-divider {
+  border-top: 1px solid var(--color-border);
+  margin: var(--spacing-sm) 0;
+}
+
+.receipt-ticket__invoice-row--total {
+  padding-top: var(--spacing-md);
+}
+
+.receipt-ticket__invoice-row--total .receipt-ticket__invoice-label {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.receipt-ticket__invoice-value--total {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+}
+
+/* Estado */
+.receipt-ticket__status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: rgba(245, 158, 11, 0.06);
+  border-top: 1px solid rgba(245, 158, 11, 0.12);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.12);
+}
+
+.receipt-ticket__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.receipt-ticket__status-text {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-accent-dark);
+  letter-spacing: 0.3px;
+}
+
+/* Barcode decorativo */
+.receipt-ticket__barcode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
+}
+
+.receipt-ticket__barcode-bars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 48px;
+}
+
+.receipt-ticket__bar {
+  display: inline-block;
+  height: 100%;
+  background: var(--color-text-primary);
+  border-radius: 1px;
+  opacity: 0.7;
+}
+
+.receipt-ticket__barcode-number {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Acciones */
+.receipt-ticket__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-xl) var(--spacing-xl);
+}
+
+@media (max-width: 576px) {
+  .receipt-ticket__actions {
+    flex-direction: column-reverse;
+  }
+  .receipt-ticket__timeline-item {
+    grid-template-columns: 48px 24px 1fr;
+  }
+}

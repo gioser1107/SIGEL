@@ -1,0 +1,18 @@
+export { default as CabeceraModulo } from './CabeceraModulo/CabeceraModulo';
+export { default as EtiquetaEstado, resolverVariante } from './EtiquetaEstado/EtiquetaEstado';
+export type { VarianteBadge } from './EtiquetaEstado/EtiquetaEstado';
+export { default as PestaniasFiltro } from './PestaniasFiltro/PestaniasFiltro';
+export type { PestaniaFiltro } from './PestaniasFiltro/PestaniasFiltro';
+export { default as AlternadorVista } from './AlternadorVista/AlternadorVista';
+export type { VistaModulo } from './AlternadorVista/AlternadorVista';
+export { default as TablaDatos } from './TablaDatos/TablaDatos';
+export type { Columna, PropsTablaDatos } from './TablaDatos/tipos';
+export { default as PanelDeslizable } from './PanelDeslizable/PanelDeslizable';
+export type { PestaniaPanel } from './PanelDeslizable/PanelDeslizable';
+export { default as CuadriculaTarjetas } from './CuadriculaTarjetas/CuadriculaTarjetas';
+export { default as ModalConfirmacion } from './ModalConfirmacion/ModalConfirmacion';
+export { default as BotonAccionTabla } from './BotonAccionTabla/BotonAccionTabla';
+export type { AccionTabla } from './BotonAccionTabla/BotonAccionTabla';
+export { default as PaginacionTabla } from './PaginacionTabla/PaginacionTabla';
+export { default as SelectBuscador } from './SelectBuscador/SelectBuscador';
+export type { OpcionSelectBuscador } from './SelectBuscador/SelectBuscador';

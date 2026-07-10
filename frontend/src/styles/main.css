@@ -1,0 +1,199 @@
+/* ============================================
+   TRAVELBQTO — Global Styles & Reset
+   ============================================ */
+
+@import './variables.css';
+@import './imprimir.css';
+@import './admin-responsive.css';
+@import './landing-responsive.css';
+
+/* ─── Reset Completo ─── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-deep);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* ─── Tipografía Base ─── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+}
+
+h1 { font-size: var(--font-size-5xl); }
+h2 { font-size: var(--font-size-4xl); }
+h3 { font-size: var(--font-size-3xl); }
+h4 { font-size: var(--font-size-2xl); }
+h5 { font-size: var(--font-size-xl); }
+h6 { font-size: var(--font-size-lg); }
+
+p {
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+a {
+  text-decoration: none;
+  color: var(--color-primary);
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-light);
+}
+
+/* ─── Imágenes ─── */
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ─── Listas ─── */
+ul, ol {
+  list-style: none;
+}
+
+/* ─── Inputs y Botones ─── */
+button, input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* ─── Focus Accesible ─── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Scrollbar Personalizada ─── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-bg-deep);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ─── Selección de Texto ─── */
+::selection {
+  background: var(--color-primary-light);
+  color: #ffffff;
+}
+
+/* ─── Hover solo en dispositivos con cursor real ─────────────────────────────
+   En táctil (celular, tablet) el dedo no tiene hover real: el navegador simula
+   un hover "pegado" al tocar, lo que deja estilos atascados.
+   @media (hover: hover) and (pointer: fine)  → mouse / trackpad
+   @media (hover: none) or (pointer: coarse)  → táctil
+   Con este bloque los estilos :hover que ya existen se neutralizan en táctil
+   SIN necesidad de editar cada archivo CSS por separado.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media (hover: none), (pointer: coarse) {
+  /* Filas de tabla */
+  .tabla-datos__fila:hover {
+    background: transparent !important;
+  }
+  .tabla-datos__fila--seleccionada:hover {
+    background: var(--color-primary-glow) !important;
+  }
+
+  /* Botones — quitar transformación y brillo */
+  button:hover,
+  a:hover {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+
+  /* Acciones de fila: siempre visibles en táctil */
+  .tabla-datos__grupo-acciones {
+    opacity: 1;
+  }
+
+  /* Tarjetas / cards */
+  .tarjeta:hover,
+  .card:hover,
+  [class*="tarjeta"]:hover,
+  [class*="card"]:hover {
+    transform: none !important;
+    box-shadow: var(--shadow-card) !important;
+  }
+
+  /* NavLinks del sidebar */
+  .barra-lateral__enlace:hover {
+    background: transparent;
+    color: inherit;
+  }
+
+  /* Pestañas */
+  .pestanias-filtro__pestania:hover {
+    color: var(--color-text-muted);
+  }
+
+  /* Scrollbar solo para ratón */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+/* ─── Utilidades Globales ─── */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,8 @@
+.mis-puntos__error {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md, 8px);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-error, #dc2626);
+  font-size: 0.9rem;
+}

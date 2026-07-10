@@ -1,0 +1,314 @@
+/* =============================================
+   MisViajes.css — Dashboard de viajes del cliente
+   ============================================= */
+
+.mis-viajes {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: var(--spacing-3xl);
+}
+
+/* ─── Cabecera ─── */
+.mis-viajes__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.mis-viajes__titulo {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-3xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: var(--spacing-xs);
+}
+
+.mis-viajes__subtitulo {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.mis-viajes__btn-explorar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-primary-dark);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.mis-viajes__btn-explorar:hover {
+  background: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+/* ─── Estado vacío ─── */
+.mis-viajes__vacio {
+  text-align: center;
+  padding: var(--spacing-3xl) var(--spacing-xl);
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.mis-viajes__vacio-icono {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: var(--spacing-lg);
+  opacity: 0.7;
+}
+
+.mis-viajes__vacio-titulo {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.mis-viajes__vacio-desc {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-xl);
+  max-width: 360px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mis-viajes__vacio-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-xl);
+  background: var(--color-primary-dark);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition-base);
+}
+
+.mis-viajes__vacio-btn:hover {
+  background: var(--color-primary);
+}
+
+/* ─── Lista de tickets ─── */
+.mis-viajes__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* ─── Ticket individual ─── */
+.mis-viajes__ticket {
+  display: flex;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: all var(--transition-base);
+}
+
+.mis-viajes__ticket:hover {
+  border-color: rgba(18, 40, 75, 0.2);
+}
+
+/* Imagen lateral */
+.mis-viajes__ticket-img {
+  width: 140px;
+  min-height: 180px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+/* Cuerpo */
+.mis-viajes__ticket-body {
+  flex: 1;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.mis-viajes__ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.mis-viajes__ticket-titulo {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* Badge de estado */
+.mis-viajes__badge {
+  padding: 3px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mis-viajes__badge--pendiente {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-accent-dark);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.mis-viajes__badge--aprobado {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.mis-viajes__badge--rechazado {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.mis-viajes__ticket-ubicacion {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* Grid de detalles */
+.mis-viajes__ticket-detalles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.mis-viajes__ticket-dato {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.mis-viajes__ticket-dato-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mis-viajes__ticket-dato-value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mis-viajes__ticket-dato-value--saldo {
+  color: var(--color-primary-dark);
+}
+
+/* Footer del ticket */
+.mis-viajes__ticket-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--spacing-sm);
+  border-top: 1px dashed var(--color-border);
+}
+
+.mis-viajes__ticket-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.mis-viajes__btn-abonar {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-dark);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity var(--transition-base);
+}
+
+.mis-viajes__btn-abonar:hover {
+  opacity: 0.9;
+}
+
+.mis-viajes__ticket-ref {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.mis-viajes__ticket-id {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.mis-viajes__cargando,
+.mis-viajes__error {
+  margin-bottom: var(--spacing-lg);
+  font-size: var(--font-size-sm);
+}
+
+.mis-viajes__error {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--color-error);
+}
+
+.mis-viajes__cargando {
+  color: var(--color-text-muted);
+}
+
+.mis-viajes .paginacion-tabla {
+  margin-top: var(--spacing-xl);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .mis-viajes__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mis-viajes__ticket {
+    flex-direction: column;
+  }
+
+  .mis-viajes__ticket-img {
+    width: 100%;
+    min-height: 120px;
+    max-height: 140px;
+  }
+
+  .mis-viajes__ticket-detalles {
+    grid-template-columns: 1fr 1fr;
+  }
+}

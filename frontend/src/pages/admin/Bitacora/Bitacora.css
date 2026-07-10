@@ -1,0 +1,212 @@
+.bitacora {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Toolbar ─── */
+.bitacora__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.bitacora__toolbar-izq {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.bitacora__busqueda {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.4rem 0.75rem;
+  color: var(--color-text-muted);
+  transition: border-color var(--transition-fast);
+}
+
+.bitacora__busqueda:focus-within {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.bitacora__busqueda input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  min-width: 220px;
+}
+
+.bitacora__busqueda input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.bitacora__filtro {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.bitacora__filtro:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.bitacora__filtro--fecha {
+  min-width: 140px;
+}
+
+/* ─── Error ─── */
+.bitacora__error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  color: #dc2626;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ─── Celdas tabla ─── */
+.bit-tabla__fecha {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.bit-tabla__texto-secundario {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.bit-tabla__resumen {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.bit-tabla__usuario {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bit-tabla__usuario-nombre {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.bit-tabla__usuario-correo {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* ─── Paginación ─── */
+.bitacora__paginacion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.bitacora__paginacion-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+}
+
+.bitacora__paginacion-botones {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* ─── Panel detalle ─── */
+.bitacora__detalle-cargando {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+}
+
+.bitacora__detalle {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.bitacora__detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-md);
+}
+
+.bitacora__detalle-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+}
+
+.bitacora__detalle-campo--completo {
+  grid-column: 1 / -1;
+}
+
+.bitacora__detalle-etiqueta {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.bitacora__detalle-json {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bitacora__detalle-pre {
+  background: var(--color-bg-subtle, #f8fafc);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .bitacora__detalle-grid {
+    grid-template-columns: 1fr;
+  }
+}

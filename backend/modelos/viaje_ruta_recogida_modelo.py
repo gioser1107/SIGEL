@@ -164,34 +164,50 @@ def listar_candidatos_ruta_recogida(db: Session, viaje_id: int) -> dict:
         )
         .all()
     )
-    orden_por_viajero = {r.reserva_cliente_id: r.orden for r in rutas_activas}
-    ids_en_ruta = set(orden_por_viajero.keys())
+    pasajero_por_id = {pasajero.id: (pasajero, reserva, cliente) for pasajero, reserva, cliente in viajeros}
+    orden_por_cliente: dict[int, int] = {}
+    clientes_en_ruta: set[int] = set()
+    for ruta in rutas_activas:
+        fila = pasajero_por_id.get(ruta.reserva_cliente_id)
+        if fila is None:
+            continue
+        cliente_id = fila[2].id
+        clientes_en_ruta.add(cliente_id)
+        orden_por_cliente.setdefault(cliente_id, ruta.orden)
 
     candidatos = []
     reservas_ids = set()
     sin_domicilio = 0
+    clientes_sin_domicilio: set[int] = set()
     for pasajero, reserva, cliente in viajeros:
         reservas_ids.add(reserva.id)
         if pasajero.punto_recogida_id is None:
-            sin_domicilio += 1
-        en_ruta = pasajero.id in ids_en_ruta
+            if cliente.id not in clientes_sin_domicilio:
+                sin_domicilio += 1
+                clientes_sin_domicilio.add(cliente.id)
+        en_ruta = cliente.id in clientes_en_ruta
         candidatos.append(
             _item_candidato(
                 db,
                 pasajero,
                 reserva,
                 cliente,
-                orden_ruta=orden_por_viajero.get(pasajero.id),
+                orden_ruta=orden_por_cliente.get(cliente.id),
                 en_ruta=en_ruta,
             )
         )
+
+    candidatos = _deduplicar_candidatos_por_cliente(candidatos)
+    ids_en_ruta_clientes = {
+        c["cliente"]["id"] for c in candidatos if c["en_ruta"]
+    }
 
     return {
         "viaje_id": viaje_id,
         "reservas_activas": len(reservas_ids),
         "viajeros_total": len(candidatos),
         "viajeros_sin_domicilio": sin_domicilio,
-        "viajeros_en_ruta": len(ids_en_ruta),
+        "viajeros_en_ruta": len(ids_en_ruta_clientes),
         "candidatos": candidatos,
     }
 
@@ -213,10 +229,18 @@ def listar_ruta_recogida(db: Session, viaje_id: int) -> dict:
         .all()
     )
 
-    paradas = [
+    paradas_raw = [
         _item_ruta(db, ruta, pasajero, reserva, cliente)
         for ruta, pasajero, reserva, cliente in filas
     ]
+
+    paradas_por_cliente: dict[int, dict] = {}
+    for parada in paradas_raw:
+        cliente_id = parada["cliente"]["id"]
+        if cliente_id not in paradas_por_cliente:
+            paradas_por_cliente[cliente_id] = parada
+
+    paradas = sorted(paradas_por_cliente.values(), key=lambda item: item["orden"])
 
     candidatos_info = listar_candidatos_ruta_recogida(db, viaje_id)
 
@@ -228,18 +252,42 @@ def listar_ruta_recogida(db: Session, viaje_id: int) -> dict:
     }
 
 
-def _anular_ruta_recogida_viaje(db: Session, viaje_id: int, ahora: datetime) -> None:
-    filas = (
-        db.query(ViajeRutaRecogida)
-        .filter(
-            ViajeRutaRecogida.viaje_id == viaje_id,
-            ViajeRutaRecogida.eliminado_en.is_(None),
-        )
-        .all()
+def _deduplicar_candidatos_por_cliente(candidatos: list[dict]) -> list[dict]:
+    por_cliente: dict[int, dict] = {}
+    for candidato in candidatos:
+        cliente_id = candidato["cliente"]["id"]
+        actual = por_cliente.get(cliente_id)
+        if actual is None:
+            por_cliente[cliente_id] = candidato
+            continue
+        if candidato["en_ruta"] and not actual["en_ruta"]:
+            por_cliente[cliente_id] = candidato
+            continue
+        if actual["en_ruta"]:
+            continue
+        if candidato["reserva_id"] > actual["reserva_id"]:
+            por_cliente[cliente_id] = candidato
+
+    return sorted(
+        por_cliente.values(),
+        key=lambda item: (
+            item["cliente"]["apellido"] or "",
+            item["cliente"]["nombre"] or "",
+            item["reserva_id"],
+        ),
     )
-    for fila in filas:
-        fila.eliminado_en = ahora
-        fila.actualizado_en = ahora
+
+
+def _eliminar_ruta_recogida_viaje(db: Session, viaje_id: int) -> None:
+    """Elimina todas las paradas del viaje (incluidas soft-deleted) para evitar
+    conflictos con uq_vrr_viaje_orden y uq_vrr_viaje_viajero al reemplazar la ruta."""
+    eliminados = (
+        db.query(ViajeRutaRecogida)
+        .filter(ViajeRutaRecogida.viaje_id == viaje_id)
+        .delete(synchronize_session=False)
+    )
+    if eliminados:
+        db.flush()
 
 
 def guardar_ruta_recogida(
@@ -251,7 +299,7 @@ def guardar_ruta_recogida(
     ahora = datetime.now()
 
     if not paradas:
-        _anular_ruta_recogida_viaje(db, viaje_id, ahora)
+        _eliminar_ruta_recogida_viaje(db, viaje_id)
         db.commit()
         return listar_ruta_recogida(db, viaje_id)
 
@@ -263,10 +311,21 @@ def guardar_ruta_recogida(
     if len(set(ids)) != len(ids):
         raise HTTPException(status_code=400, detail="Hay viajeros duplicados en la ruta")
 
+    cliente_ids_vistos: set[int] = set()
     for item in paradas:
         pasajero, reserva, cliente = _validar_reserva_cliente_del_viaje(
             db, viaje_id, item.reserva_cliente_id
         )
+        if cliente.id in cliente_ids_vistos:
+            nombre = f"{cliente.nombre} {cliente.apellido}".strip()
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"{nombre} ya está en la ruta de recogida. "
+                    "Solo puede haber una parada por persona en el viaje."
+                ),
+            )
+        cliente_ids_vistos.add(cliente.id)
         if pasajero.punto_recogida_id is None:
             nombre = f"{cliente.nombre} {cliente.apellido}".strip()
             raise HTTPException(
@@ -274,7 +333,7 @@ def guardar_ruta_recogida(
                 detail=f"El viajero {nombre} no tiene domicilio de recogida registrado",
             )
 
-    _anular_ruta_recogida_viaje(db, viaje_id, ahora)
+    _eliminar_ruta_recogida_viaje(db, viaje_id)
 
     for item in sorted(paradas, key=lambda p: p.orden):
         db.add(

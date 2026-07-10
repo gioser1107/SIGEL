@@ -1,0 +1,57 @@
+.boton-accion-tabla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.boton-accion-tabla:hover:not(:disabled) {
+  color: var(--color-text-primary);
+  background: var(--color-bg-dark);
+  border-color: var(--color-border);
+}
+
+.boton-accion-tabla:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.boton-accion-tabla:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.boton-accion-tabla--primario:hover:not(:disabled) {
+  color: var(--color-primary);
+  background: var(--color-primary-glow);
+  border-color: rgba(0, 85, 160, 0.2);
+}
+
+.boton-accion-tabla--exito:hover:not(:disabled) {
+  color: var(--color-success, #16a34a);
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
+.boton-accion-tabla--peligro:hover:not(:disabled) {
+  color: var(--color-error, #dc2626);
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.2);
+}
+
+.boton-accion-tabla svg {
+  display: block;
+  pointer-events: none;
+}

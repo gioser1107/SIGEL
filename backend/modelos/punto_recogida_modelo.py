@@ -69,14 +69,14 @@ def validar_datos_domicilio_cliente(
     estado: str | None,
     notas_referencia: str | None,
 ) -> tuple[str, str, str, str, str]:
-    nombre_limpio = _texto_normalizado(nombre)
+    from utilidades.validaciones import ValidadorEntrada
+
+    nombre_limpio = ValidadorEntrada.etiqueta_texto(nombre, "nombre")
     direccion_limpia = _texto_normalizado(direccion)
     ciudad_limpia = _texto_normalizado(ciudad)
     estado_limpio = _texto_normalizado(estado)
     referencia_limpia = _texto_normalizado(notas_referencia)
 
-    if not nombre_limpio:
-        raise HTTPException(status_code=422, detail="El nombre del domicilio es requerido (ej. Mi casa)")
     if not direccion_limpia:
         raise HTTPException(status_code=422, detail="La direccion exacta de recogida es requerida")
     if not ciudad_limpia:
@@ -481,6 +481,15 @@ def actualizar_punto_domicilio_cliente(
     db.refresh(punto)
 
     return punto_recogida_a_dict(punto, es_predeterminado=vinculo.es_predeterminado)
+
+
+def punto_pertenece_a_cliente(db: Session, cliente_id: int, punto_id: int) -> bool:
+    vinculo = db.query(ClientePuntoRecogida).filter(
+        ClientePuntoRecogida.cliente_id == cliente_id,
+        ClientePuntoRecogida.punto_recogida_id == punto_id,
+        ClientePuntoRecogida.eliminado_en.is_(None),
+    ).first()
+    return vinculo is not None
 
 
 def validar_punto_recogida_del_cliente(db: Session, cliente_id: int, punto_id: int) -> None:

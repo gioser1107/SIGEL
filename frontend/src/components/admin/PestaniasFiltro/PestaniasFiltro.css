@@ -1,0 +1,54 @@
+.pestanias-filtro {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--spacing-lg);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pestanias-filtro::-webkit-scrollbar { display: none; }
+
+.pestanias-filtro__pestania {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.625rem var(--spacing-md);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+.pestanias-filtro__pestania:hover { color: var(--color-text-primary); }
+
+.pestanias-filtro__pestania--activa {
+  color: var(--color-primary);
+  font-weight: 600;
+  border-bottom-color: var(--color-primary);
+}
+
+.pestanias-filtro__contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.25rem;
+  background: var(--color-bg-dark);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+}
+.pestanias-filtro__pestania--activa .pestanias-filtro__contador {
+  background: var(--color-primary-glow);
+  color: var(--color-primary);
+}

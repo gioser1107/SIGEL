@@ -1,0 +1,7 @@
+/* TablaPermisos.css — celdas del listado de permisos */
+
+.seguridad__permiso-nombre {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono, monospace);
+}

@@ -1,0 +1,32 @@
+.registro-page__contenedor {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.registro-page__stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.25rem;
+}
+
+.registro-page__paso {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.registro-page__paso--activo {
+  color: var(--color-primary, #0055a0);
+  font-weight: 700;
+}
+
+.registro-page__paso--ok {
+  color: var(--color-success, #059669);
+}
+
+.registro-page__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}

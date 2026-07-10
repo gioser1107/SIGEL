@@ -1,0 +1,321 @@
+.calendario-viajes {
+    padding: 4rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* =========================================
+   ENCABEZADO (Estilo Fecha / Imagen 2)
+   ========================================= */
+.calendario-viajes__encabezado {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.calendario-viajes__fecha-insignia {
+    background-color: var(--color-primary);
+    /* Usamos tu acento (ej. el azul/turquesa) en lugar del rojo genérico para mantener coherencia */
+    color: #ffffff;
+    border-radius: var(--radius-md, 12px);
+    width: 70px;
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 8px 16px rgba(40, 152, 186, 0.3);
+    /* Sombra basada en tu color */
+    flex-shrink: 0;
+}
+
+.insignia-dia {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.insignia-mes {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.calendario-viajes__textos {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.calendario-viajes__subtitulo {
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.calendario-viajes__titulo {
+    font-size: var(--font-size-3xl);
+    margin: 0;
+    color: var(--color-text-primary);
+}
+
+.calendario-viajes__controles {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.calendario-viajes__acciones {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-shrink: 0;
+}
+
+/* =========================================
+   CARRUSEL Y TARJETAS (Imagen 1)
+   ========================================= */
+.calendario-viajes__carrusel {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    /* Permite hacer scroll horizontal */
+    padding-bottom: 2rem;
+    /* Espacio para la sombra */
+
+    /* Ocultar barra de scroll en navegadores modernos para un look limpio */
+    scrollbar-width: none;
+}
+
+.calendario-viajes__carrusel::-webkit-scrollbar {
+    display: none;
+}
+
+.tarjeta-cartelera {
+    min-width: 400px;
+    /* Tarjetas anchas tipo cine */
+    height: 280px;
+    border-radius: var(--radius-lg, 24px);
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    flex-shrink: 0;
+    /* Evita que se aplasten */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    transition: transform var(--transition-fast);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.tarjeta-cartelera:hover {
+    transform: translateY(-5px);
+}
+
+/* Sombra oscura interior para que el cuadro de vidrio siempre resalte */
+.tarjeta-cartelera::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 14, 23, 0.8) 0%, transparent 50%);
+}
+
+/* =========================================
+   EFECTO GLASSMORPHISM (Vidrio Esmerilado)
+   ========================================= */
+.tarjeta-cartelera__info-glass {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+
+    /* El truco del vidrio */
+    background: rgba(255, 255, 255, 0.1);
+    /* Blanco casi transparente */
+    backdrop-filter: blur(12px);
+    /* Desenfoca el fondo de la imagen */
+    -webkit-backdrop-filter: blur(12px);
+    /* Soporte para Safari */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Borde sutil */
+
+    border-radius: var(--radius-md, 16px);
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ffffff;
+    z-index: 2;
+}
+
+.calendario-viajes__controles .control-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast, 0.2s ease);
+    box-shadow: 0 4px 10px rgba(40, 152, 186, 0.3);
+}
+
+.calendario-viajes__controles .control-btn:hover {
+    background-color: var(--color-primary-light);
+    color: #ffffff;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 15px rgba(40, 152, 186, 0.4);
+}
+
+.calendario-viajes__controles .control-btn:active {
+    transform: translateY(0) scale(0.95);
+}
+
+.info-glass__detalles {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+}
+
+.info-glass__titulo {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.info-glass__ubicacion {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+.info-glass__precio-caja {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+}
+
+.precio-monto {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.precio-sufijo {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Adaptación para móviles */
+@media (max-width: 768px) {
+    .calendario-viajes {
+        padding: 2.5rem 1.25rem;
+    }
+
+    .calendario-viajes__encabezado {
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .calendario-viajes__titulo {
+        font-size: var(--font-size-2xl);
+    }
+
+    .calendario-viajes__acciones {
+        display: none;
+    }
+
+    .tarjeta-cartelera {
+        min-width: min(85vw, 100%);
+        height: 260px;
+    }
+
+    .tarjeta-cartelera__info-glass {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .info-glass__precio-caja {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 0.35rem;
+    }
+
+    .precio-monto {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendario-viajes {
+        padding: 2rem 1rem;
+    }
+
+    .tarjeta-cartelera {
+        min-width: min(92vw, 100%);
+        height: 240px;
+    }
+
+    .insignia-mes {
+        font-size: 0.65rem;
+    }
+}
+
+/* =========================================
+   PIE DE SECCIÓN (Botón Inferior)
+   ========================================= */
+.calendario-viajes__pie {
+    display: flex;
+    justify-content: center;
+    /* Esto centra el botón horizontalmente */
+    margin-top: 1rem;
+    /* Espacio entre las tarjetas y el botón */
+}
+
+.btn-agenda-completa-centrado {
+    display: inline-block;
+    padding: 0.8rem 2.5rem;
+    font-family: var(--font-heading);
+    font-size: var(--font-size-base, 1rem);
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-full, 50px);
+    /* Botón estilo píldora */
+    background-color: transparent;
+    transition: all var(--transition-base, 0.3s ease);
+}
+
+.btn-agenda-completa-centrado:hover {
+    background-color: var(--color-primary);
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 152, 186, 0.4);
+    /* Resplandor usando tu tono azul/turquesa */
+}
+
+.btn-agenda-completa-centrado:active {
+    transform: translateY(0);
+}

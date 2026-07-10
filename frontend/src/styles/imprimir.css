@@ -1,0 +1,192 @@
+/* ============================================
+   TRAVELBQTO — Estilos de impresión / PDF
+   ============================================ */
+
+.solo-imprimir {
+  display: none;
+}
+
+.no-imprimir {
+  /* visible en pantalla */
+}
+
+@media print {
+  @page {
+    margin: 1.2cm 1.5cm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: var(--color-text-primary, #12284b) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Ocultar chrome del admin */
+  .barra-lateral,
+  .barra-lateral__superposicion,
+  .admin-cabecera,
+  .no-imprimir,
+  .panel-deslizable,
+  .panel-deslizable__superposicion,
+  .modal-confirmacion,
+  .tabla-datos__th--casilla,
+  .tabla-datos__celda--casilla,
+  .tabla-datos__th--acciones,
+  .tabla-datos__celda--acciones {
+    display: none !important;
+  }
+
+  .layout-admin,
+  .admin-principal,
+  .admin-contenido,
+  .planificacion,
+  .cotizaciones,
+  .reservas {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .admin-principal--expandido {
+    margin-left: 0 !important;
+  }
+
+  .solo-imprimir {
+    display: block !important;
+  }
+
+  .zona-imprimible {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .reporte-impresion {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    color: var(--color-text-primary, #12284b);
+  }
+
+  .reporte-impresion__marca {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid var(--color-primary, #0055a0);
+  }
+
+  .reporte-impresion__logo {
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .reporte-impresion__fecha {
+    font-size: 0.75rem;
+    color: var(--color-text-muted, #64748b);
+    text-align: right;
+  }
+
+  .reporte-impresion__titulo {
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0 0 0.25rem;
+    color: var(--color-text-primary, #12284b);
+  }
+
+  .reporte-impresion__subtitulo {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary, #475569);
+    margin: 0 0 1rem;
+  }
+
+  .reporte-impresion__resumen {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .reporte-impresion__resumen-item {
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: var(--radius-md, 8px);
+    padding: 0.5rem 0.65rem;
+    background: var(--color-bg-subtle, #f8fafc);
+  }
+
+  .reporte-impresion__resumen-etiqueta {
+    display: block;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-muted, #64748b);
+    margin-bottom: 0.15rem;
+  }
+
+  .reporte-impresion__resumen-valor {
+    display: block;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .reporte-impresion__tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+    page-break-inside: auto;
+  }
+
+  .reporte-impresion__tabla thead {
+    display: table-header-group;
+  }
+
+  .reporte-impresion__tabla tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .reporte-impresion__tabla th {
+    background: var(--color-primary, #0055a0);
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .reporte-impresion__tabla td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+    vertical-align: top;
+  }
+
+  .reporte-impresion__tabla tbody tr:nth-child(even) td {
+    background: var(--color-bg-subtle, #f8fafc);
+  }
+
+  .reporte-impresion__vacio {
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #64748b);
+    padding: 1rem 0;
+    text-align: center;
+  }
+
+  .reporte-impresion__pie {
+    margin-top: 1.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    font-size: 0.65rem;
+    color: var(--color-text-muted, #64748b);
+    text-align: center;
+  }
+}

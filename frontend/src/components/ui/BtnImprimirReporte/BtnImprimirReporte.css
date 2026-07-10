@@ -1,0 +1,9 @@
+.btn-imprimir-reporte {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.btn-imprimir-reporte svg {
+  flex-shrink: 0;
+}

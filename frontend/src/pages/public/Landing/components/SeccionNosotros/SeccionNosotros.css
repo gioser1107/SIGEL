@@ -1,0 +1,226 @@
+/* ============================================
+   SECCIÓN NOSOTROS — Compromiso y estadísticas
+   Diseño inspirado en layout de 2 columnas:
+   izquierda (texto + stats) · derecha (imagen + badge)
+   ============================================ */
+.seccion-nosotros {
+    padding: 5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.seccion-nosotros__contenido {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3.5rem;
+    align-items: center;
+}
+
+/* ══════════════════════════════════════════
+   LADO IZQUIERDO — Texto + Estadísticas
+══════════════════════════════════════════ */
+.seccion-nosotros__izquierda {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.seccion-nosotros__eyebrow {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+}
+
+.seccion-nosotros__titulo {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-4xl);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    margin: 0;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+}
+
+.seccion-nosotros__descripcion {
+    font-size: var(--font-size-base);
+    color: var(--color-text-secondary);
+    line-height: 1.75;
+    max-width: 480px;
+    margin: 0;
+}
+
+/* ── Grid de estadísticas (2x2) ── */
+.seccion-nosotros__estadisticas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+.stat-card {
+    background: #ffffff;
+    border: 1.5px solid var(--color-border-light, #f0f0f0);
+    border-radius: var(--radius-xl, 16px);
+    padding: 1.25rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    transition: all var(--transition-base, 0.25s ease);
+}
+
+.stat-card:hover {
+    border-color: rgba(0, 85, 160, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 85, 160, 0.1);
+}
+
+.stat-card__icono {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg, 12px);
+    background: var(--color-primary-glow, rgba(0, 85, 160, 0.1));
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.25rem;
+}
+
+.stat-card__numero {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.stat-card__etiqueta {
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-text-muted);
+    letter-spacing: 0.3px;
+}
+
+/* ══════════════════════════════════════════
+   LADO DERECHO — Imagen + Badge
+══════════════════════════════════════════ */
+.seccion-nosotros__derecha {
+    display: flex;
+    justify-content: center;
+}
+
+.seccion-nosotros__imagen-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+}
+
+.seccion-nosotros__imagen {
+    width: 100%;
+    height: 520px;
+    object-fit: cover;
+    border-radius: var(--radius-2xl, 24px);
+    box-shadow: var(--shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.08));
+}
+
+/* ── Badge circular ── */
+.seccion-nosotros__badge {
+    position: absolute;
+    bottom: -28px;
+    right: -28px;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: var(--gradient-primary, linear-gradient(135deg, #0055A0 0%, #1F5BD6 100%));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    box-shadow: 0 8px 28px rgba(0, 85, 160, 0.4);
+    animation: badgeFloat 3s ease-in-out infinite;
+    z-index: 2;
+    text-decoration: none;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.seccion-nosotros__badge:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 12px 32px rgba(0, 85, 160, 0.5);
+}
+
+@keyframes badgeFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+.seccion-nosotros__badge-text {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.seccion-nosotros__badge-icon {
+    font-size: 1.2rem;
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 900px) {
+    .seccion-nosotros__contenido {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+    }
+
+    .seccion-nosotros__derecha {
+        order: -1;
+    }
+
+    .seccion-nosotros__imagen {
+        height: 380px;
+    }
+
+    .seccion-nosotros__badge {
+        bottom: -20px;
+        right: -10px;
+        width: 120px;
+        height: 120px;
+    }
+
+    .seccion-nosotros__badge-text {
+        font-size: 0.85rem;
+    }
+
+    .seccion-nosotros__titulo {
+        font-size: var(--font-size-3xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .seccion-nosotros {
+        padding: 3rem 1.25rem;
+    }
+
+    .seccion-nosotros__estadisticas {
+        gap: 0.75rem;
+    }
+
+    .stat-card {
+        padding: 1rem 0.85rem;
+    }
+
+    .stat-card__numero {
+        font-size: var(--font-size-2xl);
+    }
+
+    .seccion-nosotros__imagen {
+        height: 300px;
+    }
+}

@@ -13,6 +13,7 @@ from modelos.estado_modelo import Estado
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente, listar_puntos_por_cliente
 from modelos.rol_modelo import Rol
 from utilidades.paginacion import offset_pagina, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada, normalizar_datos_cliente, validar_datos_cliente_entrada
 
 if TYPE_CHECKING:
     from modelos.usuario_modelo import Usuario
@@ -192,10 +193,12 @@ def registrar_cliente_para_reserva(
     datos,
     creado_por_usuario_id: int | None,
 ) -> Cliente:
-    tipo_documento = datos.tipo_documento or "V"
-    numero_documento = datos.numero_documento.strip()
+    validar_datos_cliente_entrada(datos, parcial=False)
+    campos = normalizar_datos_cliente(datos)
+    tipo_documento = campos["tipo_documento"]
+    numero_documento = campos["numero_documento"]
     if not numero_documento:
-        raise HTTPException(status_code=422, detail="El número de documento es requerido")
+        raise HTTPException(status_code=422, detail="numero_documento: es obligatorio")
 
     validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
 
@@ -216,12 +219,12 @@ def registrar_cliente_para_reserva(
     ahora = datetime.now()
     nuevo_cliente = Cliente(
         usuario_id=None,
-        tipo_cliente=getattr(datos, "tipo_cliente", None) or "natural",
+        tipo_cliente=campos["tipo_cliente"],
         tipo_documento=tipo_documento,
         numero_documento=numero_documento,
-        nombre=datos.nombre,
-        apellido=datos.apellido,
-        razon_social=getattr(datos, "razon_social", None),
+        nombre=campos["nombre"],
+        apellido=campos["apellido"],
+        razon_social=campos["razon_social"] or getattr(datos, "razon_social", None),
         telefono=getattr(datos, "telefono", None),
         telefono_secundario=getattr(datos, "telefono_secundario", None),
         direccion=getattr(datos, "direccion", None),
@@ -318,10 +321,12 @@ def obtener_cliente(db: Session, cliente_id: int) -> dict:
 
 
 def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
+    validar_datos_cliente_entrada(datos, parcial=False)
+    campos = normalizar_datos_cliente(datos)
     validar_documento_no_repetido(
         db,
-        datos.tipo_documento,
-        datos.numero_documento,
+        campos["tipo_documento"],
+        campos["numero_documento"],
     )
     validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
 
@@ -329,12 +334,12 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
 
     nuevo_cliente = Cliente(
         usuario_id=None,
-        tipo_cliente=datos.tipo_cliente,
-        tipo_documento=datos.tipo_documento,
-        numero_documento=datos.numero_documento,
-        nombre=datos.nombre,
-        apellido=datos.apellido,
-        razon_social=datos.razon_social,
+        tipo_cliente=campos["tipo_cliente"],
+        tipo_documento=campos["tipo_documento"],
+        numero_documento=campos["numero_documento"],
+        nombre=campos["nombre"],
+        apellido=campos["apellido"],
+        razon_social=campos["razon_social"] or datos.razon_social,
         telefono=datos.telefono,
         telefono_secundario=datos.telefono_secundario,
         direccion=datos.direccion,
@@ -379,17 +384,26 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
     usuario = buscar_usuario_cliente(db, cliente)
 
     if datos.nombre is not None:
-        cliente.nombre = datos.nombre
+        nombre = ValidadorEntrada.nombre_persona(datos.nombre, "nombre")
+        cliente.nombre = nombre
         if usuario is not None:
-            usuario.nombre = datos.nombre
+            usuario.nombre = nombre
 
     if datos.apellido is not None:
-        cliente.apellido = datos.apellido
+        apellido = ValidadorEntrada.nombre_persona(datos.apellido, "apellido")
+        cliente.apellido = apellido
         if usuario is not None:
-            usuario.apellido = datos.apellido
+            usuario.apellido = apellido
 
     tipo_documento_final = datos.tipo_documento or cliente.tipo_documento
     numero_documento_final = datos.numero_documento or cliente.numero_documento
+    if datos.tipo_documento is not None:
+        tipo_documento_final = ValidadorEntrada.tipo_documento(datos.tipo_documento)
+    if datos.numero_documento is not None:
+        numero_documento_final = ValidadorEntrada.numero_documento(
+            tipo_documento_final,
+            datos.numero_documento,
+        )
     if (
         tipo_documento_final != cliente.tipo_documento
         or numero_documento_final != cliente.numero_documento
@@ -404,10 +418,14 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
         cliente.numero_documento = numero_documento_final
 
     if datos.tipo_cliente is not None:
-        cliente.tipo_cliente = datos.tipo_cliente
+        cliente.tipo_cliente = ValidadorEntrada.tipo_cliente(datos.tipo_cliente)
 
     if datos.razon_social is not None:
-        cliente.razon_social = datos.razon_social
+        cliente.razon_social = ValidadorEntrada.nombre_entidad(
+            datos.razon_social,
+            "razon_social",
+            obligatorio=cliente.tipo_cliente == "juridico",
+        )
 
     if datos.telefono is not None:
         cliente.telefono = datos.telefono

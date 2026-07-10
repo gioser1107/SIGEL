@@ -20,6 +20,7 @@ from modelos.punto_recogida_modelo import asignar_puntos_a_cliente
 from modelos.cliente_modelo import cliente_respuesta
 from modelos.rol_modelo import Rol
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada, normalizar_datos_cliente, validar_datos_cliente_entrada
 
 directorio_backend = Path(__file__).resolve().parent.parent
 load_dotenv(directorio_backend / ".env")
@@ -134,9 +135,9 @@ def actualizar_mi_perfil(
     usuario = buscar_usuario_activo(db, usuario_id)
 
     if nombre is not None:
-        usuario.nombre = nombre
+        usuario.nombre = ValidadorEntrada.nombre_persona(nombre, "nombre")
     if apellido is not None:
-        usuario.apellido = apellido
+        usuario.apellido = ValidadorEntrada.nombre_persona(apellido, "apellido")
     if telefono is not None:
         usuario.telefono = telefono
 
@@ -157,6 +158,7 @@ def cambiar_mi_contrasena(
     if not verificar_contrasena(contrasena_actual, usuario.hash_contrasena):
         raise HTTPException(status_code=400, detail="La contraseña actual no es correcta")
 
+    ValidadorEntrada.contrasena(contrasena_nueva)
     usuario.hash_contrasena = hashear_contrasena(contrasena_nueva)
     usuario.actualizado_en = datetime.now()
     db.commit()
@@ -171,7 +173,12 @@ def crear_usuario(
     rol_id: int,
     telefono: str | None,
 ) -> dict:
-    usuario_existente = db.query(Usuario).filter(Usuario.correo == correo).first()
+    nombre_limpio = ValidadorEntrada.nombre_persona(nombre, "nombre")
+    apellido_limpio = ValidadorEntrada.nombre_persona(apellido, "apellido")
+    correo_limpio = ValidadorEntrada.correo(correo)
+    ValidadorEntrada.contrasena(contrasena)
+
+    usuario_existente = db.query(Usuario).filter(Usuario.correo == correo_limpio).first()
     if usuario_existente is not None and usuario_existente.eliminado_en is None:
         raise HTTPException(
             status_code=400,
@@ -188,10 +195,10 @@ def crear_usuario(
     ahora = datetime.now()
     nuevo_usuario = Usuario(
         rol_id=rol_id,
-        correo=correo,
+        correo=correo_limpio,
         hash_contrasena=hashear_contrasena(contrasena),
-        nombre=nombre,
-        apellido=apellido,
+        nombre=nombre_limpio,
+        apellido=apellido_limpio,
         telefono=telefono,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -213,18 +220,19 @@ def actualizar_usuario(
     usuario = buscar_usuario_activo(db, usuario_id)
 
     if correo is not None and correo != usuario.correo:
-        otro = db.query(Usuario).filter(Usuario.correo == correo).first()
+        correo_limpio = ValidadorEntrada.correo(correo)
+        otro = db.query(Usuario).filter(Usuario.correo == correo_limpio).first()
         if otro is not None and otro.id != usuario_id and otro.eliminado_en is None:
             raise HTTPException(
                 status_code=400,
                 detail="El correo ya está en uso por otro usuario",
             )
-        usuario.correo = correo
+        usuario.correo = correo_limpio
 
     if nombre is not None:
-        usuario.nombre = nombre
+        usuario.nombre = ValidadorEntrada.nombre_persona(nombre, "nombre")
     if apellido is not None:
-        usuario.apellido = apellido
+        usuario.apellido = ValidadorEntrada.nombre_persona(apellido, "apellido")
     if telefono is not None:
         usuario.telefono = telefono
 
@@ -257,6 +265,7 @@ def resetear_contrasena_de_usuario(
     contrasena_nueva: str,
 ) -> None:
     usuario = buscar_usuario_activo(db, usuario_id)
+    ValidadorEntrada.contrasena(contrasena_nueva)
     usuario.hash_contrasena = hashear_contrasena(contrasena_nueva)
     usuario.actualizado_en = datetime.now()
     db.commit()
@@ -279,8 +288,10 @@ def eliminar_usuario(db: Session, usuario_id: int, usuario_sesion_id: int) -> No
 def iniciar_sesion(db: Session, correo: str, contrasena: str) -> dict:
     from dependencias.auth_dependencia import obtener_permisos_del_rol
 
+    correo_limpio = ValidadorEntrada.correo(correo)
+
     consulta = db.query(Usuario).filter(
-        Usuario.correo == correo,
+        Usuario.correo == correo_limpio,
         Usuario.eliminado_en.is_(None),
     )
     usuario = consulta.first()
@@ -315,19 +326,24 @@ def iniciar_sesion(db: Session, correo: str, contrasena: str) -> dict:
 def registrar_cliente_portal(db: Session, datos) -> dict:
     from dependencias.auth_dependencia import obtener_permisos_del_rol
 
+    validar_datos_cliente_entrada(datos, parcial=False)
+    campos = normalizar_datos_cliente(datos)
+    correo_limpio = ValidadorEntrada.correo(datos.correo)
+    ValidadorEntrada.contrasena(datos.contrasena)
+
     rol_cliente = obtener_rol_cliente(db)
     if rol_cliente is None:
         raise HTTPException(status_code=500, detail="El rol Cliente no existe en el sistema")
 
-    consulta_correo = db.query(Usuario).filter(Usuario.correo == datos.correo)
+    consulta_correo = db.query(Usuario).filter(Usuario.correo == correo_limpio)
     existente = consulta_correo.first()
 
     if existente is not None and existente.eliminado_en is None:
         raise HTTPException(status_code=400, detail="El correo ya está registrado")
 
     consulta_documento = db.query(Cliente).filter(
-        Cliente.tipo_documento == datos.tipo_documento,
-        Cliente.numero_documento == datos.numero_documento,
+        Cliente.tipo_documento == campos["tipo_documento"],
+        Cliente.numero_documento == campos["numero_documento"],
         Cliente.eliminado_en.is_(None),
     )
     cliente_existente = consulta_documento.first()
@@ -345,10 +361,10 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
 
     nuevo_usuario = Usuario(
         rol_id=rol_cliente.id,
-        correo=datos.correo,
+        correo=correo_limpio,
         hash_contrasena=hash_contrasena,
-        nombre=datos.nombre,
-        apellido=datos.apellido,
+        nombre=campos["nombre"],
+        apellido=campos["apellido"],
         telefono=datos.telefono,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -360,12 +376,12 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
     if cliente_existente is None:
         nuevo_cliente = Cliente(
             usuario_id=nuevo_usuario.id,
-            tipo_cliente=datos.tipo_cliente,
-            tipo_documento=datos.tipo_documento,
-            numero_documento=datos.numero_documento,
-            nombre=datos.nombre,
-            apellido=datos.apellido,
-            razon_social=datos.razon_social,
+            tipo_cliente=campos["tipo_cliente"],
+            tipo_documento=campos["tipo_documento"],
+            numero_documento=campos["numero_documento"],
+            nombre=campos["nombre"],
+            apellido=campos["apellido"],
+            razon_social=campos["razon_social"] or datos.razon_social,
             telefono=datos.telefono,
             telefono_secundario=datos.telefono_secundario,
             direccion=datos.direccion,
@@ -381,9 +397,9 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
     else:
         nuevo_cliente = cliente_existente
         nuevo_cliente.usuario_id = nuevo_usuario.id
-        nuevo_cliente.nombre = datos.nombre
-        nuevo_cliente.apellido = datos.apellido
-        nuevo_cliente.razon_social = datos.razon_social
+        nuevo_cliente.nombre = campos["nombre"]
+        nuevo_cliente.apellido = campos["apellido"]
+        nuevo_cliente.razon_social = campos["razon_social"] or datos.razon_social
         nuevo_cliente.telefono = datos.telefono
         nuevo_cliente.telefono_secundario = datos.telefono_secundario
         nuevo_cliente.direccion = datos.direccion

@@ -1,0 +1,380 @@
+/* =============================================
+   FormularioPago.css — Paso 1: Información de Pago
+   Diseño limpio inspirado en formulario "Marwa"
+   ============================================= */
+
+.formulario-pago {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* Cabecera del formulario */
+.formulario-pago__header {
+  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.formulario-pago__tag {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.formulario-pago__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  letter-spacing: -0.3px;
+}
+
+.formulario-pago__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* Cuerpo del formulario */
+.formulario-pago__body {
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.formulario-pago__resumen {
+  background: var(--color-fondo-suave, #f5f7fa);
+  border: 1px solid var(--color-borde, #e5e7eb);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.formulario-pago__resumen-titulo {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.formulario-pago__resumen-lineas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.formulario-pago__resumen-total {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--color-borde, #e5e7eb);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.formulario-pago__resumen-equivalente {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-primary, #2563eb);
+  font-weight: 600;
+}
+
+.formulario-pago__deposito {
+  margin-top: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+}
+
+.formulario-pago__deposito-etiqueta {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-primary-dark, #1d4ed8);
+  margin-bottom: 0.35rem;
+}
+
+.formulario-pago__deposito-monto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 1.25rem;
+  color: var(--color-primary-dark, #1d4ed8);
+}
+
+.formulario-pago__deposito-monto span {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.formulario-pago__deposito-nota {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.formulario-pago__pago-total {
+  margin-top: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-radius: 10px;
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.22);
+}
+
+.formulario-pago__pago-total-etiqueta {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #15803d;
+  margin-bottom: 0.35rem;
+}
+
+.formulario-pago__pago-total-monto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 1.25rem;
+  color: #15803d;
+}
+
+.formulario-pago__pago-total-monto span {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.formulario-pago__pago-total-nota {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+.formulario-pago__saldo-restante {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--color-borde, #e5e7eb);
+  font-size: 0.875rem;
+}
+
+.formulario-pago__saldo-restante strong {
+  text-align: right;
+  color: var(--color-text-primary);
+}
+
+.formulario-pago__saldo-restante-eur {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.formulario-pago__resumen-aviso,
+.formulario-pago__resumen-tasa {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.formulario-pago__monto-ayuda {
+  margin: -0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+/* Grid de 2 columnas para campos */
+.formulario-pago__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 576px) {
+  .formulario-pago__row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+}
+
+/* Grupo de campo individual */
+.formulario-pago__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formulario-pago__label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Inputs y selects — estilo limpio "underline" con borde inferior */
+.formulario-pago .grupo-entrada__campo,
+.formulario-pago__select {
+  height: 48px;
+  padding: 0 var(--spacing-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-dark);
+  border: 1px solid transparent;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  width: 100%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.formulario-pago__select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.formulario-pago .grupo-entrada__campo:hover,
+.formulario-pago__select:hover {
+  border-color: var(--color-primary-light);
+  background: #ffffff;
+}
+
+.formulario-pago .grupo-entrada__campo:focus,
+.formulario-pago__select:focus {
+  border-color: var(--color-primary);
+  background: #ffffff;
+  outline: none;
+}
+
+/* Labels del componente Entrada reutilizable */
+.formulario-pago .grupo-entrada__etiqueta {
+  font-weight: 600;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  margin-bottom: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Dropzone de comprobante ─── */
+.formulario-pago__dropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  text-align: center;
+  cursor: pointer;
+  background: var(--color-bg-dark);
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.formulario-pago__dropzone:hover {
+  border-color: var(--color-primary-light);
+  background: rgba(0, 85, 160, 0.02);
+}
+
+.formulario-pago__dropzone--dragging {
+  border-color: var(--color-success);
+  background: rgba(16, 185, 129, 0.04);
+}
+
+.formulario-pago__dropzone--has-file {
+  border-style: solid;
+  border-color: var(--color-success);
+  background: rgba(16, 185, 129, 0.02);
+}
+
+.formulario-pago__file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.formulario-pago__dropzone-label {
+  display: block;
+  cursor: pointer;
+}
+
+.formulario-pago__dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.formulario-pago__dropzone-icon {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-xs);
+  opacity: 0.8;
+}
+
+.formulario-pago__dropzone-text {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.formulario-pago__dropzone-sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.formulario-pago__preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.formulario-pago__preview-image {
+  max-width: 100%;
+  max-height: 140px;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.formulario-pago__preview-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* ─── Footer con botón ─── */
+.formulario-pago__footer {
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.formulario-pago__submit-btn {
+  margin-top: 0;
+}

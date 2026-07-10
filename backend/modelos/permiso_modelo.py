@@ -83,6 +83,7 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Permiso(Base):
@@ -124,9 +125,10 @@ def listar_permisos(db: Session, pagina: int = 1, limite: int = 10) -> dict:
 
 
 def crear_permiso(db: Session, descripcion: str) -> Permiso:
+    descripcion_limpia = ValidadorEntrada.codigo_permiso(descripcion)
     ahora = datetime.now()
     nuevo_permiso = Permiso(
-        descripcion=descripcion,
+        descripcion=descripcion_limpia,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -138,7 +140,7 @@ def crear_permiso(db: Session, descripcion: str) -> Permiso:
 
 def actualizar_permiso(db: Session, permiso_id: int, descripcion: str) -> Permiso:
     permiso = obtener_permiso_activo(db, permiso_id)
-    permiso.descripcion = descripcion
+    permiso.descripcion = ValidadorEntrada.codigo_permiso(descripcion)
     permiso.actualizado_en = datetime.now()
     db.commit()
     db.refresh(permiso)

@@ -1,0 +1,109 @@
+.tabla-datos__contenedor {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-card);
+}
+
+.tabla-datos {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  min-width: 600px;
+}
+
+.tabla-datos__cabecera {
+  background: var(--color-bg-dark);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabla-datos__th {
+  padding: 0.75rem var(--spacing-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  user-select: none;
+}
+.tabla-datos__th--ordenable { cursor: pointer; }
+.tabla-datos__th--ordenable:hover { color: var(--color-text-primary); }
+
+.tabla-datos__th-contenido {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.tabla-datos__iconos-orden {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  opacity: 0.8;
+}
+
+.tabla-datos__th--casilla,
+.tabla-datos__celda--casilla { width: 44px; padding-left: var(--spacing-md); }
+
+.tabla-datos__th--acciones,
+.tabla-datos__celda--acciones { width: 1%; white-space: nowrap; text-align: right; padding-right: var(--spacing-md); }
+
+.tabla-datos__fila {
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background var(--transition-fast);
+}
+.tabla-datos__fila:last-child { border-bottom: none; }
+.tabla-datos__fila:hover { background: var(--color-bg-dark); }
+.tabla-datos__fila--clickeable { cursor: pointer; }
+.tabla-datos__fila--seleccionada { background: var(--color-primary-glow); }
+.tabla-datos__fila--seleccionada:hover { background: rgba(0, 85, 160, 0.08); }
+
+.tabla-datos__celda {
+  padding: 0.875rem var(--spacing-md);
+  color: var(--color-text-primary);
+  vertical-align: middle;
+}
+
+.tabla-datos__grupo-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+
+.tabla-datos__casilla {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.tabla-datos__vacio {
+  padding: var(--spacing-3xl) var(--spacing-xl);
+}
+.tabla-datos__vacio-contenido {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.tabla-datos__vacio-contenido p { margin: 0; font-size: var(--font-size-sm); }
+
+.tabla-datos__fila--skeleton { pointer-events: none; }
+.tabla-datos__esqueleto {
+  height: 14px;
+  background: linear-gradient(90deg, var(--color-bg-dark) 25%, var(--color-border-light) 50%, var(--color-bg-dark) 75%);
+  background-size: 200% 100%;
+  animation: esqueleto-brillo 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes esqueleto-brillo {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

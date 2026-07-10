@@ -42,6 +42,7 @@ from modelos.viaje_modelo import (
     resumen_costos,
     viaje_a_dict,
 )
+from modelos.viaje_reporte_modelo import obtener_reporte_viaje
 
 router = APIRouter(prefix="/viajes", tags=["Planificación - Viajes"])
 
@@ -136,6 +137,15 @@ def obtener_viaje_endpoint(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
 ):
     return obtener_viaje_detalle(db, viaje_id)
+
+
+@router.get("/{viaje_id}/reporte")
+def obtener_reporte_viaje_endpoint(
+    viaje_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
+):
+    return obtener_reporte_viaje(db, viaje_id)
 
 
 @router.post("")

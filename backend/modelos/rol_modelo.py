@@ -8,6 +8,7 @@ from database import Base
 from modelos.permiso_modelo import Permiso
 from modelos.rol_permiso_modelo import RolPermiso
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Rol(Base):
@@ -51,7 +52,8 @@ def listar_roles(db: Session, pagina: int = 1, limite: int = 10) -> dict:
 
 
 def crear_rol(db: Session, nombre: str, descripcion: str | None) -> Rol:
-    rol_existente = db.query(Rol).filter(Rol.nombre == nombre).first()
+    nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
+    rol_existente = db.query(Rol).filter(Rol.nombre == nombre_limpio).first()
     if rol_existente is not None and rol_existente.eliminado_en is None:
         raise HTTPException(
             status_code=400,
@@ -60,7 +62,7 @@ def crear_rol(db: Session, nombre: str, descripcion: str | None) -> Rol:
 
     ahora = datetime.now()
     nuevo_rol = Rol(
-        nombre=nombre,
+        nombre=nombre_limpio,
         descripcion=descripcion,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -80,13 +82,14 @@ def actualizar_rol(
     rol = obtener_rol_activo(db, rol_id)
 
     if nombre is not None and nombre != rol.nombre:
-        otro = db.query(Rol).filter(Rol.nombre == nombre).first()
+        nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
+        otro = db.query(Rol).filter(Rol.nombre == nombre_limpio).first()
         if otro is not None and otro.id != rol_id and otro.eliminado_en is None:
             raise HTTPException(
                 status_code=400,
                 detail="Ya existe otro rol con ese nombre",
             )
-        rol.nombre = nombre
+        rol.nombre = nombre_limpio
 
     if descripcion is not None:
         rol.descripcion = descripcion

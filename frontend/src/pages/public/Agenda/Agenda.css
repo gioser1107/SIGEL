@@ -1,0 +1,643 @@
+/* ============================================================
+   AGENDA — Calendario tipo Cartelera de Cine
+   TravelBQTO · Diseño premium con sistema de variables global
+   ============================================================ */
+
+/* ── Contenedor principal ── */
+.agenda {
+    min-height: 100vh;
+    background: var(--color-bg-deep);
+    padding-top: var(--navbar-height);
+}
+
+/* ══════════════════════════════════════════
+   HERO
+══════════════════════════════════════════ */
+.agenda__hero {
+    position: relative;
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 60%, var(--color-primary-light) 100%);
+    overflow: hidden;
+    padding: 3.5rem 2rem 4rem;
+}
+
+/* Decoración de fondo */
+.agenda__hero::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 340px;
+    height: 340px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    pointer-events: none;
+}
+
+.agenda__hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -40px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    pointer-events: none;
+}
+
+.agenda__hero-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.agenda__back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    transition: color var(--transition-fast);
+    letter-spacing: 0.3px;
+}
+
+.agenda__back-link:hover {
+    color: #ffffff;
+}
+
+.agenda__hero-titulo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.agenda__hero-eyebrow {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.agenda__hero-h1 {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-5xl);
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.1;
+    letter-spacing: -1px;
+}
+
+.agenda__hero-desc {
+    font-size: var(--font-size-base);
+    color: rgba(255, 255, 255, 0.72);
+    max-width: 560px;
+    line-height: 1.7;
+    margin-top: 0.25rem;
+}
+
+/* ══════════════════════════════════════════
+   MAIN / CALENDARIO
+══════════════════════════════════════════ */
+.agenda__main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem 5rem;
+}
+
+/* ── Navegación de mes ── */
+.agenda__mes-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.agenda__mes-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.agenda__mes-nombre {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.agenda__mes-anio {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.agenda__mes-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 85, 160, 0.3);
+}
+
+.agenda__mes-btn:hover:not(:disabled) {
+    background: var(--color-primary-light);
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(0, 85, 160, 0.4);
+}
+
+.agenda__mes-btn:disabled {
+    background: #d1d5db;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* ── Encabezados días de semana ── */
+.agenda__semana-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.agenda__semana-dia {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.4rem 0;
+}
+
+/* ── Grilla de días ── */
+.agenda__grilla {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+}
+
+/* Celda base */
+.agenda__celda {
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-card);
+    border: 1.5px solid var(--color-border-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    cursor: not-allowed;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.agenda__celda--vacia {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.agenda__celda-numero {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-muted);
+    line-height: 1;
+}
+
+/* Celda con evento */
+.agenda__celda--con-evento {
+    cursor: pointer;
+    background: #ffffff;
+    border-color: rgba(0, 85, 160, 0.15);
+    box-shadow: var(--shadow-sm);
+}
+
+.agenda__celda--con-evento .agenda__celda-numero {
+    color: var(--color-text-primary);
+    font-weight: 700;
+}
+
+.agenda__celda--con-evento:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 85, 160, 0.15);
+}
+
+/* Celda seleccionada */
+.agenda__celda--seleccionada {
+    background: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 8px 24px rgba(0, 85, 160, 0.4) !important;
+    transform: translateY(-3px) scale(1.04) !important;
+}
+
+.agenda__celda--seleccionada .agenda__celda-numero {
+    color: #ffffff !important;
+}
+
+.agenda__celda--seleccionada .agenda__celda-punto {
+    background: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Hoy */
+.agenda__celda--hoy:not(.agenda__celda--con-evento) .agenda__celda-numero {
+    color: var(--color-primary);
+    font-weight: 700;
+}
+
+.agenda__celda--hoy:not(.agenda__celda--seleccionada) {
+    border-color: var(--color-primary) !important;
+    background: var(--color-primary-glow) !important;
+}
+
+/* Indicadores de puntos */
+.agenda__celda-indicadores {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.agenda__celda-punto {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    display: block;
+}
+
+.agenda__celda--con-evento .agenda__celda-punto {
+    animation: pulso 2s ease-in-out infinite;
+}
+
+.agenda__celda--con-evento .agenda__celda-punto:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.agenda__celda--con-evento .agenda__celda-punto:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes pulso {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.85); }
+}
+
+/* ══════════════════════════════════════════
+   PANEL DE VIAJES (Cartelera)
+══════════════════════════════════════════ */
+.agenda__panel {
+    margin-top: 2.5rem;
+    animation: slideDown 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.agenda__panel-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1.5px solid var(--color-border-light);
+}
+
+.agenda__panel-fecha-badge {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-radius: var(--radius-md);
+    width: 60px;
+    height: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(0, 85, 160, 0.3);
+}
+
+.agenda__panel-dia-num {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.agenda__panel-mes-txt {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    opacity: 0.85;
+}
+
+.agenda__panel-titulo {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.agenda__panel-subtitulo {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin: 2px 0 0;
+}
+
+.agenda__panel-cerrar {
+    margin-left: auto;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--color-bg-dark);
+    border: 1.5px solid var(--color-border);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.agenda__panel-cerrar:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+/* ── Tarjetas de viaje ── */
+.agenda__tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.agenda__tarjeta {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: #ffffff;
+    border: 1.5px solid var(--color-border-light);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+    animation: cardEntrada 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardEntrada {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.agenda__tarjeta:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(0, 85, 160, 0.2);
+}
+
+/* Imagen de la tarjeta */
+.agenda__tarjeta-imagen {
+    position: relative;
+    height: 200px;
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+}
+
+.agenda__tarjeta-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 40%,
+        rgba(18, 40, 75, 0.5) 100%
+    );
+}
+
+.agenda__tarjeta-dificultad {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Info de la tarjeta */
+.agenda__tarjeta-info {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.agenda__tarjeta-titulo {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.agenda__tarjeta-ubicacion {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* Meta info (hora, cupos, duración) */
+.agenda__tarjeta-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--color-border-light);
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.agenda__tarjeta-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+}
+
+/* Footer precio + botón */
+.agenda__tarjeta-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.2rem;
+}
+
+.agenda__tarjeta-precio {
+    display: flex;
+    align-items: baseline;
+    gap: 3px;
+}
+
+.agenda__tarjeta-precio-monto {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    color: var(--color-primary);
+}
+
+.agenda__tarjeta-precio-sufijo {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.agenda__tarjeta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.55rem 1.25rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-full);
+    font-family: var(--font-heading);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 12px rgba(0, 85, 160, 0.3);
+}
+
+.agenda__tarjeta-btn:hover {
+    background: var(--color-primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 85, 160, 0.45);
+}
+
+/* ══════════════════════════════════════════
+   LEYENDA
+══════════════════════════════════════════ */
+.agenda__leyenda {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border-light);
+    flex-wrap: wrap;
+}
+
+.agenda__leyenda-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+.agenda__leyenda-punto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.agenda__leyenda-punto--evento {
+    background: var(--color-primary);
+}
+
+.agenda__leyenda-punto--hoy {
+    background: transparent;
+    border: 2px solid var(--color-primary);
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .agenda__hero {
+        padding: 2.5rem 1.25rem 3rem;
+    }
+
+    .agenda__hero-h1 {
+        font-size: var(--font-size-4xl);
+    }
+
+    .agenda__main {
+        padding: 1.75rem 1.25rem 4rem;
+    }
+
+    .agenda__mes-nombre {
+        font-size: var(--font-size-2xl);
+    }
+
+    .agenda__celda-numero {
+        font-size: var(--font-size-sm);
+    }
+
+    .agenda__tarjetas {
+        grid-template-columns: 1fr;
+    }
+
+    .agenda__panel-titulo {
+        font-size: var(--font-size-xl);
+    }
+}
+
+@media (max-width: 480px) {
+    .agenda__semana-dia {
+        font-size: 0.62rem;
+        letter-spacing: 0;
+    }
+
+    .agenda__grilla {
+        gap: 4px;
+    }
+
+    .agenda__celda {
+        border-radius: var(--radius-md);
+    }
+}

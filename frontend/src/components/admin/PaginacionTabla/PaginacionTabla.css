@@ -1,0 +1,20 @@
+.paginacion-tabla {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.paginacion-tabla__info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.paginacion-tabla__botones {
+  display: flex;
+  gap: var(--spacing-sm);
+}

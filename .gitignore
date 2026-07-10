@@ -1,8 +1,14 @@
 # Entorno Frontend (React)
 frontend/node_modules/
 frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Variables de entorno
 .env
 .env.*
+!.env.example
+!frontend/.env.example
 
 # Sistema operativo
 .DS_Store

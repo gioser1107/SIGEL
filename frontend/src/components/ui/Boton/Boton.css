@@ -1,0 +1,90 @@
+/* ─── Boton — Componente Atómico Reutilizable ─── */
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-base);
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Variantes ─── */
+.boton--primario {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-sm), 0 0 20px var(--color-primary-glow);
+}
+.boton--primario:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+
+.boton--secundario {
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+.boton--secundario:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-glow);
+}
+
+.boton--fantasma {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+.boton--fantasma:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-dark);
+}
+
+.boton--peligro {
+  background: var(--color-error);
+  color: white;
+}
+.boton--peligro:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+/* ─── Tamaños ─── */
+.boton--sm {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-md);
+}
+
+.boton--md {
+  padding: var(--spacing-sm) var(--spacing-xl);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-lg);
+}
+
+.boton--lg {
+  padding: var(--spacing-md) var(--spacing-2xl);
+  font-size: var(--font-size-base);
+  border-radius: var(--radius-xl);
+}
+
+/* ─── Estado deshabilitado ─── */
+.boton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ─── Ancho completo ─── */
+.boton--ancho-completo {
+  width: 100%;
+}

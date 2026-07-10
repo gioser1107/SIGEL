@@ -19,6 +19,7 @@ from modelos.destino_modelo import Destino, imagenes_destino
 from modelos.punto_recogida_modelo import (
     PuntoRecogida,
     obtener_punto_predeterminado_cliente,
+    punto_pertenece_a_cliente,
     punto_recogida_a_dict,
     validar_punto_recogida_del_cliente,
 )
@@ -63,6 +64,24 @@ def obtener_pasajero_activo(db: Session, reserva_id: int, pasajero_id: int) -> R
     if not pasajero:
         raise HTTPException(status_code=404, detail="Pasajero no encontrado en esta reserva")
     return pasajero
+
+
+def obtener_reserva_activa_cliente_en_viaje(
+    db: Session,
+    cliente_id: int,
+    viaje_id: int,
+) -> Reserva | None:
+    return (
+        db.query(Reserva)
+        .filter(
+            Reserva.cliente_id == cliente_id,
+            Reserva.viaje_id == viaje_id,
+            Reserva.eliminado_en.is_(None),
+            Reserva.estado != "cancelada",
+        )
+        .order_by(Reserva.id.desc())
+        .first()
+    )
 
 
 def validar_viaje_para_reserva(db: Session, viaje_id: int) -> Viaje:
@@ -150,6 +169,82 @@ def validar_punto_recogida(db: Session, cliente_id: int, punto_id: int) -> None:
     validar_punto_recogida_del_cliente(db, cliente_id, punto_id)
 
 
+def _pasajeros_con_asiento_reserva(db: Session, reserva_id: int) -> list:
+    return (
+        db.query(ReservaCliente)
+        .filter(
+            ReservaCliente.reserva_id == reserva_id,
+            ReservaCliente.eliminado_en.is_(None),
+            ReservaCliente.ocupa_asiento.is_(True),
+        )
+        .order_by(ReservaCliente.es_titular.desc(), ReservaCliente.creado_en)
+        .all()
+    )
+
+
+def _preparar_asiento_reserva(
+    db: Session,
+    reserva: Reserva,
+    pasajero_id: int,
+    asiento_id: int,
+) -> AsientoReservado:
+    obtener_pasajero_activo(db, reserva.id, pasajero_id)
+
+    asiento = db.query(Asiento).filter(
+        Asiento.id == asiento_id, Asiento.eliminado_en.is_(None),
+    ).first()
+    if not asiento:
+        raise HTTPException(status_code=404, detail="El asiento seleccionado no existe o está eliminado")
+
+    ocupado = db.query(AsientoReservado).filter(
+        AsientoReservado.asiento_id == asiento_id,
+        AsientoReservado.viaje_id == reserva.viaje_id,
+        AsientoReservado.eliminado_en.is_(None),
+    ).first()
+    if ocupado:
+        raise HTTPException(status_code=400, detail="Este asiento ya está reservado para este viaje")
+
+    ahora = datetime.now()
+    nuevo_asiento = AsientoReservado(
+        reserva_cliente_id=pasajero_id,
+        viaje_id=reserva.viaje_id,
+        asiento_id=asiento_id,
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    db.add(nuevo_asiento)
+    return nuevo_asiento
+
+
+def _asignar_asientos_a_reserva(
+    db: Session,
+    reserva: Reserva,
+    asientos_ids: list[int],
+) -> None:
+    pasajeros = _pasajeros_con_asiento_reserva(db, reserva.id)
+    if not pasajeros:
+        raise HTTPException(status_code=400, detail="No hay pasajeros con asiento en esta reserva")
+    if len(asientos_ids) != len(pasajeros):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Debe seleccionar {len(pasajeros)} asiento(s)",
+        )
+
+    for pasajero, asiento_id in zip(pasajeros, asientos_ids):
+        existente = db.query(AsientoReservado).filter(
+            AsientoReservado.reserva_cliente_id == pasajero.id,
+            AsientoReservado.eliminado_en.is_(None),
+        ).first()
+        if existente:
+            if existente.asiento_id == asiento_id:
+                continue
+            raise HTTPException(
+                status_code=400,
+                detail="Los asientos ya fueron asignados para esta reserva",
+            )
+        _preparar_asiento_reserva(db, reserva, pasajero.id, asiento_id)
+
+
 def crear_reserva_desde_landing(
     db: Session,
     viaje_id: int,
@@ -157,6 +252,7 @@ def crear_reserva_desde_landing(
     usuario_id: int,
     titular_punto_recogida_id: Optional[int],
     pasajeros_extra: list,
+    asientos_ids: Optional[list[int]] = None,
 ) -> Reserva:
     cliente = db.query(Cliente).filter(
         Cliente.id == cliente_id,
@@ -166,6 +262,16 @@ def crear_reserva_desde_landing(
         raise HTTPException(status_code=404, detail="Perfil de cliente no encontrado")
 
     viaje = validar_viaje_para_reserva(db, viaje_id)
+
+    reserva_existente = obtener_reserva_activa_cliente_en_viaje(db, cliente_id, viaje_id)
+    if reserva_existente is not None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Ya tienes una reserva activa para este viaje (RES-{reserva_existente.id}). "
+                "Agrega acompañantes en esa reserva o contacta a la agencia."
+            ),
+        )
 
     destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
     recargo_menor = float(destino.recargo_menor_eur) if destino and destino.recargo_menor_eur else 0.0
@@ -237,7 +343,10 @@ def crear_reserva_desde_landing(
                 status_code=400,
                 detail=f"El viajero {acomp.nombre} debe tener un domicilio de recogida registrado",
             )
-        if punto_id == titular_punto_recogida_id:
+        if (
+            punto_id == titular_punto_recogida_id
+            or punto_pertenece_a_cliente(db, cliente_id, punto_id)
+        ):
             validar_punto_recogida(db, cliente_id, punto_id)
         else:
             validar_punto_recogida(db, acomp.id, punto_id)
@@ -254,6 +363,10 @@ def crear_reserva_desde_landing(
             creado_en=ahora,
             actualizado_en=ahora,
         ))
+
+    if asientos_ids:
+        db.flush()
+        _asignar_asientos_a_reserva(db, nueva_reserva, asientos_ids)
 
     db.commit()
     db.refresh(nueva_reserva)
@@ -444,6 +557,16 @@ def crear_reserva(
     usuario_id: int,
 ) -> Reserva:
     validar_viaje_para_reserva(db, viaje_id)
+
+    reserva_existente = obtener_reserva_activa_cliente_en_viaje(db, cliente_id, viaje_id)
+    if reserva_existente is not None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"El cliente ya tiene una reserva activa para este viaje "
+                f"(RES-{reserva_existente.id}). Agregue acompañantes en esa reserva."
+            ),
+        )
 
     ahora = datetime.now()
     nueva_reserva = Reserva(
@@ -637,39 +760,9 @@ def asignar_asientos_reserva_portal(
 
     obtener_reserva_del_cliente(db, reserva_id, cliente_id)
 
-    pasajeros = (
-        db.query(ReservaCliente)
-        .filter(
-            ReservaCliente.reserva_id == reserva_id,
-            ReservaCliente.eliminado_en.is_(None),
-            ReservaCliente.ocupa_asiento.is_(True),
-        )
-        .order_by(ReservaCliente.es_titular.desc(), ReservaCliente.creado_en)
-        .all()
-    )
-
-    if not pasajeros:
-        raise HTTPException(status_code=400, detail="No hay pasajeros con asiento en esta reserva")
-
-    if len(asientos_ids) != len(pasajeros):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Debe seleccionar {len(pasajeros)} asiento(s)",
-        )
-
-    for pasajero, asiento_id in zip(pasajeros, asientos_ids):
-        existente = db.query(AsientoReservado).filter(
-            AsientoReservado.reserva_cliente_id == pasajero.id,
-            AsientoReservado.eliminado_en.is_(None),
-        ).first()
-        if existente:
-            if existente.asiento_id == asiento_id:
-                continue
-            raise HTTPException(
-                status_code=400,
-                detail="Los asientos ya fueron asignados para esta reserva",
-            )
-        asignar_asiento_pasajero(db, reserva_id, pasajero.id, asiento_id)
+    reserva = obtener_reserva_activa(db, reserva_id)
+    _asignar_asientos_a_reserva(db, reserva, asientos_ids)
+    db.commit()
 
     return {
         "mensaje": "Asientos asignados",
@@ -681,31 +774,7 @@ def asignar_asiento_pasajero(
     db: Session, reserva_id: int, pasajero_id: int, asiento_id: int,
 ) -> AsientoReservado:
     reserva = obtener_reserva_activa(db, reserva_id)
-    obtener_pasajero_activo(db, reserva_id, pasajero_id)
-
-    asiento = db.query(Asiento).filter(
-        Asiento.id == asiento_id, Asiento.eliminado_en.is_(None),
-    ).first()
-    if not asiento:
-        raise HTTPException(status_code=404, detail="El asiento seleccionado no existe o está eliminado")
-
-    ocupado = db.query(AsientoReservado).filter(
-        AsientoReservado.asiento_id == asiento_id,
-        AsientoReservado.viaje_id == reserva.viaje_id,
-        AsientoReservado.eliminado_en.is_(None),
-    ).first()
-    if ocupado:
-        raise HTTPException(status_code=400, detail="Este asiento ya está reservado para este viaje")
-
-    ahora = datetime.now()
-    nuevo_asiento = AsientoReservado(
-        reserva_cliente_id=pasajero_id,
-        viaje_id=reserva.viaje_id,
-        asiento_id=asiento_id,
-        creado_en=ahora,
-        actualizado_en=ahora,
-    )
-    db.add(nuevo_asiento)
+    nuevo_asiento = _preparar_asiento_reserva(db, reserva, pasajero_id, asiento_id)
     db.commit()
     db.refresh(nuevo_asiento)
     return nuevo_asiento

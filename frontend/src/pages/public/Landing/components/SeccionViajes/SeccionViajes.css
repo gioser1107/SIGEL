@@ -1,0 +1,137 @@
+/* ============================================
+   SECCIÓN VIAJES — Los favoritos del momento
+   ============================================ */
+.seccion-viajes {
+    padding: 4rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.seccion-viajes__titulo {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-4xl);
+    font-weight: 700;
+    margin-bottom: var(--spacing-2xl);
+    color: var(--color-text-primary);
+}
+
+.seccion-viajes__cuadricula {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.tarjeta-viaje {
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    transition: transform var(--transition-fast, 0.15s ease);
+}
+
+.tarjeta-viaje__enlace {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    text-decoration: none;
+    color: inherit;
+}
+
+.tarjeta-viaje:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-primary);
+    box-shadow: 0 8px 20px rgba(0, 85, 160, 0.12);
+}
+
+.tarjeta-viaje__contenedor-imagen {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    padding: 0;
+}
+
+.tarjeta-viaje__imagen {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+}
+
+.tarjeta-viaje__calificacion {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(8px);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.tarjeta-viaje__contenido {
+    padding: 1.2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tarjeta-viaje__enlace:hover .tarjeta-viaje__titulo {
+    color: var(--color-primary);
+}
+
+.tarjeta-viaje__enlace:hover .tarjeta-viaje__titulo-icono {
+    transform: translateX(4px);
+    color: var(--color-primary);
+}
+
+.tarjeta-viaje__titulo-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.tarjeta-viaje__titulo {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+    transition: color var(--transition-fast, 0.15s ease);
+}
+
+.tarjeta-viaje__titulo-icono {
+    flex-shrink: 0;
+    color: var(--color-text-muted, #64748b);
+    transition: transform var(--transition-base, 0.25s ease), color var(--transition-base, 0.25s ease);
+}
+
+.seccion-viajes__pie {
+    margin-top: var(--spacing-2xl);
+    text-align: center;
+}
+
+.seccion-viajes__btn-agenda {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.seccion-viajes__btn-agenda:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}

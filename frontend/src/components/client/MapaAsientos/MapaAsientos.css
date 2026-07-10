@@ -1,0 +1,362 @@
+/* =============================================
+   MapaAsientos.css — Paso 2: Selección de Asientos
+   Diseño inspirado en app de tren (Select Seat)
+   ============================================= */
+
+.mapa-asientos {
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 0;
+  max-width: 440px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* ─── Cabecera ─── */
+.mapa-asientos__header {
+  padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mapa-asientos__tag {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.mapa-asientos__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  letter-spacing: -0.3px;
+}
+
+.mapa-asientos__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+/* ─── Leyenda ─── */
+.mapa-asientos__legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--color-bg-dark);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mapa-asientos__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.mapa-asientos__seat-sample {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.mapa-asientos__seat-sample--available {
+  background: var(--color-bg-dark);
+  border: 1.5px solid var(--color-border);
+}
+
+.mapa-asientos__seat-sample--selected {
+  background: var(--color-primary-dark);
+  border: 1.5px solid var(--color-primary-dark);
+}
+
+.mapa-asientos__seat-sample--occupied {
+  background: rgba(18, 40, 75, 0.06);
+  border: 1.5px solid rgba(18, 40, 75, 0.1);
+  position: relative;
+}
+
+.mapa-asientos__seat-sample--occupied::after {
+  content: '×';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  line-height: 1;
+}
+
+/* ─── Área del Bus ─── */
+.mapa-asientos__bus-wrapper {
+  padding: var(--spacing-lg) var(--spacing-xl);
+}
+
+/* Labels de columnas A B C D */
+.mapa-asientos__column-labels {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding-left: 28px; /* Espacio para alinear con filas */
+}
+
+.mapa-asientos__column-label {
+  width: 42px;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.mapa-asientos__column-label--gap {
+  margin-right: 20px; /* Pasillo */
+}
+
+/* Bus container */
+.mapa-asientos__bus {
+  background: var(--color-bg-dark);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg) var(--radius-lg);
+  padding: var(--spacing-md);
+  position: relative;
+}
+
+/* Cabina del conductor */
+.mapa-asientos__driver-cabin {
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 2px dashed var(--color-border);
+  padding-bottom: var(--spacing-md);
+}
+
+.mapa-asientos__windshield {
+  background: rgba(0, 85, 160, 0.06);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid rgba(0, 85, 160, 0.1);
+}
+
+.mapa-asientos__windshield-text {
+  font-size: 8px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  color: var(--color-primary);
+  opacity: 0.4;
+}
+
+.mapa-asientos__dashboard-elements {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--spacing-sm);
+}
+
+.mapa-asientos__wheel {
+  font-size: var(--font-size-xl);
+  animation: steer 4s ease-in-out infinite alternate;
+}
+
+@keyframes steer {
+  0% { transform: rotate(-15deg); }
+  100% { transform: rotate(15deg); }
+}
+
+.mapa-asientos__driver-seat {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  background: #ffffff;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-weight: 500;
+}
+
+/* ─── Filas de asientos ─── */
+.mapa-asientos__seats-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) 0;
+}
+
+.mapa-asientos__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.mapa-asientos__row-number {
+  width: 20px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.mapa-asientos__row-seats {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: center;
+  flex: 1;
+}
+
+/* ─── Asiento individual ─── */
+.mapa-asientos__seat {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  border: 1.5px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+/* Pasillo — gap entre columna B y C */
+.mapa-asientos__seat--aisle-right {
+  margin-right: 20px;
+}
+
+.mapa-asientos__seat:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  background: rgba(0, 85, 160, 0.04);
+  transform: translateY(-1px);
+}
+
+.mapa-asientos__seat--selected {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  color: white;
+}
+
+.mapa-asientos__seat--selected:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.mapa-asientos__seat--occupied {
+  background: rgba(18, 40, 75, 0.04);
+  border-color: rgba(18, 40, 75, 0.08);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.mapa-asientos__seat--locked {
+  background: rgba(18, 40, 75, 0.02);
+  border-color: rgba(18, 40, 75, 0.06);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.mapa-asientos__seat-num {
+  line-height: 1;
+}
+
+/* ─── Resumen tipo ticket ─── */
+.mapa-asientos__ticket-summary {
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.mapa-asientos__ticket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--spacing-sm) 0;
+}
+
+.mapa-asientos__ticket-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.mapa-asientos__ticket-value {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary-dark);
+}
+
+.mapa-asientos__ticket-counter {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  letter-spacing: 1px;
+}
+
+/* ─── Acciones ─── */
+.mapa-asientos__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
+  border-top: 1px solid var(--color-border);
+}
+
+.mapa-asientos__back-btn {
+  flex: 1;
+}
+
+.mapa-asientos__confirm-btn {
+  flex: 2;
+}
+
+@media (max-width: 480px) {
+  .mapa-asientos {
+    max-width: 100%;
+  }
+
+  .mapa-asientos__legend {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    justify-content: flex-start;
+  }
+
+  .mapa-asientos__column-label,
+  .mapa-asientos__seat {
+    width: 36px;
+  }
+
+  .mapa-asientos__column-label--gap,
+  .mapa-asientos__seat--aisle-right {
+    margin-right: 12px;
+  }
+
+  .mapa-asientos__column-labels {
+    padding-left: 22px;
+  }
+
+  .mapa-asientos__actions {
+    flex-direction: column;
+  }
+
+  .mapa-asientos__back-btn,
+  .mapa-asientos__confirm-btn {
+    flex: 1;
+    width: 100%;
+  }
+}

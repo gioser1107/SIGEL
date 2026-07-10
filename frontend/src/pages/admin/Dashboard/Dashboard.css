@@ -1,0 +1,340 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* ─── Error ─── */
+.dashboard__error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  color: #dc2626;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+}
+
+/* ─── KPIs ─── */
+.dashboard__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+}
+
+@media (max-width: 1200px) {
+  .dashboard__kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .dashboard__kpis { grid-template-columns: 1fr; }
+}
+
+.kpi-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-card);
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.kpi-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.kpi-card--primary::before { background: var(--gradient-primary); }
+.kpi-card--warning::before { background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light)); }
+.kpi-card--info::before    { background: linear-gradient(90deg, var(--color-info), var(--color-secondary-light)); }
+.kpi-card--success::before { background: linear-gradient(90deg, var(--color-success), #34d399); }
+
+.kpi-card__icono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-lg);
+  flex-shrink: 0;
+}
+.kpi-card--primary .kpi-card__icono { background: var(--color-primary-glow); color: var(--color-primary); }
+.kpi-card--warning .kpi-card__icono { background: rgba(245, 158, 11, 0.12); color: var(--color-accent-dark); }
+.kpi-card--info .kpi-card__icono    { background: rgba(59, 130, 246, 0.1); color: var(--color-info); }
+.kpi-card--success .kpi-card__icono { background: rgba(16, 185, 129, 0.1); color: var(--color-success); }
+
+.kpi-card__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+.kpi-card__etiqueta {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 0;
+  font-family: var(--font-sans);
+}
+.kpi-card__valor {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  font-family: var(--font-heading);
+  margin: 0;
+  line-height: 1.2;
+}
+.kpi-card__subtitulo {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+/* ─── Fila media ─── */
+.dashboard__fila-media {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xl);
+}
+@media (max-width: 900px) {
+  .dashboard__fila-media { grid-template-columns: 1fr; }
+}
+
+/* ─── Panel genérico ─── */
+.dashboard__panel {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-card);
+}
+.dashboard__panel--ancho-completo {
+  width: 100%;
+}
+.dashboard__panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+.dashboard__panel-titulo {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+.dashboard__panel-link {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  transition: opacity var(--transition-fast);
+}
+.dashboard__panel-link:hover { opacity: 0.75; }
+
+.dashboard__vacio {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+  margin: 0;
+}
+
+/* ─── Skeleton ─── */
+.dashboard__skeleton-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.dashboard__skeleton-row {
+  height: 44px;
+  background: linear-gradient(90deg, var(--color-bg-dark) 25%, var(--color-border-light) 50%, var(--color-bg-dark) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: var(--radius-lg);
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Lista viajes próximos ─── */
+.dashboard__viajes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.dashboard__viaje-fila {
+  display: grid;
+  grid-template-columns: 60px 1fr auto;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0.625rem var(--spacing-md);
+  border-radius: var(--radius-lg);
+  transition: background var(--transition-fast);
+}
+.dashboard__viaje-fila:hover {
+  background: var(--color-bg-dark);
+}
+.dashboard__viaje-fecha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.dashboard__viaje-dia {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  text-transform: capitalize;
+}
+.dashboard__viaje-hora {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+}
+.dashboard__viaje-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dashboard__viaje-destino {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard__viaje-unidad {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* ─── Destinos top ─── */
+.dashboard__destinos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.dashboard__destino-fila {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+.dashboard__destino-nombre {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard__destino-barra-cont {
+  grid-column: 1;
+  grid-row: 2;
+  height: 6px;
+  background: var(--color-bg-dark);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.dashboard__destino-barra-fill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.5s ease;
+}
+.dashboard__destino-total {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  text-align: right;
+}
+
+/* ─── Tabla cotizaciones recientes ─── */
+.dashboard__cot-tabla-cont {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+.dashboard__cot-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  min-width: 500px;
+}
+.dashboard__cot-tabla thead {
+  background: var(--color-bg-dark);
+  border-bottom: 1px solid var(--color-border);
+}
+.dashboard__cot-tabla th {
+  padding: 0.625rem var(--spacing-md);
+  text-align: left;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.dashboard__cot-tabla td {
+  padding: 0.75rem var(--spacing-md);
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+}
+.dashboard__cot-tabla tr:last-child td {
+  border-bottom: none;
+}
+.dashboard__cot-tabla tr:hover td {
+  background: var(--color-bg-dark);
+}
+.dashboard__cot-cliente {
+  display: block;
+  font-weight: 600;
+}
+.dashboard__cot-razon {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+.dashboard__cot-sin-precio {
+  font-style: italic;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+.dashboard__cot-fecha {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}

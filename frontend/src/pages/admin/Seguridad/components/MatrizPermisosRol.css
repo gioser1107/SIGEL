@@ -1,0 +1,114 @@
+/* MatrizPermisosRol.css — matriz de permisos por módulo */
+
+.seguridad__matriz-permisos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.seguridad__matriz-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-card);
+}
+
+.seguridad__matriz {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+}
+
+.seguridad__matriz-th {
+  padding: 0.625rem 0.75rem;
+  text-align: center;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  background: var(--color-bg-dark);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.seguridad__matriz-th--modulo {
+  text-align: left;
+  min-width: 10rem;
+}
+
+.seguridad__matriz-th--accion {
+  width: 4.5rem;
+}
+
+.seguridad__matriz-fila:hover {
+  background: var(--color-bg-dark);
+}
+
+.seguridad__matriz-celda {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+}
+
+.seguridad__matriz-celda--modulo {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.seguridad__matriz-celda--accion {
+  text-align: center;
+}
+
+.seguridad__matriz-casilla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.seguridad__matriz-casilla input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.seguridad__matriz-vacio {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.seguridad__permisos-sueltos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.seguridad__permisos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.seguridad__permiso-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.seguridad__permiso-item:hover {
+  background: var(--color-bg-dark);
+}
+
+.seguridad__permiso-item input {
+  accent-color: var(--color-primary);
+  width: 1rem;
+  height: 1rem;
+}

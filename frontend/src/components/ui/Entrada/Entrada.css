@@ -1,0 +1,52 @@
+/* ─── Entrada — Componente Atómico Reutilizable ─── */
+
+.grupo-entrada {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.grupo-entrada__etiqueta {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.2px;
+}
+
+.grupo-entrada__campo {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.grupo-entrada__campo::placeholder {
+  color: var(--color-text-muted);
+}
+
+.grupo-entrada__campo:hover {
+  border-color: var(--color-border-active);
+}
+
+.grupo-entrada__campo:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+  outline: none;
+}
+
+.grupo-entrada__campo--error {
+  border-color: var(--color-error);
+}
+
+.grupo-entrada__campo--error:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.grupo-entrada__error {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+}

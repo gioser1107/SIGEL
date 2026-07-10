@@ -1,0 +1,248 @@
+/* ==========================================
+   LayoutCliente.css — Portal del Cliente
+   Con bottom tab bar tipo app móvil
+   ========================================== */
+
+.layout-cliente {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  /* Espacio para el tab bar fijo abajo */
+  padding-bottom: 72px;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   CABECERA — Minimalista
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.cabecera-cliente {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-navbar);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(18, 40, 75, 0.06);
+  height: var(--navbar-height);
+  display: flex;
+  align-items: center;
+}
+
+.cabecera-cliente__contenedor {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-2xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Logo */
+.cabecera-cliente__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  text-decoration: none;
+}
+
+.cabecera-cliente__logo-icono {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-xl);
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xl);
+  color: white;
+  box-shadow: var(--shadow-glow);
+}
+
+.cabecera-cliente__logo-texto {
+  font-family: var(--font-heading);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+.cabecera-cliente__logo-texto span {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Sección de usuario */
+.cabecera-cliente__seccion-usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.cabecera-cliente__bienvenida {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.cabecera-cliente__saludo {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.cabecera-cliente__nombre-usuario {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   CONTENIDO
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.layout-cliente__contenido {
+  flex: 1;
+  padding: var(--spacing-2xl) 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-cliente__contenedor {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-2xl);
+  flex: 1;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   BOTTOM TAB BAR
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-navbar);
+  height: 72px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(18, 40, 75, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 0 var(--spacing-xl);
+}
+
+.tab-bar__item {
+  flex: 1;
+  max-width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--spacing-sm) 0;
+  text-decoration: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-lg);
+}
+
+.tab-bar__icono {
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+}
+
+.tab-bar__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  transition: all var(--transition-fast);
+  letter-spacing: 0.2px;
+}
+
+/* Estado activo */
+.tab-bar__item--activo .tab-bar__icono {
+  color: var(--color-primary-dark);
+}
+
+.tab-bar__item--activo .tab-bar__label {
+  color: var(--color-primary-dark);
+}
+
+.tab-bar__item--activo {
+  position: relative;
+}
+
+.tab-bar__item--activo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  background: var(--color-primary-dark);
+  border-radius: 0 0 var(--radius-full) var(--radius-full);
+}
+
+/* Hover */
+.tab-bar__item:hover .tab-bar__icono {
+  color: var(--color-text-primary);
+}
+
+.tab-bar__item:hover .tab-bar__label {
+  color: var(--color-text-primary);
+}
+
+/* Cerrar sesión */
+.tab-bar__item--cerrar .tab-bar__icono {
+  color: var(--color-text-muted);
+}
+
+.tab-bar__item--cerrar .tab-bar__label {
+  color: var(--color-text-muted);
+}
+
+.tab-bar__item--cerrar:hover .tab-bar__icono {
+  color: var(--color-error);
+}
+
+.tab-bar__item--cerrar:hover .tab-bar__label {
+  color: var(--color-error);
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RESPONSIVO
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+@media (max-width: 768px) {
+  .cabecera-cliente__contenedor {
+    padding: 0 var(--spacing-lg);
+  }
+
+  .layout-cliente__contenedor {
+    padding: 0 var(--spacing-lg);
+  }
+
+  .layout-cliente__contenido {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .tab-bar {
+    padding: 0 var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .cabecera-cliente__bienvenida {
+    display: none;
+  }
+}

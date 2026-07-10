@@ -1,0 +1,21 @@
+/* FormularioClienteCampos.css — validación y campos del drawer */
+
+.clientes__campo-error {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  margin: 0;
+  font-family: var(--font-sans);
+}
+
+.drawer-form__ubicacion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.drawer-form__ubicacion-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+  line-height: 1.4;
+}

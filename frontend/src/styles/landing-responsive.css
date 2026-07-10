@@ -1,0 +1,56 @@
+/* ============================================
+   Landing pública — responsive compartido
+   Complementa media queries de cada sección
+   ============================================ */
+
+@media (max-width: 768px) {
+  .landing__section {
+    padding: var(--spacing-2xl) var(--spacing-lg);
+  }
+
+  .seccion-beneficios {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .seccion-beneficios__titulo {
+    font-size: var(--font-size-3xl);
+  }
+
+  .seccion-viajes {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .seccion-viajes__titulo {
+    font-size: var(--font-size-3xl);
+  }
+
+  .tarjeta-viaje__contenedor-imagen {
+    height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing__section {
+    padding: var(--spacing-xl) var(--spacing-md);
+  }
+
+  .seccion-beneficios {
+    padding: 2rem 1rem;
+  }
+
+  .seccion-beneficios__titulo {
+    font-size: var(--font-size-2xl);
+  }
+
+  .seccion-viajes__cuadricula {
+    grid-template-columns: 1fr;
+  }
+
+  .tarjeta-viaje__contenedor-imagen {
+    height: 180px;
+  }
+
+  .calendario-viajes__titulo {
+    font-size: var(--font-size-2xl);
+  }
+}

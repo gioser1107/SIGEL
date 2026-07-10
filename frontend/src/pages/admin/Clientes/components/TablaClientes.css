@@ -1,0 +1,34 @@
+/* TablaClientes.css — celdas del listado de clientes */
+
+.clientes__tabla-nombre {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clientes__tabla-nombre strong {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.clientes__tabla-razon {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.clientes__tabla-documento {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono, monospace);
+}
+
+.clientes__tabla-ubicacion {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.clientes__tabla-sin-cuenta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  font-style: italic;
+}

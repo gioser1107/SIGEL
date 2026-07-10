@@ -1,0 +1,126 @@
+.abordaje__filtros-viajes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0.875rem 1rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.abordaje__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.abordaje__select-estado {
+  min-width: 12rem;
+}
+
+.abordaje-resumen {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 900px) {
+  .abordaje-resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.abordaje-resumen__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem 1.125rem;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+.abordaje-resumen__valor {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.abordaje-resumen__etiqueta {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.abordaje-resumen__tarjeta--pendiente .abordaje-resumen__valor {
+  color: var(--color-accent-dark);
+}
+
+.abordaje-resumen__tarjeta--abordado .abordaje-resumen__valor {
+  color: var(--color-primary);
+}
+
+.abordaje-resumen__tarjeta--ausente .abordaje-resumen__valor {
+  color: #b91c1c;
+}
+
+.abordaje__acciones-lote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.abordaje__seleccion-info {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.abordaje__exito {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  background: rgba(0, 85, 160, 0.08);
+  border: 1px solid rgba(0, 85, 160, 0.15);
+  color: var(--color-primary-dark);
+  font-size: 0.875rem;
+}
+
+.abordaje-tabla__pasajero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.abordaje-tabla__badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full);
+  background: rgba(0, 85, 160, 0.1);
+  color: var(--color-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.abordaje-tabla__badge--menor {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-accent-dark);
+}
+
+.abordaje-panel__pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
