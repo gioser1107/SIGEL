@@ -17,6 +17,8 @@ interface RutaPrivadaProps {
   /** Varios módulos: basta acceso de lectura a uno. */
   modulos?: string[];
   accionModulo?: AccionPermiso;
+  /** Exige rol Cliente con perfil vinculado (portal de pasajeros). */
+  requiereCliente?: boolean;
   redirigirA?: string;
   children?: React.ReactNode;
 }
@@ -27,6 +29,7 @@ export default function RutaPrivada({
   modulo,
   modulos,
   accionModulo = 'leer',
+  requiereCliente = false,
   redirigirA = '/iniciar-sesion',
   children,
 }: RutaPrivadaProps) {
@@ -35,6 +38,8 @@ export default function RutaPrivada({
     estaCargando,
     tienePermiso,
     puedeModulo,
+    esCliente,
+    usuario,
   } = useAutenticacion();
   const ubicacion = useLocation();
 
@@ -62,6 +67,21 @@ export default function RutaPrivada({
 
   if (!estaAutenticado) {
     return <Navigate to={redirigirA} state={{ desde: ubicacion }} replace />;
+  }
+
+  if (requiereCliente && !esCliente) {
+    const rolActual = usuario?.rol ?? 'sin rol';
+    const sinPerfil = usuario?.cliente_id == null;
+    return (
+      <div className="ruta-privada__denegado">
+        <h2>Acceso solo para clientes</h2>
+        <p>
+          {sinPerfil
+            ? 'Tu cuenta no tiene un perfil de cliente vinculado. Regístrate en el portal o inicia sesión con una cuenta de cliente.'
+            : `Tu rol actual es «${rolActual}». Cierra sesión e inicia con una cuenta de cliente para reservar viajes.`}
+        </p>
+      </div>
+    );
   }
 
   if ((permiso || permisos || modulo || modulos) && !accesoPermitido) {

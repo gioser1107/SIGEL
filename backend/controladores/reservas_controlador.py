@@ -16,7 +16,7 @@ from modelos.permiso_modelo import (
     PERMISO_EDITAR_RESERVAS,
     PERMISO_LEER_RESERVAS,
 )
-from modelos.cliente_modelo import es_rol_cliente, registrar_cliente_para_reserva
+from modelos.cliente_modelo import registrar_cliente_para_reserva, requiere_sesion_cliente_portal
 from modelos.reservas_modelo import (
     actualizar_pasajero,
     actualizar_reserva,
@@ -135,10 +135,7 @@ def _resolver_cliente_id_pasajero(
 
 
 def _requiere_cliente_sesion_reserva(usuario_actual: dict) -> int:
-    cliente_id = usuario_actual.get("cliente_id")
-    if cliente_id is None or not es_rol_cliente(usuario_actual.get("rol", "")):
-        raise HTTPException(status_code=403, detail="Solo clientes pueden usar este recurso")
-    return cliente_id
+    return requiere_sesion_cliente_portal(usuario_actual)
 
 
 @router.get("/portal/mis-reservas")
@@ -188,9 +185,7 @@ def crear_reserva_desde_landing_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
-    cliente_id = usuario_actual.get("cliente_id")
-    if not cliente_id:
-        raise HTTPException(status_code=403, detail="Solo clientes registrados pueden crear reservas")
+    cliente_id = _requiere_cliente_sesion_reserva(usuario_actual)
 
     nueva_reserva = crear_reserva_desde_landing(
         db,

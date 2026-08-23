@@ -9,7 +9,8 @@ interface PropsPanelNueva {
   form: DatosCotizacionNueva;
   guardando: boolean;
   errorForm: string | null;
-  clientesOpciones: { id: number; etiqueta: string }[];
+  clientesOpciones: OpcionSelectBuscador[];
+  cargandoClientes: boolean;
   destinosOpciones: OpcionSelectBuscador[];
   cargandoDestinos: boolean;
   onCerrar: () => void;
@@ -24,6 +25,7 @@ export default function PanelNuevaCotizacion({
   guardando,
   errorForm,
   clientesOpciones,
+  cargandoClientes,
   destinosOpciones,
   cargandoDestinos,
   onCerrar,
@@ -68,18 +70,14 @@ export default function PanelNuevaCotizacion({
           <label className="drawer-form__label">
             Cliente / Empresa <span className="drawer-form__req">*</span>
           </label>
-          <select
-            className="drawer-form__input"
-            value={form.cliente_id || ''}
-            onChange={(e) => actualizarCampo('cliente_id', Number(e.target.value))}
-          >
-            <option value="">Selecciona un cliente</option>
-            {clientesOpciones.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.etiqueta}
-              </option>
-            ))}
-          </select>
+          <SelectBuscador
+            opciones={clientesOpciones}
+            valorSeleccionado={form.cliente_id || null}
+            onSeleccionar={(op) => actualizarCampo('cliente_id', op?.valor ?? 0)}
+            placeholder="Buscar cliente…"
+            cargando={cargandoClientes}
+            mensajeVacio="No hay clientes registrados"
+          />
         </div>
 
         <div className="drawer-form__campo">

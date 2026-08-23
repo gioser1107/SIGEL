@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>SRS SIGEL — Requisitos Funcionales y No Funcionales</title>
+  <style>
+    @page { margin: 2cm; }
+    body { font-family: 'Segoe UI', Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.45; color: #222; max-width: 900px; margin: 0 auto; padding: 20px; }
+    h1 { font-size: 18pt; border-bottom: 2px solid #1a5276; padding-bottom: 8px; color: #1a5276; }
+    h2 { font-size: 14pt; color: #1a5276; margin-top: 28px; page-break-after: avoid; }
+    h3 { font-size: 12pt; color: #333; margin-top: 20px; page-break-after: avoid; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 10pt; page-break-inside: avoid; }
+    th, td { border: 1px solid #bbb; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #eaf2f8; font-weight: 600; width: 28%; }
+    .portada { text-align: center; padding: 60px 20px; page-break-after: always; }
+    .portada h1 { border: none; font-size: 22pt; }
+    .portada p { font-size: 12pt; color: #555; }
+    .meta { background: #f8f9fa; padding: 12px; border-left: 4px solid #1a5276; margin: 16px 0; }
+    .section-break { page-break-before: always; }
+    @media print {
+      body { padding: 0; }
+      .no-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="portada">
+  <h1>Especificación de Requisitos de Software (SRS)</h1>
+  <p><strong>SIGEL — Travel BQTO</strong></p>
+  <p>Desarrollo de un sistema integral para la gestión logística turística<br>
+  con módulos de analítica predictiva y arquitectura MVC<br>
+  para la agencia Travel Bqto, parroquia Ana Soto, Barquisimeto</p>
+  <br>
+  <p>Integrantes: María Alvarado, Luis Herice, Sergio Jiménez, Gabriel Jiménez</p>
+  <p>Tutor: Edecio Freitez</p>
+  <p>Julio 2026 — UPTAEB, PNF Informática, Trayecto III</p>
+</div>
+
+<p class="no-print meta"><strong>Instrucciones:</strong> Abre este archivo en Chrome o Edge → Archivo → Imprimir → Guardar como PDF. También puedes abrirlo con Microsoft Word (Archivo → Abrir) y guardar como .docx.</p>
+
+<h1>Índice</h1>
+<ol>
+  <li>Requisitos Funcionales (RF-01 a RF-20)</li>
+  <li>Requisitos No Funcionales (RNF-01 a RNF-16)</li>
+  <li>Trazabilidad con Diagramas A, B, C</li>
+</ol>
+
+<div class="section-break"></div>
+<h1>PARTE I — Requisitos Funcionales</h1>
+
+<h2>Resumen RF</h2>
+<table>
+  <tr><th>ID</th><th>Nombre</th><th>Prioridad</th><th>Actor</th><th>Diagrama</th></tr>
+  <tr><td>RF-01</td><td>Autenticación e identidad</td><td>Alta</td><td>Todos</td><td>A, B, C</td></tr>
+  <tr><td>RF-02</td><td>Gestión de usuarios</td><td>Alta</td><td>Administrador</td><td>A — M6-U1 a U4</td></tr>
+  <tr><td>RF-03</td><td>Gestión de roles</td><td>Alta</td><td>Administrador</td><td>A — M6-U5 a U8</td></tr>
+  <tr><td>RF-04</td><td>Gestión de permisos</td><td>Alta</td><td>Administrador</td><td>A — M9-U1 a U4</td></tr>
+  <tr><td>RF-05</td><td>Consulta de bitácora</td><td>Alta</td><td>Administrador</td><td>A</td></tr>
+  <tr><td>RF-06</td><td>Gestión de destinos</td><td>Alta</td><td>Admin / Visitante</td><td>A, C — M1-U1 a U4</td></tr>
+  <tr><td>RF-07</td><td>Flota y asientos</td><td>Alta</td><td>Administrador</td><td>A</td></tr>
+  <tr><td>RF-08</td><td>Puntos de recogida</td><td>Alta</td><td>Admin / Cliente</td><td>A, C — M8-U1 a U4</td></tr>
+  <tr><td>RF-09</td><td>Planificación de viajes</td><td>Alta</td><td>Administrador</td><td>A — M3-O1 a O6</td></tr>
+  <tr><td>RF-10</td><td>Dashboard administrativo</td><td>Media</td><td>Administrador</td><td>A</td></tr>
+  <tr><td>RF-11</td><td>Gestión de clientes</td><td>Alta</td><td>Administrador</td><td>B — M7-U1 a U4</td></tr>
+  <tr><td>RF-12</td><td>Gestión de cotizaciones</td><td>Alta</td><td>Admin / ATC</td><td>B — M5-U1 a U5</td></tr>
+  <tr><td>RF-13</td><td>Reservas y asientos</td><td>Alta</td><td>Admin / Cliente</td><td>B, C — M1-U5 a U10</td></tr>
+  <tr><td>RF-14</td><td>Reportes de pago</td><td>Alta</td><td>Admin / Cliente</td><td>B, C — M2-U1</td></tr>
+  <tr><td>RF-15</td><td>Conciliación de pagos</td><td>Alta</td><td>Administrador</td><td>B — M2-U2 a U4</td></tr>
+  <tr><td>RF-16</td><td>Catálogo financiero</td><td>Alta</td><td>Administrador</td><td>B</td></tr>
+  <tr><td>RF-17</td><td>Control de abordaje</td><td>Alta</td><td>Admin / Guía</td><td>B — M4-U1 a U4</td></tr>
+  <tr><td>RF-18</td><td>Moderación de reseñas</td><td>Media</td><td>Admin / Cliente</td><td>B, C</td></tr>
+  <tr><td>RF-19</td><td>Portal público</td><td>Alta</td><td>Visitante</td><td>C — M1-U2</td></tr>
+  <tr><td>RF-20</td><td>Portal cliente</td><td>Alta</td><td>Cliente</td><td>C — M1-U6, M1-U7</td></tr>
+</table>
+
+<p><em>Las fichas detalladas completas de cada RF están en el archivo <strong>SRS_REQUISITOS_FUNCIONALES.md</strong> del proyecto (20 fichas con especificación, criterios de aceptación y endpoints).</em></p>
+
+<div class="section-break"></div>
+<h1>PARTE II — Requisitos No Funcionales</h1>
+
+<h2>Resumen RNF</h2>
+<table>
+  <tr><th>ID</th><th>Nombre</th><th>Prioridad</th><th>Categoría UPTAEB</th></tr>
+  <tr><td>RNF-01</td><td>Autenticación y control de sesión</td><td>Alta</td><td>Seguridad / Login</td></tr>
+  <tr><td>RNF-02</td><td>Autorización RBAC (roles y permisos)</td><td>Alta</td><td>Seguridad / Roles / Permisos</td></tr>
+  <tr><td>RNF-03</td><td>Modularización funcional</td><td>Media</td><td>Módulos</td></tr>
+  <tr><td>RNF-04</td><td>Bitácora y trazabilidad</td><td>Alta</td><td>Bitácora</td></tr>
+  <tr><td>RNF-05</td><td>Ciclo de vida de cuentas</td><td>Alta</td><td>Gestión de usuarios</td></tr>
+  <tr><td>RNF-06</td><td>Validación de datos de entrada</td><td>Alta</td><td>Validación</td></tr>
+  <tr><td>RNF-07</td><td>Seguridad de datos y comunicaciones</td><td>Alta</td><td>Seguridad</td></tr>
+  <tr><td>RNF-08</td><td>Fiabilidad e integridad transaccional</td><td>Alta</td><td>Fiabilidad</td></tr>
+  <tr><td>RNF-09</td><td>Disponibilidad del servicio</td><td>Media</td><td>Disponibilidad</td></tr>
+  <tr><td>RNF-10</td><td>Tiempo de respuesta de la API</td><td>Media</td><td>Rendimiento</td></tr>
+  <tr><td>RNF-11</td><td>Escalabilidad y carga concurrente</td><td>Media</td><td>Escalabilidad</td></tr>
+  <tr><td>RNF-12</td><td>Eficiencia y uso de recursos</td><td>Media</td><td>Eficiencia</td></tr>
+  <tr><td>RNF-13</td><td>Mantenibilidad del software</td><td>Media</td><td>Mantenibilidad</td></tr>
+  <tr><td>RNF-14</td><td>Portabilidad y compatibilidad</td><td>Alta</td><td>Portabilidad</td></tr>
+  <tr><td>RNF-15</td><td>Usabilidad en tareas críticas</td><td>Media</td><td>Usabilidad</td></tr>
+  <tr><td>RNF-16</td><td>Navegabilidad estructurada</td><td>Media</td><td>Navegabilidad</td></tr>
+</table>
+
+<p><em>Las fichas detalladas completas de cada RNF están en <strong>SRS_REQUISITOS_NO_FUNCIONALES.md</strong> (formato idéntico a la plantilla REQUISITOS_NO_FUNCIONALES_SRS.docx).</em></p>
+
+<div class="section-break"></div>
+<h1>PARTE III — Trazabilidad con diagramas</h1>
+
+<h2>Diagrama A — Administración y catálogo</h2>
+<p>RF-02, RF-03, RF-04, RF-05, RF-06, RF-07, RF-08, RF-09, RF-10</p>
+
+<h2>Diagrama B — Comercial, finanzas y operación</h2>
+<p>RF-11, RF-12, RF-13, RF-14, RF-15, RF-16, RF-17, RF-18</p>
+
+<h2>Diagrama C — Portal público y cliente</h2>
+<p>RF-19, RF-20 (+ consulta RF-06, RF-08, RF-13, RF-14, RF-18)</p>
+
+<h2>Matriz RF ↔ RNF (extracto)</h2>
+<table>
+  <tr><th>RF</th><th>RNF</th></tr>
+  <tr><td>RF-01 Autenticación</td><td>RNF-01, RNF-02, RNF-07</td></tr>
+  <tr><td>RF-02 Usuarios</td><td>RNF-02, RNF-05, RNF-06</td></tr>
+  <tr><td>RF-13 Reservas</td><td>RNF-08, RNF-15</td></tr>
+  <tr><td>RF-14 Pagos</td><td>RNF-04, RNF-08</td></tr>
+  <tr><td>RF-15 Conciliación</td><td>RNF-04, RNF-08</td></tr>
+  <tr><td>RF-17 Abordaje</td><td>RNF-04, RNF-14</td></tr>
+  <tr><td>RF-19 Portal público</td><td>RNF-14, RNF-16</td></tr>
+  <tr><td>RF-20 Portal cliente</td><td>RNF-01, RNF-15</td></tr>
+</table>
+
+<p style="margin-top:40px; font-size:9pt; color:#666;">Documento SRS SIGEL — Generado Julio 2026. Archivos fuente: docs/SRS_REQUISITOS_FUNCIONALES.md y docs/SRS_REQUISITOS_NO_FUNCIONALES.md</p>
+
+</body>
+</html>

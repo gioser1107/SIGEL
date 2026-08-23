@@ -192,7 +192,7 @@ export default function App() {
           <Route
             path="/client"
             element={
-              <RutaPrivada>
+              <RutaPrivada requiereCliente>
                 <LayoutCliente />
               </RutaPrivada>
             }

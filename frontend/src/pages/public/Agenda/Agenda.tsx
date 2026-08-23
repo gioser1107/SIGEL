@@ -41,16 +41,31 @@ export default function Agenda() {
     const [viajeParaModal, setViajeParaModal] = useState<ViajeAgenda | null>(null);
     const [agendaDatos, setAgendaDatos] = useState<EventosPorDia>({});
     const [cargandoAgenda, setCargandoAgenda] = useState(true);
+    const [errorAgenda, setErrorAgenda] = useState<string | null>(null);
 
     useEffect(() => {
         const mesParam = `${anioActual}-${String(mesActual + 1).padStart(2, '0')}`;
         setCargandoAgenda(true);
+        setErrorAgenda(null);
         obtenerViajesCatalogo({ mes: mesParam })
             .then((viajes: ViajeCatalogo[]) => {
                 const agrupados = agruparViajesPorFecha(viajes);
                 setAgendaDatos(agrupados);
+
+                const hoyClave = formatFecha(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+                if (
+                    mesActual === hoy.getMonth() &&
+                    anioActual === hoy.getFullYear() &&
+                    agrupados[hoyClave]?.length
+                ) {
+                    setDiaSeleccionado(hoyClave);
+                }
             })
-            .catch(() => setAgendaDatos({}))
+            .catch((err: unknown) => {
+                setAgendaDatos({});
+                const msg = err instanceof Error ? err.message : 'No se pudieron cargar los viajes.';
+                setErrorAgenda(msg);
+            })
             .finally(() => setCargandoAgenda(false));
     }, [mesActual, anioActual]);
 
@@ -135,6 +150,11 @@ export default function Agenda() {
 
             {/* ── CALENDARIO ── */}
             <main className="agenda__main">
+                {errorAgenda && (
+                    <p className="agenda__error" role="alert">
+                        {errorAgenda}
+                    </p>
+                )}
                 {cargandoAgenda && (
                     <p className="agenda__cargando">Cargando viajes del mes...</p>
                 )}

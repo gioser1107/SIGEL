@@ -10,7 +10,7 @@ from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
-from modelos.cliente_modelo import es_rol_cliente
+from modelos.cliente_modelo import requiere_sesion_cliente_portal
 from modelos.destino_imagen_modelo import procesar_y_guardar_comprobante_pago
 from modelos.pago_modelo import (
     actualizar_pago_reserva,
@@ -91,10 +91,7 @@ class DatosPagoReportarPortal(BaseModel):
 
 
 def _requiere_cliente_sesion(usuario_actual: dict) -> int:
-    cliente_id = usuario_actual.get("cliente_id")
-    if cliente_id is None or not es_rol_cliente(usuario_actual.get("rol", "")):
-        raise HTTPException(status_code=403, detail="Solo clientes pueden usar este recurso")
-    return cliente_id
+    return requiere_sesion_cliente_portal(usuario_actual)
 
 
 @router.post("/pagos/portal/comprobante/upload")

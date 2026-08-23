@@ -54,6 +54,7 @@ export default function Cotizaciones() {
     lineaForm,
     cargandoLineas,
     clientesOpciones,
+    cargandoClientes,
     destinosOpciones,
     cargandoDestinos,
     pagina,
@@ -257,6 +258,7 @@ export default function Cotizaciones() {
         guardando={guardando}
         errorForm={errorForm}
         clientesOpciones={clientesOpciones}
+        cargandoClientes={cargandoClientes}
         destinosOpciones={destinosOpciones}
         cargandoDestinos={cargandoDestinos}
         onCerrar={cerrarDrawer}

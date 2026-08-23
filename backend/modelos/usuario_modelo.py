@@ -12,8 +12,11 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.cliente_modelo import (
     Cliente,
+    asegurar_perfil_cliente_usuario,
+    es_rol_cliente,
     obtener_cliente_por_usuario_id,
     obtener_rol_cliente,
+    resolver_cliente_id_portal,
     validar_ubicacion,
 )
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente
@@ -206,6 +209,10 @@ def crear_usuario(
     db.add(nuevo_usuario)
     db.commit()
     db.refresh(nuevo_usuario)
+
+    if es_rol_cliente(rol.nombre):
+        asegurar_perfil_cliente_usuario(db, nuevo_usuario, rol.nombre)
+
     return usuario_a_dict(nuevo_usuario, rol.nombre)
 
 
@@ -311,8 +318,7 @@ def iniciar_sesion(db: Session, correo: str, contrasena: str) -> dict:
 
     usuario_dict = usuario_a_dict(usuario, nombre_rol)
     usuario_dict["permisos"] = obtener_permisos_del_rol(db, usuario.rol_id)
-    cliente = obtener_cliente_por_usuario_id(db, usuario.id)
-    usuario_dict["cliente_id"] = cliente.id if cliente is not None else None
+    usuario_dict["cliente_id"] = resolver_cliente_id_portal(db, usuario.id, nombre_rol)
 
     return {
         "mensaje": "Sesión iniciada con éxito",

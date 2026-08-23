@@ -114,6 +114,13 @@ export function AutenticacionProvider({ children }: { children: ReactNode }) {
     [usuario]
   );
 
+  const esCliente = useMemo(
+    () =>
+      (usuario?.rol?.trim().toLowerCase() === 'cliente') &&
+      usuario?.cliente_id != null,
+    [usuario],
+  );
+
   const valor = useMemo(
     () => ({
       estaAutenticado: Boolean(usuario),
@@ -130,6 +137,7 @@ export function AutenticacionProvider({ children }: { children: ReactNode }) {
       puedeBorrar: puedeBorrarFn,
       puedeAccederSeguridad: puedeAccederSeguridadFn,
       esAdmin,
+      esCliente,
     }),
     [
       usuario,
@@ -145,6 +153,7 @@ export function AutenticacionProvider({ children }: { children: ReactNode }) {
       puedeBorrarFn,
       puedeAccederSeguridadFn,
       esAdmin,
+      esCliente,
     ]
   );
 

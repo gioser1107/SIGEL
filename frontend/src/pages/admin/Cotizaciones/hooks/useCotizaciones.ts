@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useVistaModuloResponsive } from '../../../../hooks/useVistaModuloResponsive';
 import { usePaginacionListado } from '../../../../hooks/usePaginacionListado';
 import {
@@ -11,6 +11,7 @@ import {
   obtenerLineasCotizacion,
   obtenerResumenLineasCotizacion,
 } from '../../../../services/cotizaciones';
+import { listarClientesParaSelect } from '../../../../services/clientes';
 import { listarDestinosParaSelect } from '../../../../services/destinos';
 import type {
   Cotizacion,
@@ -21,8 +22,8 @@ import type {
 import type { FiltroListado } from '../../../../types/paginacion';
 import type { OpcionSelectBuscador } from '../../../../components/admin';
 import { FORM_VACIO, LINEA_FORM_VACIO } from '../constants';
-import { etiquetaCliente } from '../utils/formatearCotizacion';
 import { validarFormularioCotizacion } from '../../../../utils/validacionesFormulario';
+import { nombreCompleto } from '../../../../utils/nombrePersona';
 
 export function useCotizaciones() {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
@@ -50,18 +51,34 @@ export function useCotizaciones() {
   const [lineas, setLineas] = useState<CotizacionLinea[]>([]);
   const [lineaForm, setLineaForm] = useState(LINEA_FORM_VACIO);
   const [cargandoLineas, setCargandoLineas] = useState(false);
+  const [clientesOpciones, setClientesOpciones] = useState<OpcionSelectBuscador[]>([]);
+  const [cargandoClientes, setCargandoClientes] = useState(false);
   const [destinosOpciones, setDestinosOpciones] = useState<OpcionSelectBuscador[]>([]);
   const [cargandoDestinos, setCargandoDestinos] = useState(false);
   const { pagina, setTotal, total, totalPaginas, irPagina, reiniciarPagina, limite } = usePaginacionListado();
 
-  // Extrae clientes únicos del listado para poblar el select de creación
-  const clientesOpciones = useMemo(() => {
-    const mapa = new Map<number, string>();
-    for (const c of cotizaciones) {
-      if (c.cliente_id) mapa.set(c.cliente_id, etiquetaCliente(c));
+  const cargarClientes = useCallback(async () => {
+    setCargandoClientes(true);
+    try {
+      const clientes = await listarClientesParaSelect();
+      setClientesOpciones(
+        clientes.map((c) => {
+          const nombre = nombreCompleto(c.nombre, c.apellido);
+          const documento = `${c.tipo_documento}-${c.numero_documento}`;
+          const etiqueta = c.razon_social ? `${nombre} — ${c.razon_social}` : nombre;
+          return {
+            valor: c.cliente_id,
+            etiqueta,
+            busqueda: [nombre, c.razon_social ?? '', documento, c.correo ?? ''].join(' ').trim(),
+          };
+        }),
+      );
+    } catch {
+      setClientesOpciones([]);
+    } finally {
+      setCargandoClientes(false);
     }
-    return Array.from(mapa.entries()).map(([id, etiqueta]) => ({ id, etiqueta }));
-  }, [cotizaciones]);
+  }, []);
 
   const cargarDestinos = useCallback(async () => {
     setCargandoDestinos(true);
@@ -83,9 +100,10 @@ export function useCotizaciones() {
 
   useEffect(() => {
     if (drawerAbierto && drawerModo === 'crear') {
+      cargarClientes();
       cargarDestinos();
     }
-  }, [drawerAbierto, drawerModo, cargarDestinos]);
+  }, [drawerAbierto, drawerModo, cargarClientes, cargarDestinos]);
 
   // Carga el listado completo de cotizaciones desde la API
   const cargarCotizaciones = useCallback(async () => {
@@ -311,6 +329,7 @@ export function useCotizaciones() {
     lineaForm,
     cargandoLineas,
     clientesOpciones,
+    cargandoClientes,
     destinosOpciones,
     cargandoDestinos,
     pagina,

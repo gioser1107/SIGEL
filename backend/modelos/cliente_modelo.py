@@ -58,8 +58,130 @@ def obtener_cliente_por_usuario_id(db: Session, usuario_id: int) -> Cliente | No
     ).first()
 
 
+def _candidatos_cliente_sin_usuario(db: Session, usuario) -> list[Cliente]:
+    """Fichas en clientes creadas desde admin sin usuario vinculado."""
+    consulta = db.query(Cliente).filter(
+        Cliente.eliminado_en.is_(None),
+        Cliente.usuario_id.is_(None),
+        Cliente.nombre == usuario.nombre.strip(),
+        Cliente.apellido == usuario.apellido.strip(),
+    )
+    candidatos = consulta.all()
+    if len(candidatos) <= 1:
+        return candidatos
+
+    telefono = (usuario.telefono or "").strip()
+    if telefono:
+        filtrados = [
+            c for c in candidatos
+            if not (c.telefono or "").strip() or (c.telefono or "").strip() == telefono
+        ]
+        if len(filtrados) == 1:
+            return filtrados
+
+    return candidatos
+
+
+def asegurar_perfil_cliente_usuario(db: Session, usuario, rol_nombre: str) -> Cliente | None:
+    """
+    Garantiza que un usuario con rol Cliente tenga ficha en la tabla clientes.
+    Vincula automáticamente fichas huérfanas (creadas en admin) o crea una mínima.
+    """
+    if not es_rol_cliente(rol_nombre):
+        return None
+
+    vinculado = obtener_cliente_por_usuario_id(db, usuario.id)
+    if vinculado is not None:
+        return vinculado
+
+    ahora = datetime.now()
+    candidatos = _candidatos_cliente_sin_usuario(db, usuario)
+
+    if len(candidatos) == 1:
+        cliente = candidatos[0]
+        cliente.usuario_id = usuario.id
+        cliente.actualizado_en = ahora
+        if cliente.actualizado_por is None:
+            cliente.actualizado_por = usuario.id
+        db.commit()
+        db.refresh(cliente)
+        return cliente
+
+    numero_documento = f"USR{usuario.id:08d}"
+    existente_doc = db.query(Cliente).filter(
+        Cliente.tipo_documento == "V",
+        Cliente.numero_documento == numero_documento,
+        Cliente.eliminado_en.is_(None),
+    ).first()
+    if existente_doc is not None:
+        if existente_doc.usuario_id is None:
+            existente_doc.usuario_id = usuario.id
+            existente_doc.actualizado_en = ahora
+            db.commit()
+            db.refresh(existente_doc)
+            return existente_doc
+        if existente_doc.usuario_id == usuario.id:
+            return existente_doc
+
+    nuevo = Cliente(
+        usuario_id=usuario.id,
+        tipo_cliente="natural",
+        tipo_documento="V",
+        numero_documento=numero_documento,
+        nombre=usuario.nombre,
+        apellido=usuario.apellido,
+        telefono=usuario.telefono,
+        creado_por=usuario.id,
+        actualizado_por=usuario.id,
+        creado_en=ahora,
+        actualizado_en=ahora,
+    )
+    db.add(nuevo)
+    db.commit()
+    db.refresh(nuevo)
+    return nuevo
+
+
+def resolver_cliente_id_portal(db: Session, usuario_id: int, rol_nombre: str) -> int | None:
+    from modelos.usuario_modelo import Usuario
+
+    usuario = db.query(Usuario).filter(
+        Usuario.id == usuario_id,
+        Usuario.eliminado_en.is_(None),
+    ).first()
+    if usuario is None:
+        return None
+    cliente = asegurar_perfil_cliente_usuario(db, usuario, rol_nombre)
+    return cliente.id if cliente is not None else None
+
+
 def es_rol_cliente(nombre_rol: str) -> bool:
-    return nombre_rol == "Cliente"
+    return (nombre_rol or "").strip().lower() == "cliente"
+
+
+def requiere_sesion_cliente_portal(usuario_actual: dict) -> int:
+    """Valida sesión del portal cliente: rol Cliente y perfil vinculado en clientes."""
+    rol = (usuario_actual.get("rol") or "").strip()
+    if not es_rol_cliente(rol):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                f"Este recurso es solo para clientes. "
+                f"Tu rol actual es «{rol or 'sin rol'}». "
+                f"Cierra sesión e inicia con una cuenta de cliente."
+            ),
+        )
+
+    cliente_id = usuario_actual.get("cliente_id")
+    if cliente_id is None:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Tu cuenta no tiene un perfil de cliente vinculado. "
+                "Regístrate en el portal o contacta a soporte para activar tu acceso."
+            ),
+        )
+    return int(cliente_id)
 
 
 def cliente_a_dict(

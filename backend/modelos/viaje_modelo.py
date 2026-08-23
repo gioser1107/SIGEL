@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, time
 from decimal import Decimal
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, or_
 from sqlalchemy.orm import Session
 
 from database import Base
@@ -605,10 +605,11 @@ def listar_viajes_catalogo(
     hasta: datetime | None = None,
 ) -> list[dict]:
     ahora = datetime.now()
+    inicio_hoy = datetime.combine(ahora.date(), time.min)
     consulta = db.query(Viaje).filter(
         Viaje.eliminado_en.is_(None),
-        Viaje.estado == "planificado",
-        Viaje.fecha_salida >= ahora,
+        or_(Viaje.estado == "planificado", Viaje.estado == "en_curso"),
+        Viaje.fecha_salida >= inicio_hoy,
     )
 
     if destino_id is not None:
@@ -632,11 +633,7 @@ def listar_viajes_catalogo(
 
     consulta = consulta.order_by(Viaje.fecha_salida.asc())
     viajes = consulta.all()
-    return [
-        viaje_catalogo_dict(db, v)
-        for v in viajes
-        if viaje_disponible_para_reserva(db, v)
-    ]
+    return [viaje_catalogo_dict(db, v) for v in viajes]
 
 
 def obtener_viaje_catalogo(db: Session, viaje_id: int) -> dict:

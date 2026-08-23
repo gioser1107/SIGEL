@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
-from modelos.cliente_modelo import es_rol_cliente
+from modelos.cliente_modelo import requiere_sesion_cliente_portal
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 from modelos.permiso_modelo import (
     PERMISO_BORRAR_PLANIFICACION,
@@ -459,8 +459,7 @@ def listar_asientos_viaje_portal_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
-    if not es_rol_cliente(usuario_actual.get("rol", "")):
-        raise HTTPException(status_code=403, detail="Solo clientes pueden consultar asientos del portal")
+    requiere_sesion_cliente_portal(usuario_actual)
     return asientos_disponibles(db, viaje_id)
 
 

@@ -17,6 +17,7 @@ export interface AutenticacionContextValue {
   puedeBorrar: (modulo: string) => boolean;
   puedeAccederSeguridad: () => boolean;
   esAdmin: boolean;
+  esCliente: boolean;
 }
 
 export const AutenticacionContext = createContext<AutenticacionContextValue | null>(null);

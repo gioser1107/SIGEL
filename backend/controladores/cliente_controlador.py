@@ -11,9 +11,9 @@ from modelos.cliente_modelo import (
     buscar_cliente_por_documento_respuesta,
     crear_cliente,
     desactivar_cliente,
-    es_rol_cliente,
     listar_clientes,
     obtener_cliente,
+    requiere_sesion_cliente_portal,
 )
 from modelos.permiso_modelo import (
     PERMISO_BORRAR_CLIENTES,
@@ -95,10 +95,7 @@ class DatosPuntoRecogidaCliente(BaseModel):
 
 
 def _requiere_cliente_sesion(usuario_actual: dict) -> int:
-    cliente_id = usuario_actual.get("cliente_id")
-    if cliente_id is None or not es_rol_cliente(usuario_actual.get("rol", "")):
-        raise HTTPException(status_code=403, detail="Solo clientes con perfil activo pueden usar este recurso")
-    return cliente_id
+    return requiere_sesion_cliente_portal(usuario_actual)
 
 
 @router.get("/domicilios-recogida/buscar")

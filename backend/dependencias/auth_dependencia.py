@@ -8,7 +8,7 @@ from modelos.permiso_modelo import Permiso
 from modelos.rol_modelo import Rol
 from modelos.rol_permiso_modelo import RolPermiso
 from modelos.usuario_modelo import Usuario
-from modelos.cliente_modelo import obtener_cliente_por_usuario_id
+from modelos.cliente_modelo import resolver_cliente_id_portal
 from modelos.usuario_modelo import verificar_token
 
 esquema_bearer = HTTPBearer()
@@ -72,8 +72,7 @@ def obtener_usuario_actual(
 
     permisos = obtener_permisos_del_rol(db, usuario.rol_id)
 
-    cliente = obtener_cliente_por_usuario_id(db, usuario.id)
-    cliente_id = cliente.id if cliente is not None else None
+    cliente_id = resolver_cliente_id_portal(db, usuario.id, nombre_rol)
 
     return {
         "id": usuario.id,

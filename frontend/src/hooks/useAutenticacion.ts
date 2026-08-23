@@ -40,6 +40,7 @@ export default function useAutenticacion() {
     puedeBorrar: ctx.puedeBorrar,
     puedeAccederSeguridad: ctx.puedeAccederSeguridad,
     esAdmin: ctx.esAdmin,
+    esCliente: ctx.esCliente,
     iniciarSesion,
     cerrarSesion: ctx.cerrarSesion,
   };
