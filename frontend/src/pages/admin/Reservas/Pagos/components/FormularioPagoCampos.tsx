@@ -302,7 +302,11 @@ export default function FormularioPagoCampos({
                   maxLength={11}
                   value={form.telefono_origen}
                   onChange={(e) => onChange({ ...form, telefono_origen: sanitizarTelefono(e.target.value) })}
-
+                  onKeyDown={(e) => {
+                    const permitidas = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+                    if (permitidas.includes(e.key)) return;
+                    if (!/^\d$/.test(e.key)) e.preventDefault();
+                  }}
                   placeholder="04141234567"
 
                 />

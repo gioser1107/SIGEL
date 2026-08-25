@@ -10,6 +10,12 @@ import { useReservas } from '../../../context/Reservas';
 import { registrarCliente } from '../../../services/autenticacion';
 import { listarCiudadesPorEstado, listarEstados } from '../../../services/ubicaciones';
 import { ErrorApi } from '../../../services/api';
+import {
+  MENSAJE_NOMBRE_PERSONA,
+  esNombreValido,
+  sanitizarNombrePersona,
+  sanitizarSoloDigitos,
+} from '../../../utils/validacionesFormulario';
 import type { PuntosRecogidaDraft } from '../../../types/puntoRecogida';
 import { PUNTOS_RECOGIDA_DRAFT_VACIO } from '../../../types/puntoRecogida';
 import '../InicioSesion/InicioSesion.css';
@@ -57,10 +63,12 @@ export default function Registro() {
 
   function validarPaso1(): string | null {
     if (!nombre.trim() || !apellido.trim()) return 'Completa nombre y apellido.';
+    if (!esNombreValido(nombre) || !esNombreValido(apellido)) return MENSAJE_NOMBRE_PERSONA;
     if (!correo.trim()) return 'Ingresa tu correo.';
     if (contrasena.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
     if (contrasena !== confirmar) return 'Las contraseñas no coinciden.';
     if (!numeroDocumento.trim()) return 'Ingresa tu documento.';
+    if (telefono && /[A-Za-z]/.test(telefono)) return 'El teléfono no puede contener letras.';
     return null;
   }
 
@@ -128,8 +136,8 @@ export default function Registro() {
             <form className="inicio-sesion__form" onSubmit={(e) => e.preventDefault()}>
               {paso === 1 && (
                 <>
-                  <Entrada etiqueta="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-                  <Entrada etiqueta="Apellido" value={apellido} onChange={(e) => setApellido(e.target.value)} required />
+                  <Entrada etiqueta="Nombre" value={nombre} onChange={(e) => setNombre(sanitizarNombrePersona(e.target.value))} maxLength={80} required />
+                  <Entrada etiqueta="Apellido" value={apellido} onChange={(e) => setApellido(sanitizarNombrePersona(e.target.value))} maxLength={80} required />
                   <Entrada etiqueta="Correo" type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
                   <Entrada etiqueta="Contraseña" type="password" value={contrasena} onChange={(e) => setContrasena(e.target.value)} required />
                   <Entrada etiqueta="Confirmar contraseña" type="password" value={confirmar} onChange={(e) => setConfirmar(e.target.value)} required />
@@ -139,8 +147,8 @@ export default function Registro() {
                       {TIPOS_DOCUMENTO.map((t) => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
-                  <Entrada etiqueta="Número documento" value={numeroDocumento} onChange={(e) => setNumeroDocumento(e.target.value.replace(/\D/g, ''))} required />
-                  <Entrada etiqueta="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+                  <Entrada etiqueta="Número documento" value={numeroDocumento} onChange={(e) => setNumeroDocumento(sanitizarSoloDigitos(e.target.value, 15))} required />
+                  <Entrada etiqueta="Teléfono" type="tel" inputMode="numeric" value={telefono} onChange={(e) => setTelefono(sanitizarSoloDigitos(e.target.value, 11))} />
                 </>
               )}
 

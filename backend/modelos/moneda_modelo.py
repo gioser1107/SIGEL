@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from utilidades.paginacion import offset_pagina, paginar_consulta, respuesta_paginada
+from utilidades.persistencia import _confirmar_transaccion, _persistir
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Moneda(Base):
@@ -61,7 +63,7 @@ def listar_monedas(db: Session, pagina: int = 1, limite: int = 10) -> dict:
 
 
 def crear_moneda(db: Session, codigo: str, nombre: str, simbolo: str) -> Moneda:
-    codigo_limpio = codigo.strip().upper()
+    codigo_limpio = ValidadorEntrada.etiqueta_texto(codigo, "codigo").upper()[:10]
     existe = db.query(Moneda).filter(
         Moneda.codigo == codigo_limpio,
         Moneda.eliminado_en.is_(None),
@@ -69,11 +71,16 @@ def crear_moneda(db: Session, codigo: str, nombre: str, simbolo: str) -> Moneda:
     if existe:
         raise HTTPException(status_code=400, detail="Ya existe una moneda con ese codigo")
 
-    nueva = Moneda(codigo=codigo_limpio, nombre=nombre.strip(), simbolo=simbolo.strip())
-    db.add(nueva)
-    db.commit()
-    db.refresh(nueva)
-    return nueva
+    simbolo_limpio = (simbolo or "").strip()
+    if not simbolo_limpio or len(simbolo_limpio) > 10:
+        raise HTTPException(status_code=422, detail="simbolo: es obligatorio y máximo 10 caracteres")
+
+    nueva = Moneda(
+        codigo=codigo_limpio,
+        nombre=ValidadorEntrada.nombre_entidad(nombre, "nombre"),
+        simbolo=simbolo_limpio,
+    )
+    return _persistir(db, nueva)
 
 
 def actualizar_moneda(

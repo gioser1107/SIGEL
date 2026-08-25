@@ -13,6 +13,7 @@ from modelos.estado_modelo import Estado
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente, listar_puntos_por_cliente
 from modelos.rol_modelo import Rol
 from utilidades.paginacion import offset_pagina, respuesta_paginada
+from utilidades.persistencia import _confirmar_transaccion, _persistir
 from utilidades.validaciones import ValidadorEntrada, normalizar_datos_cliente, validar_datos_cliente_entrada
 
 if TYPE_CHECKING:
@@ -103,7 +104,7 @@ def asegurar_perfil_cliente_usuario(db: Session, usuario, rol_nombre: str) -> Cl
         cliente.actualizado_en = ahora
         if cliente.actualizado_por is None:
             cliente.actualizado_por = usuario.id
-        db.commit()
+        _confirmar_transaccion(db)
         db.refresh(cliente)
         return cliente
 
@@ -117,7 +118,7 @@ def asegurar_perfil_cliente_usuario(db: Session, usuario, rol_nombre: str) -> Cl
         if existente_doc.usuario_id is None:
             existente_doc.usuario_id = usuario.id
             existente_doc.actualizado_en = ahora
-            db.commit()
+            _confirmar_transaccion(db)
             db.refresh(existente_doc)
             return existente_doc
         if existente_doc.usuario_id == usuario.id:
@@ -137,7 +138,7 @@ def asegurar_perfil_cliente_usuario(db: Session, usuario, rol_nombre: str) -> Cl
         actualizado_en=ahora,
     )
     db.add(nuevo)
-    db.commit()
+    _confirmar_transaccion(db)
     db.refresh(nuevo)
     return nuevo
 
@@ -347,8 +348,11 @@ def registrar_cliente_para_reserva(
         nombre=campos["nombre"],
         apellido=campos["apellido"],
         razon_social=campos["razon_social"] or getattr(datos, "razon_social", None),
-        telefono=getattr(datos, "telefono", None),
-        telefono_secundario=getattr(datos, "telefono_secundario", None),
+        telefono=ValidadorEntrada.telefono(getattr(datos, "telefono", None), "telefono") or None,
+        telefono_secundario=ValidadorEntrada.telefono(
+            getattr(datos, "telefono_secundario", None),
+            "telefono_secundario",
+        ) or None,
         direccion=getattr(datos, "direccion", None),
         estado_id=getattr(datos, "estado_id", None),
         ciudad_id=getattr(datos, "ciudad_id", None),
@@ -462,9 +466,9 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
         nombre=campos["nombre"],
         apellido=campos["apellido"],
         razon_social=campos["razon_social"] or datos.razon_social,
-        telefono=datos.telefono,
-        telefono_secundario=datos.telefono_secundario,
-        direccion=datos.direccion,
+        telefono=ValidadorEntrada.telefono(datos.telefono, "telefono") or None,
+        telefono_secundario=ValidadorEntrada.telefono(datos.telefono_secundario, "telefono_secundario") or None,
+        direccion=(datos.direccion or "").strip() or None,
         estado_id=datos.estado_id,
         ciudad_id=datos.ciudad_id,
         notas=datos.notas,
@@ -488,7 +492,7 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
             creado_por_usuario_id=usuario_actual_id,
         )
 
-    db.commit()
+    _confirmar_transaccion(db)
     db.refresh(nuevo_cliente)
 
     return {
@@ -550,12 +554,15 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
         )
 
     if datos.telefono is not None:
-        cliente.telefono = datos.telefono
+        cliente.telefono = ValidadorEntrada.telefono(datos.telefono, "telefono")
         if usuario is not None:
-            usuario.telefono = datos.telefono
+            usuario.telefono = cliente.telefono
 
     if datos.telefono_secundario is not None:
-        cliente.telefono_secundario = datos.telefono_secundario
+        cliente.telefono_secundario = ValidadorEntrada.telefono(
+            datos.telefono_secundario,
+            "telefono_secundario",
+        )
 
     if datos.direccion is not None:
         cliente.direccion = datos.direccion
@@ -585,7 +592,7 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
     cliente.actualizado_por = usuario_actual_id
     if usuario is not None:
         usuario.actualizado_en = datetime.now()
-    db.commit()
+    _confirmar_transaccion(db)
     db.refresh(cliente)
     if usuario is not None:
         db.refresh(usuario)
@@ -610,7 +617,7 @@ def desactivar_cliente(db: Session, cliente_id: int, usuario_actual_id: int) -> 
     if usuario is not None:
         usuario.eliminado_en = ahora
         usuario.actualizado_en = ahora
-    db.commit()
+    _confirmar_transaccion(db)
 
     return {
         "mensaje": "Cliente desactivado con éxito",

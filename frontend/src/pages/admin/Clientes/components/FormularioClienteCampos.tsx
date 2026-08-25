@@ -5,6 +5,7 @@ import {
   type ErroresFormularioCliente,
   type FormularioCliente,
 } from '../../../../utils/validacionesCliente';
+import { sanitizarNombrePersona } from '../../../../utils/validacionesFormulario';
 import { TIPOS_DOCUMENTO } from '../constants';
 import CampoTelefono from './CampoTelefono';
 import './FormularioClienteCampos.css';
@@ -153,9 +154,11 @@ export default function FormularioClienteCampos({
             <input
               id={id('nombre')}
               className="drawer-form__input"
+              autoComplete="given-name"
+              maxLength={80}
               value={form.nombre}
               onChange={(e) => {
-                onChange((f) => ({ ...f, nombre: e.target.value }));
+                onChange((f) => ({ ...f, nombre: sanitizarNombrePersona(e.target.value) }));
                 onLimpiarError('nombre');
               }}
             />
@@ -168,9 +171,11 @@ export default function FormularioClienteCampos({
             <input
               id={id('apellido')}
               className="drawer-form__input"
+              autoComplete="family-name"
+              maxLength={80}
               value={form.apellido}
               onChange={(e) => {
-                onChange((f) => ({ ...f, apellido: e.target.value }));
+                onChange((f) => ({ ...f, apellido: sanitizarNombrePersona(e.target.value) }));
                 onLimpiarError('apellido');
               }}
             />

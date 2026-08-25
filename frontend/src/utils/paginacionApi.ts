@@ -19,6 +19,9 @@ export function agregarPaginacionAParams(
   if (query?.filtro) {
     params.set('filtro', query.filtro);
   }
+  if (query?.buscar?.trim()) {
+    params.set('buscar', query.buscar.trim());
+  }
   return params;
 }
 

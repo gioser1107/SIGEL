@@ -36,6 +36,8 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 
 **Especificación:**
 - Autenticación stateless mediante token JWT (esquema Bearer, algoritmo HS256).
+- El token exige claims `sub`, `exp`, `iat`; se verifica firma, expiración, formato (3 segmentos) y tipo `access`.
+- En cada request se comprueba que el usuario exista, no esté eliminado, que el correo y `rol_id` del token coincidan con la BD y que el rol esté activo.
 - Expiración configurable vía `JWT_EXPIRACION_MINUTOS` (default ≤ 480 min, máximo 1440 min).
 - Credenciales inválidas devuelven HTTP 401 con mensaje genérico.
 - Usuarios con `eliminado_en` distinto de NULL no pueden autenticarse.
@@ -114,7 +116,8 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 
 **Especificación:**
 - Tabla `bitacora`: usuario_id, modulo, accion, tabla_afectada, registro_id, resumen, detalle JSON, ip_origen, creado_en.
-- Registro automático en login, reservas, viajes, pagos, destinos, cotizaciones, abordaje, puntos recogida.
+- El resumen indica el módulo, la acción realizada (crear/editar/eliminar/login) y el registro afectado.
+- Registro automático en login, reservas, clientes, viajes, pagos, destinos, cotizaciones, abordaje, puntos recogida.
 - Consulta con filtros y paginación (límite 1–200); permiso `leer_bitacora`.
 
 **Criterio de éxito:** Tras login + 3 operaciones de escritura existen ≥ 4 registros coherentes; consulta sin permiso retorna HTTP 403.
@@ -165,8 +168,11 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 **Descripción:** Toda entrada inválida se rechaza antes de persistirse en base de datos.
 
 **Especificación:**
-- Validación en servidor con esquemas Pydantic en endpoints POST/PUT.
-- Reglas: montos ≥ 0, fechas coherentes, campos obligatorios, tipos de documento válidos.
+- Validación en servidor con esquemas Pydantic y `ValidadorEntrada` en endpoints POST/PUT.
+- Nombres de persona: solo letras, espacios, guiones y apóstrofes (sin dígitos ni basura).
+- Campos de texto no aceptan cadenas vacías ni solo espacios.
+- URLs de imágenes: formato `http(s)://` o `/api/archivos/...` y verificación de existencia/accesibilidad.
+- Reglas: montos ≥ 0, fechas coherentes, campos obligatorios, tipos de documento válidos, teléfonos numéricos.
 - HTTP 422 (esquema) o HTTP 400 (negocio) con JSON estructurado.
 - Validación complementaria en frontend React.
 
@@ -219,9 +225,11 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 
 **Especificación:**
 - MySQL InnoDB con transacciones ACID.
-- Commit/rollback explícito en reservas, asientos y pagos.
+- `SELECT … FOR UPDATE` sobre el viaje y el asiento al reservar (bloqueo pesimista).
+- Verificación de cupo atómica: si dos clientes reservan el mismo paquete a la misma hora, uno obtiene HTTP 409 y no hay sobreventa.
+- Commit/rollback explícito encapsulado en la capa de persistencia de los modelos (`_persistir`, `_confirmar_transaccion`); los INSERT/UPDATE no se invocan desde controladores.
 - FK con ON DELETE RESTRICT.
-- Handler SQLAlchemyError → HTTP 503.
+- Handler IntegrityError → HTTP 409; SQLAlchemyError → HTTP 503.
 
 **Criterio de éxito:** 50 reservas concurrentes sobre mismo asiento → 0 sobreventas (1 éxito, resto 409/400).
 

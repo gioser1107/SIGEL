@@ -2,7 +2,7 @@
 export const CODIGOS_TELEFONO_VE = ['0424', '0414', '0426', '0416', '0412', '0422'] as const;
 
 const REGEX_CORREO = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-const REGEX_NOMBRE = /^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s'-]{2,80}$/;
+const REGEX_NOMBRE_PERSONA = /^[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:\s+[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+){0,6}$/;
 const REGEX_CODIGO = /^[A-Za-z0-9_\-]{1,30}$/;
 const REGEX_PLACA_VE = /^([A-Z]{2,3}\d{1,4}[A-Z]{0,2}|\d{1,4}[A-Z]{2,3})$/i;
 const REGEX_MONTO_EUR = /^\d{1,7}(\.\d{1,2})?$/;
@@ -11,9 +11,26 @@ export function esCorreoValido(correo: string): boolean {
   return REGEX_CORREO.test(correo.trim());
 }
 
-export function esNombreValido(texto: string): boolean {
-  return REGEX_NOMBRE.test(texto.trim());
+/** Quita números y símbolos de un nombre de persona. Permite letras (con tildes) y un espacio. */
+export function sanitizarNombrePersona(valor: string): string {
+  return valor.replace(/[^A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]/g, '').replace(/\s{2,}/g, ' ').slice(0, 80);
 }
+
+/** Quita letras y símbolos de un teléfono. Solo dígitos. */
+export function sanitizarSoloDigitos(valor: string, maximo = 20): string {
+  return valor.replace(/\D/g, '').slice(0, maximo);
+}
+
+export function esNombreValido(texto: string): boolean {
+  const limpio = texto.trim().replace(/\s+/g, ' ');
+  if (limpio.length < 2 || limpio.length > 80) return false;
+  if (/\d/.test(limpio)) return false;
+  return REGEX_NOMBRE_PERSONA.test(limpio);
+}
+
+export const MENSAJE_NOMBRE_PERSONA =
+  'Solo letras y espacios. Sin números ni caracteres especiales.';
+export const MENSAJE_TELEFONO_SOLO_DIGITOS = 'El teléfono no puede contener letras.';
 
 export function esCodigoValido(codigo: string): boolean {
   return REGEX_CODIGO.test(codigo.trim());
@@ -36,7 +53,7 @@ export function validarFormularioDestino(form: {
   const nombre = form.nombre.trim();
   if (!nombre) return 'El nombre es obligatorio.';
   if (nombre.length < 3) return 'El nombre debe tener al menos 3 caracteres.';
-  if (!esNombreValido(nombre)) return 'El nombre solo puede contener letras, espacios y guiones.';
+  if (!esNombreValido(nombre)) return MENSAJE_NOMBRE_PERSONA;
 
   const desc = (form.descripcion ?? '').trim();
   if (desc && desc.length < 10) return 'La descripción debe tener al menos 10 caracteres.';
@@ -122,7 +139,7 @@ export function validarFormularioRol(form: { nombre: string; descripcion?: strin
   const nombre = form.nombre.trim();
   if (!nombre) return 'El nombre del rol es obligatorio.';
   if (nombre.length < 3) return 'El nombre debe tener al menos 3 caracteres.';
-  if (!esNombreValido(nombre)) return 'El nombre solo puede contener letras, espacios y guiones.';
+  if (!esNombreValido(nombre)) return MENSAJE_NOMBRE_PERSONA;
   return null;
 }
 
@@ -237,14 +254,14 @@ export function validarFormularioUsuario(
   if (!nombre) {
     errores.nombre = 'El nombre es obligatorio.';
   } else if (!esNombreValido(nombre)) {
-    errores.nombre = 'El nombre solo puede contener letras, espacios y guiones (mín. 2).';
+    errores.nombre = MENSAJE_NOMBRE_PERSONA;
   }
 
   const apellido = datos.apellido.trim();
   if (!apellido) {
     errores.apellido = 'El apellido es obligatorio.';
   } else if (!esNombreValido(apellido)) {
-    errores.apellido = 'El apellido solo puede contener letras, espacios y guiones (mín. 2).';
+    errores.apellido = MENSAJE_NOMBRE_PERSONA;
   }
 
   const correo = datos.correo.trim();

@@ -1,5 +1,5 @@
 import type { Rol } from '../../../../types/seguridad';
-import { CODIGOS_TELEFONO_VE } from '../../../../utils/validacionesFormulario';
+import { CODIGOS_TELEFONO_VE, sanitizarNombrePersona, sanitizarSoloDigitos } from '../../../../utils/validacionesFormulario';
 import type { ErroresFormularioUsuario } from '../../../../utils/validacionesFormulario';
 import type { FormularioUsuario } from '../constants';
 import './FormularioUsuarioCampos.css';
@@ -33,9 +33,11 @@ export default function FormularioUsuarioCampos({
         <input
           id="usuario-nombre"
           className="drawer-form__input"
+          autoComplete="given-name"
+          maxLength={80}
           value={form.nombre}
           onChange={(e) => {
-            onChange((f) => ({ ...f, nombre: e.target.value }));
+            onChange((f) => ({ ...f, nombre: sanitizarNombrePersona(e.target.value) }));
             onLimpiarError('nombre');
           }}
         />
@@ -50,9 +52,11 @@ export default function FormularioUsuarioCampos({
         <input
           id="usuario-apellido"
           className="drawer-form__input"
+          autoComplete="family-name"
+          maxLength={80}
           value={form.apellido}
           onChange={(e) => {
-            onChange((f) => ({ ...f, apellido: e.target.value }));
+            onChange((f) => ({ ...f, apellido: sanitizarNombrePersona(e.target.value) }));
             onLimpiarError('apellido');
           }}
         />
@@ -105,9 +109,14 @@ export default function FormularioUsuarioCampos({
             maxLength={7}
             value={form.telefono_numero}
             onChange={(e) => {
-              const soloDigitos = e.target.value.replace(/\D/g, '').slice(0, 7);
+              const soloDigitos = sanitizarSoloDigitos(e.target.value, 7);
               onChange((f) => ({ ...f, telefono_numero: soloDigitos }));
               onLimpiarError('telefono');
+            }}
+            onKeyDown={(e) => {
+              const permitidas = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+              if (permitidas.includes(e.key)) return;
+              if (!/^\d$/.test(e.key)) e.preventDefault();
             }}
           />
         </div>

@@ -26,6 +26,7 @@ from modelos.tasa_modelo import (
 )
 from modelos.viaje_modelo import Viaje
 from utilidades.paginacion import offset_pagina, paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 METODOS_PAGO_REQUIEREN_VALIDACION = ("pago_movil", "transferencia", "zelle")
 MAX_COMPROBANTE_URL = 500
@@ -862,6 +863,7 @@ def registrar_pago_reserva(
     validar_tipo_pago(tipo)
     comprobante_url = normalizar_comprobante_url(comprobante_url)
     validar_monto_pago_reserva(db, reserva, metodo_pago_id, tasa_id, monto)
+    telefono_origen = ValidadorEntrada.telefono(telefono_origen, "telefono_origen") or None
 
     ahora = datetime.now()
     estado_inicial = determinar_estado_inicial_pago(metodo.codigo, registro_desde_admin)
@@ -966,7 +968,7 @@ def actualizar_pago_reserva(
         pago.punto_venta_id = punto_venta_id
 
     if telefono_origen is not None:
-        pago.telefono_origen = telefono_origen
+        pago.telefono_origen = ValidadorEntrada.telefono(telefono_origen, "telefono_origen") or None
 
     if correo_origen is not None:
         pago.correo_origen = correo_origen

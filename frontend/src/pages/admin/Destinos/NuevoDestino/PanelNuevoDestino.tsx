@@ -2,6 +2,7 @@ import { PanelDeslizable } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
 import type { DatosDestinoNuevo } from '../../../../types/destino';
 import SelectorImagenArchivo from '../components/SelectorImagenArchivo';
+import { sanitizarNombrePersona } from '../../../../utils/validacionesFormulario';
 
 interface PropsPanelNuevo {
   abierto: boolean;
@@ -67,7 +68,7 @@ export default function PanelNuevoDestino({
             id="destino-nombre"
             className="drawer-form__input"
             value={form.nombre}
-            onChange={(e) => actualizarCampo('nombre', e.target.value)}
+            onChange={(e) => actualizarCampo('nombre', sanitizarNombrePersona(e.target.value))}
           />
         </div>
 

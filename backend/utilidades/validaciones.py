@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
+import os
 import re
+import urllib.error
+import urllib.request
 from typing import Any
 
 from fastapi import HTTPException
 
 _REGEX_CORREO = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-_REGEX_NOMBRE_PERSONA = re.compile(r"^[A-Za-záéíóúÁÉÍÓÚüÜñÑ\s'-]{2,80}$")
+_REGEX_NOMBRE_PERSONA = re.compile(r"^[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:\s+[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+){0,6}$")
 _REGEX_NOMBRE_ENTIDAD = re.compile(r"^[A-Za-záéíóúÁÉÍÓÚüÜñÑ0-9\s'.&-]{2,160}$")
 _REGEX_ETIQUETA = re.compile(r"^[A-Za-záéíóúÁÉÍÓÚüÜñÑ0-9\s'.#-]{2,80}$")
 _REGEX_CODIGO = re.compile(r"^[A-Za-z0-9_\-]{1,30}$")
@@ -16,6 +19,7 @@ _REGEX_URL_HTTP = re.compile(
     r"^https?://[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]{1,512}$"
 )
 _REGEX_RUTA_ARCHIVO = re.compile(r"^/api/archivos/[A-Za-z0-9._\-/]{1,480}$")
+_REGEX_TELEFONO = re.compile(r"^\+?[0-9]{7,20}$")
 
 _TIPOS_DOCUMENTO = frozenset({"V", "E", "P", "J", "G"})
 _TIPOS_DOCUMENTO_NUMERICOS = frozenset({"V", "E", "P"})
@@ -48,11 +52,15 @@ class ValidadorEntrada:
             if obligatorio:
                 cls._error(campo, "es obligatorio")
             return ""
-        limpio = str(valor).strip()
-        if not _REGEX_NOMBRE_PERSONA.fullmatch(limpio):
+        limpio = re.sub(r"\s+", " ", str(valor).strip())
+        if re.search(r"\d", limpio):
+            cls._error(campo, "no puede contener números")
+        if re.search(r"[^A-Za-záéíóúÁÉÍÓÚüÜñÑ\s]", limpio):
+            cls._error(campo, "no puede contener caracteres especiales")
+        if len(limpio) < 2 or len(limpio) > 80 or not _REGEX_NOMBRE_PERSONA.fullmatch(limpio):
             cls._error(
                 campo,
-                "solo puede contener letras, espacios, guiones y apóstrofes (mín. 2 caracteres)",
+                "solo puede contener letras y espacios (mín. 2 caracteres, sin números ni símbolos)",
             )
         return limpio
 
@@ -120,6 +128,43 @@ class ValidadorEntrada:
         return limpio
 
     @classmethod
+    def telefono(cls, valor: str | None, campo: str = "telefono", *, obligatorio: bool = False) -> str:
+        if valor is None or not str(valor).strip():
+            if obligatorio:
+                cls._error(campo, "es obligatorio")
+            return ""
+        crudo = str(valor).strip()
+        if re.search(r"[A-Za-záéíóúÁÉÍÓÚüÜñÑ]", crudo):
+            cls._error(campo, "no puede contener letras")
+        limpio = re.sub(r"[\s\-().]", "", crudo)
+        if not _REGEX_TELEFONO.fullmatch(limpio):
+            cls._error(campo, "solo dígitos (7 a 20); se admite un + inicial, sin letras")
+        return limpio
+
+    @classmethod
+    def _url_es_accesible(cls, url: str) -> bool:
+        encabezados = {"User-Agent": "SIGEL-Validador/1.0"}
+        try:
+            peticion = urllib.request.Request(url, method="HEAD", headers=encabezados)
+            with urllib.request.urlopen(peticion, timeout=4) as respuesta:
+                return int(getattr(respuesta, "status", 200)) < 400
+        except urllib.error.HTTPError as error:
+            if error.code in (403, 405, 501):
+                try:
+                    peticion = urllib.request.Request(
+                        url,
+                        method="GET",
+                        headers={**encabezados, "Range": "bytes=0-0"},
+                    )
+                    with urllib.request.urlopen(peticion, timeout=4) as respuesta:
+                        return int(getattr(respuesta, "status", 200)) < 400
+                except Exception:
+                    return False
+            return False
+        except Exception:
+            return False
+
+    @classmethod
     def url_imagen(cls, url: str | None, *, obligatorio: bool = False) -> str:
         if url is None or not str(url).strip():
             if obligatorio:
@@ -133,7 +178,12 @@ class ValidadorEntrada:
                 "url",
                 "debe ser http(s):// con caracteres válidos o una ruta /api/archivos/...",
             )
+        verificar = os.getenv("VALIDAR_EXISTENCIA_URL", "1").lower() not in {"0", "false", "no"}
+        if verificar and not cls._url_es_accesible(limpio):
+            cls._error("url", "no existe o no es accesible")
         return limpio
+
+    url_imagen = url_imagen
 
     @classmethod
     def tipo_cliente(cls, valor: str | None) -> str:

@@ -3,6 +3,7 @@ import Boton from '../../../../components/ui/Boton/Boton';
 import type { DatosDestinoNuevo, Destino, DestinoImagen } from '../../../../types/destino';
 import { formatPrecio } from '../utils/formatearDestino';
 import FormularioImagenesDestino from './components/FormularioImagenesDestino';
+import { sanitizarNombrePersona } from '../../../../utils/validacionesFormulario';
 
 interface PropsPanelEditar {
   abierto: boolean;
@@ -91,7 +92,7 @@ export default function PanelEditarDestino({
             id="destino-editar-nombre"
             className="drawer-form__input"
             value={form.nombre}
-            onChange={(e) => actualizarCampo('nombre', e.target.value)}
+            onChange={(e) => actualizarCampo('nombre', sanitizarNombrePersona(e.target.value))}
           />
         </div>
 

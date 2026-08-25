@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from modelos.destino_imagen_modelo import UPLOAD_ROOT, asegurar_carpeta_uploads
 
@@ -31,11 +31,21 @@ from controladores.banco_controlador import router as router_bancos
 from controladores.punto_venta_controlador import router as router_puntos_venta
 from controladores.abordaje_controlador import router as router_abordajes
 from controladores.resena_controlador import router as router_resenas
+from controladores.reporte_estadistico_controlador import router as router_reportes
 
 app = FastAPI(title="API Travel BQTO", version="1.3.0")
 
 asegurar_carpeta_uploads()
 app.mount("/api/archivos", StaticFiles(directory=Path(UPLOAD_ROOT)), name="archivos")
+
+@app.exception_handler(IntegrityError)
+def manejar_conflicto_integridad(request: Request, error: IntegrityError):
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detalle": "Conflicto de concurrencia: el cupo, asiento o registro ya fue tomado",
+        },
+    )
 
 @app.exception_handler(SQLAlchemyError)
 def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
@@ -97,6 +107,7 @@ app.include_router(router_bancos, prefix="/api")
 app.include_router(router_puntos_venta, prefix="/api")
 app.include_router(router_abordajes, prefix="/api")
 app.include_router(router_resenas, prefix="/api")
+app.include_router(router_reportes, prefix="/api")
 
 @app.get("/api")
 def ruta_raiz_api():
@@ -126,5 +137,6 @@ def ruta_raiz_api():
             "bancos": "/api/bancos",
             "puntos_venta": "/api/puntos-venta",
             "abordajes": "/api/abordajes",
+            "reportes": "/api/reportes/estadisticos",
         },
     }

@@ -82,6 +82,7 @@ def crear_token(usuario_id: int, correo: str, rol_id: int) -> tuple[str, int]:
         "sub": str(usuario_id),
         "correo": correo,
         "rol_id": rol_id,
+        "typ": "access",
         "iat": int(ahora.timestamp()),
         "exp": int(expiracion.timestamp()),
     }
@@ -93,7 +94,24 @@ def crear_token(usuario_id: int, correo: str, rol_id: int) -> tuple[str, int]:
 
 
 def verificar_token(token: str) -> dict:
-    payload = jwt.decode(token, SECRETO_JWT, algorithms=[ALGORITMO_JWT])
+    if not token or not str(token).strip():
+        raise jwt.InvalidTokenError("Token vacío")
+    limpio = str(token).strip()
+    if limpio.lower().startswith("bearer "):
+        limpio = limpio[7:].strip()
+    if limpio.count(".") != 2:
+        raise jwt.InvalidTokenError("Formato JWT inválido")
+    payload = jwt.decode(
+        limpio,
+        SECRETO_JWT,
+        algorithms=[ALGORITMO_JWT],
+        options={"require": ["sub", "exp", "iat"]},
+    )
+    tipo = payload.get("typ")
+    if tipo not in (None, "access"):
+        raise jwt.InvalidTokenError("Tipo de token no válido")
+    if not payload.get("sub"):
+        raise jwt.InvalidTokenError("Token sin sujeto")
     return payload
 
 
@@ -142,7 +160,7 @@ def actualizar_mi_perfil(
     if apellido is not None:
         usuario.apellido = ValidadorEntrada.nombre_persona(apellido, "apellido")
     if telefono is not None:
-        usuario.telefono = telefono
+        usuario.telefono = ValidadorEntrada.telefono(telefono, "telefono") or None
 
     usuario.actualizado_en = datetime.now()
     db.commit()
@@ -181,6 +199,8 @@ def crear_usuario(
     correo_limpio = ValidadorEntrada.correo(correo)
     ValidadorEntrada.contrasena(contrasena)
 
+    telefono_limpio = ValidadorEntrada.telefono(telefono, "telefono") or None
+
     usuario_existente = db.query(Usuario).filter(Usuario.correo == correo_limpio).first()
     if usuario_existente is not None and usuario_existente.eliminado_en is None:
         raise HTTPException(
@@ -202,7 +222,7 @@ def crear_usuario(
         hash_contrasena=hashear_contrasena(contrasena),
         nombre=nombre_limpio,
         apellido=apellido_limpio,
-        telefono=telefono,
+        telefono=telefono_limpio,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -241,7 +261,7 @@ def actualizar_usuario(
     if apellido is not None:
         usuario.apellido = ValidadorEntrada.nombre_persona(apellido, "apellido")
     if telefono is not None:
-        usuario.telefono = telefono
+        usuario.telefono = ValidadorEntrada.telefono(telefono, "telefono") or None
 
     usuario.actualizado_en = datetime.now()
     db.commit()
@@ -362,6 +382,12 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
 
     validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
 
+    telefono_limpio = ValidadorEntrada.telefono(getattr(datos, "telefono", None), "telefono") or None
+    telefono_sec_limpio = ValidadorEntrada.telefono(
+        getattr(datos, "telefono_secundario", None),
+        "telefono_secundario",
+    ) or None
+
     ahora = datetime.now()
     hash_contrasena = hashear_contrasena(datos.contrasena)
 
@@ -371,7 +397,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
         hash_contrasena=hash_contrasena,
         nombre=campos["nombre"],
         apellido=campos["apellido"],
-        telefono=datos.telefono,
+        telefono=telefono_limpio,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -388,8 +414,8 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
             nombre=campos["nombre"],
             apellido=campos["apellido"],
             razon_social=campos["razon_social"] or datos.razon_social,
-            telefono=datos.telefono,
-            telefono_secundario=datos.telefono_secundario,
+            telefono=telefono_limpio,
+            telefono_secundario=telefono_sec_limpio,
             direccion=datos.direccion,
             estado_id=datos.estado_id,
             ciudad_id=datos.ciudad_id,
@@ -406,8 +432,8 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
         nuevo_cliente.nombre = campos["nombre"]
         nuevo_cliente.apellido = campos["apellido"]
         nuevo_cliente.razon_social = campos["razon_social"] or datos.razon_social
-        nuevo_cliente.telefono = datos.telefono
-        nuevo_cliente.telefono_secundario = datos.telefono_secundario
+        nuevo_cliente.telefono = telefono_limpio
+        nuevo_cliente.telefono_secundario = telefono_sec_limpio
         nuevo_cliente.direccion = datos.direccion
         nuevo_cliente.estado_id = datos.estado_id
         nuevo_cliente.ciudad_id = datos.ciudad_id

@@ -1,6 +1,8 @@
 import {
   CODIGOS_TELEFONO_VE,
+  MENSAJE_NOMBRE_PERSONA,
   armarTelefonoVe,
+  esNombreValido,
   parsearTelefonoVe,
   validarTelefonoVe,
 } from './validacionesFormulario';
@@ -126,15 +128,15 @@ export function validarFormularioCliente(datos: FormularioCliente): ErroresFormu
   const nombre = datos.nombre.trim();
   if (!nombre) {
     errores.nombre = 'El nombre es obligatorio.';
-  } else if (nombre.length < 2) {
-    errores.nombre = 'El nombre debe tener al menos 2 caracteres.';
+  } else if (!esNombreValido(nombre)) {
+    errores.nombre = MENSAJE_NOMBRE_PERSONA;
   }
 
   const apellido = datos.apellido.trim();
   if (!apellido) {
     errores.apellido = 'El apellido es obligatorio.';
-  } else if (apellido.length < 2) {
-    errores.apellido = 'El apellido debe tener al menos 2 caracteres.';
+  } else if (!esNombreValido(apellido)) {
+    errores.apellido = MENSAJE_NOMBRE_PERSONA;
   }
 
   if (datos.tipo_cliente === 'juridico' && !datos.razon_social.trim()) {

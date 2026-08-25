@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.persistencia import _confirmar_transaccion, _persistir
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Banco(Base):
@@ -48,7 +50,7 @@ def listar_bancos(db: Session, pagina: int = 1, limite: int = 10) -> dict:
 
 
 def crear_banco(db: Session, codigo: str, nombre: str, activo: bool) -> Banco:
-    codigo_limpio = codigo.strip()
+    codigo_limpio = ValidadorEntrada.etiqueta_texto(codigo, "codigo").upper()[:10]
     existe = db.query(Banco).filter(Banco.codigo == codigo_limpio, Banco.eliminado_en.is_(None)).first()
     if existe:
         raise HTTPException(status_code=400, detail="Ya existe un banco con ese codigo")
@@ -56,15 +58,12 @@ def crear_banco(db: Session, codigo: str, nombre: str, activo: bool) -> Banco:
     ahora = datetime.now()
     nuevo = Banco(
         codigo=codigo_limpio,
-        nombre=nombre.strip(),
+        nombre=ValidadorEntrada.nombre_entidad(nombre, "nombre"),
         activo=activo,
         creado_en=ahora,
         actualizado_en=ahora,
     )
-    db.add(nuevo)
-    db.commit()
-    db.refresh(nuevo)
-    return nuevo
+    return _persistir(db, nuevo)
 
 
 def actualizar_banco(
@@ -85,16 +84,16 @@ def actualizar_banco(
         ).first()
         if repetido:
             raise HTTPException(status_code=400, detail="Ya existe otro banco con ese codigo")
-        banco.codigo = codigo_limpio
+        banco.codigo = ValidadorEntrada.etiqueta_texto(codigo, "codigo").upper()[:10]
 
     if nombre is not None:
-        banco.nombre = nombre.strip()
+        banco.nombre = ValidadorEntrada.nombre_entidad(nombre, "nombre")
 
     if activo is not None:
         banco.activo = activo
 
     banco.actualizado_en = datetime.now()
-    db.commit()
+    _confirmar_transaccion(db)
     db.refresh(banco)
     return banco
 

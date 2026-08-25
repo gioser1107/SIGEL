@@ -29,6 +29,7 @@ import Bitacora from './pages/admin/Bitacora/Bitacora';
 import ModuloResenas from './pages/admin/Resenas/Resenas';
 import Abordaje from './pages/admin/Abordaje/Abordaje';
 import ReporteViaje from './pages/admin/ReporteViaje/ReporteViaje';
+import ReportesEstadisticos from './pages/admin/ReportesEstadisticos/ReportesEstadisticos';
 
 // Páginas Cliente
 import MisViajes from './pages/client/MisViajes/MisViajes';
@@ -156,6 +157,14 @@ export default function App() {
               element={
                 <RutaPrivada modulo="planificacion">
                   <ReporteViaje />
+                </RutaPrivada>
+              }
+            />
+            <Route
+              path="reportes"
+              element={
+                <RutaPrivada modulos={['reservas', 'reportes_pago', 'clientes']}>
+                  <ReportesEstadisticos />
                 </RutaPrivada>
               }
             />

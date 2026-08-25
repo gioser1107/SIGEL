@@ -47,6 +47,7 @@ Los RF están alineados con:
 | RF-18 | Moderación de reseñas | Media | Administrador / Cliente | B, C | — |
 | RF-19 | Portal público | Alta | Visitante | C | M1-U2 |
 | RF-20 | Portal cliente | Alta | Cliente | C | M1-U6, M1-U7 |
+| RF-21 | Reportes estadísticos | Alta | Administrador | A, B | — |
 
 ---
 
@@ -346,17 +347,19 @@ Los RF están alineados con:
 | **Casos de uso IBM** | M7-U1 a M7-U4 |
 | **RNF relacionados** | RNF-05, RNF-06 |
 
-**Descripción:** CRUD de clientes con documento, contacto, ubicación y domicilios de recogida.
+**Descripción:** CRUD de clientes con documento, contacto, ubicación y domicilios de recogida. El cliente es la entidad maestra del negocio: no existe reserva sin persona registrada.
 
 **Especificación:**
 - `/api/clientes` — CRUD con permisos `crear_clientes`, `leer_clientes`, `editar_clientes`, `borrar_clientes`.
 - Búsqueda por nombre, documento, teléfono.
 - `GET /api/clientes/buscar-por-documento`.
+- Cada pasajero de una reserva es un registro en `clientes`; `reserva_clientes` solo enlaza reserva + cliente (3FN).
 
 **Criterios de aceptación:**
 1. Cliente creado con tipo y número de documento únicos.
 2. Desactivación lógica (soft delete).
 3. Integración con puntos de recogida (RF-08).
+4. Un acompañante no registrado se crea primero como cliente y luego se vincula a la reserva.
 
 ---
 
@@ -410,12 +413,14 @@ Los RF están alineados con:
 - Portal: `/api/reservas/portal/mis-reservas`.
 - Estados: pendiente, confirmada, abonada, cancelada.
 - Bloqueo transaccional de asientos (sin sobreventa).
+- Tabla `reserva_clientes` en 3FN: no duplica nombre/apellido/documento (JOIN a `clientes`); atributos propios del vínculo: titular, menor, asiento, tarifa, recargo, recogida.
 
 **Criterios de aceptación:**
 1. Asiento ocupado no puede asignarse a dos pasajeros (HTTP 409).
 2. Reserva refleja cupo debitado del viaje.
 3. Cliente consulta sus reservas en portal.
 4. Anulación libera asientos.
+5. Dos reservas simultáneas sobre el último cupo: una confirma y la otra recibe 409.
 
 ---
 
@@ -614,6 +619,36 @@ Los RF están alineados con:
 
 ---
 
+### RF-21 — Reportes estadísticos
+
+| Campo | Contenido |
+|-------|-----------|
+| **ID** | RF-21 |
+| **Nombre del Requisito** | Reportes estadísticos parametrizados por fechas |
+| **Tipo** | Funcional |
+| **Prioridad** | Alta |
+| **Actores** | Administrador |
+| **Diagrama relacionado** | A, B |
+| **RNF relacionados** | RNF-06, RNF-10 |
+
+**Descripción:** El administrador consulta, en un solo apartado, indicadores de negocio filtrados por un rango de fechas reales: clientes registrados en el periodo, destinos más concurridos (reservas y cotizaciones), mes con más movimiento, reservas de un día e ingresos cobrados (pagos aprobados convertidos a euros). El sistema rechaza fechas imposibles (por ejemplo el año 500). No se reporta por género ni edad porque el maestro de clientes no almacena esos datos.
+
+**Especificación:**
+- `GET /api/reportes/estadisticos?desde=YYYY-MM-DD&hasta=YYYY-MM-DD`
+- Frontend: `/admin/reportes`
+- Validación: `desde ≤ hasta`; año entre 2000 y el año actual + 1; rango máximo 10 años.
+- Métricas: clientes nuevos, reservas (activas/canceladas), pasajeros (adultos/menores), destinos más reservados, destinos más cotizados, movimiento mensual, reservas por día, ingresos de pagos en estado `aprobado`.
+- Permiso: `leer_reservas` o `leer_reportes_pago` o `leer_clientes`.
+
+**Criterios de aceptación:**
+1. Consultar el año en curso muestra totales coherentes con reservas, clientes y pagos del rango.
+2. Un rango de un solo día lista las reservas de esa fecha.
+3. Una fecha con año 500 (u otro año imposible) retorna HTTP 400 sin consultar la base como si hubiera datos.
+4. La pantalla indica explícitamente que no hay corte por género ni edad.
+5. El reporte es imprimible para apoyo a decisiones del dueño.
+
+---
+
 ## 4. Trazabilidad RF ↔ Diagramas ↔ IBM
 
 | RF | Diagrama | Casos de uso IBM |
@@ -638,6 +673,7 @@ Los RF están alineados con:
 | RF-18 | B, C | — |
 | RF-19 | C | M1-U2 |
 | RF-20 | C | M1-U6, M1-U7 |
+| RF-21 | A, B | — |
 
 ---
 
@@ -664,6 +700,7 @@ Los RF están alineados con:
 | RF-18 | RNF-06 |
 | RF-19 | RNF-14, RNF-16 |
 | RF-20 | RNF-01, RNF-15 |
+| RF-21 | RNF-06, RNF-10 |
 
 ---
 

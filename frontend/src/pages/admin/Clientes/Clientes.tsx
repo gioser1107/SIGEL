@@ -49,7 +49,11 @@ export default function Clientes() {
     setCargando(true);
     setError(null);
     try {
-      const respuesta = await listarClientes({ pagina, limite });
+      const respuesta = await listarClientes({
+        pagina,
+        limite,
+        buscar: busqueda.trim() || undefined,
+      });
       setClientes(respuesta.items);
       setTotal(respuesta.total);
     } catch (err) {
@@ -57,7 +61,7 @@ export default function Clientes() {
     } finally {
       setCargando(false);
     }
-  }, [pagina, limite, setTotal]);
+  }, [pagina, limite, busqueda, setTotal]);
 
   useEffect(() => {
     cargarClientes();
@@ -160,7 +164,10 @@ export default function Clientes() {
               type="text"
               placeholder="Buscar por nombre, documento o ciudad…"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => {
+                setBusqueda(e.target.value);
+                reiniciarPagina();
+              }}
               aria-label="Buscar clientes"
             />
           </div>

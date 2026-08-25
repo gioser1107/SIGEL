@@ -153,6 +153,9 @@ export default function Dashboard() {
         <div className="dashboard__panel">
           <div className="dashboard__panel-header">
             <h2 className="dashboard__panel-titulo">Destinos más cotizados</h2>
+            <Link to="/admin/reportes" className="dashboard__panel-link">
+              Ver reportes →
+            </Link>
           </div>
           {cargando ? (
             <div className="dashboard__skeleton-lista">

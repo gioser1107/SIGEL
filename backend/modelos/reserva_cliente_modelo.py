@@ -1,9 +1,25 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Numeric, String
+from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 
 from database import Base
 
+
 class ReservaCliente(Base):
+    """Tabla puente en 3FN entre reservas y clientes.
+
+    Los datos personales (nombre, apellido, documento, telefono) viven solo en
+    `clientes`. Aqui solo se guardan atributos del vinculo con esa reserva:
+    rol (titular), tarifa del pasajero, recargo y punto de recogida.
+    """
+
     __tablename__ = "reserva_clientes"
+    __table_args__ = (
+        UniqueConstraint(
+            "reserva_id",
+            "cliente_id",
+            "eliminado_en",
+            name="uq_reserva_cliente_activo",
+        ),
+    )
 
     id = Column(BigInteger, primary_key=True, index=True)
     reserva_id = Column(BigInteger, ForeignKey("reservas.id"), nullable=False, index=True)

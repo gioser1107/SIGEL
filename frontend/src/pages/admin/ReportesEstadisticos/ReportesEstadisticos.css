@@ -1,0 +1,134 @@
+.reportes-estadisticos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.reportes-estadisticos__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.reportes-estadisticos__campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.reportes-estadisticos__campo label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.reportes-estadisticos__campo input[type='date'] {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  min-width: 150px;
+}
+
+.reportes-estadisticos__campo input[type='date']:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.reportes-estadisticos__atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.reportes-estadisticos__rango {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.reportes-estadisticos__nota {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.reportes-estadisticos__error {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-lg);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+  font-size: var(--font-size-sm);
+}
+
+.reportes-estadisticos__destacado {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.reportes-estadisticos__destacado strong {
+  color: var(--color-primary);
+}
+
+.reportes-estadisticos__barras {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.reportes-estadisticos__barra-fila {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 4.5rem;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+}
+
+.reportes-estadisticos__barra-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.reportes-estadisticos__barra-pista {
+  grid-column: 1;
+  height: 6px;
+  background: var(--color-bg-dark);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.reportes-estadisticos__barra-valor {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+}
+
+.reportes-estadisticos__barra-total {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  text-align: right;
+  font-weight: 700;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+}
+
+@media print {
+  .reportes-estadisticos__filtros,
+  .reportes-estadisticos__atajos {
+    display: none;
+  }
+}

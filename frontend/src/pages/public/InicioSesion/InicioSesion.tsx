@@ -7,6 +7,12 @@ import { useReservas } from '../../../context/Reservas';
 import { registrarCliente } from '../../../services/autenticacion';
 import { useAutenticacionContext } from '../../../context/Autenticacion';
 import { ErrorApi } from '../../../services/api';
+import {
+  MENSAJE_NOMBRE_PERSONA,
+  esNombreValido,
+  sanitizarNombrePersona,
+  sanitizarSoloDigitos,
+} from '../../../utils/validacionesFormulario';
 import './InicioSesion.css';
 
 const TIPOS_DOCUMENTO = [
@@ -27,10 +33,6 @@ const PREFIJOS_TELEFONO = [
 ] as const;
 
 const MAX_DIGITOS_TELEFONO = 7;
-
-function soloDigitos(valor: string): string {
-  return valor.replace(/\D/g, '');
-}
 
 function IconoOjo({ visible }: { visible: boolean }) {
   if (visible) {
@@ -163,6 +165,10 @@ export default function InicioSesion() {
         setError('Ingresa tu nombre.');
         return;
       }
+      if (!esNombreValido(nombre) || !esNombreValido(apellido)) {
+        setError(MENSAJE_NOMBRE_PERSONA);
+        return;
+      }
       if (!apellido.trim()) {
         setError('Ingresa tu apellido.');
         return;
@@ -245,7 +251,8 @@ export default function InicioSesion() {
                   type="text"
                   placeholder="ej: María"
                   value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                  onChange={(e) => setNombre(sanitizarNombrePersona(e.target.value))}
+                  maxLength={80}
                   required
                   className="inicio-sesion__input-group"
                 />
@@ -254,7 +261,8 @@ export default function InicioSesion() {
                   type="text"
                   placeholder="ej: Alvarado"
                   value={apellido}
-                  onChange={(e) => setApellido(e.target.value)}
+                  onChange={(e) => setApellido(sanitizarNombrePersona(e.target.value))}
+                  maxLength={80}
                   required
                   className="inicio-sesion__input-group"
                 />
@@ -311,7 +319,7 @@ export default function InicioSesion() {
                   inputMode="numeric"
                   placeholder="ej: 12345678"
                   value={numeroDocumento}
-                  onChange={(e) => setNumeroDocumento(soloDigitos(e.target.value))}
+                  onChange={(e) => setNumeroDocumento(sanitizarSoloDigitos(e.target.value, 15))}
                   required
                   className="inicio-sesion__input-group"
                 />
@@ -341,7 +349,7 @@ export default function InicioSesion() {
                       placeholder="1234567"
                       value={numeroTelefono}
                       onChange={(e) =>
-                        setNumeroTelefono(soloDigitos(e.target.value).slice(0, MAX_DIGITOS_TELEFONO))
+                        setNumeroTelefono(sanitizarSoloDigitos(e.target.value, MAX_DIGITOS_TELEFONO))
                       }
                       autoComplete="tel-national"
                       maxLength={MAX_DIGITOS_TELEFONO}

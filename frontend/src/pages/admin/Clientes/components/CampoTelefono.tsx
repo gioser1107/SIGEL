@@ -64,6 +64,11 @@ export default function CampoTelefono({
               onFijoChange(e.target.value.replace(/\D/g, '').slice(0, 11));
               onLimpiarError?.();
             }}
+            onKeyDown={(e) => {
+              const permitidas = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+              if (permitidas.includes(e.key)) return;
+              if (!/^\d$/.test(e.key)) e.preventDefault();
+            }}
           />
         ) : (
           <input
@@ -77,6 +82,11 @@ export default function CampoTelefono({
             onChange={(e) => {
               onNumeroChange(e.target.value.replace(/\D/g, '').slice(0, 7));
               onLimpiarError?.();
+            }}
+            onKeyDown={(e) => {
+              const permitidas = ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+              if (permitidas.includes(e.key)) return;
+              if (!/^\d$/.test(e.key)) e.preventDefault();
             }}
           />
         )}

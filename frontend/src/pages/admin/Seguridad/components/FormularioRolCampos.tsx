@@ -1,6 +1,7 @@
 import type { Permiso } from '../../../../types/seguridad';
 import type { FormularioRol } from '../constants';
 import MatrizPermisosRol from './MatrizPermisosRol';
+import { sanitizarNombrePersona } from '../../../../utils/validacionesFormulario';
 
 interface FormularioRolCamposProps {
   form: FormularioRol;
@@ -32,7 +33,7 @@ export default function FormularioRolCampos({
           id="rol-nombre"
           className="drawer-form__input"
           value={form.nombre}
-          onChange={(e) => onChange((f) => ({ ...f, nombre: e.target.value }))}
+          onChange={(e) => onChange((f) => ({ ...f, nombre: sanitizarNombrePersona(e.target.value) }))}
           required
         />
       </div>

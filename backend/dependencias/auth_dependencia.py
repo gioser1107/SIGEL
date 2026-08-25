@@ -11,7 +11,7 @@ from modelos.usuario_modelo import Usuario
 from modelos.cliente_modelo import resolver_cliente_id_portal
 from modelos.usuario_modelo import verificar_token
 
-esquema_bearer = HTTPBearer()
+esquema_bearer = HTTPBearer(auto_error=True)
 
 def obtener_permisos_del_rol(db: Session, rol_id: int) -> list[str]:
     consulta_asignaciones = db.query(RolPermiso).filter(
@@ -53,6 +53,8 @@ def obtener_usuario_actual(
         )
 
     usuario_id = int(payload.get("sub", 0))
+    if usuario_id <= 0:
+        raise HTTPException(status_code=401, detail="Token sin identificador de usuario")
 
     consulta_usuario = db.query(Usuario).filter(
         Usuario.id == usuario_id,
@@ -66,9 +68,28 @@ def obtener_usuario_actual(
             detail="Usuario del token no encontrado",
         )
 
-    consulta_rol = db.query(Rol).filter(Rol.id == usuario.rol_id)
+    correo_token = (payload.get("correo") or "").strip().lower()
+    if correo_token and correo_token != (usuario.correo or "").strip().lower():
+        raise HTTPException(
+            status_code=401,
+            detail="El token no coincide con el usuario actual. Inicia sesión de nuevo",
+        )
+
+    rol_id_token = payload.get("rol_id")
+    if rol_id_token is not None and int(rol_id_token) != usuario.rol_id:
+        raise HTTPException(
+            status_code=401,
+            detail="El rol del token ya no es válido. Inicia sesión de nuevo",
+        )
+
+    consulta_rol = db.query(Rol).filter(
+        Rol.id == usuario.rol_id,
+        Rol.eliminado_en.is_(None),
+    )
     rol = consulta_rol.first()
-    nombre_rol = rol.nombre if rol is not None else ""
+    if rol is None:
+        raise HTTPException(status_code=401, detail="El rol del usuario no está activo")
+    nombre_rol = rol.nombre
 
     permisos = obtener_permisos_del_rol(db, usuario.rol_id)
 

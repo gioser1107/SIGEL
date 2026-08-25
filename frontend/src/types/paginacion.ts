@@ -12,6 +12,7 @@ export interface PaginacionQuery {
   pagina?: number;
   limite?: number;
   filtro?: FiltroListado;
+  buscar?: string;
 }
 
 export const LIMITE_PAGINA_DEFAULT = 10;
