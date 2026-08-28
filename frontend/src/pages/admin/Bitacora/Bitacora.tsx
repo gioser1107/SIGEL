@@ -41,7 +41,7 @@ export default function Bitacora() {
         migaja="Administración"
         titulo="Bitácora del Sistema"
         contador={total}
-        descripcion="Registro de auditoría de todas las operaciones del sistema. Solo consulta."
+        descripcion="Registro de auditoría de todas las operaciones del sistema."
       />
 
       <BarraFiltrosBitacora

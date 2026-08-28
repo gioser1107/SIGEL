@@ -86,7 +86,6 @@ export default function Cotizaciones() {
 
   const columnas = useMemo(() => columnasCotizaciones(), []);
 
-  // Enriquece las pestañas de filtro con contadores dinámicos por estado
   const pestaniasConContador: PestaniaFiltro[] = PESTANIAS_FILTRO.map((t) => ({
     ...t,
     contador: t.id === filtroTab ? total : undefined,
@@ -144,7 +143,6 @@ export default function Cotizaciones() {
           migaja="TravelBqto / Admin"
           titulo="Cotizaciones"
           contador={total}
-          descripcion="«Anuladas» son cotizaciones borradas del sistema (rechazadas o eliminadas)."
           acciones={
             <>
               <BtnImprimirReporte deshabilitado={cargando || cotizacionesFiltradas.length === 0} />

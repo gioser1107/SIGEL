@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<title>SIGEL — Guía de instalación</title>
+<style>
+@page { size: A4; margin: 16mm; }
+body { font-family: -apple-system, Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.4; color: #111; }
+h1 { font-size: 20pt; margin: 0 0 10px; }
+h2 { font-size: 14pt; margin: 20px 0 8px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+h3 { font-size: 12pt; margin: 14px 0 6px; }
+h4 { font-size: 11pt; margin: 12px 0 6px; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0 14px; font-size: 10pt; }
+th, td { border: 1px solid #bbb; padding: 5px 7px; text-align: left; vertical-align: top; }
+th { background: #f0f0f0; }
+code { font-family: Menlo, Consolas, monospace; font-size: 9.5pt; background: #f4f4f4; padding: 1px 4px; }
+pre { background: #f4f4f4; border: 1px solid #ddd; padding: 8px 10px; white-space: pre-wrap; font-size: 9pt; }
+ul, ol { margin: 6px 0 12px 22px; }
+hr { border: none; border-top: 1px solid #ddd; margin: 16px 0; }
+</style></head><body>
+<h1>SIGEL — Guía de instalación en una computadora vacía</h1>
+<p>Documento para instalar Travel BQTO en la laptop de la comunidad. Esa máquina <strong>no tiene nada</strong>: ni Python, ni base de datos, ni el sistema. Al terminar, abren SIGEL con un icono en el escritorio.</p>
+<p><strong>Leé esto en orden. No saltes pasos.</strong></p>
+<hr>
+<h2>0. Git no alcanza (léelo antes de ir)</h2>
+<p>El código está en git, pero <strong>clonar el repo en esa laptop no deja el sistema listo</strong>.</p>
+<p>| Qué hay en git                       | Qué falta en git                           |</p>
+<p>| ------------------------------------ | ------------------------------------------ |</p>
+<p>| Código Python y React                | <code>frontend/dist</code> (la pantalla ya compilada) |</p>
+<p>| <code>instalacion/travel_bqto_limpia.sql</code> | <code>backend/.env</code> (clave de MySQL de ellos)   |</p>
+<p>| Scripts de Windows                   | Programas: Python, MySQL/MariaDB           |</p>
+<p><code>frontend/dist</code> está en <code>.gitignore</code> a propósito. En la laptop de ellos <strong>no se instala Node.js</strong>. Por eso <strong>tú compilas en tu Mac</strong> y llevas esa carpeta en el USB.</p>
+<p>En la laptop virgen <strong>no uses git</strong>. Copias desde el USB a <code>C:\SIGEL</code>.</p>
+<p>Internet en esa laptop <strong>sí hace falta el día de la instalación</strong> (bajar Python, MySQL y las librerías de Python). Después puede funcionar sin internet.</p>
+<hr>
+<h2>1. En TU Mac, antes de salir</h2>
+<p>Haz esto en <strong>tu</strong> computadora, no en la de ellos.</p>
+<h3>1.1 Compilar la interfaz</h3>
+<p>Abre Terminal:</p>
+<pre><code>cd /Users/sergiojimenez/Desktop/TODO/PROYECTOS/SIGEL/frontend
+npm install
+npm run build</code></pre>
+<p>Comprueba que exista el archivo:</p>
+<p><code>frontend/dist/index.html</code></p>
+<p>Si ese archivo no está, en la laptop de ellos la web no abre.</p>
+<h3>1.2 Confirmar la base limpia</h3>
+<p>Debe existir:</p>
+<p><code>instalacion/travel_bqto_limpia.sql</code></p>
+<p>Esa es la base de <strong>ellos</strong>: usuarios y catálogos, <strong>sin</strong> tus reservas ni destinos de prueba. No exportes tu MySQL de trabajo.</p>
+<h3>1.3 Armar el USB</h3>
+<p>Copia la carpeta del proyecto. <strong>No copies</strong> estas carpetas (pesan y no sirven en Windows):</p>
+<ul><li><code>frontend/node_modules</code></li><li><code>backend/.venv</code></li><li><code>.git</code> (opcional; no hace falta)</li></ul>
+<p>Sí tiene que ir:</p>
+<ul><li><code>frontend/dist/</code> (entera)</li><li><code>backend/</code> (código, <code>requirements.txt</code>, <code>.env.example</code>)</li><li><code>instalacion/</code> (esta guía, el <code>.sql</code>, las carpetas <code>windows</code>)</li></ul>
+<p>En Terminal, si quieres copiar limpio a un USB montado en <code>/Volumes/USB</code>:</p>
+<pre><code>rsync -a --exclude node_modules --exclude .venv --exclude .git \
+  /Users/sergiojimenez/Desktop/TODO/PROYECTOS/SIGEL/ \
+  /Volumes/USB/SIGEL/</code></pre>
+<p>Lleva también <strong>esta guía impresa o en el USB</strong>, abierta en el Bloc de notas de ellos.</p>
+<h3>1.4 Lo que NO hace falta llevar</h3>
+<ul><li>Node.js</li><li>tu base <code>travel_bqto</code> de desarrollo</li><li>contraseñas de tu Mac</li></ul>
+<hr>
+<h2>2. Cuentas que ya vienen en la base</h2>
+<p>Después de importar el SQL, estas tres cuentas existen. Contraseña inicial de las tres: <code>TravelBqto2026</code></p>
+<p>| Quién         | Correo                   | Para qué                                                    |</p>
+<p>| ------------- | ------------------------ | ----------------------------------------------------------- |</p>
+<p>| Administrador | <code>admin@travelbqto.com</code>   | Panel completo: destinos, viajes, reservas, pagos, usuarios |</p>
+<p>| Guía          | <code>guia@travelbqto.com</code>    | Ver viajes, reservas, clientes y registrar abordaje         |</p>
+<p>| Cliente       | <code>cliente@travelbqto.com</code> | Portal del pasajero (catálogo y sus reservas)               |</p>
+<p>El público también puede <strong>registrarse</strong> solo desde la web (crea un cliente nuevo). No hace falta crear cada pasajero a mano.</p>
+<p>Cuando entren, conviene que el admin <strong>cambie esas tres contraseñas</strong> en Seguridad → Usuarios.</p>
+<hr>
+<h2>3. En la laptop de ellos (Windows, desde cero)</h2>
+<p>Supuesto: Windows 10 u 11, usuario con permiso de instalar programas, hay internet.</p>
+<h3>3.1 Copiar el proyecto</h3>
+<ol><li>Enchufa el USB.</li><li>Abre el Explorador de archivos.</li><li>Crea la carpeta <code>C:\SIGEL</code> (en el disco C, nombre corto, sin tildes ni espacios).</li><li>Copia <strong>todo</strong> el contenido de <code>SIGEL</code> del USB <strong>dentro</strong> de <code>C:\SIGEL</code>.</li></ol>
+<p>Al terminar debe existir, entre otras cosas:</p>
+<ul><li><code>C:\SIGEL\frontend\dist\index.html</code></li><li><code>C:\SIGEL\backend\main.py</code></li><li><code>C:\SIGEL\backend\requirements.txt</code></li><li><code>C:\SIGEL\backend\.env.example</code></li><li><code>C:\SIGEL\instalacion\travel_bqto_limpia.sql</code></li><li><code>C:\SIGEL\instalacion\windows\iniciar.bat</code></li></ul>
+<p>Si <code>dist\index.html</code> no está, volviste a copiar el repo sin compilar. Para y vuelve al paso 1.1.</p>
+<h3>3.2 Instalar Python</h3>
+<ol><li>En el navegador entra a: <a href="https://www.python.org/downloads/">https://www.python.org/downloads/</a></li><li>Baja <strong>Python 3.12</strong> (Windows installer 64-bit).</li><li>Ejecuta el instalador.</li><li><strong>Marca la casilla</strong> «Add python.exe to PATH» (abajo del todo). Si no la marcas, el resto falla.</li><li>Pulsa «Install Now».</li><li>Al final, si aparece «Disable path length limit», acéptalo.</li><li>Cierra el instalador.</li></ol>
+<p>Comprobar: clic derecho en Inicio → <strong>Terminal</strong> o <strong>Símbolo del sistema</strong>, escribe:</p>
+<pre><code>python --version</code></pre>
+<p>Tiene que salir algo como <code>Python 3.12.x</code>. Si dice que no se reconoce, desinstala Python, vuelve a instalar y <strong>no olvides Add to PATH</strong>. Cierra y abre otra vez la terminal después de instalar.</p>
+<h3>3.3 Instalar la base de datos</h3>
+<p>Elige <strong>una</strong> opción. No instales las dos.</p>
+<h4>Opción A — XAMPP (si ellos ya lo conocen)</h4>
+<ol><li>Baja XAMPP de <a href="https://www.apachefriends.org/">https://www.apachefriends.org/</a></li><li>Instala con lo predeterminado (suele quedar en <code>C:\xampp</code>).</li><li>Abre el <strong>Panel de control de XAMPP</strong>.</li><li>Arranca <strong>solo MySQL</strong>. Apache <strong>no</strong> hace falta.</li><li>Deja MySQL en verde.</li></ol>
+<p>La clave de <code>root</code> en XAMPP nuevo suele estar <strong>vacía</strong>.</p>
+<p>Para usar <code>mysql</code> en la terminal, o bien agregas <code>C:\xampp\mysql\bin</code> al PATH, o usas la ruta completa en el paso 3.4.</p>
+<h4>Opción B — MariaDB (mejor si la laptop es floja)</h4>
+<ol><li>Baja MariaDB 10.11 o 11: <a href="https://mariadb.org/download/">https://mariadb.org/download/</a></li><li>Instalador Windows 64-bit.</li><li>Durante la instalación:</li></ol>
+<ul><li>Anota la <strong>contraseña de root</strong> que pongas. La vas a necesitar.</li><li>Deja el puerto <strong>3306</strong>.</li><li>Marca que instale como servicio de Windows.</li></ul>
+<ol><li>Termina e instala.</li></ol>
+<p>Si la laptop tiene poca RAM, después de instalar abre <code>C:\Program Files\MariaDB *\data\my.ini</code> (o el <code>my.ini</code> que indique el instalador) y en la sección <code>[mysqld]</code> agrega:</p>
+<pre><code>innodb_buffer_pool_size=64M
+performance_schema=OFF</code></pre>
+<p>Guarda y reinicia el servicio MariaDB (Servicios de Windows → MariaDB → Reiniciar).</p>
+<h3>3.4 Importar la base limpia</h3>
+<p>Abre <strong>Símbolo del sistema</strong> (cmd).</p>
+<p><strong>Con XAMPP:</strong></p>
+<pre><code>C:\xampp\mysql\bin\mysql.exe -u root -p &lt; C:\SIGEL\instalacion\travel_bqto_limpia.sql</code></pre>
+<p>Si no tiene contraseña, pulsa Enter cuando pida <code>password</code>.</p>
+<p><strong>Con MariaDB / MySQL en PATH:</strong></p>
+<pre><code>mysql -u root -p &lt; C:\SIGEL\instalacion\travel_bqto_limpia.sql</code></pre>
+<p>Escribe la contraseña de root y Enter.</p>
+<p>Ese archivo <strong>borra y recrea</strong> la base <code>travel_bqto</code>. En una PC virgen eso está bien. No lo ejecutes contra una base que ya tenga datos reales.</p>
+<p>Si sale <code>mysql no se reconoce</code>, no está en el PATH: usa la ruta de XAMPP de arriba, o busca <code>mysql.exe</code> en <code>C:\Program Files\MariaDB *\bin\</code>.</p>
+<p>Si sale error de archivo no encontrado, el SQL no está en <code>C:\SIGEL\instalacion\</code>. Revisa la copia del USB.</p>
+<p>Cuando termine sin error, la base ya tiene roles, usuarios, estados, monedas y métodos de pago.</p>
+<h3>3.5 Entorno Python del sistema</h3>
+<p>Sigue en el símbolo del sistema:</p>
+<pre><code>cd C:\SIGEL\backend
+python -m venv .venv
+.venv\Scripts\python -m pip install --upgrade pip
+.venv\Scripts\python -m pip install -r requirements.txt
+copy .env.example .env</code></pre>
+<p>La línea de <code>pip install -r requirements.txt</code> necesita internet. Tarda unos minutos. Si falla por red, reintenta. No sigas hasta que termine en <code>Successfully installed</code>.</p>
+<h3>3.6 Editar <code>backend\.env</code></h3>
+<pre><code>notepad C:\SIGEL\backend\.env</code></pre>
+<p>Déjalo así, cambiando solo la contraseña si MariaDB/XAMPP tiene clave:</p>
+<pre><code>DB_USUARIO=root
+DB_CONTRASENA=
+DB_HOST=localhost
+DB_PUERTO=3306
+DB_NOMBRE=travel_bqto
+JWT_SECRETO=una-frase-larga-solo-de-esta-laptop
+JWT_EXPIRACION_MINUTOS=480</code></pre>
+<ul><li>Si XAMPP y root <strong>sin</strong> clave: deja <code>DB_CONTRASENA=</code> vacío (nada después del <code>=</code>).</li><li>Si MariaDB y pusiste clave: escríbela <strong>justo después</strong> del <code>=</code>, sin espacios ni comillas.</li><li><code>JWT_SECRETO</code>: cualquier frase larga inventada. No dejes el texto de ejemplo.</li></ul>
+<p>Guarda (Ctrl+S) y cierra el Bloc de notas.</p>
+<p>No hace falta un <code>.env</code> en <code>frontend</code> en esa máquina: la interfaz ya se compiló en tu Mac.</p>
+<h3>3.7 Icono en el escritorio</h3>
+<pre><code>C:\SIGEL\instalacion\windows\crear-acceso-directo.bat</code></pre>
+<p>Debe aparecer <strong>SIGEL Travel BQTO</strong> en el escritorio.</p>
+<h3>3.8 Primera arrancada</h3>
+<ol><li>Confirma que MySQL/MariaDB esté encendido (XAMPP: MySQL en verde; o el servicio de Windows).</li><li>Doble clic en <strong>SIGEL Travel BQTO</strong>.</li><li>Se abre una <strong>ventana negra</strong>. <strong>No la cierren</strong> mientras usen el sistema.</li><li>El navegador debe abrir <code>http://127.0.0.1:8000</code>.</li></ol>
+<p>Si la ventana se cierra al instante, léela otra vez: casi siempre falta <code>frontend\dist</code>, Python o el <code>.env</code>.</p>
+<hr>
+<h2>4. Probar los tres usuarios</h2>
+<p>En <code>http://127.0.0.1:8000</code> → Iniciar sesión.</p>
+<ol><li><code>admin@travelbqto.com</code> / <code>TravelBqto2026</code></li></ol>
+<p>  Debe entrar al <strong>panel admin</strong> (menú completo).</p>
+<ol><li>Cierra sesión.</li></ol>
+<p>  <code>guia@travelbqto.com</code> / <code>TravelBqto2026</code>  </p>
+<p>   Debe entrar al panel, con menos menús (viajes / abordaje).</p>
+<ol><li>Cierra sesión.</li></ol>
+<p>  <code>cliente@travelbqto.com</code> / <code>TravelBqto2026</code>  </p>
+<p>   Debe entrar al <strong>portal del cliente</strong>, no al admin.</p>
+<p>Si el admin no entra: SQL no se importó o <code>.env</code> tiene mal la clave de MySQL (error 503).</p>
+<p>Si entra pero “no hay destinos”: es normal. La base está limpia.</p>
+<hr>
+<h2>5. Primer día de uso (datos reales)</h2>
+<p>Lo hace el <strong>administrador</strong>. Aún no hay viajes porque no se copiaron datos de prueba.</p>
+<ol><li><strong>Pagos → Tasas:</strong> crea o corrige la tasa euro <strong>de hoy</strong>. Sin tasa del día, los cobros en bolívares fallan o avisan.</li><li><strong>Seguridad → Usuarios:</strong> cambia las tres contraseñas iniciales.</li><li><strong>Destinos:</strong> da de alta los destinos reales (nombre, precio en euros, fotos si tienen).</li><li><strong>Flota / unidades:</strong> da de alta el bus (placa, capacidad) y <strong>los asientos</strong>.</li><li><strong>Puntos de recogida:</strong> ya existe «Obelisco». Agregan las paradas que usen.</li><li><strong>Planificación:</strong> crean un viaje (fecha de salida <strong>sí puede ser futura</strong>). Asignan guía y unidad.</li><li>A partir de ahí: clientes (alta en admin o registro en la web), reservas, pagos.</li></ol>
+<p>Los reportes, bitácora y pagos <strong>no</strong> aceptan fechas futuras. Solo las fechas de viaje (y la vigencia de una cotización).</p>
+<hr>
+<h2>6. Uso diario (cuando ya está instalado)</h2>
+<ol><li>Encender la laptop.</li><li>Que MySQL esté corriendo (en XAMPP, abrir el panel y Start en MySQL si no arrancó solo).</li><li>Doble clic en <strong>SIGEL Travel BQTO</strong>.</li><li>Trabajar en el navegador. <strong>No cerrar la ventana negra.</strong></li><li>Al terminar: cierran la ventana negra o ejecutan <code>C:\SIGEL\instalacion\windows\detener.bat</code>.</li></ol>
+<p>No hace falta internet para usar el sistema en esa laptop (solo para el día que instalaron Python y <code>pip</code>).</p>
+<hr>
+<h2>7. Si algo falla</h2>
+<p>| Qué ves                                    | Qué hacer                                                                             |</p>
+<p>| ------------------------------------------ | ------------------------------------------------------------------------------------- |</p>
+<p>| <code>python</code> no se reconoce                    | Reinstalar Python marcando <strong>Add to PATH</strong>. Cerrar y abrir cmd.                       |</p>
+<p>| Ventana negra se cierra al toque           | Falta <code>C:\SIGEL\frontend\dist\index.html</code>, o no hay <code>.venv</code>, o no hay <code>backend\.env</code>. |</p>
+<p>| Navegador abre pero error 503 / no conecta | MySQL apagado, o <code>DB_CONTRASENA</code> mal en <code>.env</code>.                                       |</p>
+<p>| <code>mysql</code> no se reconoce                     | Usar <code>C:\xampp\mysql\bin\mysql.exe</code> o la carpeta <code>bin</code> de MariaDB.                    |</p>
+<p>| Puerto 8000 ocupado                        | Ejecutar <code>detener.bat</code> y volver a iniciar.                                            |</p>
+<p>| <code>pip install</code> falla                        | Internet, o reintentar. En proxy de universidad a veces hay que usar otra red.        |</p>
+<p>| Pantalla en blanco                         | No copiaste <code>frontend/dist</code>. Compila en tu Mac y vuelve a copiar esa carpeta.         |</p>
+<p>| Admin entra como cliente                   | Estás usando <code>cliente@...</code>. Entra con <code>admin@travelbqto.com</code>.                         |</p>
+<p>Para volver a importar la base <strong>vacía</strong> (borra todo lo que hayan cargado):</p>
+<pre><code>mysql -u root -p &lt; C:\SIGEL\instalacion\travel_bqto_limpia.sql</code></pre>
+<p>Solo si están seguros. Eso elimina destinos, viajes y reservas que hayan creado.</p>
+<hr>
+<h2>8. Lista rápida (impresión)</h2>
+<p><strong>En tu Mac</strong></p>
+<p>&#9744; <code>npm run build</code> y existe <code>frontend/dist/index.html</code></p>
+<p>&#9744; USB con el proyecto <strong>incluyendo</strong> <code>dist</code> y <code>instalacion/travel_bqto_limpia.sql</code></p>
+<p>&#9744; Sin <code>node_modules</code> ni <code>.venv</code></p>
+<p><strong>En la laptop de ellos</strong></p>
+<p>&#9744; Copiar a <code>C:\SIGEL</code></p>
+<p>&#9744; Python 3.12 con PATH</p>
+<p>&#9744; XAMPP (solo MySQL) o MariaDB</p>
+<p>&#9744; Importar <code>travel_bqto_limpia.sql</code></p>
+<p>&#9744; <code>python -m venv .venv</code> y <code>pip install -r requirements.txt</code></p>
+<p>&#9744; Copiar <code>.env.example</code> → <code>.env</code> y poner clave de MySQL</p>
+<p>&#9744; Acceso directo en el escritorio</p>
+<p>&#9744; Probar admin, guía y cliente</p>
+<p>&#9744; Cambiar contraseñas y cargar tasa / destinos / bus / viaje</p>
+<p><strong>Usuarios</strong></p>
+<ul><li><a href="mailto:admin@travelbqto.com">admin@travelbqto.com</a> / TravelBqto2026</li><li><a href="mailto:guia@travelbqto.com">guia@travelbqto.com</a> / TravelBqto2026</li><li><a href="mailto:cliente@travelbqto.com">cliente@travelbqto.com</a> / TravelBqto2026</li></ul>
+</body></html>

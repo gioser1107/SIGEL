@@ -141,7 +141,7 @@ export default function ModuloResenas() {
         migaja="Administración"
         titulo="Moderación de reseñas"
         contador={resenas.length}
-        descripcion="Consulta, oculta o elimina reseñas de clientes. No se puede editar el texto."
+        descripcion="Consulta, oculta o elimina reseñas de clientes."
       />
 
       {error && <div className="resenas-admin__alerta resenas-admin__alerta--error">{error}</div>}

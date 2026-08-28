@@ -192,7 +192,6 @@ export default function CrearReserva() {
       <CabeceraModulo
         migaja="Reservas / Crear"
         titulo="Registrar nueva reserva"
-        descripcion="Flujo manual para registrar reservas por taquilla o teléfono."
         acciones={
           <Boton variante="secundario" onClick={() => navegar('/admin/reservas')}>
             Volver

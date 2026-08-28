@@ -89,7 +89,6 @@ export default function Planificacion() {
 
   const columnas = useMemo(() => columnasViajes(), []);
 
-  // Enriquece las pestañas de filtro con contadores dinámicos por estado
   const pestaniasConContador: PestaniaFiltro[] = PESTANIAS_FILTRO.map((t) => ({
     ...t,
     contador: t.id === filtroEstado ? total : undefined,
@@ -136,7 +135,6 @@ export default function Planificacion() {
           migaja="TravelBqto / Admin"
           titulo="Planificación de viajes"
           contador={total}
-          descripcion="«Anulados» son viajes borrados del sistema (borrado lógico). Puedes cancelar un viaje cambiando su estado sin anularlo."
           acciones={
             <>
               <BtnImprimirReporte deshabilitado={cargando || viajesFiltrados.length === 0} />

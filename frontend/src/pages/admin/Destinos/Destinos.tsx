@@ -86,7 +86,6 @@ export default function Destinos() {
         migaja="TravelBqto / Admin"
         titulo="Destinos"
         contador={total}
-        descripcion="«Anulados» son destinos borrados del sistema (borrado lógico). Desactiva un destino editando su estado si quieres ocultarlo del catálogo sin borrarlo."
         acciones={
           <Boton variante="primario" tamano="sm" onClick={abrirCrear}>
             + Nuevo destino

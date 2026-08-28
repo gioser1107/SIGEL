@@ -275,7 +275,6 @@ export default function Reservas() {
           migaja="TravelBqto / Admin"
           titulo="Reservas"
           contador={total}
-          descripcion="«Anuladas» son reservas borradas del sistema. «Canceladas» son reservas activas con ese estado comercial."
           acciones={
             <>
               <BtnImprimirReporte deshabilitado={cargando || reservasFiltradas.length === 0} />

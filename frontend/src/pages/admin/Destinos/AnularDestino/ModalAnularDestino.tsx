@@ -24,7 +24,7 @@ export default function ModalAnularDestino({
       titulo="Anular destino"
       mensaje={
         destino
-          ? `¿Confirmas que quieres anular "${destino.nombre}"? Pasará a la pestaña «Anulados» (borrado lógico).`
+          ? `¿Confirmas que quieres anular "${destino.nombre}"? Esta acción no se puede deshacer.`
           : ''
       }
       error={error}

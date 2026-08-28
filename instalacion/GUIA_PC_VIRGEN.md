@@ -10,11 +10,13 @@ Documento para instalar Travel BQTO en la laptop de la comunidad. Esa máquina *
 
 El código está en git, pero **clonar el repo en esa laptop no deja el sistema listo**.
 
-| Qué hay en git | Qué falta en git |
-|---|---|
-| Código Python y React | `frontend/dist` (la pantalla ya compilada) |
-| `instalacion/travel_bqto_limpia.sql` | `backend/.env` (clave de MySQL de ellos) |
-| Scripts de Windows | Programas: Python, MySQL/MariaDB |
+
+| Qué hay en git                       | Qué falta en git                           |
+| ------------------------------------ | ------------------------------------------ |
+| Código Python y React                | `frontend/dist` (la pantalla ya compilada) |
+| `instalacion/travel_bqto_limpia.sql` | `backend/.env` (clave de MySQL de ellos)   |
+| Scripts de Windows                   | Programas: Python, MySQL/MariaDB           |
+
 
 `frontend/dist` está en `.gitignore` a propósito. En la laptop de ellos **no se instala Node.js**. Por eso **tú compilas en tu Mac** y llevas esa carpeta en el USB.
 
@@ -23,6 +25,8 @@ En la laptop virgen **no uses git**. Copias desde el USB a `C:\SIGEL`.
 Internet en esa laptop **sí hace falta el día de la instalación** (bajar Python, MySQL y las librerías de Python). Después puede funcionar sin internet.
 
 ---
+
+
 
 ## 1. En TU Mac, antes de salir
 
@@ -84,21 +88,27 @@ Lleva también **esta guía impresa o en el USB**, abierta en el Bloc de notas d
 
 ---
 
+
+
 ## 2. Cuentas que ya vienen en la base
 
 Después de importar el SQL, estas tres cuentas existen. Contraseña inicial de las tres: `TravelBqto2026`
 
-| Quién | Correo | Para qué |
-|---|---|---|
-| Administrador | `admin@travelbqto.com` | Panel completo: destinos, viajes, reservas, pagos, usuarios |
-| Guía | `guia@travelbqto.com` | Ver viajes, reservas, clientes y registrar abordaje |
-| Cliente | `cliente@travelbqto.com` | Portal del pasajero (catálogo y sus reservas) |
+
+| Quién         | Correo                   | Para qué                                                    |
+| ------------- | ------------------------ | ----------------------------------------------------------- |
+| Administrador | `admin@travelbqto.com`   | Panel completo: destinos, viajes, reservas, pagos, usuarios |
+| Guía          | `guia@travelbqto.com`    | Ver viajes, reservas, clientes y registrar abordaje         |
+| Cliente       | `cliente@travelbqto.com` | Portal del pasajero (catálogo y sus reservas)               |
+
 
 El público también puede **registrarse** solo desde la web (crea un cliente nuevo). No hace falta crear cada pasajero a mano.
 
 Cuando entren, conviene que el admin **cambie esas tres contraseñas** en Seguridad → Usuarios.
 
 ---
+
+
 
 ## 3. En la laptop de ellos (Windows, desde cero)
 
@@ -124,7 +134,7 @@ Si `dist\index.html` no está, volviste a copiar el repo sin compilar. Para y vu
 
 ### 3.2 Instalar Python
 
-1. En el navegador entra a: https://www.python.org/downloads/
+1. En el navegador entra a: [https://www.python.org/downloads/](https://www.python.org/downloads/)
 2. Baja **Python 3.12** (Windows installer 64-bit).
 3. Ejecuta el instalador.
 4. **Marca la casilla** «Add python.exe to PATH» (abajo del todo). Si no la marcas, el resto falla.
@@ -146,7 +156,7 @@ Elige **una** opción. No instales las dos.
 
 #### Opción A — XAMPP (si ellos ya lo conocen)
 
-1. Baja XAMPP de https://www.apachefriends.org/
+1. Baja XAMPP de [https://www.apachefriends.org/](https://www.apachefriends.org/)
 2. Instala con lo predeterminado (suele quedar en `C:\xampp`).
 3. Abre el **Panel de control de XAMPP**.
 4. Arranca **solo MySQL**. Apache **no** hace falta.
@@ -158,12 +168,12 @@ Para usar `mysql` en la terminal, o bien agregas `C:\xampp\mysql\bin` al PATH, o
 
 #### Opción B — MariaDB (mejor si la laptop es floja)
 
-1. Baja MariaDB 10.11 o 11: https://mariadb.org/download/
+1. Baja MariaDB 10.11 o 11: [https://mariadb.org/download/](https://mariadb.org/download/)
 2. Instalador Windows 64-bit.
 3. Durante la instalación:
-   - Anota la **contraseña de root** que pongas. La vas a necesitar.
-   - Deja el puerto **3306**.
-   - Marca que instale como servicio de Windows.
+  - Anota la **contraseña de root** que pongas. La vas a necesitar.
+  - Deja el puerto **3306**.
+  - Marca que instale como servicio de Windows.
 4. Termina e instala.
 
 Si la laptop tiene poca RAM, después de instalar abre `C:\Program Files\MariaDB *\data\my.ini` (o el `my.ini` que indique el instalador) y en la sección `[mysqld]` agrega:
@@ -262,19 +272,19 @@ Si la ventana se cierra al instante, léela otra vez: casi siempre falta `fronte
 
 ---
 
+
+
 ## 4. Probar los tres usuarios
 
 En `http://127.0.0.1:8000` → Iniciar sesión.
 
-1. `admin@travelbqto.com` / `TravelBqto2026`  
-   Debe entrar al **panel admin** (menú completo).
-
-2. Cierra sesión.  
-   `guia@travelbqto.com` / `TravelBqto2026`  
+1. `admin@travelbqto.com` / `TravelBqto2026`
+  Debe entrar al **panel admin** (menú completo).
+2. Cierra sesión.
+  `guia@travelbqto.com` / `TravelBqto2026`  
    Debe entrar al panel, con menos menús (viajes / abordaje).
-
-3. Cierra sesión.  
-   `cliente@travelbqto.com` / `TravelBqto2026`  
+3. Cierra sesión.
+  `cliente@travelbqto.com` / `TravelBqto2026`  
    Debe entrar al **portal del cliente**, no al admin.
 
 Si el admin no entra: SQL no se importó o `.env` tiene mal la clave de MySQL (error 503).
@@ -282,6 +292,8 @@ Si el admin no entra: SQL no se importó o `.env` tiene mal la clave de MySQL (e
 Si entra pero “no hay destinos”: es normal. La base está limpia.
 
 ---
+
+
 
 ## 5. Primer día de uso (datos reales)
 
@@ -299,6 +311,8 @@ Los reportes, bitácora y pagos **no** aceptan fechas futuras. Solo las fechas d
 
 ---
 
+
+
 ## 6. Uso diario (cuando ya está instalado)
 
 1. Encender la laptop.
@@ -311,18 +325,22 @@ No hace falta internet para usar el sistema en esa laptop (solo para el día que
 
 ---
 
+
+
 ## 7. Si algo falla
 
-| Qué ves | Qué hacer |
-|---|---|
-| `python` no se reconoce | Reinstalar Python marcando **Add to PATH**. Cerrar y abrir cmd. |
-| Ventana negra se cierra al toque | Falta `C:\SIGEL\frontend\dist\index.html`, o no hay `.venv`, o no hay `backend\.env`. |
-| Navegador abre pero error 503 / no conecta | MySQL apagado, o `DB_CONTRASENA` mal en `.env`. |
-| `mysql` no se reconoce | Usar `C:\xampp\mysql\bin\mysql.exe` o la carpeta `bin` de MariaDB. |
-| Puerto 8000 ocupado | Ejecutar `detener.bat` y volver a iniciar. |
-| `pip install` falla | Internet, o reintentar. En proxy de universidad a veces hay que usar otra red. |
-| Pantalla en blanco | No copiaste `frontend/dist`. Compila en tu Mac y vuelve a copiar esa carpeta. |
-| Admin entra como cliente | Estás usando `cliente@...`. Entra con `admin@travelbqto.com`. |
+
+| Qué ves                                    | Qué hacer                                                                             |
+| ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `python` no se reconoce                    | Reinstalar Python marcando **Add to PATH**. Cerrar y abrir cmd.                       |
+| Ventana negra se cierra al toque           | Falta `C:\SIGEL\frontend\dist\index.html`, o no hay `.venv`, o no hay `backend\.env`. |
+| Navegador abre pero error 503 / no conecta | MySQL apagado, o `DB_CONTRASENA` mal en `.env`.                                       |
+| `mysql` no se reconoce                     | Usar `C:\xampp\mysql\bin\mysql.exe` o la carpeta `bin` de MariaDB.                    |
+| Puerto 8000 ocupado                        | Ejecutar `detener.bat` y volver a iniciar.                                            |
+| `pip install` falla                        | Internet, o reintentar. En proxy de universidad a veces hay que usar otra red.        |
+| Pantalla en blanco                         | No copiaste `frontend/dist`. Compila en tu Mac y vuelve a copiar esa carpeta.         |
+| Admin entra como cliente                   | Estás usando `cliente@...`. Entra con `admin@travelbqto.com`.                         |
+
 
 Para volver a importar la base **vacía** (borra todo lo que hayan cargado):
 
@@ -333,6 +351,8 @@ mysql -u root -p < C:\SIGEL\instalacion\travel_bqto_limpia.sql
 Solo si están seguros. Eso elimina destinos, viajes y reservas que hayan creado.
 
 ---
+
+
 
 ## 8. Lista rápida (impresión)
 
@@ -356,6 +376,7 @@ Solo si están seguros. Eso elimina destinos, viajes y reservas que hayan creado
 
 **Usuarios**
 
-- admin@travelbqto.com / TravelBqto2026
-- guia@travelbqto.com / TravelBqto2026
-- cliente@travelbqto.com / TravelBqto2026
+- [admin@travelbqto.com](mailto:admin@travelbqto.com) / TravelBqto2026
+- [guia@travelbqto.com](mailto:guia@travelbqto.com) / TravelBqto2026
+- [cliente@travelbqto.com](mailto:cliente@travelbqto.com) / TravelBqto2026
+

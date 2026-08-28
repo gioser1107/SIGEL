@@ -7,12 +7,6 @@ import { esRolClientePortal } from '../../../utils/permisosModulos';
 import PanelNotificaciones from './PanelNotificaciones';
 import './LayoutAdmin.css';
 
-/**
- * LayoutAdmin — Panel de administración privado.
- * Oculta el diseño público y proporciona un panel con:
- *  - Sidebar colapsable con navegación
- *  - Header con buscador global, notificaciones y perfil
- */
 function iniciales(nombre: string): string {
   return nombre
     .split(' ')
@@ -28,9 +22,14 @@ export default function LayoutAdmin() {
   const [panelNotificacionesAbierto, setPanelNotificacionesAbierto] = useState(false);
   
   const ubicacion = useLocation();
-  const [menuConfigAbierto, setMenuConfigAbierto] = useState(() => {
-    return ubicacion.pathname.includes('/admin/bitacora') || ubicacion.pathname.includes('/admin/usuarios-roles');
-  });
+  const [menusAbiertos, setMenusAbiertos] = useState<Record<string, boolean>>(() => ({
+    reportes:
+      ubicacion.pathname.startsWith('/admin/reportes') ||
+      ubicacion.pathname.includes('/admin/reporte-viaje'),
+    configuracion:
+      ubicacion.pathname.includes('/admin/bitacora') ||
+      ubicacion.pathname.includes('/admin/usuarios-roles'),
+  }));
   const contenedorNotificacionesRef = useRef<HTMLDivElement>(null);
   const { usuario, cerrarSesion, puedeLeer, puedeAccederSeguridad } = useAutenticacion();
   const notificaciones = useNotificaciones();
@@ -38,6 +37,18 @@ export default function LayoutAdmin() {
   useEffect(() => {
     setEstaAbiertoMovil(false);
     setPanelNotificacionesAbierto(false);
+    if (
+      ubicacion.pathname.startsWith('/admin/reportes') ||
+      ubicacion.pathname.includes('/admin/reporte-viaje')
+    ) {
+      setMenusAbiertos((prev) => ({ ...prev, reportes: true }));
+    }
+    if (
+      ubicacion.pathname.includes('/admin/bitacora') ||
+      ubicacion.pathname.includes('/admin/usuarios-roles')
+    ) {
+      setMenusAbiertos((prev) => ({ ...prev, configuracion: true }));
+    }
   }, [ubicacion.pathname]);
 
   useEffect(() => {
@@ -149,9 +160,13 @@ export default function LayoutAdmin() {
       ),
     },
     {
-      to: '/admin/reportes',
+      id: 'reportes',
       label: 'Reportes',
-      visible: puedeLeer('reservas') || puedeLeer('reportes_pago') || puedeLeer('clientes'),
+      visible:
+        puedeLeer('reservas') ||
+        puedeLeer('reportes_pago') ||
+        puedeLeer('clientes') ||
+        puedeLeer('planificacion'),
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="18" y1="20" x2="18" y2="10" />
@@ -159,20 +174,18 @@ export default function LayoutAdmin() {
           <line x1="6" y1="20" x2="6" y2="14" />
         </svg>
       ),
-    },
-    {
-      to: '/admin/reporte-viaje',
-      label: 'Reporte de viaje',
-      visible: puedeLeer('planificacion'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-          <line x1="10" y1="9" x2="8" y2="9" />
-        </svg>
-      ),
+      subItems: [
+        {
+          to: '/admin/reportes',
+          label: 'Estadísticos',
+          visible: puedeLeer('reservas') || puedeLeer('reportes_pago') || puedeLeer('clientes'),
+        },
+        {
+          to: '/admin/reporte-viaje',
+          label: 'Operativo de viaje',
+          visible: puedeLeer('planificacion'),
+        },
+      ],
     },
     {
       to: '/admin/abordaje',
@@ -293,15 +306,17 @@ export default function LayoutAdmin() {
         <nav className="barra-lateral__navegacion">
           {enlacesBarraLateral.map((enlace) => {
             if ('subItems' in enlace && enlace.subItems) {
-              const itemsVisibles = enlace.subItems.filter((s: any) => s.visible);
+              const itemsVisibles = enlace.subItems.filter((s: { visible?: boolean }) => s.visible);
               if (itemsVisibles.length === 0) return null;
-              
+              const idGrupo = String(enlace.id || enlace.label);
+              const abierto = Boolean(menusAbiertos[idGrupo]);
+
               return (
-                <div key={enlace.id || enlace.label} className="barra-lateral__grupo">
+                <div key={idGrupo} className="barra-lateral__grupo">
                   <button
-                    className={`barra-lateral__enlace barra-lateral__boton-acordeon ${menuConfigAbierto && !estaColapsado ? 'barra-lateral__boton-acordeon--abierto' : ''}`}
+                    className={`barra-lateral__enlace barra-lateral__boton-acordeon ${abierto && !estaColapsado ? 'barra-lateral__boton-acordeon--abierto' : ''}`}
                     onClick={() => {
-                      setMenuConfigAbierto(!menuConfigAbierto);
+                      setMenusAbiertos((prev) => ({ ...prev, [idGrupo]: !prev[idGrupo] }));
                       if (estaColapsado) setEstaColapsado(false);
                     }}
                   >
@@ -313,9 +328,9 @@ export default function LayoutAdmin() {
                       </svg>
                     </span>
                   </button>
-                  {menuConfigAbierto && !estaColapsado && (
+                  {abierto && !estaColapsado && (
                     <div className="barra-lateral__sub-navegacion">
-                      {itemsVisibles.map((sub: any) => (
+                      {itemsVisibles.map((sub: { to: string; label: string }) => (
                         <NavLink
                           key={sub.to}
                           to={sub.to}

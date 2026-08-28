@@ -47,20 +47,34 @@
   gap: 0.4rem;
 }
 
+.reportes-estadisticos__tipos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.reportes-estadisticos__tipo {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  padding: 0.4rem 0.85rem;
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+.reportes-estadisticos__tipo--activo {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
 .reportes-estadisticos__rango {
   margin: 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
-}
-
-.reportes-estadisticos__nota {
-  margin: 0;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-lg);
-  background: rgba(59, 130, 246, 0.08);
-  border: 1px solid rgba(59, 130, 246, 0.18);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
 }
 
 .reportes-estadisticos__error {
@@ -128,7 +142,8 @@
 
 @media print {
   .reportes-estadisticos__filtros,
-  .reportes-estadisticos__atajos {
+  .reportes-estadisticos__atajos,
+  .reportes-estadisticos__tipos {
     display: none;
   }
 }

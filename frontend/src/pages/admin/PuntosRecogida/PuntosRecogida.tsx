@@ -129,7 +129,7 @@ export default function PuntosRecogidaAdmin() {
         migaja="TravelBqto / Admin"
         titulo="Puntos de recogida"
         contador={total}
-        descripcion="Consulta de domicilios registrados por clientes. La gestión (crear, editar, eliminar) se realiza en el módulo Clientes."
+        descripcion="Consulta de domicilios registrados por clientes."
       />
 
       <PestaniasFiltro pestanias={PESTANIAS} activa={pestania} onChange={cambiarPestania} />

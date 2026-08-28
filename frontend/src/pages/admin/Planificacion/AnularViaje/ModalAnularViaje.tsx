@@ -9,7 +9,6 @@ interface PropsModalAnular {
   onCancelar: () => void;
 }
 
-// Modal de confirmación para anular (eliminar lógicamente) un viaje
 export default function ModalAnularViaje({
   abierto,
   viaje,

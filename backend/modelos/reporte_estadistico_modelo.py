@@ -1,9 +1,4 @@
-"""Reportes estadísticos parametrizados por rango de fechas reales.
-
-Apoya decisiones del dueño: clientes del periodo, destinos más concurridos,
-mes con más movimiento, reservas de un día e ingresos cobrados (pagos aprobados).
-No incluye cortes por género ni edad: el maestro de clientes no guarda esos datos.
-"""
+"""Reportes estadísticos filtrados por rango de fechas."""
 
 from datetime import date, datetime, time, timedelta
 from typing import Optional
@@ -15,10 +10,11 @@ from sqlalchemy.orm import Session
 from modelos.cliente_modelo import Cliente
 from modelos.cotizacion_modelo import Cotizacion
 from modelos.destino_modelo import Destino
+from modelos.metodo_pago_modelo import MetodoPago
 from modelos.pago_modelo import Pago, convertir_monto_pago_a_eur
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
-from modelos.viaje_modelo import Viaje
+from modelos.viaje_modelo import Viaje, calcular_disponibilidad_viaje
 
 ANIO_MINIMO = 2000
 DIAS_MAXIMOS_RANGO = 366 * 10
@@ -60,7 +56,6 @@ def _etiqueta_mes(clave: str) -> str:
 
 
 def validar_rango_fechas(desde: Optional[date], hasta: Optional[date]) -> tuple[date, date]:
-    """Rechaza años imposibles (p. ej. 500) y rangos invertidos o excesivos."""
     hoy = date.today()
     if desde is None:
         desde = date(hoy.year, 1, 1)
@@ -70,10 +65,7 @@ def validar_rango_fechas(desde: Optional[date], hasta: Optional[date]) -> tuple[
     if desde.year < ANIO_MINIMO or hasta.year < ANIO_MINIMO:
         raise HTTPException(
             status_code=400,
-            detail=(
-                f"El año del rango no es válido. Use fechas reales del negocio "
-                f"(desde {ANIO_MINIMO} en adelante), no años imposibles."
-            ),
+            detail=f"El año del rango no es válido. Use {ANIO_MINIMO} o posterior.",
         )
     if desde > hoy or hasta > hoy:
         raise HTTPException(
@@ -382,18 +374,96 @@ def generar_reporte_estadistico(
             }
         )
 
+    cotizaciones_por_estado = [
+        {"estado": estado or "sin_estado", "total": int(total)}
+        for estado, total in (
+            db.query(Cotizacion.estado, func.count(Cotizacion.id))
+            .filter(
+                Cotizacion.eliminado_en.is_(None),
+                Cotizacion.creado_en >= inicio,
+                Cotizacion.creado_en < fin,
+            )
+            .group_by(Cotizacion.estado)
+            .all()
+        )
+    ]
+    cotizaciones_aceptadas = next(
+        (item["total"] for item in cotizaciones_por_estado if item["estado"] == "aceptada"),
+        0,
+    )
+    conversion_pct = (
+        round((cotizaciones_aceptadas / cotizaciones_total) * 100, 1)
+        if cotizaciones_total
+        else 0.0
+    )
+
+    pagos_periodo = (
+        db.query(Pago)
+        .filter(
+            Pago.eliminado_en.is_(None),
+            fecha_pago_efectiva >= desde,
+            fecha_pago_efectiva <= hasta,
+        )
+        .all()
+    )
+    pagos_por_estado: dict[str, int] = {}
+    for pago in pagos_periodo:
+        clave = pago.estado or "sin_estado"
+        pagos_por_estado[clave] = pagos_por_estado.get(clave, 0) + 1
+    pagos_por_estado_lista = [
+        {"estado": estado, "total": total} for estado, total in sorted(pagos_por_estado.items())
+    ]
+
+    nombres_metodo = {metodo.id: metodo.nombre for metodo in db.query(MetodoPago).all()}
+    ingresos_por_metodo: dict[str, dict] = {}
+    for pago in pagos_aprobados:
+        nombre = nombres_metodo.get(pago.metodo_pago_id, "Otro")
+        monto_eur, _ = convertir_monto_pago_a_eur(db, pago)
+        fila = ingresos_por_metodo.setdefault(
+            nombre, {"metodo": nombre, "pagos": 0, "ingresos_eur": 0.0}
+        )
+        fila["pagos"] += 1
+        fila["ingresos_eur"] = round(fila["ingresos_eur"] + monto_eur, 2)
+    pagos_por_metodo = sorted(
+        ingresos_por_metodo.values(),
+        key=lambda item: item["ingresos_eur"],
+        reverse=True,
+    )
+
+    ocupacion_viajes = []
+    viajes_periodo = (
+        db.query(Viaje)
+        .filter(
+            Viaje.eliminado_en.is_(None),
+            Viaje.fecha_salida >= inicio,
+            Viaje.fecha_salida < fin,
+        )
+        .order_by(Viaje.fecha_salida.desc())
+        .limit(40)
+        .all()
+    )
+    for viaje in viajes_periodo:
+        destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
+        cupo = calcular_disponibilidad_viaje(db, viaje)
+        total = int(cupo.get("total_asientos") or 0)
+        ocupados = int(cupo.get("asientos_ocupados") or 0)
+        porcentaje = round((ocupados / total) * 100, 1) if total else 0.0
+        ocupacion_viajes.append(
+            {
+                "id": viaje.id,
+                "destino": destino.nombre if destino else f"Viaje {viaje.id}",
+                "fecha_salida": viaje.fecha_salida.date().isoformat() if viaje.fecha_salida else None,
+                "estado": viaje.estado,
+                "asientos_ocupados": ocupados,
+                "asientos_total": total,
+                "porcentaje": porcentaje,
+            }
+        )
+
     return {
         "desde": desde.isoformat(),
         "hasta": hasta.isoformat(),
         "rango_disponible": _rango_disponible(db),
-        "limitaciones": {
-            "sin_genero_ni_edad": True,
-            "nota": (
-                "No se reporta por género ni rango de edad porque el maestro de "
-                "clientes no registra esos datos. El corte demográfico disponible "
-                "es adulto / menor según la reserva."
-            ),
-        },
         "resumen": {
             "clientes_nuevos": int(clientes_nuevos),
             "reservas": int(reservas_total),
@@ -403,8 +473,11 @@ def generar_reporte_estadistico(
             "pasajeros_adultos": pasajeros - pasajeros_menores,
             "pasajeros_menores": pasajeros_menores,
             "cotizaciones": int(cotizaciones_total),
+            "cotizaciones_aceptadas": int(cotizaciones_aceptadas),
+            "conversion_cotizaciones_pct": conversion_pct,
             "ingresos_aprobados_eur": round(ingresos_total, 2),
             "pagos_aprobados": len(pagos_aprobados),
+            "pagos_periodo": len(pagos_periodo),
         },
         "clientes_por_tipo": clientes_por_tipo,
         "reservas_por_estado": reservas_por_estado,
@@ -414,4 +487,8 @@ def generar_reporte_estadistico(
         "mes_mayor_movimiento": mes_mayor,
         "reservas_por_dia": reservas_por_dia,
         "reservas_del_periodo": reservas_del_periodo,
+        "cotizaciones_por_estado": cotizaciones_por_estado,
+        "pagos_por_estado": pagos_por_estado_lista,
+        "pagos_por_metodo": pagos_por_metodo,
+        "ocupacion_viajes": ocupacion_viajes,
     }

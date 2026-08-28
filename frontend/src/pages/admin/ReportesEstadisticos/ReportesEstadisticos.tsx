@@ -1,15 +1,48 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { CabeceraModulo, EtiquetaEstado, TablaDatos } from '../../../components/admin';
 import type { Columna } from '../../../components/admin';
 import Boton from '../../../components/ui/Boton/Boton';
 import BtnImprimirReporte from '../../../components/ui/BtnImprimirReporte/BtnImprimirReporte';
 import CabeceraReporteImpresion from '../../../components/ui/CabeceraReporteImpresion/CabeceraReporteImpresion';
 import { formatearEuro } from '../../../utils/formatoMoneda';
-import type { ReservaPeriodoReporte } from '../../../types/reportesEstadisticos';
+import type {
+  OcupacionViajeReporte,
+  ReservaPeriodoReporte,
+  ReservasDiaReporte,
+} from '../../../types/reportesEstadisticos';
 import { useReportesEstadisticos } from './hooks/useReportesEstadisticos';
 import { fechaHoyIso } from '../../../utils/validacionesFormulario';
 import '../Dashboard/Dashboard.css';
 import './ReportesEstadisticos.css';
+
+type TipoReporte =
+  | 'gerencial'
+  | 'destinos'
+  | 'reservas'
+  | 'ingresos'
+  | 'clientes'
+  | 'ocupacion'
+  | 'cotizaciones';
+
+const TIPOS: { id: TipoReporte; etiqueta: string }[] = [
+  { id: 'gerencial', etiqueta: 'Gerencial' },
+  { id: 'destinos', etiqueta: 'Destinos' },
+  { id: 'reservas', etiqueta: 'Reservas y pasajeros' },
+  { id: 'ingresos', etiqueta: 'Ingresos' },
+  { id: 'clientes', etiqueta: 'Clientes' },
+  { id: 'ocupacion', etiqueta: 'Ocupación' },
+  { id: 'cotizaciones', etiqueta: 'Cotizaciones' },
+];
+
+const TITULO_TIPO: Record<TipoReporte, string> = {
+  gerencial: 'Resumen gerencial',
+  destinos: 'Destinos más concurridos',
+  reservas: 'Reservas y pasajeros',
+  ingresos: 'Ingresos cobrados',
+  clientes: 'Clientes del periodo',
+  ocupacion: 'Ocupación de viajes',
+  cotizaciones: 'Cotizaciones',
+};
 
 function formatearFechaCorta(iso: string): string {
   const [anio, mes, dia] = iso.split('-');
@@ -39,6 +72,38 @@ function Kpi({
   );
 }
 
+function Barras({
+  filas,
+  vacio,
+}: {
+  filas: { clave: string | number; titulo: string; detalle?: string; valor: number; etiquetaValor: string }[];
+  vacio: string;
+}) {
+  const maximo = Math.max(1, ...filas.map((f) => f.valor));
+  if (filas.length === 0) {
+    return <p className="dashboard__vacio">{vacio}</p>;
+  }
+  return (
+    <div className="reportes-estadisticos__barras">
+      {filas.map((fila) => (
+        <div key={fila.clave} className="reportes-estadisticos__barra-fila">
+          <div className="reportes-estadisticos__barra-meta">
+            <span>{fila.titulo}</span>
+            {fila.detalle && <span>{fila.detalle}</span>}
+          </div>
+          <div className="reportes-estadisticos__barra-pista">
+            <div
+              className="reportes-estadisticos__barra-valor"
+              style={{ width: `${(fila.valor / maximo) * 100}%` }}
+            />
+          </div>
+          <span className="reportes-estadisticos__barra-total">{fila.etiquetaValor}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ReportesEstadisticos() {
   const {
     desde,
@@ -51,11 +116,10 @@ export default function ReportesEstadisticos() {
     aplicarConsulta,
     aplicarAtajo,
   } = useReportesEstadisticos();
+  const [tipo, setTipo] = useState<TipoReporte>('gerencial');
 
   const resumen = reporte?.resumen;
-  const maxReservasDestino = reporte?.destinos_mas_reservados[0]?.reservas ?? 1;
-  const maxCotizaciones = reporte?.destinos_mas_cotizados[0]?.cotizaciones ?? 1;
-  const maxReservasMes = Math.max(1, ...(reporte?.movimiento_mensual.map((m) => m.reservas) ?? [1]));
+  const esUnSoloDia = desde === hasta;
 
   const columnasReservas: Columna<ReservaPeriodoReporte>[] = useMemo(
     () => [
@@ -75,14 +139,51 @@ export default function ReportesEstadisticos() {
     [],
   );
 
-  const esUnSoloDia = desde === hasta;
+  const columnasDia: Columna<ReservasDiaReporte>[] = useMemo(
+    () => [
+      {
+        id: 'fecha',
+        encabezado: 'Día',
+        accessor: (fila) => formatearFechaCorta(fila.fecha),
+      },
+      { id: 'reservas', encabezado: 'Reservas', accessor: (fila) => fila.reservas },
+      { id: 'pasajeros', encabezado: 'Pasajeros', accessor: (fila) => fila.pasajeros },
+    ],
+    [],
+  );
+
+  const columnasOcupacion: Columna<OcupacionViajeReporte>[] = useMemo(
+    () => [
+      {
+        id: 'fecha',
+        encabezado: 'Salida',
+        accessor: (fila) => (fila.fecha_salida ? formatearFechaCorta(fila.fecha_salida) : '—'),
+      },
+      { id: 'destino', encabezado: 'Destino', accessor: (fila) => fila.destino },
+      {
+        id: 'estado',
+        encabezado: 'Estado',
+        accessor: (fila) => <EtiquetaEstado etiqueta={fila.estado} />,
+      },
+      {
+        id: 'cupo',
+        encabezado: 'Cupo',
+        accessor: (fila) => `${fila.asientos_ocupados} / ${fila.asientos_total}`,
+      },
+      {
+        id: 'pct',
+        encabezado: 'Ocupación',
+        accessor: (fila) => `${fila.porcentaje} %`,
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="reportes-estadisticos">
       <CabeceraModulo
-        migaja="Administración"
+        migaja="Administración / Reportes"
         titulo="Reportes estadísticos"
-        descripcion="Indicadores del negocio en un rango de fechas reales: clientes, destinos más concurridos, mes con más movimiento e ingresos cobrados."
         acciones={
           <BtnImprimirReporte
             etiqueta="Imprimir reporte"
@@ -130,14 +231,29 @@ export default function ReportesEstadisticos() {
         </div>
       </div>
 
+      <div className="reportes-estadisticos__tipos no-imprimir" role="tablist" aria-label="Tipo de reporte">
+        {TIPOS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={tipo === item.id}
+            className={`reportes-estadisticos__tipo ${tipo === item.id ? 'reportes-estadisticos__tipo--activo' : ''}`}
+            onClick={() => setTipo(item.id)}
+          >
+            {item.etiqueta}
+          </button>
+        ))}
+      </div>
+
       {reporte?.rango_disponible.desde && (
         <p className="reportes-estadisticos__rango">
-          Datos reales en el sistema:{' '}
-          {formatearFechaCorta(reporte.rango_disponible.desde)} —{' '}
+          Datos del{' '}
+          {formatearFechaCorta(reporte.rango_disponible.desde)} al{' '}
           {reporte.rango_disponible.hasta
             ? formatearFechaCorta(reporte.rango_disponible.hasta)
             : 'hoy'}
-          . El año 500 u otras fechas imposibles no se aceptan. Tampoco fechas futuras.
+          .
         </p>
       )}
 
@@ -146,8 +262,7 @@ export default function ReportesEstadisticos() {
       <div className="zona-imprimible">
         {reporte && (
           <CabeceraReporteImpresion
-            titulo="Reportes estadísticos — Travel BQTO"
-            subtitulo="Apoyo a la toma de decisiones del dueño de la agencia"
+            titulo={`${TITULO_TIPO[tipo]} — Travel BQTO`}
             filtroActivo={`${formatearFechaCorta(reporte.desde)} al ${formatearFechaCorta(reporte.hasta)}`}
             resumen={[
               { etiqueta: 'Clientes nuevos', valor: resumen?.clientes_nuevos ?? 0 },
@@ -161,152 +276,317 @@ export default function ReportesEstadisticos() {
           />
         )}
 
-        {reporte?.limitaciones.nota && (
-          <p className="reportes-estadisticos__nota">{reporte.limitaciones.nota}</p>
+        {tipo === 'gerencial' && (
+          <>
+            <div className="dashboard__kpis">
+              <Kpi
+                etiqueta="Clientes nuevos"
+                valor={cargando ? '…' : resumen?.clientes_nuevos ?? 0}
+                subtitulo="fichas registradas en el periodo"
+                colorAcento="info"
+              />
+              <Kpi
+                etiqueta="Reservas"
+                valor={cargando ? '…' : resumen?.reservas ?? 0}
+                subtitulo={`${resumen?.reservas_activas ?? 0} activas · ${resumen?.reservas_canceladas ?? 0} canceladas`}
+                colorAcento="primary"
+              />
+              <Kpi
+                etiqueta="Pasajeros"
+                valor={cargando ? '…' : resumen?.pasajeros ?? 0}
+                subtitulo={`${resumen?.pasajeros_adultos ?? 0} adultos · ${resumen?.pasajeros_menores ?? 0} menores`}
+                colorAcento="warning"
+              />
+              <Kpi
+                etiqueta="Ingresos cobrados"
+                valor={cargando ? '…' : formatearEuro(resumen?.ingresos_aprobados_eur ?? 0)}
+                subtitulo={`${resumen?.pagos_aprobados ?? 0} pagos aprobados`}
+                colorAcento="success"
+              />
+            </div>
+            {reporte?.mes_mayor_movimiento && (
+              <p className="reportes-estadisticos__destacado">
+                Mes con más movimiento:{' '}
+                <strong>{reporte.mes_mayor_movimiento.etiqueta}</strong>
+                {' · '}
+                {reporte.mes_mayor_movimiento.reservas} reservas,{' '}
+                {reporte.mes_mayor_movimiento.pasajeros} pasajeros,{' '}
+                {formatearEuro(reporte.mes_mayor_movimiento.ingresos_eur)} cobrados.
+              </p>
+            )}
+            <div className="dashboard__panel dashboard__panel--ancho-completo">
+              <div className="dashboard__panel-header">
+                <h2 className="dashboard__panel-titulo">Movimiento por mes</h2>
+              </div>
+              <Barras
+                vacio="No hay movimiento en el rango consultado."
+                filas={(reporte?.movimiento_mensual ?? []).map((mes) => ({
+                  clave: mes.mes,
+                  titulo: mes.etiqueta,
+                  detalle: `${mes.pasajeros} pasajeros · ${formatearEuro(mes.ingresos_eur)}`,
+                  valor: mes.reservas,
+                  etiquetaValor: String(mes.reservas),
+                }))}
+              />
+            </div>
+          </>
         )}
 
-        <div className="dashboard__kpis">
-          <Kpi
-            etiqueta="Clientes nuevos"
-            valor={cargando ? '…' : resumen?.clientes_nuevos ?? 0}
-            subtitulo="fichas registradas en el periodo"
-            colorAcento="info"
-          />
-          <Kpi
-            etiqueta="Reservas"
-            valor={cargando ? '…' : resumen?.reservas ?? 0}
-            subtitulo={`${resumen?.reservas_activas ?? 0} activas · ${resumen?.reservas_canceladas ?? 0} canceladas`}
-            colorAcento="primary"
-          />
-          <Kpi
-            etiqueta="Pasajeros"
-            valor={cargando ? '…' : resumen?.pasajeros ?? 0}
-            subtitulo={`${resumen?.pasajeros_adultos ?? 0} adultos · ${resumen?.pasajeros_menores ?? 0} menores`}
-            colorAcento="warning"
-          />
-          <Kpi
-            etiqueta="Ingresos cobrados"
-            valor={cargando ? '…' : formatearEuro(resumen?.ingresos_aprobados_eur ?? 0)}
-            subtitulo={`${resumen?.pagos_aprobados ?? 0} pagos aprobados`}
-            colorAcento="success"
-          />
-        </div>
-
-        {reporte?.mes_mayor_movimiento && (
-          <p className="reportes-estadisticos__destacado">
-            Mes con más movimiento:{' '}
-            <strong>{reporte.mes_mayor_movimiento.etiqueta}</strong>
-            {' · '}
-            {reporte.mes_mayor_movimiento.reservas} reservas,{' '}
-            {reporte.mes_mayor_movimiento.pasajeros} pasajeros,{' '}
-            {formatearEuro(reporte.mes_mayor_movimiento.ingresos_eur)} cobrados.
-          </p>
+        {tipo === 'destinos' && (
+          <div className="dashboard__fila-media">
+            <div className="dashboard__panel">
+              <div className="dashboard__panel-header">
+                <h2 className="dashboard__panel-titulo">Destinos más reservados</h2>
+              </div>
+              <Barras
+                vacio="Sin reservas activas en este rango."
+                filas={(reporte?.destinos_mas_reservados ?? []).map((destino) => ({
+                  clave: destino.id,
+                  titulo: destino.nombre,
+                  detalle: `${destino.pasajeros} pasajeros`,
+                  valor: destino.reservas,
+                  etiquetaValor: String(destino.reservas),
+                }))}
+              />
+            </div>
+            <div className="dashboard__panel">
+              <div className="dashboard__panel-header">
+                <h2 className="dashboard__panel-titulo">Destinos más cotizados</h2>
+              </div>
+              <Barras
+                vacio="Sin cotizaciones en este rango."
+                filas={(reporte?.destinos_mas_cotizados ?? []).map((destino) => ({
+                  clave: destino.id,
+                  titulo: destino.nombre,
+                  valor: destino.cotizaciones,
+                  etiquetaValor: String(destino.cotizaciones),
+                }))}
+              />
+            </div>
+          </div>
         )}
 
-        <div className="dashboard__fila-media">
-          <div className="dashboard__panel">
-            <div className="dashboard__panel-header">
-              <h2 className="dashboard__panel-titulo">Destinos más reservados</h2>
+        {tipo === 'reservas' && (
+          <>
+            <div className="dashboard__kpis">
+              <Kpi
+                etiqueta="Reservas"
+                valor={cargando ? '…' : resumen?.reservas ?? 0}
+                subtitulo={`${resumen?.reservas_activas ?? 0} activas · ${resumen?.reservas_canceladas ?? 0} canceladas`}
+              />
+              <Kpi
+                etiqueta="Pasajeros"
+                valor={cargando ? '…' : resumen?.pasajeros ?? 0}
+                subtitulo={`${resumen?.pasajeros_adultos ?? 0} adultos · ${resumen?.pasajeros_menores ?? 0} menores`}
+                colorAcento="warning"
+              />
             </div>
-            {!reporte || reporte.destinos_mas_reservados.length === 0 ? (
-              <p className="dashboard__vacio">Sin reservas activas en este rango.</p>
-            ) : (
-              <div className="reportes-estadisticos__barras">
-                {reporte.destinos_mas_reservados.map((destino) => (
-                  <div key={destino.id} className="reportes-estadisticos__barra-fila">
-                    <div className="reportes-estadisticos__barra-meta">
-                      <span>{destino.nombre}</span>
-                      <span>{destino.pasajeros} pasajeros</span>
-                    </div>
-                    <div className="reportes-estadisticos__barra-pista">
-                      <div
-                        className="reportes-estadisticos__barra-valor"
-                        style={{ width: `${(destino.reservas / maxReservasDestino) * 100}%` }}
-                      />
-                    </div>
-                    <span className="reportes-estadisticos__barra-total">{destino.reservas}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="dashboard__panel">
-            <div className="dashboard__panel-header">
-              <h2 className="dashboard__panel-titulo">Destinos más cotizados</h2>
-            </div>
-            {!reporte || reporte.destinos_mas_cotizados.length === 0 ? (
-              <p className="dashboard__vacio">Sin cotizaciones en este rango.</p>
-            ) : (
-              <div className="reportes-estadisticos__barras">
-                {reporte.destinos_mas_cotizados.map((destino) => (
-                  <div key={destino.id} className="reportes-estadisticos__barra-fila">
-                    <div className="reportes-estadisticos__barra-meta">
-                      <span>{destino.nombre}</span>
-                    </div>
-                    <div className="reportes-estadisticos__barra-pista">
-                      <div
-                        className="reportes-estadisticos__barra-valor"
-                        style={{ width: `${(destino.cotizaciones / maxCotizaciones) * 100}%` }}
-                      />
-                    </div>
-                    <span className="reportes-estadisticos__barra-total">{destino.cotizaciones}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="dashboard__panel dashboard__panel--ancho-completo">
-          <div className="dashboard__panel-header">
-            <h2 className="dashboard__panel-titulo">Movimiento por mes</h2>
-          </div>
-          {!reporte || reporte.movimiento_mensual.length === 0 ? (
-            <p className="dashboard__vacio">No hay movimiento en el rango consultado.</p>
-          ) : (
-            <div className="reportes-estadisticos__barras">
-              {reporte.movimiento_mensual.map((mes) => (
-                <div key={mes.mes} className="reportes-estadisticos__barra-fila">
-                  <div className="reportes-estadisticos__barra-meta">
-                    <span>{mes.etiqueta}</span>
-                    <span>
-                      {mes.pasajeros} pasajeros · {formatearEuro(mes.ingresos_eur)}
-                    </span>
-                  </div>
-                  <div className="reportes-estadisticos__barra-pista">
-                    <div
-                      className="reportes-estadisticos__barra-valor"
-                      style={{ width: `${(mes.reservas / maxReservasMes) * 100}%` }}
-                    />
-                  </div>
-                  <span className="reportes-estadisticos__barra-total">{mes.reservas}</span>
+            <div className="dashboard__fila-media">
+              <div className="dashboard__panel">
+                <div className="dashboard__panel-header">
+                  <h2 className="dashboard__panel-titulo">Reservas por estado</h2>
                 </div>
-              ))}
+                <Barras
+                  vacio="Sin reservas en este rango."
+                  filas={(reporte?.reservas_por_estado ?? []).map((item) => ({
+                    clave: item.estado ?? 'estado',
+                    titulo: item.estado ?? '—',
+                    valor: item.total,
+                    etiquetaValor: String(item.total),
+                  }))}
+                />
+              </div>
+              <div className="dashboard__panel">
+                <div className="dashboard__panel-header">
+                  <h2 className="dashboard__panel-titulo">Reservas por día</h2>
+                </div>
+                <TablaDatos
+                  columnas={columnasDia}
+                  datos={reporte?.reservas_por_dia ?? []}
+                  cargando={cargando}
+                  mensajeVacio="No hay reservas diarias en el rango."
+                  idFila={(fila) => fila.fecha}
+                />
+              </div>
             </div>
-          )}
-        </div>
+            <div className="dashboard__panel dashboard__panel--ancho-completo">
+              <div className="dashboard__panel-header">
+                <h2 className="dashboard__panel-titulo">
+                  {esUnSoloDia
+                    ? `Reservas del ${formatearFechaCorta(desde)}`
+                    : 'Reservas del periodo'}
+                </h2>
+              </div>
+              <TablaDatos
+                columnas={columnasReservas}
+                datos={reporte?.reservas_del_periodo ?? []}
+                cargando={cargando}
+                mensajeVacio={
+                  esUnSoloDia
+                    ? 'No hay reservas en ese día.'
+                    : 'No hay reservas en el rango seleccionado.'
+                }
+                idFila={(fila) => fila.id}
+              />
+            </div>
+          </>
+        )}
 
-        <div className="dashboard__panel dashboard__panel--ancho-completo">
-          <div className="dashboard__panel-header">
-            <h2 className="dashboard__panel-titulo">
-              {esUnSoloDia
-                ? `Reservas del ${formatearFechaCorta(desde)}`
-                : 'Reservas del periodo'}
-            </h2>
+        {tipo === 'ingresos' && (
+          <>
+            <div className="dashboard__kpis">
+              <Kpi
+                etiqueta="Ingresos cobrados"
+                valor={cargando ? '…' : formatearEuro(resumen?.ingresos_aprobados_eur ?? 0)}
+                subtitulo="solo pagos aprobados, en euros"
+                colorAcento="success"
+              />
+              <Kpi
+                etiqueta="Pagos aprobados"
+                valor={cargando ? '…' : resumen?.pagos_aprobados ?? 0}
+                subtitulo={`${resumen?.pagos_periodo ?? 0} reportes en el periodo`}
+                colorAcento="info"
+              />
+            </div>
+            <div className="dashboard__fila-media">
+              <div className="dashboard__panel">
+                <div className="dashboard__panel-header">
+                  <h2 className="dashboard__panel-titulo">Por método de pago</h2>
+                </div>
+                <Barras
+                  vacio="Sin pagos aprobados en este rango."
+                  filas={(reporte?.pagos_por_metodo ?? []).map((item) => ({
+                    clave: item.metodo,
+                    titulo: item.metodo,
+                    detalle: `${item.pagos} pagos`,
+                    valor: item.ingresos_eur,
+                    etiquetaValor: formatearEuro(item.ingresos_eur),
+                  }))}
+                />
+              </div>
+              <div className="dashboard__panel">
+                <div className="dashboard__panel-header">
+                  <h2 className="dashboard__panel-titulo">Pagos por estado</h2>
+                </div>
+                <Barras
+                  vacio="Sin pagos en este rango."
+                  filas={(reporte?.pagos_por_estado ?? []).map((item) => ({
+                    clave: item.estado ?? 'estado',
+                    titulo: item.estado ?? '—',
+                    valor: item.total,
+                    etiquetaValor: String(item.total),
+                  }))}
+                />
+              </div>
+            </div>
+            <div className="dashboard__panel dashboard__panel--ancho-completo">
+              <div className="dashboard__panel-header">
+                <h2 className="dashboard__panel-titulo">Ingresos por mes</h2>
+              </div>
+              <Barras
+                vacio="No hay ingresos en el rango."
+                filas={(reporte?.movimiento_mensual ?? []).map((mes) => ({
+                  clave: mes.mes,
+                  titulo: mes.etiqueta,
+                  detalle: `${mes.reservas} reservas`,
+                  valor: mes.ingresos_eur,
+                  etiquetaValor: formatearEuro(mes.ingresos_eur),
+                }))}
+              />
+            </div>
+          </>
+        )}
+
+        {tipo === 'clientes' && (
+          <>
+            <div className="dashboard__kpis">
+              <Kpi
+                etiqueta="Clientes nuevos"
+                valor={cargando ? '…' : resumen?.clientes_nuevos ?? 0}
+                subtitulo="fichas creadas en el periodo"
+                colorAcento="info"
+              />
+            </div>
+            <div className="dashboard__panel dashboard__panel--ancho-completo">
+              <div className="dashboard__panel-header">
+                <h2 className="dashboard__panel-titulo">Por tipo de cliente</h2>
+              </div>
+              <Barras
+                vacio="No hay clientes nuevos en este rango."
+                filas={(reporte?.clientes_por_tipo ?? []).map((item) => ({
+                  clave: item.tipo ?? 'tipo',
+                  titulo: item.tipo === 'natural' ? 'Natural' : item.tipo === 'juridico' ? 'Jurídico' : item.tipo ?? '—',
+                  valor: item.total,
+                  etiquetaValor: String(item.total),
+                }))}
+              />
+            </div>
+          </>
+        )}
+
+        {tipo === 'ocupacion' && (
+          <div className="dashboard__panel dashboard__panel--ancho-completo">
+            <div className="dashboard__panel-header">
+              <h2 className="dashboard__panel-titulo">Cupo de viajes con salida en el periodo</h2>
+            </div>
+            <TablaDatos
+              columnas={columnasOcupacion}
+              datos={reporte?.ocupacion_viajes ?? []}
+              cargando={cargando}
+              mensajeVacio="No hay viajes con fecha de salida en ese rango (hasta hoy)."
+              idFila={(fila) => fila.id}
+            />
           </div>
-          <TablaDatos
-            columnas={columnasReservas}
-            datos={reporte?.reservas_del_periodo ?? []}
-            cargando={cargando}
-            mensajeVacio={
-              esUnSoloDia
-                ? 'No hay reservas en ese día.'
-                : 'No hay reservas en el rango seleccionado.'
-            }
-            idFila={(fila) => fila.id}
-          />
-        </div>
+        )}
+
+        {tipo === 'cotizaciones' && (
+          <>
+            <div className="dashboard__kpis">
+              <Kpi
+                etiqueta="Cotizaciones"
+                valor={cargando ? '…' : resumen?.cotizaciones ?? 0}
+                subtitulo={`${resumen?.cotizaciones_aceptadas ?? 0} aceptadas`}
+                colorAcento="primary"
+              />
+              <Kpi
+                etiqueta="Conversión"
+                valor={cargando ? '…' : `${resumen?.conversion_cotizaciones_pct ?? 0} %`}
+                subtitulo="aceptadas sobre el total del periodo"
+                colorAcento="success"
+              />
+            </div>
+            <div className="dashboard__fila-media">
+              <div className="dashboard__panel">
+                <div className="dashboard__panel-header">
+                  <h2 className="dashboard__panel-titulo">Por estado</h2>
+                </div>
+                <Barras
+                  vacio="Sin cotizaciones en este rango."
+                  filas={(reporte?.cotizaciones_por_estado ?? []).map((item) => ({
+                    clave: item.estado ?? 'estado',
+                    titulo: item.estado ?? '—',
+                    valor: item.total,
+                    etiquetaValor: String(item.total),
+                  }))}
+                />
+              </div>
+              <div className="dashboard__panel">
+                <div className="dashboard__panel-header">
+                  <h2 className="dashboard__panel-titulo">Destinos más cotizados</h2>
+                </div>
+                <Barras
+                  vacio="Sin cotizaciones en este rango."
+                  filas={(reporte?.destinos_mas_cotizados ?? []).map((destino) => ({
+                    clave: destino.id,
+                    titulo: destino.nombre,
+                    valor: destino.cotizaciones,
+                    etiquetaValor: String(destino.cotizaciones),
+                  }))}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

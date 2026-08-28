@@ -138,7 +138,6 @@ export default function Clientes() {
         migaja="TravelBqto / Admin"
         titulo="Clientes"
         contador={total}
-        descripcion="Fichas de clientes captadas por ATC o administración. Sin registro público por ahora."
         acciones={
           puedeCrearCliente ? (
             <Boton variante="primario" tamano="sm" onClick={abrirCrear}>

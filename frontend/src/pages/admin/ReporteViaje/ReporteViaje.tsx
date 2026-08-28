@@ -207,7 +207,8 @@ export default function ReporteViaje() {
   return (
     <div className="modulo-admin">
       <CabeceraModulo
-        titulo="Reporte de viaje"
+        migaja="Administración / Reportes"
+        titulo="Reporte operativo de viaje"
         descripcion="Consulta quiénes viajan, sus asientos y el estado de pago de cada reserva."
       />
 

@@ -53,7 +53,7 @@ export default function CabeceraReporteImpresion({
       {children}
 
       <p className="reporte-impresion__pie">
-        Documento generado por TravelBqto — Uso interno para toma de decisiones estratégicas.
+        Documento generado por Travel BQTO.
       </p>
     </div>
   );
