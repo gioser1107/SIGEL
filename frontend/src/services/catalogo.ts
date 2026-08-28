@@ -99,6 +99,7 @@ export function destinoComoViaje(destino: DestinoCatalogo): ViajeAgenda {
     titulo: destino.nombre,
     ubicacion: destino.descripcion?.slice(0, 80) ?? 'Venezuela',
     precio: destino.precio_base_eur ?? 0,
+    recargo_menor_eur: 0,
     imagen: destino.imagen,
     hora: 'Consultar',
     cupos: 0,

@@ -4,6 +4,7 @@ import { ETIQUETA_ESTADO_PAGO } from '../../constants';
 import { etiquetaMetodoCorta } from '../../../Reservas/Pagos/utils/metodosPagoUi';
 import type { FiltrosBandeja } from '../constants';
 import { FILTROS_BANDEJA_VACIOS } from '../constants';
+import { fechaHoyIso } from '../../../../../utils/validacionesFormulario';
 
 interface FiltrosBandejaPagosProps {
   filtros: FiltrosBandeja;
@@ -55,6 +56,7 @@ export default function FiltrosBandejaPagos({
         </select>
         <input
           type="date"
+          max={fechaHoyIso()}
           className="drawer-form__input"
           value={filtros.fecha_desde}
           onChange={(e) => onChange({ ...filtros, fecha_desde: e.target.value })}
@@ -62,6 +64,7 @@ export default function FiltrosBandejaPagos({
         />
         <input
           type="date"
+          max={fechaHoyIso()}
           className="drawer-form__input"
           value={filtros.fecha_hasta}
           onChange={(e) => onChange({ ...filtros, fecha_hasta: e.target.value })}

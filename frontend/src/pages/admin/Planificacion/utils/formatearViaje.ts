@@ -1,5 +1,6 @@
 // Convierte la fecha ISO a formato legible dd/mm/aaaa hh:mm (zona VE)
-export function formatFecha(iso: string): string {
+export function formatFecha(iso: string | null | undefined): string {
+  if (!iso) return '—';
   const d = new Date(iso);
   return (
     d.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' }) +

@@ -1,4 +1,5 @@
 import { ACCIONES, MODULOS } from '../constants';
+import { fechaHoyIso } from '../../../../utils/validacionesFormulario';
 
 interface PropsBarraFiltros {
   busqueda: string;
@@ -68,6 +69,7 @@ export default function BarraFiltrosBitacora({
 
         <input
           type="date"
+          max={fechaHoyIso()}
           className="bitacora__filtro bitacora__filtro--fecha"
           value={fechaDesde}
           onChange={(e) => onFechaDesdeChange(e.target.value)}
@@ -75,6 +77,7 @@ export default function BarraFiltrosBitacora({
         />
         <input
           type="date"
+          max={fechaHoyIso()}
           className="bitacora__filtro bitacora__filtro--fecha"
           value={fechaHasta}
           onChange={(e) => onFechaHastaChange(e.target.value)}

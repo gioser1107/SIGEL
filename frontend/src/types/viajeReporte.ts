@@ -49,7 +49,7 @@ export interface ReporteViaje {
     fecha_salida?: string | null;
     guia_nombre?: string | null;
     estado?: string | null;
-    unidad_nombre?: string | null;
+    unidad_placa?: string | null;
   };
   ocupacion: {
     total_asientos: number;

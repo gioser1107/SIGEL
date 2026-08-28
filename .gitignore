@@ -8,7 +8,9 @@ frontend/dist-ssr/
 .env
 .env.*
 !.env.example
+!.env.production
 !frontend/.env.example
+!frontend/.env.production
 
 # Sistema operativo
 .DS_Store

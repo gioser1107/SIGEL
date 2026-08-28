@@ -1,5 +1,6 @@
 import type { Moneda } from '../../../../../types/pagos';
 import type { FormularioTasa } from '../constants';
+import { fechaHoyIso } from '../../../../../utils/validacionesFormulario';
 
 interface FormularioTasaCamposProps {
   form: FormularioTasa;
@@ -17,6 +18,7 @@ export default function FormularioTasaCampos({ form, monedas, onChange }: Formul
           type="date"
           className="drawer-form__input"
           value={form.fecha}
+          max={fechaHoyIso()}
           onChange={(e) => onChange({ ...form, fecha: e.target.value })}
         />
       </div>

@@ -21,7 +21,6 @@ from modelos.reservas_modelo import Reserva
 from modelos.viaje_modelo import Viaje
 
 ANIO_MINIMO = 2000
-ANIO_MAXIMO_ADELANTE = 1
 DIAS_MAXIMOS_RANGO = 366 * 10
 ESTADOS_RESERVA_ACTIVOS = ("pendiente", "confirmada", "abonada")
 MESES_ES = (
@@ -68,7 +67,6 @@ def validar_rango_fechas(desde: Optional[date], hasta: Optional[date]) -> tuple[
     if hasta is None:
         hasta = hoy
 
-    anio_maximo = hoy.year + ANIO_MAXIMO_ADELANTE
     if desde.year < ANIO_MINIMO or hasta.year < ANIO_MINIMO:
         raise HTTPException(
             status_code=400,
@@ -77,13 +75,10 @@ def validar_rango_fechas(desde: Optional[date], hasta: Optional[date]) -> tuple[
                 f"(desde {ANIO_MINIMO} en adelante), no años imposibles."
             ),
         )
-    if desde.year > anio_maximo or hasta.year > anio_maximo:
+    if desde > hoy or hasta > hoy:
         raise HTTPException(
             status_code=400,
-            detail=(
-                f"No se puede consultar un año futuro fuera de {anio_maximo}. "
-                "El rango debe coincidir con datos reales del sistema."
-            ),
+            detail="No se admiten fechas futuras en reportes. El rango debe llegar como máximo a hoy.",
         )
     if desde > hasta:
         raise HTTPException(

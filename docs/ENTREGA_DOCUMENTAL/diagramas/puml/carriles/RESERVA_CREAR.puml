@@ -1,0 +1,102 @@
+@startuml
+title Actividad — Registrar reserva (portal del cliente)
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam roundcorner 15
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  StartColor black
+  EndColor black
+  ArrowColor black
+  FontColor black
+}
+skinparam partition {
+  BorderColor black
+  FontColor black
+  BackgroundColor white
+  FontStyle bold
+}
+
+|Cliente|
+start
+:Seleccionar el viaje;
+:Indicar titular, acompañantes\ny puntos de recogida;
+:Seleccionar los asientos;
+:Pulsar Confirmar;
+
+|Interfaz|
+:Validar el formulario;
+if (¿Datos válidos?) then (sí)
+  :Enviar la solicitud\ncon el token;
+else (no)
+  :Mostrar campos a corregir;
+  |Cliente|
+  :Corregir el formulario;
+  stop
+endif
+
+|Controlador|
+:Validar token, rol y perfil;
+if (¿Sesión válida?) then (sí)
+  :Solicitar crear la reserva;
+else (no)
+  |Interfaz|
+  :Mostrar error de acceso;
+  |Cliente|
+  :Visualizar el rechazo;
+  stop
+endif
+
+|Modelo|
+:Pedir datos actuales;
+
+|MySQL|
+:Consultar y bloquear\nviaje, cupo y asientos;
+
+|Modelo|
+:Evaluar reglas de negocio;
+if (¿Reglas cumplidas?) then (sí)
+  :Preparar reserva y viajeros;
+else (no)
+  |Interfaz|
+  :Mostrar el error;
+  |Cliente|
+  :Visualizar el motivo;
+  stop
+endif
+
+|MySQL|
+:Guardar reserva, viajeros\ny asientos;
+if (¿Sin conflicto?) then (sí)
+  :Confirmar los cambios;
+else (no)
+  :Deshacer los cambios;
+  |Interfaz|
+  :Mostrar cupo o asiento tomado;
+  |Cliente|
+  :Visualizar el resultado;
+  stop
+endif
+
+|Controlador|
+:Registrar bitácora\n(módulo reservas, INSERT, id);
+
+|MySQL|
+:Guardar la bitácora;
+
+|Controlador|
+:Responder reserva_id;
+
+|Interfaz|
+:Mostrar confirmación RES;
+
+|Cliente|
+:Visualizar el resultado;
+stop
+@enduml

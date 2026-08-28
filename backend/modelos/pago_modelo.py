@@ -669,6 +669,7 @@ def listar_todos_los_pagos(
     pagina: int = 1,
     limite: int = 10,
 ) -> dict:
+    ValidadorEntrada.rango_fechas_no_futuro(fecha_desde, fecha_hasta, "fecha_desde", "fecha_hasta")
     consulta = db.query(Pago).filter(Pago.eliminado_en.is_(None))
 
     if reserva_id is not None:
@@ -864,6 +865,11 @@ def registrar_pago_reserva(
     comprobante_url = normalizar_comprobante_url(comprobante_url)
     validar_monto_pago_reserva(db, reserva, metodo_pago_id, tasa_id, monto)
     telefono_origen = ValidadorEntrada.telefono(telefono_origen, "telefono_origen") or None
+    fecha_pago = ValidadorEntrada.fecha_no_futura(
+        fecha_pago or date.today(),
+        "fecha_pago",
+        obligatorio=True,
+    )
 
     ahora = datetime.now()
     estado_inicial = determinar_estado_inicial_pago(metodo.codigo, registro_desde_admin)
@@ -950,7 +956,7 @@ def actualizar_pago_reserva(
             pago.validado_en = datetime.now()
 
     if fecha_pago is not None:
-        pago.fecha_pago = fecha_pago
+        pago.fecha_pago = ValidadorEntrada.fecha_no_futura(fecha_pago, "fecha_pago")
 
     if referencia is not None:
         pago.referencia = referencia

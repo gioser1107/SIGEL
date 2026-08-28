@@ -8,6 +8,9 @@ import {
   requierePuntoVenta,
   requiereTelefono,
 } from './utils/metodosPagoUi';
+import { esFechaFutura, fechaHoyIso, MENSAJE_FECHA_NO_FUTURA } from '../../../../utils/validacionesFormulario';
+
+export { fechaHoyIso };
 
 export const MODULO_PAGOS = 'reportes_pago';
 
@@ -23,10 +26,6 @@ export const ETIQUETA_TIPO_PAGO: Record<TipoPago, string> = {
 };
 
 export const DEPOSITO_MINIMO_EUR = 5;
-
-export function fechaHoyIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function formularioPagoVacio(fechaHoy: string): FormularioPagoDraft {
   return {
@@ -99,6 +98,7 @@ export function validarFormularioPago(
 
   const soloMonto = esEfectivoBs(metodo) || esEfectivoUsd(metodo);
   if (!soloMonto && !form.fecha_pago) return 'Indica la fecha de pago.';
+  if (form.fecha_pago && esFechaFutura(form.fecha_pago)) return MENSAJE_FECHA_NO_FUTURA;
 
   if (requiereBancos(codigo)) {
     if (!form.banco_origen_id) return 'Selecciona el banco de origen.';

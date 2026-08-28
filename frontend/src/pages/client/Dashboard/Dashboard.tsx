@@ -32,8 +32,15 @@ export default function Dashboard() {
     precioPorAsiento: 25,
   };
 
-  const manejarEnvioPago = (datos: InformacionPago) => {
-    setDatosPago(datos);
+  const manejarEnvioPago = (datos: {
+    metodo: string;
+    banco: string;
+    referencia: string;
+    monto: string;
+    fecha: string;
+    comprobanteArchivo: File | null;
+  }) => {
+    setDatosPago({ ...datos, cantidadPuestos: 1 });
     setPaso(2);
   };
 
@@ -129,7 +136,15 @@ export default function Dashboard() {
       {/* ═══ CONTENIDO DE CADA PASO ═══ */}
       <div className="client-dashboard__content-area">
         {paso === 1 && (
-          <FormularioPago onSubmit={manejarEnvioPago} />
+          <FormularioPago
+            totalEstimado={detallesViaje.precioPorAsiento}
+            adultos={1}
+            menores={0}
+            precioBase={detallesViaje.precioPorAsiento}
+            recargoMenor={0}
+            onSubmit={manejarEnvioPago}
+            onBack={() => navegar(-1)}
+          />
         )}
 
         {paso === 2 && datosPago && (

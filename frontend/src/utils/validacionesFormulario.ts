@@ -21,6 +21,21 @@ export function sanitizarSoloDigitos(valor: string, maximo = 20): string {
   return valor.replace(/\D/g, '').slice(0, maximo);
 }
 
+export function fechaHoyIso(): string {
+  const ahora = new Date();
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  return `${ahora.getFullYear()}-${mes}-${dia}`;
+}
+
+/** Compara YYYY-MM-DD contra hoy local. */
+export function esFechaFutura(valor: string | null | undefined): boolean {
+  if (!valor) return false;
+  return valor.slice(0, 10) > fechaHoyIso();
+}
+
+export const MENSAJE_FECHA_NO_FUTURA = 'No se admiten fechas futuras.';
+
 export function esNombreValido(texto: string): boolean {
   const limpio = texto.trim().replace(/\s+/g, ' ');
   if (limpio.length < 2 || limpio.length > 80) return false;

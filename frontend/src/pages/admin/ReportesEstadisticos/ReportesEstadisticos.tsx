@@ -7,6 +7,7 @@ import CabeceraReporteImpresion from '../../../components/ui/CabeceraReporteImpr
 import { formatearEuro } from '../../../utils/formatoMoneda';
 import type { ReservaPeriodoReporte } from '../../../types/reportesEstadisticos';
 import { useReportesEstadisticos } from './hooks/useReportesEstadisticos';
+import { fechaHoyIso } from '../../../utils/validacionesFormulario';
 import '../Dashboard/Dashboard.css';
 import './ReportesEstadisticos.css';
 
@@ -97,7 +98,7 @@ export default function ReportesEstadisticos() {
             id="reporte-desde"
             type="date"
             min="2000-01-01"
-            max="2027-12-31"
+            max={fechaHoyIso()}
             value={desde}
             onChange={(e) => setDesde(e.target.value)}
           />
@@ -108,7 +109,7 @@ export default function ReportesEstadisticos() {
             id="reporte-hasta"
             type="date"
             min="2000-01-01"
-            max="2027-12-31"
+            max={fechaHoyIso()}
             value={hasta}
             onChange={(e) => setHasta(e.target.value)}
           />
@@ -136,7 +137,7 @@ export default function ReportesEstadisticos() {
           {reporte.rango_disponible.hasta
             ? formatearFechaCorta(reporte.rango_disponible.hasta)
             : 'hoy'}
-          . El año 500 u otras fechas imposibles no se aceptan.
+          . El año 500 u otras fechas imposibles no se aceptan. Tampoco fechas futuras.
         </p>
       )}
 

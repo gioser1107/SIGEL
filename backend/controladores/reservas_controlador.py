@@ -129,8 +129,6 @@ def _resolver_cliente_id_pasajero(
             detail="Indica cliente_id o los datos completos del cliente en 'cliente'",
         )
     cliente = registrar_cliente_para_reserva(db, datos.cliente, usuario_actual_id)
-    db.commit()
-    db.refresh(cliente)
     return cliente.id
 
 

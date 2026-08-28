@@ -1,0 +1,92 @@
+@startuml
+title Actividad — Crear cotización
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam roundcorner 15
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  StartColor black
+  EndColor black
+  ArrowColor black
+  FontColor black
+}
+skinparam partition {
+  BorderColor black
+  FontColor black
+  BackgroundColor white
+  FontStyle bold
+}
+
+|Administrador|
+start
+:Abrir nueva cotización;
+:Indicar cliente, destino,\nrequisitos, precio y vigencia;
+:Pulsar Guardar;
+
+|Interfaz|
+:Validar el formulario;
+if (¿Datos válidos?) then (sí)
+  :Enviar la solicitud\ncon el token;
+else (no)
+  :Mostrar campos a corregir;
+  |Administrador|
+  :Corregir el formulario;
+  stop
+endif
+
+|Controlador|
+:Validar token y permiso\ncrear_cotizaciones;
+if (¿Sesión y permiso válidos?) then (sí)
+  :Solicitar crear la cotización;
+else (no)
+  |Interfaz|
+  :Mostrar error de acceso;
+  |Administrador|
+  :Visualizar el rechazo;
+  stop
+endif
+
+|Modelo|
+:Pedir cliente y destino;
+
+|MySQL|
+:Consultar cliente y destino vigentes;
+
+|Modelo|
+:Evaluar existencia y datos;
+if (¿Cliente y destino existen?) then (sí)
+  :Preparar la cotización;
+else (no)
+  |Interfaz|
+  :Mostrar el error;
+  |Administrador|
+  :Visualizar el motivo;
+  stop
+endif
+
+|MySQL|
+:Guardar la cotización;
+:Confirmar los cambios;
+
+|Controlador|
+:Registrar bitácora\n(módulo cotizaciones, INSERT, id);
+
+|MySQL|
+:Guardar la bitácora;
+
+|Controlador|
+:Responder la cotización creada;
+
+|Interfaz|
+:Mostrar confirmación;
+
+|Administrador|
+:Visualizar el resultado;
+stop
+@enduml

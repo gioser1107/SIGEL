@@ -1,4 +1,5 @@
 import { fechaHoyIso } from '../constants';
+import { esFechaFutura, MENSAJE_FECHA_NO_FUTURA } from '../../../../utils/validacionesFormulario';
 
 export interface FormularioTasa {
   fecha: string;
@@ -19,6 +20,7 @@ export function validarFormularioTasa(form: FormularioTasa): string | null {
   const valor = Number(form.valor);
   if (!form.fecha || !form.moneda_id) return 'Completa fecha y moneda.';
   if (!form.fecha.match(/^\d{4}-\d{2}-\d{2}$/)) return 'Fecha no válida.';
+  if (esFechaFutura(form.fecha)) return MENSAJE_FECHA_NO_FUTURA;
   if (!Number.isFinite(valor) || valor <= 0) return 'El valor debe ser mayor a cero.';
   return null;
 }

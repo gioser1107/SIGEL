@@ -4,6 +4,7 @@ import Entrada from '../../ui/Entrada/Entrada';
 import type { Banco } from '../../../types/pagos';
 import { formatearBs, formatearEuro } from '../../../utils/formatoMoneda';
 import { DEPOSITO_MINIMO_EUR } from '../../../types/pagosPortal';
+import { esFechaFutura, fechaHoyIso, MENSAJE_FECHA_NO_FUTURA } from '../../../utils/validacionesFormulario';
 import './FormularioPago.css';
 
 interface FormularioPagoProps {
@@ -76,7 +77,7 @@ export default function FormularioPago({
   const [banco, setBanco] = useState('');
   const [referencia, setReferencia] = useState('');
   const [monto, setMonto] = useState('');
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
+  const [fecha, setFecha] = useState(fechaHoyIso());
   const [comprobanteArchivo, setComprobanteArchivo] = useState<File | null>(null);
   const [urlVistaPrevia, setUrlVistaPrevia] = useState<string | null>(null);
   const [estaArrastrando, setEstaArrastrando] = useState(false);
@@ -169,6 +170,10 @@ export default function FormularioPago({
     }
     if (!comprobanteArchivo) {
       alert('Por favor suba el comprobante o captura del pago.');
+      return;
+    }
+    if (esFechaFutura(fecha)) {
+      alert(MENSAJE_FECHA_NO_FUTURA);
       return;
     }
     onSubmit({ metodo, banco, referencia, monto, fecha, comprobanteArchivo });
@@ -374,6 +379,7 @@ export default function FormularioPago({
           <Entrada
             etiqueta="Fecha de Transacción"
             type="date"
+            max={fechaHoyIso()}
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
             required

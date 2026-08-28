@@ -1,0 +1,53 @@
+@startuml
+title Arquitectura de componentes SIGEL
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam component {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam package {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam database {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam arrow {
+  Color black
+}
+
+package "Frontend React" {
+  [Portal público]
+  [Portal cliente]
+  [Administración]
+}
+
+package "Backend FastAPI" {
+  [Autenticación y RBAC]
+  [Catálogo, clientes y viajes]
+  [Cotizaciones, reservas y pagos]
+  [Abordaje y reportes]
+  [Bitácora]
+}
+
+database "bd : MySQL" as DB
+
+[Portal público] --> [Catálogo, clientes y viajes]
+[Portal cliente] --> [Autenticación y RBAC]
+[Portal cliente] --> [Cotizaciones, reservas y pagos]
+[Administración] --> [Autenticación y RBAC]
+[Administración] --> [Catálogo, clientes y viajes]
+[Administración] --> [Cotizaciones, reservas y pagos]
+[Administración] --> [Abordaje y reportes]
+[Administración] --> [Bitácora]
+[Autenticación y RBAC] --> DB
+[Catálogo, clientes y viajes] --> DB
+[Cotizaciones, reservas y pagos] --> DB
+[Abordaje y reportes] --> DB
+[Bitácora] --> DB
+@enduml

@@ -1,5 +1,7 @@
 import type { SeccionPagos } from './types';
 
+export { fechaHoyIso } from '../../../utils/validacionesFormulario';
+
 export const MODULO = 'reportes_pago';
 
 export interface MetaSeccionPagos {
@@ -80,7 +82,3 @@ export const CODIGOS_METODO_SUGERIDOS = [
   'tpv',
   'otro',
 ];
-
-export function fechaHoyIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}

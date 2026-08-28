@@ -2,7 +2,6 @@ import { useState, useEffect, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CabeceraModulo } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
-import { obtenerParadas } from '../../../../services/viajes';
 import { listarClientesParaSelect } from '../../../../services/clientes';
 import {
   crearReserva,
@@ -11,9 +10,8 @@ import {
   eliminarReserva,
   obtenerViajesDisponiblesReserva,
 } from '../../../../services/reservas';
-import type { Parada } from '../../../../types/viaje';
 import type { Cliente } from '../../../../types/cliente';
-import type { PasajeroDraft, ViajeDisponibleReserva } from '../../../../types/reservas';
+import type { CrearPasajeroDTO, PasajeroDraft, ViajeDisponibleReserva } from '../../../../types/reservas';
 import PasoViajeCliente from './components/PasoViajeCliente';
 import PasoPasajeros from './components/PasoPasajeros';
 import PasoAsientos from './components/PasoAsientos';
@@ -37,8 +35,6 @@ export default function CrearReserva() {
   const [pasajeros, setPasajeros] = useState<PasajeroDraft[]>([]);
   const [asientosSeleccionados, setAsientosSeleccionados] = useState<number[]>([]);
   const [reservaId, setReservaId] = useState<number | null>(null);
-
-  const [paradas, setParadas] = useState<Parada[]>([]);
   const [titularPuntoRecogidaId, setTitularPuntoRecogidaId] = useState<number | undefined>();
 
   async function recargarViajesDisponibles() {
@@ -66,22 +62,6 @@ export default function CrearReserva() {
     }
     cargarInicial();
   }, []);
-
-  useEffect(() => {
-    async function cargarParadas() {
-      if (viajeSeleccionado) {
-        try {
-          const paradasData = await obtenerParadas(viajeSeleccionado.id);
-          setParadas(paradasData);
-        } catch (err) {
-          console.error("Error cargando paradas", err);
-        }
-      } else {
-        setParadas([]);
-      }
-    }
-    cargarParadas();
-  }, [viajeSeleccionado]);
 
   function esErrorViajeNoDisponible(err: unknown): boolean {
     const detalle = err instanceof Error ? err.message : String(err);
@@ -130,13 +110,13 @@ export default function CrearReserva() {
       });
       reservaIdCreada = res.reserva.id;
 
-      const todosLosPasajeros = [
+      const todosLosPasajeros: CrearPasajeroDTO[] = [
         {
           cliente_id: clienteSeleccionado.cliente_id,
           es_menor: false,
           precio_pasajero_eur: viajeSeleccionado.precio_base_eur || 0,
           recargo_eur: 0,
-          notas_tarifa: null as string | null,
+          notas_tarifa: null,
           ocupa_asiento: true,
           punto_recogida_id: titularPuntoRecogidaId,
         },

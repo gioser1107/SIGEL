@@ -1,0 +1,87 @@
+@startuml
+title Secuencia — Registrar pago desde el portal
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam sequence {
+  ArrowColor black
+  ActorBorderColor black
+  ActorBackgroundColor white
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ParticipantBackgroundColor white
+  GroupBorderColor black
+  GroupBackgroundColor white
+}
+skinparam database {
+  BackgroundColor white
+  BorderColor black
+}
+hide footbox
+autonumber
+
+actor "Cliente" as cliente
+boundary "vistaPago :\nInterfazPago" as vista
+control "ctrlPago :\nPagoControlador" as ctrl
+control "modeloPago :\nPagoModelo" as modelo
+database "bd : MySQL" as bd
+entity "bitacora :\nBitacora" as bitacora
+
+cliente -> vista : Completar método, monto,\nreferencia y comprobante
+activate vista
+cliente -> vista : Pulsar Reportar pago
+vista -> vista : Validar campos del formulario
+
+alt ¿Los datos de la interfaz son válidos?
+  vista -> ctrl : POST /api/reservas/{id}/pagos/portal/reportar\n(JWT + datos)
+  activate ctrl
+  ctrl -> ctrl : Verificar token, rol Cliente y titularidad
+
+  alt ¿La sesión y la reserva son válidas?
+    ctrl -> modelo : registrarPagoReserva(...)
+    activate modelo
+    modelo -> bd : Consultar reserva, método, tasa y catálogo
+    activate bd
+    bd --> modelo : Datos actuales
+    deactivate bd
+
+    alt ¿Los datos de pago son válidos?
+      modelo -> bd : Guardar pago en_validacion
+      activate bd
+      bd --> modelo : pago (id)
+      deactivate bd
+      modelo --> ctrl : pago
+      deactivate modelo
+
+      ctrl -> bitacora : registrarEvento(usuario,\nmódulo pagos, INSERT, id)
+      activate bitacora
+      bitacora -> bd : Guardar bitácora
+      activate bd
+      bd --> bitacora : ok
+      deactivate bd
+      bitacora --> ctrl : auditoría ok
+      deactivate bitacora
+
+      ctrl --> vista : 200 + pago reportado
+      deactivate ctrl
+      vista --> cliente : Mostrar pendiente de validación
+    else no
+      modelo --> ctrl : error 400 / 404 / 422
+      deactivate modelo
+      ctrl --> vista : detalle del error
+      deactivate ctrl
+      vista --> cliente : Mostrar el motivo
+    end
+  else no
+    ctrl --> vista : error 401 / 403
+    deactivate ctrl
+    vista --> cliente : Pedir inicio de sesión o denegar
+  end
+else no
+  vista --> cliente : Indicar campos a corregir
+end
+
+deactivate vista
+@enduml

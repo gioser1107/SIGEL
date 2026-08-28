@@ -75,6 +75,7 @@ export interface DatosParadaActualizar {
 /* ─── Ruta de recogida (viajeros con domicilio) ─── */
 
 export interface ClienteRutaRecogida {
+  id: number;
   nombre: string;
   apellido: string;
   telefono: string;

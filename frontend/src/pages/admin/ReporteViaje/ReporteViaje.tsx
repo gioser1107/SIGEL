@@ -100,7 +100,7 @@ export default function ReporteViaje() {
       {
         id: 'unidad',
         encabezado: 'Unidad',
-        accessor: (v) => v.unidad_nombre ?? '—',
+        accessor: (v) => v.unidad_placa ?? '—',
       },
       {
         id: 'estado',
@@ -208,7 +208,7 @@ export default function ReporteViaje() {
     <div className="modulo-admin">
       <CabeceraModulo
         titulo="Reporte de viaje"
-        subtitulo="Consulta quiénes viajan, sus asientos y el estado de pago de cada reserva."
+        descripcion="Consulta quiénes viajan, sus asientos y el estado de pago de cada reserva."
       />
 
       {error && (
@@ -235,7 +235,7 @@ export default function ReporteViaje() {
               </h2>
               <p className="reporte-viaje__meta-viaje">
                 {reporte?.viaje.fecha_salida ? formatFecha(reporte.viaje.fecha_salida) : ''}
-                {reporte?.viaje.unidad_nombre ? ` · ${reporte.viaje.unidad_nombre}` : ''}
+                {reporte?.viaje.unidad_placa ? ` · ${reporte.viaje.unidad_placa}` : ''}
                 {reporte?.viaje.guia_nombre ? ` · Guía: ${reporte.viaje.guia_nombre}` : ''}
               </p>
             </div>
@@ -257,6 +257,12 @@ export default function ReporteViaje() {
               <CabeceraReporteImpresion
                 titulo="Reporte de pasajeros y pagos"
                 subtitulo={`${reporte.viaje.destino_nombre ?? ''} · ${formatFecha(reporte.viaje.fecha_salida)}`}
+                resumen={[
+                  { etiqueta: 'Pasajeros', valor: reporte.resumen.total_pasajeros },
+                  { etiqueta: 'Reservas', valor: reporte.resumen.total_reservas },
+                  { etiqueta: 'Cobrado', valor: formatearEuro(reporte.resumen.total_cobrado_eur) },
+                  { etiqueta: 'Saldo', valor: formatearEuro(reporte.resumen.saldo_pendiente_eur) },
+                ]}
               />
               <TablaReporteImpresion columnas={COLUMNAS_IMPRESION} filas={filasImpresion} />
             </div>

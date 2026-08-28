@@ -1,8 +1,9 @@
 from pathlib import Path
+from typing import Optional
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -75,9 +76,11 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:5174",
         "http://localhost:3000",
+        "http://localhost:8000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:5174",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -140,3 +143,49 @@ def ruta_raiz_api():
             "reportes": "/api/reportes/estadisticos",
         },
     }
+
+
+DIRECTORIO_INTERFAZ = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+PREFIJOS_SIN_SPA = {"api", "docs", "redoc", "openapi.json"}
+
+
+def _archivo_de_interfaz(ruta_relativa: str) -> Optional[Path]:
+    if not DIRECTORIO_INTERFAZ.is_dir():
+        return None
+    raiz = DIRECTORIO_INTERFAZ.resolve()
+    candidato = (DIRECTORIO_INTERFAZ / ruta_relativa).resolve()
+    if raiz not in candidato.parents and candidato != raiz:
+        return None
+    if candidato.is_file():
+        return candidato
+    return None
+
+
+@app.get("/")
+def servir_inicio():
+    index = _archivo_de_interfaz("index.html")
+    if index is None:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detalle": "La interfaz no está compilada",
+                "sugerencia": "En tu PC de desarrollo ejecuta npm run build en frontend/",
+            },
+        )
+    return FileResponse(index)
+
+
+@app.get("/{ruta_spa:path}")
+def servir_interfaz(ruta_spa: str):
+    primera = ruta_spa.split("/", 1)[0]
+    if primera in PREFIJOS_SIN_SPA:
+        return JSONResponse(status_code=404, content={"detalle": "Ruta no encontrada"})
+
+    archivo = _archivo_de_interfaz(ruta_spa)
+    if archivo is not None:
+        return FileResponse(archivo)
+
+    index = _archivo_de_interfaz("index.html")
+    if index is None:
+        return JSONResponse(status_code=404, content={"detalle": "Ruta no encontrada"})
+    return FileResponse(index)

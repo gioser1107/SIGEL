@@ -13,6 +13,7 @@ from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
 from modelos.usuario_modelo import Usuario, nombre_completo_de
 from modelos.viaje_modelo import Viaje, obtener_viaje_activo, viaje_a_dict
+from utilidades.validaciones import ValidadorEntrada
 
 ESTADO_ABORDADO = "abordado"
 ESTADO_NO_PRESENTADO = "no_presentado"
@@ -333,6 +334,7 @@ def registrar_abordaje_pasajero(
 
     ahora = datetime.now()
     momento = abordado_en or ahora
+    ValidadorEntrada.fecha_no_futura(momento, "abordado_en")
     existente = _abordaje_activo(db, reserva_cliente_id)
 
     if existente is None:

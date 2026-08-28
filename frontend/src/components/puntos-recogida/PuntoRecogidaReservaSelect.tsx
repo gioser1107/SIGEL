@@ -75,7 +75,6 @@ export default function PuntoRecogidaReservaSelect({
   }, [value, cargando, paradas.length, predeterminadoEnRuta, misPuntosEnRuta, onChange]);
 
   const opciones = useMemo(() => {
-    const fuente = mostrarTodasParadas || misPuntosEnRuta.length === 0 ? paradas : misPuntosEnRuta;
     if (mostrarTodasParadas || misPuntosEnRuta.length === 0) {
       return paradas.map((p) => ({
         id: p.punto_recogida_id,
@@ -83,7 +82,7 @@ export default function PuntoRecogidaReservaSelect({
         esMio: misPuntos.some((mp) => mp.id === p.punto_recogida_id),
       }));
     }
-    return fuente.map((p) => ({
+    return misPuntosEnRuta.map((p) => ({
       id: p.id,
       label: etiquetaPunto(p),
       esMio: true,

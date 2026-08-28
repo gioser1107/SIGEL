@@ -6,6 +6,7 @@ import os
 import re
 import urllib.error
 import urllib.request
+from datetime import date, datetime
 from typing import Any
 
 from fastapi import HTTPException
@@ -140,6 +141,47 @@ class ValidadorEntrada:
         if not _REGEX_TELEFONO.fullmatch(limpio):
             cls._error(campo, "solo dígitos (7 a 20); se admite un + inicial, sin letras")
         return limpio
+
+    @classmethod
+    def _a_fecha(cls, valor: date | datetime, campo: str) -> date:
+        if isinstance(valor, datetime):
+            return valor.date()
+        if isinstance(valor, date):
+            return valor
+        cls._error(campo, "no es una fecha válida")
+        raise AssertionError("inalcanzable")
+
+    @classmethod
+    def fecha_no_futura(
+        cls,
+        valor: date | datetime | None,
+        campo: str,
+        *,
+        obligatorio: bool = False,
+    ) -> date | datetime | None:
+        """Rechaza fechas posteriores a hoy. Viajes y vigencia de cotización no usan esto."""
+        if valor is None:
+            if obligatorio:
+                cls._error(campo, "es obligatorio")
+            return None
+        if cls._a_fecha(valor, campo) > date.today():
+            cls._error(campo, "no puede ser una fecha futura")
+        return valor
+
+    @classmethod
+    def rango_fechas_no_futuro(
+        cls,
+        desde: date | datetime | None,
+        hasta: date | datetime | None,
+        campo_desde: str = "desde",
+        campo_hasta: str = "hasta",
+    ) -> tuple[date | datetime | None, date | datetime | None]:
+        cls.fecha_no_futura(desde, campo_desde)
+        cls.fecha_no_futura(hasta, campo_hasta)
+        if desde is not None and hasta is not None:
+            if cls._a_fecha(desde, campo_desde) > cls._a_fecha(hasta, campo_hasta):
+                cls._error(campo_desde, "no puede ser posterior a la fecha final")
+        return desde, hasta
 
     @classmethod
     def _url_es_accesible(cls, url: str) -> bool:

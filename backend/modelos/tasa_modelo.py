@@ -15,6 +15,7 @@ from modelos.moneda_modelo import (
     validar_moneda_existente,
 )
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Tasa(Base):
@@ -170,6 +171,7 @@ def listar_tasas_hoy(db: Session, pagina: int = 1, limite: int = 10) -> dict:
 
 
 def crear_tasa(db: Session, fecha: date, valor: Decimal, moneda_id: int) -> Tasa:
+    ValidadorEntrada.fecha_no_futura(fecha, "fecha", obligatorio=True)
     validar_moneda_existente(db, moneda_id)
     nueva = Tasa(fecha=fecha, valor=valor, moneda_id=moneda_id)
     db.add(nueva)
@@ -192,6 +194,7 @@ def actualizar_tasa(
         tasa.moneda_id = moneda_id
 
     if fecha is not None:
+        ValidadorEntrada.fecha_no_futura(fecha, "fecha")
         tasa.fecha = fecha
 
     if valor is not None:

@@ -1,0 +1,92 @@
+@startuml
+title Actividad — Registrar pago desde el portal
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam roundcorner 15
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  StartColor black
+  EndColor black
+  ArrowColor black
+  FontColor black
+}
+skinparam partition {
+  BorderColor black
+  FontColor black
+  BackgroundColor white
+  FontStyle bold
+}
+
+|Cliente|
+start
+:Consultar el resumen de la reserva;
+:Completar método, monto,\nreferencia y comprobante;
+:Pulsar Reportar pago;
+
+|Interfaz|
+:Validar el formulario;
+if (¿Datos válidos?) then (sí)
+  :Enviar la solicitud\ncon el token;
+else (no)
+  :Mostrar campos a corregir;
+  |Cliente|
+  :Corregir el formulario;
+  stop
+endif
+
+|Controlador|
+:Validar token, rol Cliente\ny titularidad de la reserva;
+if (¿Sesión y reserva válidas?) then (sí)
+  :Solicitar registrar el pago;
+else (no)
+  |Interfaz|
+  :Mostrar error de acceso;
+  |Cliente|
+  :Visualizar el rechazo;
+  stop
+endif
+
+|Modelo|
+:Pedir reserva, método y tasa;
+
+|MySQL|
+:Consultar reserva y catálogo financiero;
+
+|Modelo|
+:Evaluar monto, método y datos;
+if (¿El pago es válido?) then (sí)
+  :Preparar el pago;
+else (no)
+  |Interfaz|
+  :Mostrar el error;
+  |Cliente|
+  :Visualizar el motivo;
+  stop
+endif
+
+|MySQL|
+:Guardar el pago en validación;
+:Confirmar los cambios;
+
+|Controlador|
+:Registrar bitácora\n(módulo pagos, INSERT, id);
+
+|MySQL|
+:Guardar la bitácora;
+
+|Controlador|
+:Responder pago reportado;
+
+|Interfaz|
+:Mostrar pendiente de validación;
+
+|Cliente|
+:Visualizar el resultado;
+stop
+@enduml

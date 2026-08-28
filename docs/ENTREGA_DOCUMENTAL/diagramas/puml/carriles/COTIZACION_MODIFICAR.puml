@@ -1,0 +1,92 @@
+@startuml
+title Actividad — Modificar cotización
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam roundcorner 15
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  StartColor black
+  EndColor black
+  ArrowColor black
+  FontColor black
+}
+skinparam partition {
+  BorderColor black
+  FontColor black
+  BackgroundColor white
+  FontStyle bold
+}
+
+|Administrador|
+start
+:Seleccionar la cotización;
+:Modificar requisitos, precio,\nvigencia o estado;
+:Pulsar Guardar cambios;
+
+|Interfaz|
+:Validar el formulario;
+if (¿Datos válidos?) then (sí)
+  :Enviar la solicitud\ncon el token;
+else (no)
+  :Mostrar campos a corregir;
+  |Administrador|
+  :Corregir el formulario;
+  stop
+endif
+
+|Controlador|
+:Validar token y permiso\neditar_cotizaciones;
+if (¿Sesión y permiso válidos?) then (sí)
+  :Solicitar actualizar la cotización;
+else (no)
+  |Interfaz|
+  :Mostrar error de acceso;
+  |Administrador|
+  :Visualizar el rechazo;
+  stop
+endif
+
+|Modelo|
+:Pedir la cotización vigente;
+
+|MySQL|
+:Consultar la cotización;
+
+|Modelo|
+:Evaluar existencia y reglas;
+if (¿Existe y se puede editar?) then (sí)
+  :Preparar los cambios;
+else (no)
+  |Interfaz|
+  :Mostrar el error;
+  |Administrador|
+  :Visualizar el motivo;
+  stop
+endif
+
+|MySQL|
+:Guardar los cambios;
+:Confirmar la actualización;
+
+|Controlador|
+:Registrar bitácora\n(módulo cotizaciones, UPDATE, id);
+
+|MySQL|
+:Guardar la bitácora;
+
+|Controlador|
+:Responder la cotización actualizada;
+
+|Interfaz|
+:Mostrar confirmación;
+
+|Administrador|
+:Visualizar el resultado;
+stop
+@enduml

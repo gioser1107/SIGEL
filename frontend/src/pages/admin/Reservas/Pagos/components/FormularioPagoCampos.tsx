@@ -22,7 +22,7 @@ import { equivalenciaEurEstimada } from '../utils/formatoPago';
 
 import CampoComprobanteImagen from './CampoComprobanteImagen';
 
-import { sanitizarMonto, sanitizarTelefono } from '../constants';
+import { sanitizarMonto, sanitizarTelefono, fechaHoyIso } from '../constants';
 
 import {
   requiereBancos,
@@ -264,7 +264,7 @@ export default function FormularioPagoCampos({
 
                   id="pago-fecha"
 
-                  type="date"
+                  type="date" max={fechaHoyIso()}
 
                   className="pagos-formulario__input"
 
@@ -350,7 +350,7 @@ export default function FormularioPagoCampos({
                 <label className="pagos-formulario__label" htmlFor="pago-fecha-z">Fecha de pago</label>
                 <input
                   id="pago-fecha-z"
-                  type="date"
+                  type="date" max={fechaHoyIso()}
                   className="pagos-formulario__input"
                   value={form.fecha_pago}
                   onChange={(e) => onChange({ ...form, fecha_pago: e.target.value })}
@@ -415,7 +415,7 @@ export default function FormularioPagoCampos({
 
                     id="pago-fecha-tpv"
 
-                    type="date"
+                    type="date" max={fechaHoyIso()}
 
                     className="pagos-formulario__input"
 

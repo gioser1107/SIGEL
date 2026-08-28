@@ -1,0 +1,87 @@
+@startuml
+title Secuencia — Crear cotización
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam sequence {
+  ArrowColor black
+  ActorBorderColor black
+  ActorBackgroundColor white
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ParticipantBackgroundColor white
+  GroupBorderColor black
+  GroupBackgroundColor white
+}
+skinparam database {
+  BackgroundColor white
+  BorderColor black
+}
+hide footbox
+autonumber
+
+actor "Administrador" as admin
+boundary "vistaCotizacion :\nInterfazCotizacion" as vista
+control "ctrlCotizacion :\nCotizacionControlador" as ctrl
+control "modeloCotizacion :\nCotizacionModelo" as modelo
+database "bd : MySQL" as bd
+entity "bitacora :\nBitacora" as bitacora
+
+admin -> vista : Completar cliente, destino,\nrequisitos, precio y vigencia
+activate vista
+admin -> vista : Pulsar Guardar
+vista -> vista : Validar campos del formulario
+
+alt ¿Los datos de la interfaz son válidos?
+  vista -> ctrl : POST /api/cotizaciones\n(JWT + datos)
+  activate ctrl
+  ctrl -> ctrl : Verificar token y permiso crear_cotizaciones
+
+  alt ¿La sesión y el permiso son válidos?
+    ctrl -> modelo : crearCotizacion(cliente, destino, condiciones)
+    activate modelo
+    modelo -> bd : Consultar cliente y destino vigentes
+    activate bd
+    bd --> modelo : Datos actuales
+    deactivate bd
+
+    alt ¿Cliente y destino existen?
+      modelo -> bd : Guardar cotización
+      activate bd
+      bd --> modelo : cotizacion (id)
+      deactivate bd
+      modelo --> ctrl : cotizacion
+      deactivate modelo
+
+      ctrl -> bitacora : registrarEvento(usuario,\nmódulo cotizaciones, INSERT, id)
+      activate bitacora
+      bitacora -> bd : Guardar bitácora
+      activate bd
+      bd --> bitacora : ok
+      deactivate bd
+      bitacora --> ctrl : auditoría ok
+      deactivate bitacora
+
+      ctrl --> vista : 200 + cotización
+      deactivate ctrl
+      vista --> admin : Mostrar confirmación
+    else no
+      modelo --> ctrl : error 400 / 404
+      deactivate modelo
+      ctrl --> vista : detalle del error
+      deactivate ctrl
+      vista --> admin : Mostrar el motivo
+    end
+  else no
+    ctrl --> vista : error 401 / 403
+    deactivate ctrl
+    vista --> admin : Pedir inicio de sesión o denegar
+  end
+else no
+  vista --> admin : Indicar campos a corregir
+end
+
+deactivate vista
+@enduml

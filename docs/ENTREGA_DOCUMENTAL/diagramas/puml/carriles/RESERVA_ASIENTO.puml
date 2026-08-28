@@ -1,0 +1,101 @@
+@startuml
+title Actividad — Asignar asiento a un viajero
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam roundcorner 15
+skinparam activity {
+  BackgroundColor white
+  BorderColor black
+  DiamondBackgroundColor white
+  DiamondBorderColor black
+  StartColor black
+  EndColor black
+  ArrowColor black
+  FontColor black
+}
+skinparam partition {
+  BorderColor black
+  FontColor black
+  BackgroundColor white
+  FontStyle bold
+}
+
+|Administrador|
+start
+:Abrir el detalle de la reserva;
+:Seleccionar viajero y asiento;
+:Pulsar Asignar asiento;
+
+|Interfaz|
+:Validar la selección;
+if (¿Datos válidos?) then (sí)
+  :Enviar la solicitud\ncon el token;
+else (no)
+  :Mostrar la selección a corregir;
+  |Administrador|
+  :Corregir la selección;
+  stop
+endif
+
+|Controlador|
+:Validar token y permiso\neditar_reservas;
+if (¿Sesión y permiso válidos?) then (sí)
+  :Solicitar asignar el asiento;
+else (no)
+  |Interfaz|
+  :Mostrar error de acceso;
+  |Administrador|
+  :Visualizar el rechazo;
+  stop
+endif
+
+|Modelo|
+:Pedir reserva, viajero y asiento;
+
+|MySQL|
+:Consultar y bloquear\nreserva, viajero y asiento;
+
+|Modelo|
+:Evaluar disponibilidad;
+if (¿El asiento está libre?) then (sí)
+  :Preparar la asignación;
+else (no)
+  |Interfaz|
+  :Mostrar asiento ocupado u error;
+  |Administrador|
+  :Visualizar el motivo;
+  stop
+endif
+
+|MySQL|
+:Guardar asiento_reservado;
+if (¿Sin conflicto?) then (sí)
+  :Confirmar los cambios;
+else (no)
+  :Deshacer los cambios;
+  |Interfaz|
+  :Mostrar que el asiento ya fue tomado;
+  |Administrador|
+  :Visualizar el resultado;
+  stop
+endif
+
+|Controlador|
+:Registrar bitácora\n(módulo reservas, INSERT, id);
+
+|MySQL|
+:Guardar la bitácora;
+
+|Controlador|
+:Responder asiento asignado;
+
+|Interfaz|
+:Mostrar confirmación;
+
+|Administrador|
+:Visualizar el resultado;
+stop
+@enduml

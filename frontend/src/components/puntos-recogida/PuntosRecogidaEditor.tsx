@@ -18,9 +18,7 @@ import type {
 } from '../../types/puntoRecogida';
 import { PUNTOS_RECOGIDA_DRAFT_VACIO } from '../../types/puntoRecogida';
 import Boton from '../ui/Boton/Boton';
-import FormularioPuntoRecogidaCampos, {
-  type ValoresFormularioPuntoRecogida,
-} from './FormularioPuntoRecogidaCampos';
+import { type ValoresFormularioPuntoRecogida } from './FormularioPuntoRecogidaCampos';
 import ModalDomicilioRecogida from './ModalDomicilioRecogida';
 import PuntoRecogidaTarjeta from './PuntoRecogidaTarjeta';
 import PuntosRecogidaList from './PuntosRecogidaList';

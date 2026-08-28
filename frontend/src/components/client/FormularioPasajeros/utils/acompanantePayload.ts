@@ -1,6 +1,5 @@
 import { formularioAPayload } from '../../../../pages/admin/Clientes/utils/mapeoFormulario';
 import type { PasajeroExtraPublicoDTO } from '../../../../services/reservas';
-import type { PuntoRecogidaInline } from '../../../../types/puntoRecogida';
 import type { ValorDomicilioAcompanante } from '../../../puntos-recogida/DomicilioRecogidaAcompanante';
 import type { FormularioCliente } from '../../../../utils/validacionesCliente';
 

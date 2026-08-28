@@ -1,0 +1,109 @@
+@startuml
+title Modelo de dominio — Travel BQTO
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 12
+skinparam class {
+  BackgroundColor white
+  BorderColor black
+  ArrowColor black
+}
+
+class Cliente {
+  id
+  nombre
+  apellido
+  cedula
+  telefono
+}
+
+class Destino {
+  id
+  nombre
+}
+
+class Viaje {
+  id
+  destino_id
+  fecha
+  cupo
+}
+
+class UnidadTransporte {
+  id
+}
+
+class Asiento {
+  id
+  unidad_id
+}
+
+class Cotizacion {
+  id
+  cliente_id
+  destino_id
+  estado
+}
+
+class CotizacionLinea {
+  id
+  cotizacion_id
+}
+
+class Reserva {
+  id
+  cliente_id
+  viaje_id
+  estado
+}
+
+class ReservaCliente {
+  id
+  reserva_id
+  cliente_id
+  es_titular
+  punto_recogida_id
+}
+
+class AsientoReservado {
+  id
+  reserva_cliente_id
+  asiento_id
+}
+
+class Pago {
+  id
+  reserva_id
+  estado
+}
+
+class Bitacora {
+  id
+  usuario_id
+  modulo
+  accion
+  tabla_afectada
+  registro_id
+}
+
+Cliente "1" -- "0..*" Cotizacion
+Destino "1" -- "0..*" Cotizacion
+Destino "1" -- "0..*" Viaje
+UnidadTransporte "1" -- "1..*" Asiento
+UnidadTransporte "1" -- "0..*" Viaje
+Cotizacion "1" -- "0..*" CotizacionLinea
+Cliente "1" -- "0..*" Reserva : titular
+Viaje "1" -- "0..*" Reserva
+Reserva "1" -- "1..*" ReservaCliente
+Cliente "1" -- "0..*" ReservaCliente : viaja
+ReservaCliente "1" -- "0..*" AsientoReservado
+Asiento "1" -- "0..*" AsientoReservado
+Reserva "1" -- "0..*" Pago
+
+note bottom of ReservaCliente
+  3FN: nombre, apellido y cédula
+  viven en Cliente, no aquí.
+end note
+@enduml

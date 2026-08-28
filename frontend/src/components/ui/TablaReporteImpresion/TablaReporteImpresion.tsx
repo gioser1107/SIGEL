@@ -6,7 +6,7 @@ export interface ColumnaReporteImpresion {
 }
 
 interface TablaReporteImpresionProps {
-  columnas: ColumnaReporteImpresion[];
+  columnas: readonly ColumnaReporteImpresion[];
   filas: Record<string, string>[];
   mensajeVacio?: string;
 }

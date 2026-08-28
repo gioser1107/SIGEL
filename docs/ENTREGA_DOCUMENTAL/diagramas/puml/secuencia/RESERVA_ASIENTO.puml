@@ -1,0 +1,87 @@
+@startuml
+title Secuencia — Asignar asiento a un viajero
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam sequence {
+  ArrowColor black
+  ActorBorderColor black
+  ActorBackgroundColor white
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ParticipantBackgroundColor white
+  GroupBorderColor black
+  GroupBackgroundColor white
+}
+skinparam database {
+  BackgroundColor white
+  BorderColor black
+}
+hide footbox
+autonumber
+
+actor "Administrador" as admin
+boundary "vistaReserva :\nInterfazReserva" as vista
+control "ctrlReservas :\nReservasControlador" as ctrl
+control "modeloReservas :\nReservasModelo" as modelo
+database "bd : MySQL" as bd
+entity "bitacora :\nBitacora" as bitacora
+
+admin -> vista : Seleccionar reserva, viajero y asiento
+activate vista
+admin -> vista : Pulsar Asignar asiento
+vista -> vista : Validar selección
+
+alt ¿Los datos de la interfaz son válidos?
+  vista -> ctrl : POST /api/reservas/{id}/pasajeros/{pasajero_id}/asientos\n(JWT + asiento_id)
+  activate ctrl
+  ctrl -> ctrl : Verificar token y permiso editar_reservas
+
+  alt ¿La sesión y el permiso son válidos?
+    ctrl -> modelo : asignarAsientoPasajero(reserva, viajero, asiento)
+    activate modelo
+    modelo -> bd : Consultar y bloquear reserva,\nviajero y asiento del viaje
+    activate bd
+    bd --> modelo : Datos actuales
+    deactivate bd
+
+    alt ¿El asiento está libre?
+      modelo -> bd : Guardar asiento_reservado
+      activate bd
+      bd --> modelo : asignacion (id)
+      deactivate bd
+      modelo --> ctrl : asientoReservado
+      deactivate modelo
+
+      ctrl -> bitacora : registrarEvento(usuario,\nmódulo reservas, INSERT, id)
+      activate bitacora
+      bitacora -> bd : Guardar bitácora
+      activate bd
+      bd --> bitacora : ok
+      deactivate bd
+      bitacora --> ctrl : auditoría ok
+      deactivate bitacora
+
+      ctrl --> vista : 200 + asiento asignado
+      deactivate ctrl
+      vista --> admin : Mostrar confirmación
+    else no — asiento ocupado o datos inválidos
+      modelo --> ctrl : error 400 / 404 / 409
+      deactivate modelo
+      ctrl --> vista : detalle del error
+      deactivate ctrl
+      vista --> admin : Mostrar el motivo
+    end
+  else no
+    ctrl --> vista : error 401 / 403
+    deactivate ctrl
+    vista --> admin : Pedir inicio de sesión o denegar
+  end
+else no
+  vista --> admin : Indicar la selección a corregir
+end
+
+deactivate vista
+@enduml

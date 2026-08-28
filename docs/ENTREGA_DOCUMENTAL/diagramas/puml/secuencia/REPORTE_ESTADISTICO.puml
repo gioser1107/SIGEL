@@ -1,0 +1,77 @@
+@startuml
+title Secuencia — Consultar reporte estadístico
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 13
+skinparam sequence {
+  ArrowColor black
+  ActorBorderColor black
+  ActorBackgroundColor white
+  LifeLineBorderColor black
+  ParticipantBorderColor black
+  ParticipantBackgroundColor white
+  GroupBorderColor black
+  GroupBackgroundColor white
+}
+skinparam database {
+  BackgroundColor white
+  BorderColor black
+}
+hide footbox
+autonumber
+
+actor "Administrador" as admin
+boundary "vistaReporte :\nInterfazReporte" as vista
+control "ctrlReporte :\nReporteEstadisticoControlador" as ctrl
+control "modeloReporte :\nReporteEstadisticoModelo" as modelo
+database "bd : MySQL" as bd
+
+admin -> vista : Indicar fecha desde y hasta
+activate vista
+admin -> vista : Pulsar Consultar
+vista -> vista : Validar que las fechas se puedan enviar
+
+alt ¿Las fechas de la interfaz son válidas?
+  vista -> ctrl : GET /api/reportes/estadisticos?desde=&hasta=\n(JWT)
+  activate ctrl
+  ctrl -> ctrl : Verificar token y permiso de lectura
+
+  alt ¿La sesión y el permiso son válidos?
+    ctrl -> modelo : generarReporteEstadistico(desde, hasta)
+    activate modelo
+    modelo -> modelo : Validar rango real\n(año mínimo, orden y máximo 10 años)
+
+    alt ¿El rango de fechas es válido?
+      modelo -> bd : Consultar clientes, reservas, destinos,\nmovimiento mensual e ingresos aprobados
+      activate bd
+      bd --> modelo : Datos del período
+      deactivate bd
+      modelo --> ctrl : indicadores
+      deactivate modelo
+      ctrl --> vista : 200 + reporte
+      deactivate ctrl
+      vista --> admin : Mostrar e imprimir indicadores
+    else no — año imposible, rango invertido o excesivo
+      modelo --> ctrl : error 400
+      deactivate modelo
+      ctrl --> vista : detalle del rango
+      deactivate ctrl
+      vista --> admin : Mostrar la regla de fechas
+    end
+  else no
+    ctrl --> vista : error 401 / 403
+    deactivate ctrl
+    vista --> admin : Pedir inicio de sesión o denegar
+  end
+else no
+  vista --> admin : Indicar las fechas a corregir
+end
+
+deactivate vista
+note right of bd
+  Consulta: no registra bitácora.
+  La bitácora se usa en INSERT/UPDATE/DELETE.
+end note
+@enduml

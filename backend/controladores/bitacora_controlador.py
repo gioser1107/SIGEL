@@ -10,6 +10,7 @@ from modelos.bitacora_modelo import (
     obtener_detalle_bitacora,
     verificar_permiso_bitacora,
 )
+from utilidades.validaciones import ValidadorEntrada
 
 router = APIRouter(prefix="/bitacora", tags=["Bitácora"])
 
@@ -28,6 +29,7 @@ def listar_bitacora_endpoint(
     usuario_actual: dict = Depends(obtener_usuario_actual),
 ):
     verificar_permiso_bitacora(usuario_actual)
+    ValidadorEntrada.rango_fechas_no_futuro(fecha_desde, fecha_hasta, "fecha_desde", "fecha_hasta")
     return listar_bitacora(
         db,
         modulo=modulo,

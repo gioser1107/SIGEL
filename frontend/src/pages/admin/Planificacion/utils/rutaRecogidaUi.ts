@@ -27,7 +27,7 @@ export function textoDomicilio(domicilio: DomicilioRutaRecogida | null | undefin
 
 export function paradaApiALocal(
   parada: ParadaRutaRecogida,
-  fechaSalida: string,
+  _fechaSalida: string,
 ): ParadaRutaLocal {
   return {
     ...parada,

@@ -3,15 +3,10 @@ import { ErrorApi } from '../../../../services/api';
 import { obtenerReporteEstadistico } from '../../../../services/reportesEstadisticos';
 import type { ReporteEstadistico } from '../../../../types/reportesEstadisticos';
 
-function isoLocal(fecha = new Date()): string {
-  const anio = fecha.getFullYear();
-  const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-  const dia = String(fecha.getDate()).padStart(2, '0');
-  return `${anio}-${mes}-${dia}`;
-}
+import { esFechaFutura, fechaHoyIso, MENSAJE_FECHA_NO_FUTURA } from '../../../../utils/validacionesFormulario';
 
 function isoHoy(): string {
-  return isoLocal();
+  return fechaHoyIso();
 }
 
 function isoInicioAnio(): string {
@@ -32,6 +27,12 @@ export function useReportesEstadisticos() {
   const [error, setError] = useState<string | null>(null);
 
   const consultar = useCallback(async (fechaDesde: string, fechaHasta: string) => {
+    if (esFechaFutura(fechaDesde) || esFechaFutura(fechaHasta)) {
+      setError(MENSAJE_FECHA_NO_FUTURA);
+      setReporte(null);
+      setCargando(false);
+      return;
+    }
     setCargando(true);
     setError(null);
     try {
