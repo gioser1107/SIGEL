@@ -98,10 +98,11 @@ El primer día, en **Pagos > Tasas**, confirmen o actualicen la tasa euro del d�
 cd C:\SIGEL\backend
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements.txt
-copy .env.example .env
+copy C:\SIGEL\instalacion\env.ejemplo.txt C:\SIGEL\backend\.env
+notepad C:\SIGEL\backend\.env
 ```
 
-Edita `backend\.env` con el usuario y la clave reales de MySQL.
+En Windows `.env.example` suele estar oculto o no copiarse del USB. El archivo visible es `instalacion\env.ejemplo.txt`. Edita `backend\.env` con la clave real de MySQL (vacío si XAMPP no tiene clave).
 
 6. Acceso directo en el escritorio:
 

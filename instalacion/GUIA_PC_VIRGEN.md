@@ -222,15 +222,29 @@ cd C:\SIGEL\backend
 python -m venv .venv
 .venv\Scripts\python -m pip install --upgrade pip
 .venv\Scripts\python -m pip install -r requirements.txt
-copy .env.example .env
 ```
 
 La línea de `pip install -r requirements.txt` necesita internet. Tarda unos minutos. Si falla por red, reintenta. No sigas hasta que termine en `Successfully installed`.
 
-### 3.6 Editar `backend\.env`
+### 3.6 Crear `backend\.env`
+
+En Windows los archivos que empiezan con punto (`.env`, `.env.example`) están ocultos. **No dependen de copiar `.env.example`.** Créalo así:
 
 ```bat
 notepad C:\SIGEL\backend\.env
+```
+
+Si pregunta si quiere crear el archivo, di que sí. Si el Bloc de notas guarda `env.txt` en vez de `.env`, cierra y usa esto en el símbolo del sistema:
+
+```bat
+copy C:\SIGEL\instalacion\env.ejemplo.txt C:\SIGEL\backend\.env
+notepad C:\SIGEL\backend\.env
+```
+
+O, si esa copia del USB ya trae el script:
+
+```bat
+C:\SIGEL\instalacion\windows\crear-env.bat
 ```
 
 Déjalo así, cambiando solo la contraseña si MariaDB/XAMPP tiene clave:
@@ -369,7 +383,7 @@ Solo si están seguros. Eso elimina destinos, viajes y reservas que hayan creado
 - [ ] XAMPP (solo MySQL) o MariaDB
 - [ ] Importar `travel_bqto_limpia.sql`
 - [ ] `python -m venv .venv` y `pip install -r requirements.txt`
-- [ ] Copiar `.env.example` → `.env` y poner clave de MySQL
+- [ ] Crear `backend\.env` (Bloc de notas o `instalacion\env.ejemplo.txt`) y poner clave de MySQL
 - [ ] Acceso directo en el escritorio
 - [ ] Probar admin, guía y cliente
 - [ ] Cambiar contraseñas y cargar tasa / destinos / bus / viaje

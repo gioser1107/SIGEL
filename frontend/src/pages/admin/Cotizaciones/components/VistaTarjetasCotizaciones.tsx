@@ -8,6 +8,8 @@ interface PropsVistaTarjetas {
   soloLectura?: boolean;
   onEditar: (cot: Cotizacion) => void;
   onRechazar: (cot: Cotizacion) => void;
+  onImprimir: (cot: Cotizacion) => void;
+  imprimiendo?: boolean;
 }
 
 // Renderiza la vista en tarjetas (kanban) del listado de cotizaciones
@@ -17,6 +19,8 @@ export default function VistaTarjetasCotizaciones({
   soloLectura = false,
   onEditar,
   onRechazar,
+  onImprimir,
+  imprimiendo = false,
 }: PropsVistaTarjetas) {
   return (
     <CuadriculaTarjetas
@@ -43,6 +47,12 @@ export default function VistaTarjetasCotizaciones({
           </p>
           <p className="cot-card__fecha">{formatFecha(cot.creado_en)}</p>
           <div className="cot-card__acciones">
+            <BotonAccionTabla
+              accion="imprimir"
+              onClick={() => onImprimir(cot)}
+              disabled={imprimiendo}
+              ariaLabel={`Imprimir cotización de ${cot.cliente_nombre ?? `cliente #${cot.cliente_id}`}`}
+            />
             {!soloLectura && (
               <>
                 <BotonAccionTabla

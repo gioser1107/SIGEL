@@ -1,0 +1,64 @@
+.logo-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--color-primary, #0055a0);
+}
+
+.logo-marca__icono {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.65rem;
+  background: var(--color-primary, #0055a0);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-marca__icono svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.logo-marca__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  line-height: 1.15;
+}
+
+.logo-marca__texto strong {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #12284b);
+  letter-spacing: -0.3px;
+}
+
+.logo-marca__texto strong span {
+  color: var(--color-primary, #0055a0);
+}
+
+.logo-marca__eslogan {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--color-text-muted, #64748b);
+  letter-spacing: 0.2px;
+}
+
+.logo-marca--compacto .logo-marca__icono {
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 0.45rem;
+}
+
+.logo-marca--compacto .logo-marca__icono svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.logo-marca--compacto .logo-marca__texto strong {
+  font-size: 1.05rem;
+}

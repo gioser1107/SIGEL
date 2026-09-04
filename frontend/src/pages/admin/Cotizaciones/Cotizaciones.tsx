@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import {
   AlternadorVista,
+  BotonAccionTabla,
   CabeceraModulo,
   PestaniasFiltro,
   TablaDatos,
@@ -16,6 +17,7 @@ import PanelEditarCotizacion from './EditarCotizacion/PanelEditarCotizacion';
 import PanelNuevaCotizacion from './NuevaCotizacion/PanelNuevaCotizacion';
 import ModalRechazarCotizacion from './RechazarCotizacion/ModalRechazarCotizacion';
 import { columnasCotizaciones } from './components/columnasCotizaciones';
+import DocumentoCotizacion from './components/DocumentoCotizacion';
 import VistaTarjetasCotizaciones from './components/VistaTarjetasCotizaciones';
 import type { FiltroListado } from '../../../types/paginacion';
 import { ETIQUETA_ESTADO, PESTANIAS_FILTRO } from './constants';
@@ -80,6 +82,10 @@ export default function Cotizaciones() {
     confirmarRechazar,
     ejecutarRechazar,
     cancelarRechazar,
+    imprimirPdf,
+    pdfCotizacion,
+    pdfLineas,
+    imprimiendoPdf,
   } = useCotizaciones();
 
   const esTabAnuladas = filtroTab === 'anulado';
@@ -225,6 +231,14 @@ export default function Cotizaciones() {
           }
           idFila={(c) => c.id}
           onFilaClick={esTabAnuladas ? undefined : abrirEditar}
+          accionesFila={(c) => (
+            <BotonAccionTabla
+              accion="imprimir"
+              onClick={() => imprimirPdf(c)}
+              disabled={imprimiendoPdf}
+              ariaLabel={`Imprimir cotización de ${c.cliente_nombre ?? `cliente #${c.cliente_id}`}`}
+            />
+          )}
         />
       )}
 
@@ -245,6 +259,8 @@ export default function Cotizaciones() {
           soloLectura={esTabAnuladas}
           onEditar={abrirEditar}
           onRechazar={confirmarRechazar}
+          onImprimir={imprimirPdf}
+          imprimiendo={imprimiendoPdf}
         />
       )}
         </div>
@@ -284,6 +300,10 @@ export default function Cotizaciones() {
         onCambiarEstado={cambiarEstado}
         onRechazar={confirmarRechazar}
         onConvertir={() => setConvertirAbierto(true)}
+        onImprimir={() => {
+          if (cotizacionActiva) return imprimirPdf(cotizacionActiva);
+        }}
+        imprimiendo={imprimiendoPdf || cargandoLineas}
       />
 
       <ModalConvertirReserva
@@ -299,6 +319,9 @@ export default function Cotizaciones() {
         onConfirmar={ejecutarRechazar}
         onCancelar={cancelarRechazar}
       />
+      {pdfCotizacion && (
+        <DocumentoCotizacion cotizacion={pdfCotizacion} lineas={pdfLineas} />
+      )}
     </div>
   );
 }

@@ -5,6 +5,7 @@ interface BtnImprimirReporteProps {
   etiqueta?: string;
   claseZona?: string;
   deshabilitado?: boolean;
+  alImprimir?: () => void | Promise<void>;
 }
 
 function IconoImpresora() {
@@ -31,8 +32,13 @@ export default function BtnImprimirReporte({
   etiqueta = 'Imprimir reporte',
   claseZona = 'zona-imprimible',
   deshabilitado = false,
+  alImprimir,
 }: BtnImprimirReporteProps) {
-  function manejarImpresion() {
+  async function manejarImpresion() {
+    if (alImprimir) {
+      await alImprimir();
+      return;
+    }
     document.body.setAttribute('data-zona-imprimir', claseZona);
     window.print();
     window.setTimeout(() => {

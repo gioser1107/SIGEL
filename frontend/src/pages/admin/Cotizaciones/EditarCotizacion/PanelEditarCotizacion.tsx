@@ -1,5 +1,6 @@
 import { PanelDeslizable } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
+import BtnImprimirReporte from '../../../../components/ui/BtnImprimirReporte/BtnImprimirReporte';
 import type {
   Cotizacion,
   CotizacionLinea,
@@ -36,6 +37,8 @@ interface PropsPanelEditar {
   onCambiarEstado: (cot: Cotizacion, estado: EstadoCotizacion) => void;
   onRechazar: (cot: Cotizacion) => void;
   onConvertir: () => void;
+  onImprimir: () => void | Promise<void>;
+  imprimiendo?: boolean;
 }
 
 // Panel lateral para editar una cotización existente con tabs Info y Desglose
@@ -59,6 +62,8 @@ export default function PanelEditarCotizacion({
   onCambiarEstado,
   onRechazar,
   onConvertir,
+  onImprimir,
+  imprimiendo = false,
 }: PropsPanelEditar) {
   if (!cotizacion) return null;
 
@@ -72,6 +77,13 @@ export default function PanelEditarCotizacion({
       subtitulo={`${cotizacion.destino_nombre ?? ''} · ${cotizacion.estado}`}
       pie={
         <>
+          <div className="cot-drawer__pie-imprimir">
+            <BtnImprimirReporte
+              etiqueta="Imprimir PDF"
+              deshabilitado={guardando || imprimiendo}
+              alImprimir={onImprimir}
+            />
+          </div>
           <Boton variante="secundario" tamano="sm" onClick={onCerrar} disabled={guardando}>
             Cancelar
           </Boton>

@@ -32,3 +32,7 @@ export function filtrarPorTab(cotizaciones: Cotizacion[], tab: string): Cotizaci
 export function esBloqueada(estado: string): boolean {
   return ['aceptada', 'cancelada'].includes(estado);
 }
+
+export function formatearMonedaEur(monto: number): string {
+  return `€ ${monto.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}

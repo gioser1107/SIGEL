@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import LogoMarca from '../LogoMarca/LogoMarca';
 import './CabeceraReporteImpresion.css';
 
 export interface ItemResumenReporte {
@@ -31,7 +32,7 @@ export default function CabeceraReporteImpresion({
   return (
     <div className="reporte-impresion solo-imprimir">
       <div className="reporte-impresion__marca">
-        <span className="reporte-impresion__logo">TravelBqto</span>
+        <LogoMarca compacto />
         <span className="reporte-impresion__fecha">Generado: {fechaGeneracion()}</span>
       </div>
 

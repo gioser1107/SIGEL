@@ -10,9 +10,17 @@ if not exist "frontend\dist\index.html" (
 )
 
 if not exist "backend\.env" (
-  echo [ERROR] Falta backend\.env. Copia backend\.env.example y pon usuario/clave de MySQL.
-  pause
-  exit /b 1
+  if exist "instalacion\env.ejemplo.txt" (
+    copy /Y "instalacion\env.ejemplo.txt" "backend\.env" >nul
+    echo [AVISO] Se creo backend\.env. Si MySQL tiene clave, edite DB_CONTRASENA.
+  ) else (
+    echo [ERROR] Falta backend\.env
+    echo Cree el archivo con Bloc de notas:
+    echo   notepad C:\SIGEL\backend\.env
+    echo Contenido: vea instalacion\GUIA_PC_VIRGEN.md seccion 3.6
+    pause
+    exit /b 1
+  )
 )
 
 if exist "backend\.venv\Scripts\python.exe" (

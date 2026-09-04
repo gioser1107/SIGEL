@@ -12,7 +12,8 @@ export type AccionTabla =
   | 'asientos'
   | 'mostrar'
   | 'ocultar'
-  | 'predeterminado';
+  | 'predeterminado'
+  | 'imprimir';
 
 const ETIQUETAS: Record<AccionTabla, string> = {
   ver: 'Ver',
@@ -26,6 +27,7 @@ const ETIQUETAS: Record<AccionTabla, string> = {
   mostrar: 'Mostrar',
   ocultar: 'Ocultar',
   predeterminado: 'Marcar predeterminado',
+  imprimir: 'Imprimir PDF',
 };
 
 type VarianteAccion = 'neutro' | 'primario' | 'exito' | 'peligro';
@@ -42,6 +44,7 @@ const VARIANTES: Record<AccionTabla, VarianteAccion> = {
   mostrar: 'neutro',
   ocultar: 'neutro',
   predeterminado: 'primario',
+  imprimir: 'neutro',
 };
 
 interface PropsBotonAccionTabla {
@@ -143,6 +146,14 @@ function IconoAccion({ accion }: { accion: AccionTabla }) {
       return (
         <svg {...props}>
           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+      );
+    case 'imprimir':
+      return (
+        <svg {...props}>
+          <polyline points="6 9 6 2 18 2 18 9" />
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+          <rect x="6" y="14" width="12" height="8" />
         </svg>
       );
   }

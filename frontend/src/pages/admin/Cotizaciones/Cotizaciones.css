@@ -262,6 +262,10 @@
   color: var(--color-text-muted);
 }
 
+.cot-drawer__pie-imprimir {
+  margin-right: auto;
+}
+
 /* ─── Textarea ─── */
 .drawer-form__textarea {
   resize: vertical;

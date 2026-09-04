@@ -189,4 +189,232 @@
     color: var(--color-text-muted, #64748b);
     text-align: center;
   }
+
+  /* Cotización para el cliente */
+  .zona-imprimible-cotizacion {
+    display: none !important;
+  }
+
+  body[data-zona-imprimir="zona-imprimible-cotizacion"] .zona-imprimible {
+    display: none !important;
+  }
+
+  body[data-zona-imprimir="zona-imprimible-cotizacion"] .zona-imprimible-cotizacion {
+    display: block !important;
+  }
+
+  .doc-cotizacion {
+    max-width: 100%;
+  }
+
+  .doc-cotizacion__cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1rem;
+    border-bottom: 3px solid var(--color-primary, #0055a0);
+  }
+
+  .doc-cotizacion__tipo {
+    text-align: right;
+  }
+
+  .doc-cotizacion__tipo-etiqueta {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--color-text-muted, #64748b);
+    margin-bottom: 0.15rem;
+  }
+
+  .doc-cotizacion__numero {
+    display: block;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .doc-cotizacion__meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .doc-cotizacion__meta > div {
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    background: #f8fafc;
+  }
+
+  .doc-cotizacion__meta span {
+    display: block;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-muted, #64748b);
+    margin-bottom: 0.15rem;
+  }
+
+  .doc-cotizacion__meta strong {
+    font-size: 0.85rem;
+    color: var(--color-text-primary, #12284b);
+  }
+
+  .doc-cotizacion__partes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+  }
+
+  .doc-cotizacion h2 {
+    margin: 0 0 0.35rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .doc-cotizacion__nombre {
+    margin: 0;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #12284b);
+  }
+
+  .doc-cotizacion__partes p {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #475569);
+  }
+
+  .doc-cotizacion__bloque {
+    margin-bottom: 1.1rem;
+  }
+
+  .doc-cotizacion__texto {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+  }
+
+  .doc-cotizacion__tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+
+  .doc-cotizacion__tabla th {
+    background: var(--color-primary, #0055a0);
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.45rem 0.55rem;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .doc-cotizacion__tabla td {
+    padding: 0.42rem 0.55rem;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+    vertical-align: top;
+  }
+
+  .doc-cotizacion__tabla tbody tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  .doc-cotizacion__col-monto {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+    width: 22%;
+  }
+
+  .doc-cotizacion__total {
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+    padding: 0.65rem 0.8rem;
+    background: #f0f6fc;
+    border: 1px solid #c5d8ee;
+    border-radius: 8px;
+  }
+
+  .doc-cotizacion__total span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-secondary, #475569);
+  }
+
+  .doc-cotizacion__total strong {
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 1.25rem;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .doc-cotizacion__condiciones {
+    margin-top: 1.15rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+  }
+
+  .doc-cotizacion__condiciones ul {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+
+  .doc-cotizacion__condiciones li {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary, #475569);
+    line-height: 1.4;
+    margin-bottom: 0.2rem;
+  }
+
+  .doc-cotizacion__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 0.75rem;
+    border-top: 2px solid var(--color-primary, #0055a0);
+  }
+
+  .doc-cotizacion__pie strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .doc-cotizacion__pie p {
+    margin: 0.1rem 0 0;
+    font-size: 0.68rem;
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .doc-cotizacion__firma {
+    text-align: right;
+    font-style: italic;
+  }
+
+  .logo-marca__icono {
+    background: var(--color-primary, #0055a0) !important;
+    color: #ffffff !important;
+  }
 }

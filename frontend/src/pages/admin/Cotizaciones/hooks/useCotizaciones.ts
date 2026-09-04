@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useVistaModuloResponsive } from '../../../../hooks/useVistaModuloResponsive';
 import { usePaginacionListado } from '../../../../hooks/usePaginacionListado';
 import {
@@ -46,6 +47,10 @@ export function useCotizaciones() {
   const [rechazando, setRechazando] = useState(false);
 
   const [convertirAbierto, setConvertirAbierto] = useState(false);
+
+  const [pdfCotizacion, setPdfCotizacion] = useState<Cotizacion | null>(null);
+  const [pdfLineas, setPdfLineas] = useState<CotizacionLinea[]>([]);
+  const [imprimiendoPdf, setImprimiendoPdf] = useState(false);
 
   const [drawerTab, setDrawerTab] = useState<'info' | 'desglose'>('info');
   const [lineas, setLineas] = useState<CotizacionLinea[]>([]);
@@ -295,6 +300,47 @@ export function useCotizaciones() {
     setCotizacionARechazar(null);
   };
 
+  const imprimirPdf = useCallback(
+    async (cot: Cotizacion) => {
+      setImprimiendoPdf(true);
+      try {
+        let lineasDoc: CotizacionLinea[] = [];
+        if (cotizacionActiva?.id === cot.id && !cargandoLineas) {
+          lineasDoc = lineas;
+        } else {
+          try {
+            lineasDoc = await obtenerLineasCotizacion(cot.id);
+          } catch {
+            lineasDoc = [];
+          }
+        }
+
+        const mismaAbierta = cotizacionActiva?.id === cot.id;
+        const cotParaPdf: Cotizacion = mismaAbierta
+          ? {
+              ...cot,
+              requisitos: form.requisitos ?? cot.requisitos,
+              precio_cotizado_eur: form.precio_cotizado_eur ?? cot.precio_cotizado_eur,
+              valida_hasta: form.valida_hasta ?? cot.valida_hasta,
+            }
+          : cot;
+
+        flushSync(() => {
+          setPdfLineas(lineasDoc);
+          setPdfCotizacion(cotParaPdf);
+        });
+        document.body.setAttribute('data-zona-imprimir', 'zona-imprimible-cotizacion');
+        window.print();
+        window.setTimeout(() => {
+          document.body.removeAttribute('data-zona-imprimir');
+        }, 0);
+      } finally {
+        setImprimiendoPdf(false);
+      }
+    },
+    [cotizacionActiva, cargandoLineas, lineas, form],
+  );
+
   // Aplica búsqueda local y filtro por pestaña sobre el listado
   const cotizacionesFiltradas = cotizaciones.filter((c) => {
     const texto = busqueda.toLowerCase();
@@ -324,6 +370,9 @@ export function useCotizaciones() {
     cotizacionARechazar,
     rechazando,
     convertirAbierto,
+    pdfCotizacion,
+    pdfLineas,
+    imprimiendoPdf,
     drawerTab,
     lineas,
     lineaForm,
@@ -355,5 +404,6 @@ export function useCotizaciones() {
     confirmarRechazar,
     ejecutarRechazar,
     cancelarRechazar,
+    imprimirPdf,
   };
 }

@@ -1,0 +1,9 @@
+/* Visible solo al imprimir; ver también imprimir.css */
+.zona-imprimible-cotizacion {
+  display: none;
+}
+
+.doc-cotizacion {
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  color: var(--color-text-primary, #12284b);
+}
