@@ -1,5 +1,8 @@
 from pathlib import Path
 from typing import Optional
+from contextlib import asynccontextmanager
+import logging
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,7 +37,27 @@ from controladores.abordaje_controlador import router as router_abordajes
 from controladores.resena_controlador import router as router_resenas
 from controladores.reporte_estadistico_controlador import router as router_reportes
 
-app = FastAPI(title="API Travel BQTO", version="1.3.0")
+logger = logging.getLogger("sigel")
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    auto = os.getenv("TASA_BCV_AUTO", "1").strip().lower() not in {"0", "false", "no"}
+    if auto:
+        from database import SessionLocal
+        from modelos.tasa_modelo import sincronizar_tasas_bcv
+
+        db = SessionLocal()
+        try:
+            sincronizar_tasas_bcv(db, solo_si_falta=True)
+        except Exception as error:
+            logger.warning("No se pudo sincronizar la tasa BCV al iniciar: %s", error)
+        finally:
+            db.close()
+    yield
+
+
+app = FastAPI(title="API Travel BQTO", version="1.3.0", lifespan=lifespan)
 
 asegurar_carpeta_uploads()
 app.mount("/api/archivos", StaticFiles(directory=Path(UPLOAD_ROOT)), name="archivos")

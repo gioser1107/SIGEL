@@ -33,7 +33,14 @@ export interface TasaCambio {
   id: number;
   fecha: string;
   valor: number;
+  origen?: 'manual' | 'bcv';
   moneda: Moneda;
+}
+
+export interface SincronizarTasaBcvRespuesta {
+  omitido: boolean;
+  mensaje: string;
+  tasas: TasaCambio[];
 }
 
 export interface TasaDelDiaRespuesta {

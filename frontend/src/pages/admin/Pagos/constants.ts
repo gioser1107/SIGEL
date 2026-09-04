@@ -25,7 +25,7 @@ export const GRUPOS_PAGOS: { etiqueta: string; secciones: MetaSeccionPagos[] }[]
         id: 'tasas',
         etiqueta: 'Tasas de cambio',
         titulo: 'Tasas de cambio',
-        descripcion: 'Actualiza los tipos de cambio usados al registrar y validar pagos.',
+        descripcion: 'Tasa BCV automática o registro manual para cobrar en bolívares.',
       },
     ],
   },

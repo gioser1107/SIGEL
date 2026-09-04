@@ -1,6 +1,10 @@
 import type { Columna } from '../../../../../components/admin';
 import type { TasaCambio } from '../../../../../types/pagos';
 
+function etiquetaOrigen(origen?: TasaCambio['origen']) {
+  return origen === 'bcv' ? 'BCV' : 'Manual';
+}
+
 export const columnasTasas: Columna<TasaCambio>[] = [
   { id: 'fecha', encabezado: 'Fecha', accessor: (t) => t.fecha },
   {
@@ -10,7 +14,12 @@ export const columnasTasas: Columna<TasaCambio>[] = [
   },
   {
     id: 'valor',
-    encabezado: 'Valor (Bs/€)',
-    accessor: (t) => t.valor.toLocaleString('es-ES', { minimumFractionDigits: 2 }),
+    encabezado: 'Valor (Bs/unidad)',
+    accessor: (t) => t.valor.toLocaleString('es-VE', { minimumFractionDigits: 2 }),
+  },
+  {
+    id: 'origen',
+    encabezado: 'Carga',
+    accessor: (t) => etiquetaOrigen(t.origen),
   },
 ];

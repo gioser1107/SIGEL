@@ -61,8 +61,8 @@ export default function PanelCrearTasa({
     <PanelDeslizable
       abierto={abierto}
       onCerrar={onCerrar}
-      titulo="Registrar tasa"
-      subtitulo="Valor = cuántos Bs equivalen a 1 unidad de la moneda seleccionada"
+      titulo="Registrar tasa a mano"
+      subtitulo="Úsala si el BCV no responde o quieres un valor distinto. Bs por 1 unidad de la moneda."
       pie={
         <>
           <Boton variante="secundario" tamano="sm" onClick={onCerrar} disabled={guardando}>Cancelar</Boton>

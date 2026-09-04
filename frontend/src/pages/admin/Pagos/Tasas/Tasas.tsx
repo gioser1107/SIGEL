@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { TablaDatos, BotonAccionTabla, PaginacionTabla } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
 import { usePaginacionListado } from '../../../../hooks/usePaginacionListado';
 import { listarMonedasParaSelect } from '../../../../services/monedas';
-import { listarTasas } from '../../../../services/tasas';
+import { listarTasas, sincronizarTasaBcv } from '../../../../services/tasas';
 import type { Moneda, TasaCambio } from '../../../../types/pagos';
 import { fechaHoyIso } from '../constants';
 import type { PropsSeccionPagos } from '../types';
@@ -24,28 +24,32 @@ export default function Tasas({
   const [datos, setDatos] = useState<TasaCambio[]>([]);
   const [monedas, setMonedas] = useState<Moneda[]>([]);
   const [cargando, setCargando] = useState(false);
+  const [sincronizando, setSincronizando] = useState(false);
   const [filtroMoneda, setFiltroMoneda] = useState('');
+  const [hayTasaEurHoy, setHayTasaEurHoy] = useState<boolean | null>(null);
   const [panelCrearAbierto, setPanelCrearAbierto] = useState(false);
-  const [fechaCrear, setFechaCrear] = useState<string | undefined>(undefined);
   const [panelEditarAbierto, setPanelEditarAbierto] = useState(false);
   const [tasaActiva, setTasaActiva] = useState<TasaCambio | null>(null);
   const [tasaAEliminar, setTasaAEliminar] = useState<TasaCambio | null>(null);
+  const autoIntentado = useRef(false);
   const { pagina, setTotal, total, totalPaginas, irPagina, reiniciarPagina, limite } = usePaginacionListado();
 
   const recargar = useCallback(async () => {
     setCargando(true);
     try {
-      const [tasas, monedasData] = await Promise.all([
+      const [tasas, monedasData, tasasHoy] = await Promise.all([
         listarTasas({
           ...(filtroMoneda ? { moneda_id: Number(filtroMoneda) } : {}),
           pagina,
           limite,
         }),
         listarMonedasParaSelect(),
+        listarTasas({ fecha: fechaHoyIso(), limite: 50 }),
       ]);
       setDatos(tasas.items);
       setTotal(tasas.total);
       setMonedas(monedasData);
+      setHayTasaEurHoy(tasasHoy.items.some((t) => t.moneda.codigo === 'EUR'));
     } catch (err) {
       onError(mensajeError(err, 'tasas'));
     } finally {
@@ -55,11 +59,39 @@ export default function Tasas({
 
   useEffect(() => {
     if (activo) recargar();
+    else {
+      autoIntentado.current = false;
+      setHayTasaEurHoy(null);
+    }
   }, [activo, recargar]);
 
-  function abrirCrear(fecha?: string) {
-    setFechaCrear(fecha);
-    setPanelCrearAbierto(true);
+  useEffect(() => {
+    if (!activo || !puedeCrear || hayTasaEurHoy !== false || autoIntentado.current) return;
+    autoIntentado.current = true;
+    void (async () => {
+      try {
+        const resultado = await sincronizarTasaBcv(true);
+        if (!resultado.omitido) {
+          onExito(resultado.mensaje);
+          await recargar();
+        }
+      } catch {
+        /* Si el BCV no responde, queda el aviso y la carga manual. */
+      }
+    })();
+  }, [activo, puedeCrear, hayTasaEurHoy, onExito, recargar]);
+
+  async function traerTasaBcv() {
+    setSincronizando(true);
+    try {
+      const resultado = await sincronizarTasaBcv(false);
+      onExito(resultado.mensaje);
+      await recargar();
+    } catch (err) {
+      onError(mensajeError(err, 'tasas'));
+    } finally {
+      setSincronizando(false);
+    }
   }
 
   const hayAcciones = puedeEditar || puedeBorrar;
@@ -67,14 +99,20 @@ export default function Tasas({
 
   return (
     <>
+      {hayTasaEurHoy === false && (
+        <div className="pagos-admin__alerta-aviso" role="status">
+          No hay tasa euro de hoy. Puedes traerla del BCV o registrarla a mano.
+        </div>
+      )}
+
       <div className="pagos-admin__toolbar">
         {puedeCrear && (
           <>
-            <Boton variante="primario" tamano="sm" onClick={() => abrirCrear()}>
-              + Registrar tasa
+            <Boton variante="primario" tamano="sm" onClick={() => void traerTasaBcv()} disabled={sincronizando}>
+              {sincronizando ? 'Consultando BCV…' : 'Traer tasa BCV'}
             </Boton>
-            <Boton variante="secundario" tamano="sm" onClick={() => abrirCrear(fechaHoyIso())}>
-              Registrar tasa de hoy
+            <Boton variante="secundario" tamano="sm" onClick={() => setPanelCrearAbierto(true)}>
+              Registrar a mano
             </Boton>
           </>
         )}
@@ -131,8 +169,7 @@ export default function Tasas({
       <PanelCrearTasa
         abierto={panelCrearAbierto}
         monedas={monedas}
-        fechaInicial={fechaCrear}
-        onCerrar={() => { setPanelCrearAbierto(false); setFechaCrear(undefined); }}
+        onCerrar={() => setPanelCrearAbierto(false)}
         onExito={onExito}
         onError={onError}
         onRecargar={recargar}

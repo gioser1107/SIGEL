@@ -15,6 +15,7 @@ from modelos.tasa_modelo import (
     listar_tasas_hoy,
     obtener_tasa,
     obtener_tasa_eur_del_dia_o_error,
+    sincronizar_tasas_bcv,
     tasa_a_respuesta,
 )
 from modelos.permiso_modelo import (
@@ -70,6 +71,15 @@ def obtener_tasas_hoy_endpoint(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_REPORTES_PAGO)),
 ):
     return listar_tasas_hoy(db, pagina=pagina, limite=limite)
+
+
+@router.post("/sincronizar-bcv")
+def sincronizar_tasa_bcv_endpoint(
+    solo_si_falta: bool = Query(default=False),
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_REPORTES_PAGO)),
+):
+    return sincronizar_tasas_bcv(db, solo_si_falta=solo_si_falta)
 
 
 @router.get("/{tasa_id}")

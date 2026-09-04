@@ -3,9 +3,7 @@
 -- Contraseña inicial de todos los usuarios: TravelBqto2026
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
-DROP DATABASE IF EXISTS travel_bqto;
-CREATE DATABASE travel_bqto CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE travel_bqto;
+
 
 CREATE TABLE bancos (
 	id BIGINT NOT NULL AUTO_INCREMENT, 
@@ -162,6 +160,7 @@ CREATE TABLE tasas (
 	fecha DATE NOT NULL, 
 	valor NUMERIC(14, 4) NOT NULL, 
 	moneda_id BIGINT NOT NULL, 
+	origen VARCHAR(20) NOT NULL DEFAULT 'manual',
 	eliminado_en DATETIME, 
 	PRIMARY KEY (id), 
 	FOREIGN KEY(moneda_id) REFERENCES monedas (id)

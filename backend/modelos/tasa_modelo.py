@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Numeric
+from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import Session
 
 from database import Base
@@ -25,7 +25,11 @@ class Tasa(Base):
     fecha = Column(Date, nullable=False, index=True)
     valor = Column(Numeric(14, 4), nullable=False)
     moneda_id = Column(BigInteger, ForeignKey("monedas.id"), nullable=False, index=True)
+    origen = Column(String(20), nullable=False, default="manual")
     eliminado_en = Column(DateTime, nullable=True)
+
+ORIGEN_MANUAL = "manual"
+ORIGEN_BCV = "bcv"
 
 
 def tasa_a_dict(tasa: Tasa, moneda: Moneda) -> dict:
@@ -33,6 +37,7 @@ def tasa_a_dict(tasa: Tasa, moneda: Moneda) -> dict:
         "id": tasa.id,
         "fecha": tasa.fecha.isoformat() if tasa.fecha else None,
         "valor": float(tasa.valor),
+        "origen": tasa.origen or ORIGEN_MANUAL,
         "moneda": moneda_a_dict(moneda),
     }
 
@@ -170,14 +175,84 @@ def listar_tasas_hoy(db: Session, pagina: int = 1, limite: int = 10) -> dict:
     return respuesta_paginada(items, total, pagina, limite)
 
 
-def crear_tasa(db: Session, fecha: date, valor: Decimal, moneda_id: int) -> Tasa:
+def crear_tasa(
+    db: Session,
+    fecha: date,
+    valor: Decimal,
+    moneda_id: int,
+    origen: str = ORIGEN_MANUAL,
+) -> Tasa:
     ValidadorEntrada.fecha_no_futura(fecha, "fecha", obligatorio=True)
     validar_moneda_existente(db, moneda_id)
-    nueva = Tasa(fecha=fecha, valor=valor, moneda_id=moneda_id)
+    nueva = Tasa(fecha=fecha, valor=valor, moneda_id=moneda_id, origen=origen)
     db.add(nueva)
     db.commit()
     db.refresh(nueva)
     return nueva
+
+
+def _tasa_del_dia_moneda(db: Session, moneda_id: int, fecha: date) -> Tasa | None:
+    return (
+        db.query(Tasa)
+        .filter(
+            Tasa.moneda_id == moneda_id,
+            Tasa.fecha == fecha,
+            Tasa.eliminado_en.is_(None),
+        )
+        .order_by(Tasa.id.desc())
+        .first()
+    )
+
+
+def upsert_tasa_del_dia(
+    db: Session,
+    fecha: date,
+    valor: Decimal,
+    moneda_id: int,
+    origen: str,
+) -> tuple[Tasa, bool]:
+    existente = _tasa_del_dia_moneda(db, moneda_id, fecha)
+    if existente:
+        existente.valor = valor
+        existente.origen = origen
+        db.commit()
+        db.refresh(existente)
+        return existente, True
+    return crear_tasa(db, fecha, valor, moneda_id, origen=origen), False
+
+
+def sincronizar_tasas_bcv(db: Session, solo_si_falta: bool = False) -> dict:
+    from utilidades.tasa_bcv import consultar_tasas_oficiales_bcv
+
+    hoy = date.today()
+    moneda_eur = buscar_moneda_por_codigo(db, "EUR")
+    if not moneda_eur:
+        raise HTTPException(status_code=503, detail="Moneda EUR no configurada en el sistema")
+
+    if solo_si_falta and _tasa_del_dia_moneda(db, moneda_eur.id, hoy):
+        return {
+            "omitido": True,
+            "mensaje": "Ya hay tasa EUR de hoy. No se consultó el BCV.",
+            "tasas": [],
+        }
+
+    oficiales = consultar_tasas_oficiales_bcv()
+    creadas = []
+    for codigo, valor in oficiales.items():
+        moneda = buscar_moneda_por_codigo(db, codigo)
+        if not moneda:
+            continue
+        tasa, actualizada = upsert_tasa_del_dia(db, hoy, valor, moneda.id, ORIGEN_BCV)
+        creadas.append({"tasa": tasa_a_dict(tasa, moneda), "actualizada": actualizada})
+
+    if not creadas:
+        raise HTTPException(status_code=503, detail="No hay monedas EUR/USD para guardar la tasa BCV")
+
+    return {
+        "omitido": False,
+        "mensaje": "Tasa oficial BCV cargada para hoy.",
+        "tasas": [item["tasa"] for item in creadas],
+    }
 
 
 def actualizar_tasa(
@@ -199,6 +274,7 @@ def actualizar_tasa(
 
     if valor is not None:
         tasa.valor = valor
+        tasa.origen = ORIGEN_MANUAL
 
     db.commit()
     db.refresh(tasa)

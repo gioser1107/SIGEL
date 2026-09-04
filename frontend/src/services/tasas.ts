@@ -2,7 +2,7 @@ import apiRequest from './api';
 import { apiMutacion } from '../utils/notificacionesEventos';
 import type { PaginacionQuery, RespuestaPaginada } from '../types/paginacion';
 import { agregarPaginacionAParams, listarItemsParaSelect, normalizarRespuestaPaginada } from '../utils/paginacionApi';
-import type { CrearTasaDTO, EditarTasaDTO, TasaCambio, TasaDelDiaRespuesta } from '../types/pagos';
+import type { CrearTasaDTO, EditarTasaDTO, SincronizarTasaBcvRespuesta, TasaCambio, TasaDelDiaRespuesta } from '../types/pagos';
 
 export interface FiltrosTasas extends PaginacionQuery {
   moneda_id?: number;
@@ -34,6 +34,19 @@ export async function obtenerTasaDelDia(): Promise<TasaDelDiaRespuesta> {
 
 export async function obtenerTasa(id: number): Promise<TasaCambio> {
   return apiRequest<TasaCambio>(`/tasas/${id}`, { requiresAuth: true });
+}
+
+export async function sincronizarTasaBcv(soloSiFalta = false): Promise<SincronizarTasaBcvRespuesta> {
+  const params = new URLSearchParams();
+  if (soloSiFalta) params.set('solo_si_falta', 'true');
+  const query = params.toString();
+  return apiMutacion(() =>
+    apiRequest<SincronizarTasaBcvRespuesta>(`/tasas/sincronizar-bcv${query ? `?${query}` : ''}`, {
+      method: 'POST',
+      requiresAuth: true,
+      body: JSON.stringify({}),
+    })
+  );
 }
 
 export async function crearTasa(datos: CrearTasaDTO): Promise<TasaCambio> {
