@@ -1,63 +1,3 @@
-# Matriz de Especificación de Requisitos Funcionales (SRS)
-
-**Proyecto:** Desarrollo de un sistema integral para la gestión logística turística con módulos de analítica predictiva y arquitectura MVC para la agencia Travel BQTO, parroquia Ana Soto, Barquisimeto.
-
-**Sistema:** SIGEL — Travel BQTO  
-**Versión API:** 1.3.0  
-**Integrantes:** María Alvarado, Luis Herice, Sergio Jiménez, Gabriel Jiménez  
-**Tutor:** Edecio Freitez  
-**Fecha:** Septiembre 2026  
-**Estado:** Documento maestro de RF (IDs oficiales RF-01 a RF-21)
-
----
-
-## 1. Introducción
-
-Este documento es el **catálogo oficial** de requisitos funcionales de SIGEL. Cada RF describe una capacidad **observable e implementada** (o el límite explícito si no aplica). Los identificadores RF-01 a RF-21 no se reenumeran en otros entregables: el resumen de `docs/ENTREGA_DOCUMENTAL/` debe citar estos mismos IDs.
-
-Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con:
-- Diagrama A — Administración, seguridad y catálogo
-- Diagrama B — Comercial, finanzas y operación
-- Diagrama C — Portal público y portal cliente
-- Plantillas IBM de casos de uso (M1–M9)
-- Requisitos no funcionales RNF-01 a RNF-16 (`docs/SRS_REQUISITOS_NO_FUNCIONALES.md`)
-
-**Límites (no se afirman como RF):** analítica predictiva entrenada; reportes por género o edad (el maestro de clientes no almacena esos atributos). El RF-21 es estadística descriptiva por rango de fechas.
-
----
-
-## 2. Resumen de requisitos funcionales
-
-| ID | Nombre | Prioridad | Actor principal | Diagrama | IBM | Evidencia en código |
-|----|--------|-----------|-----------------|----------|-----|---------------------|
-| RF-01 | Autenticación e identidad | Alta | Todos | A, B, C | — | `auth_controlador.py` |
-| RF-02 | Gestión de usuarios | Alta | Administrador | A | M6-U1 a U4 | `usuario_controlador.py` |
-| RF-03 | Gestión de roles | Alta | Administrador | A | M6-U5 a U8 | `rol_controlador.py` |
-| RF-04 | Gestión de permisos | Alta | Administrador | A | M9-U1 a U4 | `permiso_controlador.py` |
-| RF-05 | Consulta de bitácora | Alta | Administrador | A | — | `bitacora_controlador.py` |
-| RF-06 | Gestión de destinos | Alta | Administrador | A, C | M1-U1 a U4 | `destino_controlador.py` |
-| RF-07 | Gestión de flota y asientos | Alta | Administrador | A | — | `unidad_transporte_controlador.py`, `asiento_controlador.py` |
-| RF-08 | Gestión de puntos de recogida | Alta | Administrador / Cliente | A, C | M8-U1 a U4 | `puntos_recogida_controlador.py` |
-| RF-09 | Planificación de viajes | Alta | Administrador | A | M3-O1 a O6 | `viaje_controlador.py` |
-| RF-10 | Dashboard administrativo | Media | Administrador | A | — | `catalogo_controlador.py` (`/estadisticas`) |
-| RF-11 | Gestión de clientes | Alta | Administrador | B | M7-U1 a U4 | `cliente_controlador.py`, `ubicacion_controlador.py` |
-| RF-12 | Gestión de cotizaciones | Alta | Administrador / ATC | B | M5-U1 a U5 | `cotizacion_controlador.py` |
-| RF-13 | Gestión de reservas y asientos | Alta | Administrador / Cliente | B, C | M1-U5 a U10 | `reservas_controlador.py` |
-| RF-14 | Registro de reportes de pago | Alta | Administrador / Cliente | B, C | M2-U1 | `pago_controlador.py` |
-| RF-15 | Conciliación de pagos | Alta | Administrador | B | M2-U2 | `pago_controlador.py` |
-| RF-16 | Configuración de catálogo financiero | Alta | Administrador | B | — | monedas, tasas, métodos, bancos, puntos de venta |
-| RF-17 | Control de abordaje | Alta | Administrador / Guía | B | M4-U1 a U4 | `abordaje_controlador.py` |
-| RF-18 | Moderación de reseñas | Media | Administrador / Cliente | B, C | — | `resena_controlador.py` |
-| RF-19 | Portal público | Alta | Visitante | C | M1-U2 | `catalogo_controlador.py` |
-| RF-20 | Portal cliente | Alta | Cliente | C | M1-U6, M1-U7 | reservas/pagos/clientes portal |
-| RF-21 | Reportes estadísticos | Alta | Administrador | A, B | — | `reporte_estadistico_controlador.py` |
-
----
-
-## 3. Matriz detallada de requisitos funcionales
-
----
-
 ### RF-01 — Autenticación e identidad
 
 | Campo | Contenido |
@@ -121,6 +61,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 3. Usuario desactivado no aparece en listados activos.
 4. Asignación de rol actualiza permisos en siguiente login.
 
+**Necesidad:** Controlar las cuentas del personal de la agencia sin gestionar accesos de forma informal.
+
 ---
 
 ### RF-03 — Gestión de roles
@@ -149,6 +91,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 2. Cambios de permisos se reflejan en autorización de endpoints.
 3. Rol «Cliente» existe para registro público.
 
+**Necesidad:** Separar perfiles de administrador, guía y cliente.
+
 ---
 
 ### RF-04 — Gestión de permisos
@@ -172,6 +116,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 1. Listado paginado de permisos activos.
 2. Descripción del permiso usable como identificador (ej. `leer_clientes`).
 3. Eliminación lógica sin borrado físico.
+
+**Necesidad:** Autorizar acciones por módulo y no solo por cargo genérico.
 
 ---
 
@@ -199,6 +145,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 2. Detalle de evento consultable.
 3. Acceso sin permiso retorna HTTP 403.
 
+**Necesidad:** Saber quién modificó qué registro y cuándo.
+
 ---
 
 ### RF-06 — Gestión de destinos
@@ -217,15 +165,17 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 **Descripción:** CRUD de destinos con precio base, descripción y galería de imágenes; consulta pública en portal.
 
 **Especificación:**
-- `/api/destinos` — CRUD admin (`destino_controlador.py`).
-- `/api/catalogo/destinos` — consulta pública (`catalogo_controlador.py`).
-- Galería con upload de imágenes convertidas a WebP.
-- Anulación lógica si hay viajes/reservas asociados (regla de negocio).
+- `/api/destinos` — CRUD administrativo.
+- `/api/catalogo/destinos` — consulta pública.
+- Galería con carga de imágenes convertidas a WebP.
+- Anulación lógica si hay viajes o reservas asociados.
 
 **Criterios de aceptación:**
 1. Destino creado visible en catálogo admin y portal público.
 2. Galería admite múltiples imágenes por destino.
 3. Anulación bloqueada si existen dependencias activas.
+
+**Necesidad:** Publicar la oferta turística de Travel BQTO de forma centralizada.
 
 ---
 
@@ -253,6 +203,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 2. Mapa de asientos configurable (filas, columnas, tipo).
 3. Baja lógica de unidad no elimina historial de viajes.
 
+**Necesidad:** Asignar transporte y asientos sin sobreventa.
+
 ---
 
 ### RF-08 — Gestión de puntos de recogida
@@ -268,7 +220,7 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 | **Casos de uso IBM** | M8-U1 a M8-U4 |
 | **RNF relacionados** | RNF-06 |
 
-**Descripción:** Registro y consulta de domicilios de recogida vinculados a clientes; admin consulta global; cliente gestiona los propios.
+**Descripción:** Registro y consulta de domicilios de recogida vinculados a clientes; el administrador consulta de forma global y el cliente gestiona los propios.
 
 **Especificación:**
 - Admin consulta: `GET /api/puntos-recogida` (permiso `leer_puntos_recogida`).
@@ -280,6 +232,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 1. Domicilio vinculado correctamente en `clientes_puntos_recogida`.
 2. Cliente puede marcar domicilio predeterminado.
 3. Validación rechaza domicilios incompletos (HTTP 422).
+
+**Necesidad:** Coordinar paradas de recogida por cliente y por viaje.
 
 ---
 
@@ -300,16 +254,18 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 
 **Especificación:**
 - `/api/viajes` — CRUD de viajes.
-- Asignación de guías, ruta de recogida, costos operativos.
+- Asignación de guías, ruta de recogida y costos operativos.
 - `GET /api/viajes/{id}/reporte` — reporte de viaje.
 - Estados: planificado, en_curso, finalizado, cancelado.
 - Anulación bloqueada si hay reservas activas.
 
 **Criterios de aceptación:**
-1. Viaje creado en estado borrador/planificado.
+1. Viaje creado en estado borrador o planificado.
 2. Ruta de recogida con paradas ordenadas y horarios.
 3. Costos operativos calculan total y precio de venta.
-4. Reporte de viaje exportable/imprimible.
+4. Reporte de viaje exportable o imprimible.
+
+**Necesidad:** Programar la operación logística de cada salida.
 
 ---
 
@@ -325,7 +281,7 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 | **Diagrama relacionado** | A |
 | **RNF relacionados** | RNF-10 |
 
-**Descripción:** Vista resumen con estadísticas generales y alertas operativas (reservas pendientes, etc.).
+**Descripción:** Vista resumen con estadísticas generales y alertas operativas (reservas pendientes, entre otras).
 
 **Especificación:**
 - `GET /api/catalogo/estadisticas`.
@@ -334,6 +290,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 **Criterios de aceptación:**
 1. Dashboard carga indicadores sin error para usuario autenticado.
 2. Reservas pendientes de confirmación visibles.
+
+**Necesidad:** Dar a gerencia una vista rápida del estado operativo.
 
 ---
 
@@ -354,16 +312,18 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 
 **Especificación:**
 - `/api/clientes` — CRUD con permisos `crear_clientes`, `leer_clientes`, `editar_clientes`, `borrar_clientes`.
-- Catálogo auxiliar de estados/ciudades: `/api/ubicaciones`.
-- Búsqueda por nombre, documento, teléfono.
+- Catálogo auxiliar de estados y ciudades: `/api/ubicaciones`.
+- Búsqueda por nombre, documento y teléfono.
 - `GET /api/clientes/buscar-por-documento`.
-- Cada pasajero de una reserva es un registro en `clientes`; `reserva_clientes` solo enlaza reserva + cliente (3FN).
+- Cada pasajero de una reserva es un registro en `clientes`; `reserva_clientes` solo enlaza reserva y cliente.
 
 **Criterios de aceptación:**
 1. Cliente creado con tipo y número de documento únicos.
 2. Desactivación lógica (soft delete).
 3. Integración con puntos de recogida (RF-08).
 4. Un acompañante no registrado se crea primero como cliente y luego se vincula a la reserva.
+
+**Necesidad:** Mantener el maestro de personas que viajan con la agencia.
 
 ---
 
@@ -390,8 +350,10 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 
 **Criterios de aceptación:**
 1. Cotización con desglose financiero calculado.
-2. Modificación recalcula totales en tiempo real.
+2. Modificación recalcula totales.
 3. Cancelación lógica si no tiene reservas activas.
+
+**Necesidad:** Formalizar ofertas comerciales antes de la reserva.
 
 ---
 
@@ -411,13 +373,13 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 **Descripción:** Creación de reservas con pasajeros, validación de cupos, mapa interactivo de asientos y gestión de estados.
 
 **Especificación:**
-- `/api/reservas` — CRUD admin.
+- `/api/reservas` — CRUD administrativo.
 - `/api/reservas/cliente` — reserva desde portal.
 - Mapa de asientos: `/api/viajes/{id}/asientos-disponibles`.
 - Portal: `/api/reservas/portal/mis-reservas`.
 - Estados: pendiente, confirmada, abonada, cancelada.
 - Bloqueo transaccional de asientos (sin sobreventa).
-- Tabla `reserva_clientes` en 3FN: no duplica nombre/apellido/documento (JOIN a `clientes`); atributos propios del vínculo: titular, menor, asiento, tarifa, recargo, recogida.
+- Tabla `reserva_clientes`: no duplica nombre, apellido ni documento; atributos del vínculo: titular, menor, asiento, tarifa, recargo, recogida.
 
 **Criterios de aceptación:**
 1. Asiento ocupado no puede asignarse a dos pasajeros (HTTP 409).
@@ -425,6 +387,8 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 3. Cliente consulta sus reservas en portal.
 4. Anulación libera asientos.
 5. Dos reservas simultáneas sobre el último cupo: una confirma y la otra recibe 409.
+
+**Necesidad:** Evitar sobreventa y registrar viajeros de forma estructurada.
 
 ---
 
@@ -446,14 +410,16 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 **Especificación:**
 - Admin: `POST /api/reservas/{id}/pagos`.
 - Cliente: `POST /api/reservas/{id}/pagos/portal/reportar`.
-- Upload comprobante: `/api/pagos/portal/comprobante/upload`.
+- Carga de comprobante: `/api/pagos/portal/comprobante/upload`.
 - Cálculo de equivalencia según tasa del día.
-- Validación de monto ≤ saldo pendiente.
+- Validación de monto menor o igual al saldo pendiente.
 
 **Criterios de aceptación:**
-1. Pago registrado en estado `en_validacion` (excepto efectivo admin).
+1. Pago registrado en estado `en_validacion` (excepto efectivo administrativo).
 2. Comprobante adjunto accesible para conciliación.
 3. Resumen de saldo actualizado tras aprobación.
+
+**Necesidad:** Recibir abonos con soporte verificable.
 
 ---
 
@@ -470,19 +436,21 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 | **Casos de uso IBM** | M2-U2, M2-U3, M2-U4 |
 | **RNF relacionados** | RNF-04, RNF-08 |
 
-**Descripción:** Revisión de pagos pendientes, aprobación o rechazo bancario, actualización de saldo de reserva.
+**Descripción:** Revisión de pagos pendientes, aprobación o rechazo bancario y actualización de saldo de reserva.
 
 **Especificación:**
 - Bandeja: `GET /api/pagos?estado=en_validacion`.
 - `POST /api/reservas/{id}/pagos/{pid}/aprobar`.
 - `POST /api/reservas/{id}/pagos/{pid}/rechazar`.
-- Modificar/anular reportes antes o después de conciliación según reglas.
+- Modificar o anular reportes según reglas de conciliación.
 
 **Criterios de aceptación:**
 1. Aprobación cambia estado a `aprobado` y reduce saldo.
 2. Rechazo cambia estado a `rechazado` sin afectar saldo aprobado.
-3. Reserva pasa a pagada si saldo llega a cero.
+3. Reserva pasa a pagada si el saldo llega a cero.
 4. Acciones registradas en bitácora.
+
+**Necesidad:** Validar ingresos antes de considerar la reserva cobrada.
 
 ---
 
@@ -502,13 +470,15 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 
 **Especificación:**
 - `/api/monedas`, `/api/tasas`, `/api/metodos-pago`, `/api/bancos`, `/api/puntos-venta`.
-- Tasa del día obligatoria para pagos en VES/EUR; sincronización BCV al arranque (`TASA_BCV_AUTO`) y consulta/actualización en `/api/tasas`.
-- Frontend: módulo Pagos → subsecciones de catálogo.
+- Tasa del día obligatoria para pagos en VES o EUR; sincronización BCV al arranque y consulta o actualización en `/api/tasas`.
+- Frontend: módulo Pagos, subsecciones de catálogo.
 
 **Criterios de aceptación:**
-1. Sin tasa del día, registro de pago en divisas retorna error.
-2. Métodos de pago activos visibles en formulario de pago.
+1. Sin tasa del día, el registro de pago en divisas retorna error.
+2. Métodos de pago activos visibles en el formulario de pago.
 3. CRUD operativo para cada catálogo.
+
+**Necesidad:** Convertir y registrar cobros en las monedas que usa la agencia.
 
 ---
 
@@ -530,15 +500,16 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 **Especificación:**
 - `/api/abordajes/viajes` — selector de viajes.
 - `/api/abordajes/viajes/{id}/manifiesto` — manifiesto completo.
-- `PUT .../pasajeros/{id}` — registrar abordaje individual.
-- `POST .../registrar-lote` — abordaje en lote.
+- Registro de abordaje individual y en lote.
 - Permisos: `crear_abordaje`, `leer_abordaje`, `editar_abordaje`, `borrar_abordaje`.
 
 **Criterios de aceptación:**
-1. Manifiesto lista pasajeros con estado pendiente/abordado/no_presentado.
-2. Resumen de totales actualizado en tiempo real.
+1. Manifiesto lista pasajeros con estado pendiente, abordado o no_presentado.
+2. Resumen de totales actualizado.
 3. Anulación de abordaje devuelve pasajero a pendiente.
 4. Eventos en bitácora (módulo abordaje).
+
+**Necesidad:** Controlar quién sube a la unidad el día del viaje.
 
 ---
 
@@ -554,7 +525,7 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 | **Diagrama relacionado** | B, C |
 | **RNF relacionados** | RNF-06 |
 
-**Descripción:** Cliente publica reseña de viaje elegible; administrador consulta, modera visibilidad o elimina.
+**Descripción:** El cliente publica reseña de viaje elegible; el administrador consulta, modera visibilidad o elimina.
 
 **Especificación:**
 - Cliente: `POST /api/resenas`, reservas elegibles en portal.
@@ -562,9 +533,11 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 - Público: `GET /api/resenas/publicas`.
 
 **Criterios de aceptación:**
-1. Solo reservas completadas/elegibles permiten reseña.
+1. Solo reservas completadas o elegibles permiten reseña.
 2. Calificación 1–5 con comentario opcional.
-3. Admin puede eliminar reseñas inapropiadas.
+3. El administrador puede eliminar reseñas inapropiadas.
+
+**Necesidad:** Recoger opinión de viajeros con control de publicación.
 
 ---
 
@@ -585,13 +558,15 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 
 **Especificación:**
 - Rutas: `/`, `/destino/:id`, `/agenda`.
-- API catálogo público: `/api/catalogo/destinos`, `/api/catalogo/viajes`.
+- API de catálogo público: `/api/catalogo/destinos`, `/api/catalogo/viajes`.
 - Reseñas públicas visibles en destinos.
 
 **Criterios de aceptación:**
-1. Visitante consulta destinos sin login.
-2. Agenda muestra viajes publicados/planificados.
+1. El visitante consulta destinos sin inicio de sesión.
+2. La agenda muestra viajes publicados o planificados.
 3. Enlaces a registro e inicio de sesión disponibles.
+
+**Necesidad:** Mostrar la oferta 24/7 sin depender de WhatsApp.
 
 ---
 
@@ -612,14 +587,16 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 
 **Especificación:**
 - Rutas: `/client/dashboard`, `/client/registrar-pago`, `/client/puntos-recogida`, `/client/resenas`, `/client/solicitudes`.
-- APIs portal en reservas, pagos, clientes, reseñas.
-- Rol «Cliente» requerido; redirección desde panel admin.
+- APIs de portal en reservas, pagos, clientes y reseñas.
+- Rol «Cliente» requerido.
 
 **Criterios de aceptación:**
-1. Cliente autenticado ve solo sus reservas y pagos.
-2. Flujo de abono/reserva completable desde portal.
-3. Reporte de pago genera registro `en_validacion`.
+1. El cliente autenticado ve solo sus reservas y pagos.
+2. Flujo de abono o reserva completable desde el portal.
+3. El reporte de pago genera registro `en_validacion`.
 4. Gestión de domicilios de recogida propios.
+
+**Necesidad:** Que el cliente gestione su viaje sin intermediación constante.
 
 ---
 
@@ -635,87 +612,20 @@ Cada RF describe una capacidad del sistema para Travel BQTO y está alineado con
 | **Diagrama relacionado** | A, B |
 | **RNF relacionados** | RNF-06, RNF-10 |
 
-**Descripción:** El administrador consulta, en un solo apartado, indicadores de negocio filtrados por un rango de fechas reales: clientes registrados en el periodo, destinos más concurridos (reservas y cotizaciones), mes con más movimiento, reservas de un día e ingresos cobrados (pagos aprobados convertidos a euros). El sistema rechaza fechas imposibles (por ejemplo el año 500). No se reporta por género ni edad porque el maestro de clientes no almacena esos datos.
+**Descripción:** El administrador consulta, en un solo apartado, indicadores de negocio filtrados por un rango de fechas reales: clientes registrados en el periodo, destinos más concurridos (reservas y cotizaciones), mes con más movimiento, reservas de un día e ingresos cobrados (pagos aprobados convertidos a euros). El sistema rechaza fechas imposibles. No se reporta por género ni edad porque el maestro de clientes no almacena esos datos.
 
 **Especificación:**
 - `GET /api/reportes/estadisticos?desde=YYYY-MM-DD&hasta=YYYY-MM-DD`
 - Frontend: `/admin/reportes`
-- Validación: `desde ≤ hasta`; año entre 2000 y el año actual + 1; rango máximo 10 años.
+- Validación: `desde` menor o igual a `hasta`; año entre 2000 y el año actual + 1; rango máximo 10 años.
 - Métricas: clientes nuevos, reservas (activas/canceladas), pasajeros (adultos/menores), destinos más reservados, destinos más cotizados, movimiento mensual, reservas por día, ingresos de pagos en estado `aprobado`.
 - Permiso: `leer_reservas` o `leer_reportes_pago` o `leer_clientes`.
 
 **Criterios de aceptación:**
 1. Consultar el año en curso muestra totales coherentes con reservas, clientes y pagos del rango.
 2. Un rango de un solo día lista las reservas de esa fecha.
-3. Una fecha con año 500 (u otro año imposible) retorna HTTP 400 sin consultar la base como si hubiera datos.
-4. La pantalla indica explícitamente que no hay corte por género ni edad.
-5. El reporte es imprimible para apoyo a decisiones del dueño.
+3. Una fecha con año imposible retorna HTTP 400.
+4. La pantalla indica que no hay corte por género ni edad.
+5. El reporte es imprimible.
 
----
-
-## 4. Trazabilidad RF ↔ Diagramas ↔ IBM
-
-| RF | Diagrama | Casos de uso IBM |
-|----|----------|------------------|
-| RF-01 | A, B, C | Transversal |
-| RF-02 | A | M6-U1 a U4 |
-| RF-03 | A | M6-U5 a U8 |
-| RF-04 | A | M9-U1 a U4 |
-| RF-05 | A | — |
-| RF-06 | A, C | M1-U1 a U4 |
-| RF-07 | A | — |
-| RF-08 | A, C | M8-U1 a U4 |
-| RF-09 | A | M3-O1 a O6 |
-| RF-10 | A | — |
-| RF-11 | B | M7-U1 a U4 |
-| RF-12 | B | M5-U1 a U5 |
-| RF-13 | B, C | M1-U5 a U10 |
-| RF-14 | B, C | M2-U1, M2-U5 |
-| RF-15 | B | M2-U2 a U4 |
-| RF-16 | B | — |
-| RF-17 | B | M4-U1 a U4 |
-| RF-18 | B, C | — |
-| RF-19 | C | M1-U2 |
-| RF-20 | C | M1-U6, M1-U7 |
-| RF-21 | A, B | — |
-
----
-
-## 5. Trazabilidad RF ↔ RNF
-
-| RF | RNF complementarios |
-|----|---------------------|
-| RF-01 | RNF-01, RNF-02, RNF-07 |
-| RF-02 | RNF-02, RNF-05, RNF-06 |
-| RF-03, RF-04 | RNF-02 |
-| RF-05 | RNF-04 |
-| RF-06 | RNF-06, RNF-12 |
-| RF-07 | RNF-06, RNF-08 |
-| RF-08 | RNF-06 |
-| RF-09 | RNF-06, RNF-08 |
-| RF-10 | RNF-10 |
-| RF-11 | RNF-05, RNF-06 |
-| RF-12 | RNF-06 |
-| RF-13 | RNF-08, RNF-15 |
-| RF-14 | RNF-04, RNF-06, RNF-08 |
-| RF-15 | RNF-04, RNF-08 |
-| RF-16 | RNF-06 |
-| RF-17 | RNF-04, RNF-14 |
-| RF-18 | RNF-06 |
-| RF-19 | RNF-14, RNF-16 |
-| RF-20 | RNF-01, RNF-14, RNF-15 |
-| RF-21 | RNF-06, RNF-10 |
-
----
-
-## 6. Reglas funcionales críticas (verificables)
-
-1. Una reserva pertenece a un cliente y a un viaje; los viajeros se modelan en `reserva_clientes`.
-2. Un asiento no puede quedar vigente dos veces para el mismo viaje (índice único de filas vigentes + HTTP 409).
-3. Las eliminaciones son lógicas cuando la entidad tiene `eliminado_en`.
-4. El pago entra en validación administrativa; los ingresos del RF-21 usan solo pagos `aprobado`.
-5. El RF-21 rechaza fechas imposibles, rangos invertidos y rangos mayores a diez años (HTTP 400).
-
----
-
-*Documento generado conforme a la Guía Estándar SRS — UPTAEB, PNF Informática, Trayecto III. Catálogo maestro RF-01 a RF-21.*
+**Necesidad:** Apoyar decisiones de la agencia con cifras reales del periodo consultado.

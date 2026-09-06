@@ -16,6 +16,7 @@ interface Opcion {
   etiqueta: string;
   busqueda?: string;
   titulo?: string;
+  deshabilitada?: boolean;
 }
 
 function SelectBuscador({
@@ -54,6 +55,7 @@ function SelectBuscador({
     : opciones;
 
   const seleccionar = (op: Opcion) => {
+    if (op.deshabilitada) return;
     onSeleccionar(op);
     setBusqueda('');
     setAbierto(false);
@@ -109,7 +111,7 @@ function SelectBuscador({
             opcionesFiltradas.map((op) => (
               <div
                 key={op.valor}
-                className={`sb__option${op.valor === valorSeleccionado ? ' sb__option--selected' : ''}`}
+                className={`sb__option${op.valor === valorSeleccionado ? ' sb__option--selected' : ''}${op.deshabilitada ? ' sb__option--disabled' : ''}`}
                 title={op.titulo}
                 onMouseDown={() => seleccionar(op)}
               >
@@ -154,8 +156,9 @@ export default function PasoViajeCliente({
     valor: v.id,
     etiqueta: etiquetaViajeDisponible(v),
     titulo: detalleViajeDisponible(v),
+    deshabilitada: !v.disponibilidad.disponible_para_reserva,
     busqueda: [
-      v.destino_nombre,
+      v.destino_nombre ?? '',
       v.disponibilidad.unidad_placa ?? '',
       formatearFechaSalidaViaje(v.fecha_salida),
       String(v.disponibilidad.asientos_disponibles),
@@ -211,6 +214,11 @@ export default function PasoViajeCliente({
             onSeleccionar={manejarSeleccionViaje}
             placeholder="Buscar destino, fecha o asientos…"
           />
+        )}
+        {!cargandoViajes && !sinViajes && (
+          <p className="paso-aviso-cliente">
+            Los viajes sin cupo o sin asientos en la unidad aparecen en la lista, pero no se pueden seleccionar.
+          </p>
         )}
 
         {viajeSeleccionado && (

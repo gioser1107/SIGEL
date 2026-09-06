@@ -29,11 +29,12 @@ Este paquete sustituye la documentación que no representaba fielmente el sistem
 
 ## Inventario de entregables
 
-1. `01_SRS_ACTUALIZADO.md` — requisitos funcionales y no funcionales trazables.
+1. `01_SRS_ACTUALIZADO.md` — resumen RF-01 a RF-21 y RNF-01 a RNF-16 (mismos IDs que `docs/SRS_REQUISITOS_*.md`).
 2. `02_ARQUITECTURA_Y_DATOS.md` — arquitectura, módulos y modelo relacional.
 3. `03_CASOS_DE_USO_Y_PRUEBAS.md` — casos de uso prioritarios y criterios de aceptación.
 4. `04_HALLAZGOS_Y_VALIDACION.md` — puntos a validar antes de la defensa.
-5. `diagramas/` — `puml/` para editar y `pdf/` para imprimir; dentro de cada una: `secuencia/`, `carriles/` y `otros/`.
+5. `08_INFORME_PLAN_RNF.md` — cinco RNF clave, diez casos CP-RNF-01 a 10, resultados Bandit y 401.
+6. `diagramas/` — `puml/` para editar y `pdf/` para imprimir; dentro de cada una: `secuencia/`, `carriles/` y `otros/`.
 
 ## Historia de negocio
 

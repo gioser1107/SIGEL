@@ -203,7 +203,7 @@ def listar_viajes_disponibles(db: Session) -> list[dict]:
         .order_by(Viaje.fecha_salida.asc())
         .all()
     )
-    return [viaje_reserva_a_dict(db, v) for v in viajes if viaje_disponible_para_reserva(db, v)]
+    return [viaje_reserva_a_dict(db, v) for v in viajes]
 
 
 def validar_punto_recogida(db: Session, cliente_id: int, punto_id: int) -> None:

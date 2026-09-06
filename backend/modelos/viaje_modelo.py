@@ -42,15 +42,50 @@ def contar_asientos_activos_unidad(db: Session, unidad_id: int) -> int:
     )
 
 
-def contar_asientos_ocupados_viaje(db: Session, viaje_id: int) -> int:
+def _modelos_cupo():
+    from modelos.reserva_cliente_modelo import ReservaCliente
+    from modelos.reservas_modelo import Reserva
+
+    return ReservaCliente, Reserva
+
+
+def _filtros_reserva_vigente(Reserva, ReservaCliente):
     return (
-        db.query(AsientoReservado)
+        Reserva.eliminado_en.is_(None),
+        Reserva.estado != "cancelada",
+        ReservaCliente.eliminado_en.is_(None),
+    )
+
+
+def contar_asientos_ocupados_viaje(db: Session, viaje_id: int) -> int:
+    """Pasajeros con asiento en reservas vigentes (no anuladas ni canceladas)."""
+    ReservaCliente, Reserva = _modelos_cupo()
+    return (
+        db.query(ReservaCliente)
+        .join(Reserva, Reserva.id == ReservaCliente.reserva_id)
         .filter(
-            AsientoReservado.viaje_id == viaje_id,
-            AsientoReservado.eliminado_en.is_(None),
+            Reserva.viaje_id == viaje_id,
+            *_filtros_reserva_vigente(Reserva, ReservaCliente),
+            ReservaCliente.ocupa_asiento.is_(True),
         )
         .count()
     )
+
+
+def ids_asientos_ocupados_viaje(db: Session, viaje_id: int) -> set[int]:
+    ReservaCliente, Reserva = _modelos_cupo()
+    filas = (
+        db.query(AsientoReservado.asiento_id)
+        .join(ReservaCliente, ReservaCliente.id == AsientoReservado.reserva_cliente_id)
+        .join(Reserva, Reserva.id == ReservaCliente.reserva_id)
+        .filter(
+            AsientoReservado.viaje_id == viaje_id,
+            AsientoReservado.eliminado_en.is_(None),
+            *_filtros_reserva_vigente(Reserva, ReservaCliente),
+        )
+        .all()
+    )
+    return {fila.asiento_id for fila in filas}
 
 
 def obtener_unidad_activa_viaje(db: Session, viaje: Viaje) -> UnidadTransporte | None:
@@ -491,11 +526,8 @@ def asientos_disponibles(db: Session, viaje_id: int) -> dict:
         Asiento.eliminado_en.is_(None),
     ).order_by(Asiento.id).all()
 
-    reservados = db.query(AsientoReservado.asiento_id).filter(
-        AsientoReservado.viaje_id == viaje_id,
-        AsientoReservado.eliminado_en.is_(None),
-    ).all()
-    ids_ocupados = {r.asiento_id for r in reservados}
+    ids_unidad = {a.id for a in asientos}
+    ids_ocupados = ids_asientos_ocupados_viaje(db, viaje_id) & ids_unidad
 
     lista_asientos = [
         {

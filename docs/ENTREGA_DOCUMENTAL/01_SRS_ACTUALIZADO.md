@@ -1,5 +1,7 @@
 # SRS actualizado — SIGEL / Travel BQTO
 
+**Catálogo oficial de IDs:** `docs/SRS_REQUISITOS_FUNCIONALES.md` (RF-01 a RF-21) y `docs/SRS_REQUISITOS_NO_FUNCIONALES.md` (RNF-01 a RNF-16). Este archivo es un resumen trazable al código; **no reenumera** requisitos.
+
 ## 1. Alcance
 
 SIGEL apoya a Travel BQTO en la publicación y administración de destinos turísticos, gestión de clientes, cotizaciones, viajes, reservas con viajeros y asientos, pagos, abordaje, seguridad, auditoría y reportes de negocio. Consta de portal público, portal del cliente y área administrativa.
@@ -14,55 +16,65 @@ SIGEL apoya a Travel BQTO en la publicación y administración de destinos turí
 | Guía | Consulta operación del viaje y registra abordaje según permisos. |
 | API/BD | Valida, persiste, protege la concurrencia y registra auditoría. |
 
-## 3. Requisitos funcionales
+## 3. Requisitos funcionales (IDs oficiales)
 
 | ID | Requisito verificable | Actor | Evidencia principal |
 |---|---|---|---|
-| RF-01 | Autenticar usuarios, registrar clientes y consultar perfil. | Visitante, cliente, personal | `auth_controlador.py` |
-| RF-02 | Mantener usuarios, roles y permisos granulares. | Administrador | `usuario`, `rol`, `permiso` controladores |
-| RF-03 | Consultar la bitácora por usuario, módulo, acción y fechas. | Administrador | `bitacora_controlador.py`, `bitacora_modelo.py` |
-| RF-04 | Administrar el catálogo de destinos y sus imágenes. | Administrador | `destino_controlador.py` |
-| RF-05 | Publicar catálogo, detalle de destinos y agenda de viajes. | Visitante | `catalogo_controlador.py` |
-| RF-06 | Gestionar clientes y sus datos de contacto. | Administrador | `cliente_controlador.py` |
-| RF-07 | Gestionar puntos de recogida del cliente y la ruta del viaje. | Cliente, administrador | `puntos_recogida`, `viaje_ruta_recogida` |
-| RF-08 | Gestionar unidades de transporte y asientos. | Administrador | `unidad`, `asiento` controladores |
-| RF-09 | Planificar viajes, guías, costos y rutas de recogida. | Administrador | `viaje_controlador.py` |
-| RF-10 | Crear, consultar, modificar y anular cotizaciones con líneas. | Administrador / atención al cliente | `cotizacion_controlador.py` |
-| RF-11 | Registrar reservas para un viaje y asociar viajeros. | Cliente, administrador | `reservas_controlador.py` |
-| RF-12 | Asignar, consultar y liberar asientos de viajeros. | Cliente, administrador | `asientos_reservados`, migración de concurrencia |
-| RF-13 | Registrar reportes de pago con comprobante y consultar su estado. | Cliente, administrador | `pago_controlador.py` |
-| RF-14 | Aprobar o rechazar pagos y conservar validación. | Administrador | `pago_controlador.py` |
-| RF-15 | Administrar monedas, tasas, bancos, métodos y puntos de venta. | Administrador | controladores de catálogo financiero |
-| RF-16 | Consultar manifiesto y registrar abordaje individual o por lote. | Guía, administrador | `abordaje_controlador.py` |
-| RF-17 | Crear, consultar y moderar reseñas de viajes elegibles. | Cliente, administrador | `resena_controlador.py` |
-| RF-18 | Consultar reportes estadísticos por rango de fechas reales. | Administrador | `reporte_estadistico_modelo.py` |
-| RF-19 | Emitir reporte operativo del viaje e imprimirlo. | Administrador | `viaje_controlador.py`, `ReporteViaje.tsx` |
+| RF-01 | Autenticar, registrar clientes y consultar perfil. | Visitante, cliente, personal | `auth_controlador.py` |
+| RF-02 | Mantener cuentas de usuario (CRUD, rol, contraseña). | Administrador | `usuario_controlador.py` |
+| RF-03 | Crear y asignar roles. | Administrador | `rol_controlador.py` |
+| RF-04 | Mantener el catálogo de permisos granulares. | Administrador | `permiso_controlador.py` |
+| RF-05 | Consultar bitácora por módulo, acción, usuario y fechas. | Administrador | `bitacora_controlador.py` |
+| RF-06 | Administrar destinos e imágenes. | Administrador | `destino_controlador.py` |
+| RF-07 | Gestionar unidades de transporte y asientos. | Administrador | `unidad_transporte_controlador.py`, `asiento_controlador.py` |
+| RF-08 | Gestionar puntos de recogida del cliente y consulta admin. | Cliente, administrador | `puntos_recogida_controlador.py` |
+| RF-09 | Planificar viajes, guías, costos, rutas y reporte de viaje. | Administrador | `viaje_controlador.py` |
+| RF-10 | Consultar dashboard / estadísticas de catálogo. | Administrador | `catalogo_controlador.py` (`/estadisticas`) |
+| RF-11 | Gestionar clientes y ubicaciones auxiliares. | Administrador | `cliente_controlador.py`, `ubicacion_controlador.py` |
+| RF-12 | Crear, consultar, modificar y anular cotizaciones con líneas. | Administrador / ATC | `cotizacion_controlador.py` |
+| RF-13 | Registrar reservas, viajeros y asientos sin sobreventa. | Cliente, administrador | `reservas_controlador.py` |
+| RF-14 | Registrar reportes de pago con comprobante. | Cliente, administrador | `pago_controlador.py` |
+| RF-15 | Aprobar o rechazar pagos y actualizar saldo. | Administrador | `pago_controlador.py` |
+| RF-16 | Administrar monedas, tasas (incl. BCV), bancos, métodos y puntos de venta. | Administrador | controladores de catálogo financiero |
+| RF-17 | Consultar manifiesto y registrar abordaje individual o por lote. | Guía, administrador | `abordaje_controlador.py` |
+| RF-18 | Crear, consultar y moderar reseñas. | Cliente, administrador | `resena_controlador.py` |
+| RF-19 | Publicar catálogo, detalle de destinos y agenda. | Visitante | `catalogo_controlador.py` |
+| RF-20 | Autoservicio: reservas, pagos, recogida y reseñas. | Cliente | APIs portal en reservas, pagos, clientes |
+| RF-21 | Reportes estadísticos por rango de fechas reales. | Administrador | `reporte_estadistico_controlador.py` |
 
 ### Reglas funcionales críticas
 
 1. Una reserva pertenece a un cliente y a un viaje; sus viajeros se modelan mediante `reserva_clientes`.
 2. Un asiento no puede estar vigente dos veces para el mismo viaje. La migración crea el índice único `uq_asiento_viaje_vigente`.
 3. Las eliminaciones son lógicas cuando la entidad posee `eliminado_en`.
-4. El pago pasa por validación administrativa; los ingresos de reportes se basan en pagos aprobados.
+4. El pago pasa por validación administrativa; los ingresos de reportes (RF-21) se basan en pagos aprobados.
 5. Los reportes estadísticos rechazan fechas imposibles, rangos invertidos y rangos superiores a diez años.
 
-## 4. Requisitos no funcionales
+## 4. Requisitos no funcionales (IDs oficiales)
 
 | ID | Requisito | Criterio de aceptación |
 |---|---|---|
-| RNF-01 | Autenticación y sesión JWT. | Rechazar solicitud protegida sin token válido con 401. |
-| RNF-02 | Autorización RBAC en servidor. | Rechazar acción sin permiso con 403. |
-| RNF-03 | Validación de datos en cliente y servidor. | No persistir payload inválido; responder 400/422. |
-| RNF-04 | Integridad de reservas y asientos. | Evitar doble asignación vigente por restricciones e índices. |
-| RNF-05 | Auditoría de acciones críticas. | Registrar usuario, módulo, acción, tabla/registro, detalle, IP y fecha. |
-| RNF-06 | Eliminación lógica e historial. | Ocultar registro operativo sin destruir historial. |
-| RNF-07 | Arquitectura modular REST. | Frontend React consume API FastAPI bajo `/api`; routers por dominio. |
-| RNF-08 | Manejo de errores de integridad y base de datos. | Responder 409 a conflicto y 503 a fallo de BD. |
-| RNF-09 | Usabilidad administrativa y cliente. | Rutas protegidas, filtros, paginación y mensajes comprensibles. |
-| RNF-10 | Trazabilidad documental. | Todo caso de uso y diagrama referencia módulo real del repositorio. |
+| RNF-01 | Autenticación y sesión JWT. | Recurso protegido sin token válido → 401. |
+| RNF-02 | Autorización RBAC en servidor. | Acción sin permiso → 403. |
+| RNF-03 | Arquitectura modular REST (MVC + React). | Frontend consume `/api`; routers por dominio; OpenAPI en `/docs`. |
+| RNF-04 | Bitácora de acciones críticas. | Usuario, módulo, acción, tabla/registro, detalle, IP y fecha. |
+| RNF-05 | Eliminación lógica y cuentas inactivas. | Desactivado no autentica; historial se conserva. |
+| RNF-06 | Validación de datos en cliente y servidor. | Payload inválido → 400/422 sin persistir. |
+| RNF-07 | Seguridad de credenciales y archivos. | Hash unidireccional; `.env` fuera de git; uploads con whitelist. SHA-256 es prototipo (no bcrypt). |
+| RNF-08 | Fiabilidad e integridad transaccional. | Conflicto de asiento/cupo → 409; caída de BD → 503 genérico, sin traceback. |
+| RNF-09 | Disponibilidad (objetivo de servicio). | Health en `/api`; no se afirma 99 % sin medición en servidor. |
+| RNF-10 | Tiempo de respuesta / carga. | 20 usuarios / 3 min: promedio < 2 s y 0 % HTTP 500 (CP-RNF-01). |
+| RNF-11 | Escalabilidad concurrente. | JWT stateless; 5xx < 1 % con 50 VU en prueba documentada. |
+| RNF-12 | Eficiencia de recursos. | Paginación; imágenes WebP; bundle acotado. |
+| RNF-13 | Mantenibilidad MVC. | `controladores/`, `modelos/`, `utilidades/`. |
+| RNF-14 | Portabilidad cliente. | Chrome/Edge; viewport 320 px. |
+| RNF-15 | Usabilidad medible. | SUS ≥ 70; tareas críticas en español. |
+| RNF-16 | Navegabilidad. | ≤ 4 clics a reserva, asientos o pagos. |
+
+Para la guía de pruebas 2026 se usan **cinco** de estos (RNF-07, RNF-10, RNF-08, RNF-15, RNF-13) con diez casos CP-RNF-01 a CP-RNF-10, definidos en el documento maestro de RNF.
 
 ## 5. Exclusiones y límites conocidos
 
-- El código muestra reportes descriptivos; no se identificó componente de predicción.
-- No se debe documentar el análisis por género/edad como disponible: el modelo de clientes no almacena esos atributos.
-- La regla académica discutida de que **todo viajero debe ser un cliente** requiere verificación final del equipo y una prueba de datos antes de la defensa.
+- El código muestra reportes **descriptivos** (RF-21); no hay componente de predicción.
+- No se documenta análisis por género/edad: el modelo de clientes no almacena esos atributos.
+- La regla de que **todo viajero es un cliente** está implementada en reservas; debe demostrarse en defensa con un caso familiar.

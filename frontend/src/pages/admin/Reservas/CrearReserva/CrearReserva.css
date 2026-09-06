@@ -190,11 +190,22 @@
   color: var(--color-primary);
 }
 
-.sb__option--selected {
-  background: var(--color-primary-glow);
-  color: var(--color-primary);
-  font-weight: 600;
-}
+  .sb__option--selected {
+    background: var(--color-primary-glow);
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  .sb__option--disabled {
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+    opacity: 0.72;
+  }
+
+  .sb__option--disabled:hover {
+    background: transparent;
+    color: var(--color-text-muted);
+  }
 
 .sb__empty {
   padding: 0.875rem;

@@ -73,23 +73,21 @@ def manejar_conflicto_integridad(request: Request, error: IntegrityError):
 
 @app.exception_handler(SQLAlchemyError)
 def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
+    logger.exception("Fallo de base de datos: %s", error)
     return JSONResponse(
         status_code=503,
         content={
-            "detalle": "No se pudo conectar o consultar la base de datos MySQL",
-            "error": str(error.orig) if hasattr(error, "orig") else str(error),
-            "sugerencia": "Revisa backend/.env con usuario y contraseña correctos de MySQL",
+            "detalle": "El servicio no puede completar la operación. Intente de nuevo más tarde.",
         },
     )
 
 @app.exception_handler(Exception)
 def manejar_error_general(request: Request, error: Exception):
+    logger.exception("Error interno no controlado: %s", error)
     return JSONResponse(
         status_code=500,
         content={
             "detalle": "Error interno del servidor",
-            "error": str(error),
-            "tipo": type(error).__name__,
         },
     )
 

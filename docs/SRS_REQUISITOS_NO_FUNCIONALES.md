@@ -6,13 +6,16 @@
 **Versión API:** 1.3.0  
 **Integrantes:** María Alvarado, Luis Herice, Sergio Jiménez, Gabriel Jiménez  
 **Tutor:** Edecio Freitez  
-**Fecha:** Julio 2026
+**Fecha:** Septiembre 2026  
+**Estado:** Documento maestro de RNF (IDs oficiales RNF-01 a RNF-16)
 
 ---
 
 ## 1. Introducción
 
-Este documento especifica los **requisitos no funcionales (RNF)** del sistema SIGEL. Complementa la matriz de Requisitos Funcionales (RF-01 a RF-20) y está alineado con los diagramas de casos de uso A, B y C.
+Este documento es el **catálogo oficial** de requisitos no funcionales de SIGEL. Complementa RF-01 a RF-21 y los diagramas A, B y C. Los IDs RNF-01 a RNF-16 **no se reenumeran** en otros entregables.
+
+La guía académica de pruebas RNF 2026 pide seleccionar **5 RNF clave** y **2 casos de prueba por cada uno**. Esa selección está en la sección 6; no sustituye esta matriz completa.
 
 ---
 
@@ -84,14 +87,14 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 | **Tipo** | No Funcional |
 | **Prioridad** | Media |
 | **Categoría** | Arquitectura / Modularidad |
-| **RF relacionados** | Todos (RF-01 a RF-20) |
+| **RF relacionados** | Todos (RF-01 a RF-21) |
 | **Diagramas** | A, B, C |
 
 **Descripción:** El sistema organiza la lógica en módulos independientes acoplados por API REST.
 
 **Especificación:**
-- Backend con ≥ 20 routers: auth, catálogo, destinos, clientes, usuarios, roles, permisos, ubicaciones, viajes, cotizaciones, reservas, asientos, unidades, pagos, monedas, tasas, bancos, bitácora, puntos_recogida, puntos_venta, abordajes, reseñas.
-- Prefijo común `/api`; documentación OpenAPI en `/docs`.
+- Backend con routers por dominio bajo `/api`: auth, catálogo, destinos, clientes, usuarios, roles, permisos, ubicaciones, viajes, cotizaciones, reservas, asientos, unidades, pagos, monedas, tasas, bancos, bitácora, puntos_recogida, puntos_venta, abordajes, reseñas, reportes, metodos_pago.
+- Documentación OpenAPI en `/docs`.
 - Frontend React desacoplado que consume exclusivamente la API.
 
 **Criterio de éxito:** Cada módulo expone endpoints documentados en OpenAPI; desactivar un router no impide arranque del resto.
@@ -197,10 +200,10 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 **Descripción:** Protección de credenciales y datos sensibles en tránsito y en reposo.
 
 **Especificación:**
-- HTTPS/TLS 1.2+ en producción.
-- Contraseñas como hash unidireccional (SHA-256 en prototipo; objetivo bcrypt/Argon2).
+- HTTPS/TLS 1.2+ como objetivo de producción (el entorno académico corre HTTP en localhost).
+- Contraseñas almacenadas como hash unidireccional SHA-256 en el prototipo académico (`usuario_modelo.py`). El objetivo de endurecimiento es bcrypt o Argon2; Bandit marcará SHA-256 como hallazgo conocido.
 - Secretos en `.env` excluido de git.
-- CORS restringido a orígenes autorizados.
+- CORS restringido a orígenes de desarrollo autorizados (localhost).
 - Uploads: whitelist MIME (JPEG, PNG, WebP), máximo 10 MB.
 
 **Criterio de éxito:** 0 contraseñas en texto plano en BD; path-traversal bloqueado en archivos.
@@ -229,7 +232,9 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 - Verificación de cupo atómica: si dos clientes reservan el mismo paquete a la misma hora, uno obtiene HTTP 409 y no hay sobreventa.
 - Commit/rollback explícito encapsulado en la capa de persistencia de los modelos (`_persistir`, `_confirmar_transaccion`); los INSERT/UPDATE no se invocan desde controladores.
 - FK con ON DELETE RESTRICT.
-- Handler IntegrityError → HTTP 409; SQLAlchemyError → HTTP 503.
+- Handler IntegrityError → HTTP 409 con mensaje de conflicto (sin stack trace).
+- Handler SQLAlchemyError → HTTP 503 con mensaje genérico al usuario; el detalle técnico queda en el log del servidor, no en la respuesta JSON.
+- Handler Exception → HTTP 500 genérico (sin exponer tipo ni texto interno).
 
 **Criterio de éxito:** 50 reservas concurrentes sobre mismo asiento → 0 sobreventas (1 éxito, resto 409/400).
 
@@ -279,8 +284,9 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 **Especificación:**
 - P95 lecturas ≤ 2 s; P95 escrituras ≤ 3 s; health check ≤ 500 ms.
 - 25 usuarios concurrentes, 70 % lectura / 30 % escritura.
+- Alineado a la guía de pruebas: 20 usuarios virtuales, 3 minutos, promedio < 2 s y 0 % de errores HTTP 500 (caso CP-RNF-01).
 
-**Criterio de éxito:** P95 dentro de umbrales en prueba de carga con Locust/k6.
+**Criterio de éxito:** P95 dentro de umbrales en prueba de carga con Apache JMeter o Locust.
 
 **Necesidad:** Experiencia fluida en portal cliente y panel admin.
 
@@ -353,9 +359,9 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 **Especificación:**
 - MVC: `controladores/`, `modelos/`, `utilidades/`.
 - Separación frontend/backend; OpenAPI auto-generada.
-- Cobertura pruebas ≥ 60 % en auth, reservas, pagos (académico).
+- Cobertura de pruebas unitarias/integración: objetivo académico ≥ 60 % en auth, reservas y pagos (pendiente de evidenciar en informe de pruebas; no se afirma como ya cumplido).
 
-**Criterio de éxito:** Endpoint CRUD nuevo en ≤ 4 h; cobertura ≥ 60 % módulos críticos.
+**Criterio de éxito:** Endpoint CRUD nuevo en ≤ 4 h; cobertura ≥ 60 % en módulos críticos cuando se ejecute la batería de pruebas documentada.
 
 **Necesidad:** Integrar analítica predictiva sin reescribir núcleo operativo.
 
@@ -467,7 +473,7 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 |-----|----------------|-----------|
 | RNF-01 | RF-01, RF-20 | A, B, C |
 | RNF-02 | RF-02, RF-03, RF-04 | A |
-| RNF-03 | RF-01 a RF-20 | A, B, C |
+| RNF-03 | RF-01 a RF-21 | A, B, C |
 | RNF-04 | RF-05, RF-14, RF-15, RF-17 | A, B |
 | RNF-05 | RF-02, RF-11 | A, B |
 | RNF-06 | RF-06 a RF-18 | A, B, C |
@@ -501,14 +507,127 @@ Este documento especifica los **requisitos no funcionales (RNF)** del sistema SI
 | RF-11 | Clientes | RNF-05, RNF-06 |
 | RF-12 | Cotizaciones | RNF-06 |
 | RF-13 | Reservas y asientos | RNF-08, RNF-15 |
-| RF-14 | Reportes de pago | RNF-04, RNF-08 |
+| RF-14 | Reportes de pago | RNF-04, RNF-06, RNF-08 |
 | RF-15 | Conciliación | RNF-04, RNF-08 |
 | RF-16 | Catálogo financiero | RNF-06 |
 | RF-17 | Abordaje | RNF-04, RNF-14 |
 | RF-18 | Reseñas | RNF-06 |
 | RF-19 | Portal público | RNF-14, RNF-16 |
-| RF-20 | Portal cliente | RNF-01, RNF-15 |
+| RF-20 | Portal cliente | RNF-01, RNF-14, RNF-15 |
+| RF-21 | Reportes estadísticos | RNF-06, RNF-10 |
 
 ---
 
-*Documento generado conforme a la Guía Estándar SRS — UPTAEB, PNF Informática, Trayecto III.*
+## 6. Selección para la guía de pruebas RNF (5 clave)
+
+Estos cinco cubren prioridad alta/media de la guía (seguridad, rendimiento, fiabilidad, usabilidad, mantenibilidad) y son medibles sobre SIGEL en local.
+
+| Selección | RNF oficial | Categoría guía | Herramienta |
+|-----------|-------------|----------------|-------------|
+| 1 | RNF-07 (+ RNF-01) | Seguridad | Bandit + OWASP ZAP |
+| 2 | RNF-10 | Eficiencia / rendimiento | Apache JMeter o Locust |
+| 3 | RNF-08 | Fiabilidad | Interrumpir MySQL |
+| 4 | RNF-15 | Usabilidad | Encuesta SUS |
+| 5 | RNF-13 | Mantenibilidad | Revisión MVC + OpenAPI |
+
+### Casos de prueba (2 por RNF)
+
+**ID de prueba:** CP-RNF-01  
+**Categoría:** Eficiencia / Rendimiento (RNF-10)  
+**Objetivo:** Evaluar estabilidad y tiempos de respuesta con usuarios concurrentes.  
+**Entorno:** API local (Uvicorn) + Apache JMeter o Locust.  
+**Pasos:** 1) Grupo de 20 usuarios virtuales. 2) Peticiones HTTP a `/api` o catálogo público durante 3 minutos. 3) Recopilar gráfico de resultados.  
+**Éxito:** Tiempo de respuesta promedio inferior a 2 s y tasa de errores 0 %.  
+**Fracaso:** Promedio > 5 s o errores HTTP 500.  
+**Herramienta:** Apache JMeter (o Locust).
+
+**ID de prueba:** CP-RNF-02  
+**Categoría:** Eficiencia / Rendimiento (RNF-10)  
+**Objetivo:** Verificar latencia del health/catálogo en carga nominal.  
+**Entorno:** Igual a CP-RNF-01.  
+**Pasos:** 1) 25 usuarios, 70 % GET catálogo / 30 % GET autenticado si hay token de prueba. 2) Medir P95.  
+**Éxito:** P95 lecturas ≤ 2 s.  
+**Fracaso:** P95 > 3 s o tasa 5xx ≥ 1 %.  
+**Herramienta:** Locust o JMeter.
+
+**ID de prueba:** CP-RNF-03  
+**Categoría:** Seguridad — SAST (RNF-07)  
+**Objetivo:** Detectar fallos comunes en código Python antes del despliegue.  
+**Entorno:** Backend SIGEL.  
+**Pasos:** 1) Ejecutar Bandit sobre `backend/`. 2) Clasificar hallazgos (SHA-256 de prototipo vs críticos). 3) Corregir críticos.  
+**Éxito:** 0 hallazgos de severidad alta no justificados. SHA-256 documentado como limitación conocida.  
+**Fracaso:** Secretos en código, SQL concatenado o ejecución insegura sin justificación.  
+**Herramienta:** Bandit.
+
+**ID de prueba:** CP-RNF-04  
+**Categoría:** Seguridad — caja negra (RNF-01 / RNF-07)  
+**Objetivo:** Comprobar que un ataque externo automatizado no obtiene datos sin autenticación.  
+**Entorno:** App levantada en local.  
+**Pasos:** 1) Escanear con OWASP ZAP la URL local. 2) Verificar endpoints `/api/usuarios`, `/api/reservas` sin token.  
+**Éxito:** 401/403 en recursos protegidos; 0 exposición de stack traces.  
+**Fracaso:** Acceso anónimo a datos de pagos/pasajeros o XSS reflejado evidente.  
+**Herramienta:** OWASP ZAP.
+
+**ID de prueba:** CP-RNF-05  
+**Categoría:** Fiabilidad (RNF-08)  
+**Objetivo:** Caída de MySQL no muestra error interno crudo.  
+**Entorno:** Backend + MySQL local.  
+**Pasos:** 1) Navegar autenticado. 2) Detener el servicio MySQL. 3) Recargar un listado.  
+**Éxito:** HTTP 503 (o mensaje controlado en UI) sin SQL/traceback en pantalla.  
+**Fracaso:** Traceback, cadena de conexión o SQL visible al usuario.  
+**Herramienta:** Sistema + navegador.
+
+**ID de prueba:** CP-RNF-06  
+**Categoría:** Fiabilidad / integridad (RNF-08)  
+**Objetivo:** Evitar sobreventa del mismo asiento.  
+**Entorno:** API local.  
+**Pasos:** 1) Dos peticiones concurrentes asignando el mismo asiento vigente. 2) Observar respuestas.  
+**Éxito:** Una operación OK y la otra HTTP 409; 0 doble asignación vigente.  
+**Fracaso:** Dos asignaciones vigentes del mismo asiento.  
+**Herramienta:** Dos clientes HTTP o JMeter.
+
+**ID de prueba:** CP-RNF-07  
+**Categoría:** Usabilidad (RNF-15)  
+**Objetivo:** Medir facilidad de uso con compañeros (SUS).  
+**Entorno:** Frontend en navegador.  
+**Pasos:** 1) Tarea: completar reserva o reportar pago. 2) Aplicar cuestionario SUS (10 ítems).  
+**Éxito:** SUS ≥ 70; tasa de error en tarea ≤ 10 %.  
+**Fracaso:** SUS < 50 o abandono de la tarea.  
+**Herramienta:** Encuesta SUS.
+
+**ID de prueba:** CP-RNF-08  
+**Categoría:** Usabilidad (RNF-15 / RNF-16)  
+**Objetivo:** Verificar que la reserva se alcanza en ≤ 4 clics desde el home del rol.  
+**Pasos:** 1) Login cliente o admin. 2) Contar clics hasta mapa de asientos o crear reserva.  
+**Éxito:** ≤ 4 clics; mensajes en español.  
+**Fracaso:** Callejón sin salida o flujo cortado.  
+**Herramienta:** Observación.
+
+**ID de prueba:** CP-RNF-09  
+**Categoría:** Mantenibilidad (RNF-13)  
+**Objetivo:** Verificar estructura MVC y OpenAPI.  
+**Pasos:** 1) Comprobar carpetas `controladores/`, `modelos/`, `utilidades/`. 2) Abrir `/docs`.  
+**Éxito:** Routers documentados; un módulo nuevo se localiza sin mezclar SQL en el frontend.  
+**Fracaso:** Lógica de negocio solo en React o SQL en controladores de forma sistemática.  
+**Herramienta:** Revisión de código.
+
+**ID de prueba:** CP-RNF-10  
+**Categoría:** Mantenibilidad / portabilidad (RNF-13 / RNF-14)  
+**Objetivo:** La interfaz opera en Chrome y en viewport móvil.  
+**Pasos:** 1) Abrir login y catálogo en Chrome. 2) Repetir a 320 px de ancho.  
+**Éxito:** Flujo visible sin scroll horizontal bloqueante ni error de consola que impida usar el sistema.  
+**Fracaso:** Pantalla ilegible o botones inaccesibles en 320 px.  
+**Herramienta:** Navegador (Chrome / Edge).
+
+---
+
+## 7. Limitaciones honestas (defensa)
+
+- Hash de contraseña: SHA-256 (prototipo). No afirmar bcrypt hasta migrarlo.
+- Uptime 99 % (RNF-09) no se mide en localhost; para la guía usar RNF-08 (caída de BD).
+- Cobertura ≥ 60 % (RNF-13) es objetivo; no se declara cumplida sin informe de tests.
+- No hay modelo predictivo; RF-21 es descriptivo.
+
+---
+
+*Documento generado conforme a la Guía Estándar SRS — UPTAEB, PNF Informática, Trayecto III. Catálogo maestro RNF-01 a RNF-16.*
