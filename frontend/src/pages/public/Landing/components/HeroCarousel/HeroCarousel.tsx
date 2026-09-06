@@ -44,7 +44,7 @@ export default function HeroCarousel() {
             <section className="hero-carousel hero-carousel--cargando">
                 <div className="hero-carousel__overlay">
                     <div className="hero-carousel__info">
-                        <span className="hero-carousel__tag">✈ Travel Bqto</span>
+                        <span className="hero-carousel__tag">Travel Bqto</span>
                         <h1 className="hero-carousel__title">Descubre Lara</h1>
                         <p className="hero-carousel__desc">
                             Explora nuestra agenda de viajes y reserva tu próxima aventura.
@@ -88,7 +88,7 @@ export default function HeroCarousel() {
 
             <div className="hero-carousel__overlay">
                 <div className="hero-carousel__info">
-                    <span className="hero-carousel__tag">✈ Descubre Lara</span>
+                    <span className="hero-carousel__tag">Descubre Lara</span>
                     <h1 className="hero-carousel__title">{destinoActual.titulo}</h1>
                     <p className="hero-carousel__desc">{destinoActual.subtitulo}</p>
                     <div className="hero-carousel__acciones">

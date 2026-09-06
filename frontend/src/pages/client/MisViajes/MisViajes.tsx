@@ -82,7 +82,6 @@ export default function MisViajes() {
         <p className="mis-viajes__cargando">Cargando tus reservas…</p>
       ) : reservas.length === 0 ? (
         <div className="mis-viajes__vacio">
-          <span className="mis-viajes__vacio-icono">🗓</span>
           <h3 className="mis-viajes__vacio-titulo">Aún no tienes viajes</h3>
           <p className="mis-viajes__vacio-desc">
             Explora la agenda de experiencias y reserva tu próxima aventura.

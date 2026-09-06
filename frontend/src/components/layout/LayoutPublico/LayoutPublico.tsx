@@ -198,10 +198,28 @@ export default function LayoutPublico() {
         <div className="footer__bottom">
           <p>© {new Date().getFullYear()} TravelBqto. Todos los derechos reservados.</p>
           <div className="footer__social">
-            <a href="#" className="footer__social-link" aria-label="Instagram">📷</a>
-            <a href="#" className="footer__social-link" aria-label="Facebook">📘</a>
-            <a href="#" className="footer__social-link" aria-label="Twitter">🐦</a>
-            <a href="#" className="footer__social-link" aria-label="WhatsApp">💬</a>
+            <a href="#" className="footer__social-link" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5" />
+                <circle cx="12" cy="12" r="4" />
+                <circle cx="17.5" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+              </svg>
+            </a>
+            <a href="#" className="footer__social-link" aria-label="Facebook">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.6l.4-3H13v-2c0-.6.4-1 1-1z" />
+              </svg>
+            </a>
+            <a href="#" className="footer__social-link" aria-label="X">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M14.7 10.3 21 3h-2.2l-4.8 5.5L9.8 3H3l6.6 9.6L3 21h2.2l5.2-6 4.2 6H21l-6.3-10.7z" />
+              </svg>
+            </a>
+            <a href="#" className="footer__social-link" aria-label="WhatsApp">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+                <path d="M12 3a8.5 8.5 0 0 0-7.4 12.7L3.6 20.4l4.8-1.3A8.5 8.5 0 1 0 12 3zm4.7 12c-.2.5-1.1 1-1.6 1.1-.4.1-.9.2-2.9-.6-2.4-1-4-3.5-4.1-3.7-.1-.2-1-1.3-1-2.5s.6-1.8.9-2c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5.2.5.8 2 .8 2.1.1.1 0 .3-.1.4l-.4.5c-.1.1-.3.3-.1.5.1.3.7 1.1 1.5 1.8 1 .9 1.8 1.1 2.1 1.3.3.1.4.1.6-.1l.7-.8c.2-.2.4-.2.6-.1.2.1 1.6.8 1.9.9.3.1.5.2.5.3.1.2 0 .8-.3 1.3z" />
+              </svg>
+            </a>
           </div>
         </div>
       </footer>

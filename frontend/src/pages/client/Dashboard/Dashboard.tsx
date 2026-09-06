@@ -66,7 +66,7 @@ export default function Dashboard() {
       <div className="ticket">
         {/* Cabecera del ticket */}
         <div className="ticket__header">
-          <span className="ticket__tag">✈ Viaje Próximo</span>
+          <span className="ticket__tag">Viaje próximo</span>
           <div className={`ticket__badge ${paso === 3 ? 'ticket__badge--confirmed' : 'ticket__badge--pending'}`}>
             {paso === 3 ? 'Confirmado' : 'Pago Pendiente'}
           </div>
@@ -81,7 +81,7 @@ export default function Dashboard() {
           <div className="ticket__route-line">
             <span className="ticket__route-dot"></span>
             <span className="ticket__route-dash"></span>
-            <span className="ticket__route-icon">🚍</span>
+            <span className="ticket__route-icon" aria-hidden="true">—</span>
             <span className="ticket__route-dash"></span>
             <span className="ticket__route-dot"></span>
           </div>
@@ -159,8 +159,7 @@ export default function Dashboard() {
           <div className="receipt-ticket">
             {/* Celebración animada */}
             <div className="receipt-ticket__celebration">
-              <span className="receipt-ticket__emoji">🎉</span>
-              <h2 className="receipt-ticket__title">¡Registro Completado!</h2>
+              <h2 className="receipt-ticket__title">Registro completado</h2>
               <p className="receipt-ticket__subtitle">
                 Tu boleto ha sido emitido exitosamente
               </p>

@@ -37,10 +37,8 @@ const BADGE_CONFIG: Record<EstadoCotizacion, { label: string; clase: string }> =
 interface ColumnaKanban {
   id: string;
   titulo: string;
-  icono: string;
   indicadorClase: string;
   estados: EstadoCotizacion[];
-  vacioIcono: string;
   vacioTexto: string;
 }
 
@@ -48,28 +46,22 @@ const COLUMNAS: ColumnaKanban[] = [
   {
     id: 'solicitadas',
     titulo: 'Solicitadas',
-    icono: '📝',
     indicadorClase: 'kanban__columna-indicador--solicitadas',
     estados: ['solicitada'],
-    vacioIcono: '📝',
     vacioTexto: 'No tienes solicitudes pendientes',
   },
   {
     id: 'respondidas',
     titulo: 'Respondidas',
-    icono: '📨',
     indicadorClase: 'kanban__columna-indicador--respondidas',
     estados: ['pendiente', 'aceptada'],
-    vacioIcono: '📨',
     vacioTexto: 'Aún no hay respuestas',
   },
   {
     id: 'cerradas',
     titulo: 'Cerradas',
-    icono: '🕐',
     indicadorClase: 'kanban__columna-indicador--cerradas',
     estados: ['vencida', 'cancelada'],
-    vacioIcono: '📂',
     vacioTexto: 'Sin solicitudes cerradas',
   },
 ];
@@ -277,7 +269,6 @@ export default function MisSolicitudes() {
       {/* Contenido: vacío o Kanban */}
       {!cargando && !tieneCotizaciones ? (
         <div className="mis-solicitudes__vacio">
-          <span className="mis-solicitudes__vacio-icono">📋</span>
           <h3 className="mis-solicitudes__vacio-titulo">Sin solicitudes aún</h3>
           <p className="mis-solicitudes__vacio-desc">
             ¿Tienes un viaje en mente? Solicita una cotización personalizada y nuestro equipo te responderá pronto.
@@ -305,7 +296,6 @@ export default function MisSolicitudes() {
                 <div className="kanban__columna-body">
                   {items.length === 0 ? (
                     <div className="kanban__columna-vacia">
-                      <span className="kanban__columna-vacia-icono">{columna.vacioIcono}</span>
                       <span className="kanban__columna-vacia-texto">{columna.vacioTexto}</span>
                     </div>
                   ) : (

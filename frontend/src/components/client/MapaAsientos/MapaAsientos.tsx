@@ -117,8 +117,8 @@ export default function MapaAsientos({
               <span className="mapa-asientos__windshield-text">PARABRISAS</span>
             </div>
             <div className="mapa-asientos__dashboard-elements">
-              <div className="mapa-asientos__wheel" title="Volante">☸️</div>
-              <div className="mapa-asientos__driver-seat" title="Chofer">💺 Chofer</div>
+              <div className="mapa-asientos__wheel" title="Volante">Volante</div>
+              <div className="mapa-asientos__driver-seat" title="Chofer">Chofer</div>
             </div>
           </div>
 

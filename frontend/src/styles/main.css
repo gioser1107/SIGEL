@@ -20,7 +20,18 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  touch-action: manipulation;
+  touch-action: pan-x pan-y;
+}
+
+body,
+#root {
+  touch-action: pan-x pan-y;
+}
+
+img,
+svg,
+video {
+  touch-action: pan-x pan-y;
 }
 
 body {

@@ -410,7 +410,6 @@ export default function FormularioPago({
                 </div>
               ) : (
                 <div className="formulario-pago__dropzone-content">
-                  <span className="formulario-pago__dropzone-icon">📸</span>
                   <span className="formulario-pago__dropzone-text">Arrastra el capture aquí o haz clic para subir</span>
                   <span className="formulario-pago__dropzone-sub">Formatos JPG, PNG. Máx 5MB</span>
                 </div>

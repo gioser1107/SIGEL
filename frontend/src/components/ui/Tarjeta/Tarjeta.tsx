@@ -38,7 +38,9 @@ export default function Tarjeta({
           <img src={imagen} alt={titulo} className="tarjeta__imagen" loading="lazy" />
           {etiqueta && <span className="tarjeta__etiqueta">{etiqueta}</span>}
           <button className="tarjeta__favorito" aria-label="Agregar a favoritos">
-            ♡
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.6-7 10-7 10z" />
+            </svg>
           </button>
         </div>
       )}
@@ -49,7 +51,6 @@ export default function Tarjeta({
 
         {ubicacion && (
           <div className="tarjeta__ubicacion">
-            <span>📍</span>
             {ubicacion}
           </div>
         )}
@@ -70,7 +71,7 @@ export default function Tarjeta({
             )}
             {valoracion && (
               <div className="tarjeta__valoracion">
-                ⭐ {valoracion.toFixed(1)}
+                {valoracion.toFixed(1)}
               </div>
             )}
           </div>

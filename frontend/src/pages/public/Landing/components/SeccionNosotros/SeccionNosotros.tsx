@@ -125,7 +125,6 @@ export default function SeccionNosotros() {
                             <span className="seccion-nosotros__badge-text">
                                 Viaja con<br />nosotros
                             </span>
-                            <span className="seccion-nosotros__badge-icon">✈</span>
                         </Link>
                     </div>
                 </div>

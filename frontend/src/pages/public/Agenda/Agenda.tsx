@@ -139,7 +139,7 @@ export default function Agenda() {
                         Inicio
                     </Link>
                     <div className="agenda__hero-titulo">
-                        <span className="agenda__hero-eyebrow">✈ Agenda de Experiencias</span>
+                        <span className="agenda__hero-eyebrow">Agenda de Experiencias</span>
                         <h1 className="agenda__hero-h1">Calendario de Viajes</h1>
                         <p className="agenda__hero-desc">
                             Selecciona un día para ver los planes disponibles. Los días marcados tienen experiencias esperándote.

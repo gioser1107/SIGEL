@@ -66,7 +66,6 @@ export default function CampoComprobanteImagen({ valor, onChange }: CampoComprob
           </div>
         ) : (
           <div className="pagos-comprobante__placeholder">
-            <span className="pagos-comprobante__icono">📷</span>
             <span>Subir captura del comprobante</span>
             <small>JPG o PNG · máx. {MAX_MB} MB</small>
           </div>

@@ -166,13 +166,9 @@
 }
 
 .mapa-asientos__wheel {
-  font-size: var(--font-size-xl);
-  animation: steer 4s ease-in-out infinite alternate;
-}
-
-@keyframes steer {
-  0% { transform: rotate(-15deg); }
-  100% { transform: rotate(15deg); }
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
 }
 
 .mapa-asientos__driver-seat {
