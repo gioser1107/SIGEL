@@ -1,12 +1,43 @@
 from datetime import datetime
 
 from fastapi import HTTPException, Request
-from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, JSON, String, text
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, JSON, String, func, or_
 from sqlalchemy.orm import Session
 
 from database import Base
 from modelos.permiso_modelo import PERMISO_LEER_BITACORA
 from modelos.usuario_modelo import Usuario
+from utilidades.paginacion import paginar_consulta, respuesta_paginada
+
+MODULOS_BITACORA = (
+    "seguridad",
+    "catalogo",
+    "viajes",
+    "reservas",
+    "pagos",
+    "conciliacion",
+    "cotizaciones",
+    "abordaje",
+    "sistema",
+)
+ACCIONES_BITACORA = (
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "LOGIN",
+    "LOGOUT",
+    "VALIDAR",
+    "RECHAZAR",
+    "ANULAR",
+    "ERROR",
+    "OTRO",
+)
+ALIAS_MODULO = {
+    "flota": "viajes",
+    "transporte": "viajes",
+    "clientes": "catalogo",
+    "destinos": "catalogo",
+}
 
 
 class Bitacora(Base):
@@ -15,34 +46,13 @@ class Bitacora(Base):
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     usuario_id = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, index=True)
     modulo = Column(
-        Enum(
-            "seguridad",
-            "catalogo",
-            "viajes",
-            "reservas",
-            "pagos",
-            "conciliacion",
-            "cotizaciones",
-            "abordaje",
-            "sistema",
-        ),
+        Enum(*MODULOS_BITACORA),
         nullable=False,
         default="sistema",
         index=True,
     )
     accion = Column(
-        Enum(
-            "INSERT",
-            "UPDATE",
-            "DELETE",
-            "LOGIN",
-            "LOGOUT",
-            "VALIDAR",
-            "RECHAZAR",
-            "ANULAR",
-            "ERROR",
-            "OTRO",
-        ),
+        Enum(*ACCIONES_BITACORA),
         nullable=False,
         default="OTRO",
         index=True,
@@ -75,11 +85,15 @@ def registrar_evento(
     ip_origen: str | None = None,
 ) -> None:
     try:
+        modulo_valido = ALIAS_MODULO.get(modulo, modulo)
+        if modulo_valido not in MODULOS_BITACORA:
+            modulo_valido = "sistema"
+        accion_valida = accion if accion in ACCIONES_BITACORA else "OTRO"
         registro_texto = str(registro_id) if registro_id is not None else None
         entrada = Bitacora(
             usuario_id=usuario_id,
-            modulo=modulo,
-            accion=accion,
+            modulo=modulo_valido,
+            accion=accion_valida,
             tabla_afectada=tabla_afectada,
             registro_id=registro_texto,
             resumen=resumen[:500],
@@ -102,19 +116,19 @@ def verificar_permiso_bitacora(usuario_actual: dict) -> None:
         )
 
 
-def _entrada_listado_a_dict(fila: dict) -> dict:
+def _entrada_listado_a_dict(entrada: Bitacora, usuario: Usuario | None) -> dict:
     return {
-        "id": fila["id"],
-        "creado_en": fila["creado_en"],
-        "modulo": fila["modulo"],
-        "accion": fila["accion"],
-        "tabla_afectada": fila["tabla_afectada"],
-        "registro_id": fila["registro_id"],
-        "resumen": fila["resumen"],
-        "ip_origen": fila["ip_origen"],
-        "usuario_id": fila["usuario_id"],
-        "usuario_nombre": fila["usuario_nombre"],
-        "usuario_correo": fila["usuario_correo"],
+        "id": entrada.id,
+        "creado_en": entrada.creado_en,
+        "modulo": entrada.modulo,
+        "accion": entrada.accion,
+        "tabla_afectada": entrada.tabla_afectada,
+        "registro_id": entrada.registro_id,
+        "resumen": entrada.resumen,
+        "ip_origen": entrada.ip_origen,
+        "usuario_id": entrada.usuario_id,
+        "usuario_nombre": _nombre_completo_de(usuario.nombre, usuario.apellido) if usuario is not None else None,
+        "usuario_correo": usuario.correo if usuario is not None else None,
     }
 
 
@@ -129,59 +143,45 @@ def listar_bitacora(
     limite: int = 10,
     pagina: int = 1,
 ) -> dict:
-    condiciones = ["1 = 1"]
-    parametros: dict = {}
+    nombre_usuario = func.trim(
+        func.concat(
+            func.coalesce(Usuario.nombre, ""),
+            " ",
+            func.coalesce(Usuario.apellido, ""),
+        )
+    )
+    consulta = (
+        db.query(Bitacora, Usuario)
+        .outerjoin(Usuario, Bitacora.usuario_id == Usuario.id)
+    )
 
     if modulo is not None:
-        condiciones.append("modulo = :modulo")
-        parametros["modulo"] = modulo
+        consulta = consulta.filter(Bitacora.modulo == modulo)
     if accion is not None:
-        condiciones.append("accion = :accion")
-        parametros["accion"] = accion
+        consulta = consulta.filter(Bitacora.accion == accion)
     if usuario_id is not None:
-        condiciones.append("usuario_id = :usuario_id")
-        parametros["usuario_id"] = usuario_id
+        consulta = consulta.filter(Bitacora.usuario_id == usuario_id)
     if fecha_desde is not None:
-        condiciones.append("creado_en >= :fecha_desde")
-        parametros["fecha_desde"] = fecha_desde
+        consulta = consulta.filter(Bitacora.creado_en >= fecha_desde)
     if fecha_hasta is not None:
-        condiciones.append("creado_en <= :fecha_hasta")
-        parametros["fecha_hasta"] = fecha_hasta
+        consulta = consulta.filter(Bitacora.creado_en <= fecha_hasta)
     if q is not None and q.strip():
-        condiciones.append(
-            "(resumen LIKE :busqueda OR usuario_nombre LIKE :busqueda OR usuario_correo LIKE :busqueda)"
+        termino = f"%{q.strip()}%"
+        consulta = consulta.filter(
+            or_(
+                Bitacora.resumen.like(termino),
+                nombre_usuario.like(termino),
+                Usuario.correo.like(termino),
+            )
         )
-        parametros["busqueda"] = f"%{q.strip()}%"
 
-    where_sql = " AND ".join(condiciones)
-    offset = (pagina - 1) * limite
-    parametros["limite"] = limite
-    parametros["offset"] = offset
-
-    consulta_total = text(
-        f"SELECT COUNT(*) AS total FROM v_bitacora_listado WHERE {where_sql}"
+    filas, total = paginar_consulta(
+        consulta.order_by(Bitacora.creado_en.desc()),
+        pagina,
+        limite,
     )
-    total = db.execute(consulta_total, parametros).scalar() or 0
-
-    consulta_listado = text(
-        f"""
-        SELECT id, creado_en, modulo, accion, tabla_afectada, registro_id,
-               resumen, ip_origen, usuario_id, usuario_nombre, usuario_correo
-        FROM v_bitacora_listado
-        WHERE {where_sql}
-        ORDER BY creado_en DESC
-        LIMIT :limite OFFSET :offset
-        """
-    )
-    filas = db.execute(consulta_listado, parametros).mappings().all()
-    items = [_entrada_listado_a_dict(dict(fila)) for fila in filas]
-
-    return {
-        "items": items,
-        "total": total,
-        "pagina": pagina,
-        "limite": limite,
-    }
+    items = [_entrada_listado_a_dict(entrada, usuario) for entrada, usuario in filas]
+    return respuesta_paginada(items, total, pagina, limite)
 
 
 def _nombre_completo_de(nombre: str | None, apellido: str | None) -> str:

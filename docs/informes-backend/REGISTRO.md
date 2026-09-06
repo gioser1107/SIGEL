@@ -6,6 +6,15 @@ No sustituye el SRS ni los RF. Sirve para defensa: qué cambió, por qué, y qu�
 
 ---
 
+## 2026-09-06 — Bitácora: listado sin vista inexistente
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/modelos/bitacora_modelo.py`, `backend/controladores/asiento_controlador.py`
+- **Qué se hizo:** `listar_bitacora` deja de consultar `v_bitacora_listado` (nunca existió en el dump ni en migraciones) y hace JOIN de `bitacora` + `usuarios`. `registrar_evento` normaliza módulo/acción fuera del ENUM. Los asientos registran módulo `viajes` en vez de `flota`.
+- **Por qué:** abrir Bitácora devolvía 500; los eventos de asientos se perdían en silencio porque `flota` no está en el ENUM de la tabla.
+- **Qué no se tocó:** filtros, paginación, permiso `leer_bitacora`, detalle JSON ni el resto de controladores que ya usaban módulos válidos.
+- **Cómo probarlo:** entrar a Administración → Configuración → Bitácora; debe listar logins y operaciones recientes sin error de servidor.
+
 ## 2026-09-06 — Efectivo $ y Zelle a la par (1 USD = 1 EUR)
 
 - **Autor:** agente (Cursor)

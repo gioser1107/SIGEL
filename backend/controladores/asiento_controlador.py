@@ -58,7 +58,7 @@ def crear_asiento_endpoint(
     )
 
     registrar_evento(
-        db, modulo="flota", accion="INSERT",
+        db, modulo="viajes", accion="INSERT",
         resumen=f"Asiento {datos.numero} creado para unidad {datos.unidad_id}",
         usuario_id=usuario_actual["id"], tabla_afectada="asientos",
         registro_id=nuevo_asiento.id, ip_origen=obtener_ip_origen(request),
@@ -78,7 +78,7 @@ def actualizar_asiento_endpoint(
     actualizar_asiento(db, asiento_id, numero=datos.numero, posicion=datos.posicion)
 
     registrar_evento(
-        db, modulo="flota", accion="UPDATE",
+        db, modulo="viajes", accion="UPDATE",
         resumen=f"Asiento {asiento_id} actualizado",
         usuario_id=usuario_actual["id"], tabla_afectada="asientos",
         registro_id=asiento_id, ip_origen=obtener_ip_origen(request),
@@ -97,7 +97,7 @@ def eliminar_asiento_endpoint(
     eliminar_asiento(db, asiento_id)
 
     registrar_evento(
-        db, modulo="flota", accion="DELETE",
+        db, modulo="viajes", accion="DELETE",
         resumen=f"Asiento {asiento_id} eliminado",
         usuario_id=usuario_actual["id"], tabla_afectada="asientos",
         registro_id=asiento_id, ip_origen=obtener_ip_origen(request),
