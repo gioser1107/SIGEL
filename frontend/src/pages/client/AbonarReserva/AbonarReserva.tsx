@@ -172,7 +172,7 @@ export default function AbonarReserva() {
             ← Mis viajes
           </Link>
           <h1 className="abonar-reserva__titulo">
-            {reserva?.destino_nombre ?? `Reserva #${reservaId}`}
+            {reserva?.destino_nombre ?? 'Abonar reserva'}
           </h1>
           <p className="abonar-reserva__subtitulo">
             Reporta un abono parcial o liquida el saldo restante de tu reserva.

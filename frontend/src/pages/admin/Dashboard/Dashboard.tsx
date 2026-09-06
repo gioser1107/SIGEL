@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { EtiquetaEstado, resolverVariante } from '../../../components/admin';
 import { useDashboardAdmin } from '../../../hooks/useDashboardAdmin';
+import { SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
 import './Dashboard.css';
 
 function formatFecha(iso: string) {
@@ -139,8 +140,8 @@ export default function Dashboard() {
                     <span className="dashboard__viaje-hora">{formatHora(v.fecha_salida)}</span>
                   </div>
                   <div className="dashboard__viaje-info">
-                    <span className="dashboard__viaje-destino">{v.destino_nombre ?? `Destino #${v.destino_id}`}</span>
-                    <span className="dashboard__viaje-unidad">{v.unidad_placa ?? `Unidad #${v.unidad_id}`}</span>
+                    <span className="dashboard__viaje-destino">{textoVisible(v.destino_nombre, SIN_DATO.destino)}</span>
+                    <span className="dashboard__viaje-unidad">{textoVisible(v.unidad_placa, SIN_DATO.unidad)}</span>
                   </div>
                   <EtiquetaEstado etiqueta={v.estado} variante={resolverVariante(v.estado)} />
                 </div>
@@ -212,10 +213,10 @@ export default function Dashboard() {
                 {cotizacionesRecientes.map((c) => (
                   <tr key={c.id}>
                     <td>
-                      <span className="dashboard__cot-cliente">{c.cliente_nombre ?? `Cliente #${c.cliente_id}`}</span>
+                      <span className="dashboard__cot-cliente">{textoVisible(c.cliente_nombre, SIN_DATO.cliente)}</span>
                       {c.cliente_razon_social && <span className="dashboard__cot-razon">{c.cliente_razon_social}</span>}
                     </td>
-                    <td>{c.destino_nombre ?? `Destino #${c.destino_id}`}</td>
+                    <td>{textoVisible(c.destino_nombre, SIN_DATO.destino)}</td>
                     <td>
                       {c.precio_cotizado_eur !== null
                         ? <strong>€ {c.precio_cotizado_eur.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</strong>

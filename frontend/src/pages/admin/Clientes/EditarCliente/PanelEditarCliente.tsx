@@ -12,10 +12,12 @@ import {
 import FormularioClienteCampos from '../components/FormularioClienteCampos';
 import PuntosRecogidaEditor from '../../../../components/puntos-recogida/PuntosRecogidaEditor';
 import '../../../../components/puntos-recogida/puntos-recogida.css';
-import { FORM_VACIO } from '../constants';
+import { FORM_VACIO, PESTANIAS_PANEL } from '../constants';
 import useUbicacionesCliente from '../hooks/useUbicacionesCliente';
 import { clienteAFormulario, formularioAPayload } from '../utils/mapeoFormulario';
 import { mensajeError } from '../utils/mensajeError';
+import { nombreVisibleCliente } from '../utils/inicialesCliente';
+import FichaCliente from './FichaCliente';
 import './PanelEditarCliente.css';
 
 interface PanelEditarClienteProps {
@@ -38,11 +40,13 @@ export default function PanelEditarCliente({
   const [form, setForm] = useState<FormularioCliente>(FORM_VACIO);
   const [erroresForm, setErroresForm] = useState<ErroresFormularioCliente>({});
   const [guardando, setGuardando] = useState(false);
+  const [tabActiva, setTabActiva] = useState('ficha');
 
   useEffect(() => {
     if (abierto && cliente) {
       setForm(clienteAFormulario(cliente));
       setErroresForm({});
+      setTabActiva('ficha');
     }
   }, [abierto, cliente]);
 
@@ -86,40 +90,72 @@ export default function PanelEditarCliente({
     setErroresForm((prev) => ({ ...prev, [campo]: undefined }));
   }
 
+  const enFicha = tabActiva === 'ficha';
+
   return (
     <PanelDeslizable
       abierto={abierto}
       onCerrar={onCerrar}
-      titulo="Editar cliente"
+      titulo={cliente ? nombreVisibleCliente(cliente) : 'Cliente'}
       subtitulo={cliente ? `${cliente.tipo_documento}-${cliente.numero_documento}` : undefined}
       ancho="lg"
+      pestanias={PESTANIAS_PANEL}
+      pestaniaActiva={tabActiva}
+      onPestaniaChange={setTabActiva}
       pie={
-        <>
-          <Boton variante="secundario" tamano="sm" onClick={onCerrar} disabled={guardando}>
-            Cancelar
-          </Boton>
-          <Boton variante="primario" tamano="sm" onClick={guardar} disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar cambios'}
-          </Boton>
-        </>
+        enFicha ? (
+          <>
+            <Boton variante="secundario" tamano="sm" onClick={onCerrar}>
+              Cerrar
+            </Boton>
+            <Boton variante="primario" tamano="sm" onClick={() => setTabActiva('editar')}>
+              Editar datos
+            </Boton>
+          </>
+        ) : (
+          <>
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              onClick={() => {
+                if (cliente) setForm(clienteAFormulario(cliente));
+                setErroresForm({});
+                setTabActiva('ficha');
+              }}
+              disabled={guardando}
+            >
+              Volver a ficha
+            </Boton>
+            <Boton variante="primario" tamano="sm" onClick={guardar} disabled={guardando}>
+              {guardando ? 'Guardando…' : 'Guardar cambios'}
+            </Boton>
+          </>
+        )
       }
     >
-      <FormularioClienteCampos
-        form={form}
-        erroresForm={erroresForm}
-        estados={estados}
-        ciudades={ciudades}
-        cargandoCiudades={cargandoCiudades}
-        clienteActivo={cliente}
-        onChange={setForm}
-        onLimpiarError={limpiarError}
-      />
-      {cliente && (
-        <PuntosRecogidaEditor
-          mode="admin-edit"
-          clienteId={cliente.cliente_id}
-          onError={onError}
-        />
+      {cliente && enFicha && <FichaCliente cliente={cliente} activa={abierto && enFicha} />}
+
+      {!enFicha && (
+        <>
+          <FormularioClienteCampos
+            form={form}
+            erroresForm={erroresForm}
+            estados={estados}
+            ciudades={ciudades}
+            cargandoCiudades={cargandoCiudades}
+            clienteActivo={cliente}
+            ocultarIntro
+            onChange={setForm}
+            onLimpiarError={limpiarError}
+          />
+          {cliente && (
+            <PuntosRecogidaEditor
+              mode="admin-edit"
+              clienteId={cliente.cliente_id}
+              onError={onError}
+            />
+          )}
+        </>
       )}
     </PanelDeslizable>
   );

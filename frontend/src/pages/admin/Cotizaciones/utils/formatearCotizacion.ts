@@ -5,7 +5,7 @@ export function etiquetaCliente(c: Cotizacion): string {
   if (c.cliente_razon_social) {
     return `${c.cliente_nombre ?? 'Cliente'} — ${c.cliente_razon_social}`;
   }
-  return c.cliente_nombre ?? `Cliente #${c.cliente_id}`;
+  return c.cliente_nombre ?? 'Cliente sin nombre';
 }
 
 // Convierte la fecha ISO a formato legible dd/mm/aaaa (zona VE)

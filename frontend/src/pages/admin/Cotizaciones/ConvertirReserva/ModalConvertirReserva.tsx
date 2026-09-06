@@ -1,5 +1,6 @@
 import Boton from '../../../../components/ui/Boton/Boton';
 import type { Cotizacion } from '../../../../types/cotizacion';
+import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 
 interface PropsModalConvertir {
   abierto: boolean;
@@ -26,7 +27,7 @@ export default function ModalConvertirReserva({ abierto, cotizacion, onCerrar }:
         aria-label="Convertir en reserva"
       >
         <div className="cot-convertir__header">
-          <h3>Convertir cotización #{cotizacion.id} en reserva</h3>
+          <h3>Convertir cotización en reserva</h3>
           <button className="drawer__cerrar" onClick={onCerrar} aria-label="Cerrar">
             <svg
               width="20"
@@ -45,7 +46,7 @@ export default function ModalConvertirReserva({ abierto, cotizacion, onCerrar }:
         </div>
         <div className="cot-convertir__cuerpo">
           <p className="cot-convertir__info">
-            <strong>{cotizacion.cliente_nombre ?? `Cliente #${cotizacion.cliente_id}`}</strong>
+            <strong>{textoVisible(cotizacion.cliente_nombre, SIN_DATO.cliente)}</strong>
             {' · '}
             {cotizacion.destino_nombre}
             {cotizacion.precio_cotizado_eur !== null && ` · € ${cotizacion.precio_cotizado_eur}`}

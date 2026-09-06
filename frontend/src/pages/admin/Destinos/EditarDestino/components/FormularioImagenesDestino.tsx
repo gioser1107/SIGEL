@@ -64,7 +64,7 @@ export default function FormularioImagenesDestino({
               <img src={img.url} alt="" className="dest-imagenes__miniatura" />
               <div className="dest-imagenes__info">
                 <span className="dest-imagenes__url" title={img.url}>
-                  {img.es_portada ? 'Imagen de portada' : `Imagen #${img.orden + 1}`}
+                  {img.es_portada ? 'Imagen de portada' : `Imagen ${img.orden + 1}`}
                 </span>
                 {img.es_portada && <span className="dest-imagenes__badge">Portada</span>}
               </div>

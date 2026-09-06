@@ -1,6 +1,7 @@
 import { TablaDatos, EtiquetaEstado } from '../../../../components/admin';
 import type { Columna } from '../../../../components/admin';
 import type { ViajeSelectorAbordaje } from '../../../../types/abordaje';
+import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatearFechaViaje } from '../utils/formatearAbordaje';
 
 interface PropsSelectorViajesAbordaje {
@@ -13,7 +14,7 @@ const columnas: Columna<ViajeSelectorAbordaje>[] = [
   {
     id: 'destino',
     encabezado: 'Destino',
-    accessor: (v) => v.destino_nombre ?? `Viaje #${v.id}`,
+    accessor: (v) => textoVisible(v.destino_nombre, SIN_DATO.viaje),
   },
   {
     id: 'fecha',
@@ -30,7 +31,7 @@ const columnas: Columna<ViajeSelectorAbordaje>[] = [
     encabezado: 'Estado viaje',
     accessor: (v) =>
       v.estado ? (
-        <EtiquetaEstado etiqueta={v.estado.charAt(0).toUpperCase() + v.estado.slice(1)} />
+        <EtiquetaEstado etiqueta={v.estado} />
       ) : (
         '—'
       ),

@@ -1,9 +1,32 @@
 /* TablaClientes.css — celdas del listado de clientes */
 
+.clientes__tabla-persona {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.clientes__tabla-avatar {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 85, 160, 0.12);
+  color: var(--color-primary, #0055a0);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
 .clientes__tabla-nombre {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .clientes__tabla-nombre strong {

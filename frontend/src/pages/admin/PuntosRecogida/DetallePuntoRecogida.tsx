@@ -54,7 +54,9 @@ export default function DetallePuntoRecogida({ punto, onVolver }: DetallePuntoRe
       <div className="puntos-recogida-admin__detalle-cabecera">
         <div>
           <h2 className="puntos-recogida-admin__detalle-titulo">{etiquetaPunto(punto)}</h2>
-          <p className="puntos-recogida-admin__detalle-subtitulo">Domicilio #{punto.id}</p>
+          <p className="puntos-recogida-admin__detalle-subtitulo">
+            {punto.ciudad && punto.estado ? `${punto.ciudad}, ${punto.estado}` : 'Domicilio de recogida'}
+          </p>
         </div>
         <Boton variante="secundario" tamano="sm" onClick={onVolver}>
           Volver al listado
@@ -130,7 +132,7 @@ export default function DetallePuntoRecogida({ punto, onVolver }: DetallePuntoRe
                       <strong>
                         {punto.cliente_nombre || punto.cliente_apellido
                           ? `${punto.cliente_nombre ?? ''} ${punto.cliente_apellido ?? ''}`.trim()
-                          : `Cliente #${clienteIdFallback}`}
+                          : 'Cliente sin nombre'}
                       </strong>
                       {punto.cliente_tipo_documento && punto.cliente_numero_documento && (
                         <span className="puntos-recogida-admin__doc">

@@ -1,6 +1,7 @@
 import { PanelDeslizable, EtiquetaEstado } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
 import type { ReservaEnriquecida, ReservaCliente } from '../../../../types/reservas';
+import { etiquetaEstado, SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../../utils/formatoMoneda';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
 import PagosReserva from '../Pagos/PagosReserva';
@@ -113,12 +114,16 @@ export default function PanelDetalleReserva({
     <PanelDeslizable
       abierto={abierto}
       onCerrar={onCerrar}
-      titulo={reservaActiva ? `RES-${reservaActiva.id}` : 'Detalle de Reserva'}
+      titulo={
+        reservaActiva
+          ? textoVisible(reservaActiva.viajeObj?.destino_nombre, 'Detalle de reserva')
+          : 'Detalle de reserva'
+      }
       subtitulo={
         reservaActiva?.clienteObj
           ? nombreCompleto(reservaActiva.clienteObj.nombre, reservaActiva.clienteObj.apellido)
           : reservaActiva
-          ? `Cliente #${reservaActiva.cliente_id}`
+          ? SIN_DATO.cliente
           : ''
       }
       ancho="lg"
@@ -134,7 +139,7 @@ export default function PanelDetalleReserva({
           {/* ── Estado + fecha de creación ── */}
           <div className="detalle-rsv__estado-row">
             <EtiquetaEstado
-              etiqueta={reservaActiva.estado.charAt(0).toUpperCase() + reservaActiva.estado.slice(1)}
+              etiqueta={reservaActiva.estado}
               variante={ESTADO_VARIANTE[reservaActiva.estado] ?? 'neutro'}
             />
             <span className="detalle-rsv__fecha-rsv">
@@ -149,7 +154,7 @@ export default function PanelDetalleReserva({
             <div className="drawer-form__ficha">
               <div className="drawer-form__ficha-item">
                 <span className="drawer-form__ficha-etiqueta">Destino</span>
-                <strong>{reservaActiva.viajeObj?.destino_nombre ?? `Viaje #${reservaActiva.viaje_id}`}</strong>
+                <strong>{textoVisible(reservaActiva.viajeObj?.destino_nombre, SIN_DATO.viaje)}</strong>
               </div>
               <div className="drawer-form__ficha-item">
                 <span className="drawer-form__ficha-etiqueta">Fecha de salida</span>
@@ -172,7 +177,7 @@ export default function PanelDetalleReserva({
               <div className="drawer-form__ficha-item">
                 <span className="drawer-form__ficha-etiqueta">Estado del viaje</span>
                 <span className={`detalle-rsv__viaje-estado detalle-rsv__viaje-estado--${reservaActiva.viajeObj?.estado ?? 'sin_estado'}`}>
-                  {reservaActiva.viajeObj?.estado ?? '—'}
+                  {etiquetaEstado(reservaActiva.viajeObj?.estado)}
                 </span>
               </div>
             </div>

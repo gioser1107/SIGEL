@@ -42,7 +42,7 @@ export default function ModalEliminarPago({
     <ModalConfirmacion
       abierto={abierto}
       titulo="Eliminar pago"
-      mensaje={pago ? `¿Eliminar el pago #${pago.id} de la reserva RES-${pago.reserva_id}?` : ''}
+      mensaje={pago ? '¿Eliminar este pago de la reserva?' : ''}
       textoConfirmar="Eliminar"
       cargando={eliminando}
       onConfirmar={confirmar}

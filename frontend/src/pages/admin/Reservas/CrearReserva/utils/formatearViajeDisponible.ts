@@ -25,7 +25,7 @@ export function textoMotivoNoDisponible(motivo: string | null | undefined): stri
 
 export function etiquetaViajeDisponible(viaje: ViajeDisponibleReserva): string {
   const fecha = formatearFechaSalidaViaje(viaje.fecha_salida);
-  const destino = viaje.destino_nombre ?? `Viaje #${viaje.id}`;
+  const destino = viaje.destino_nombre ?? 'Viaje sin destino';
   if (!viaje.disponibilidad.disponible_para_reserva) {
     return `${destino} — ${fecha} — ${textoMotivoNoDisponible(viaje.disponibilidad.motivo_no_disponible)}`;
   }

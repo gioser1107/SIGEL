@@ -1,6 +1,7 @@
 import { EtiquetaEstado, resolverVariante } from '../../../../components/admin';
 import type { Columna } from '../../../../components/admin';
 import type { Cotizacion } from '../../../../types/cotizacion';
+import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatFecha } from '../utils/formatearCotizacion';
 
 // Construye la definición de columnas de la tabla de cotizaciones
@@ -12,7 +13,7 @@ export function columnasCotizaciones(): Columna<Cotizacion>[] {
       accessor: (c) => (
         <div className="cot-tabla__cliente">
           <span className="cot-tabla__cliente-nombre">
-            {c.cliente_nombre ?? `Cliente #${c.cliente_id}`}
+            {textoVisible(c.cliente_nombre, SIN_DATO.cliente)}
           </span>
           {c.cliente_razon_social && (
             <span className="cot-tabla__razon">{c.cliente_razon_social}</span>
@@ -23,7 +24,7 @@ export function columnasCotizaciones(): Columna<Cotizacion>[] {
     {
       id: 'destino',
       encabezado: 'Destino',
-      accessor: (c) => c.destino_nombre ?? `Destino #${c.destino_id}`,
+      accessor: (c) => textoVisible(c.destino_nombre, SIN_DATO.destino),
     },
     {
       id: 'fecha',

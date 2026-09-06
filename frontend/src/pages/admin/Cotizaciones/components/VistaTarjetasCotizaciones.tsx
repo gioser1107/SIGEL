@@ -1,5 +1,6 @@
 import { CuadriculaTarjetas, EtiquetaEstado, resolverVariante, BotonAccionTabla } from '../../../../components/admin';
 import type { Cotizacion } from '../../../../types/cotizacion';
+import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { esBloqueada, formatFecha } from '../utils/formatearCotizacion';
 
 interface PropsVistaTarjetas {
@@ -32,14 +33,14 @@ export default function VistaTarjetasCotizaciones({
         <div key={cot.id} className="cot-card">
           <div className="cot-card__header">
             <span className="cot-card__cliente">
-              {cot.cliente_nombre ?? `Cliente #${cot.cliente_id}`}
+              {textoVisible(cot.cliente_nombre, SIN_DATO.cliente)}
             </span>
             <EtiquetaEstado etiqueta={cot.estado} variante={resolverVariante(cot.estado)} />
           </div>
           {cot.cliente_razon_social && (
             <span className="cot-card__razon">{cot.cliente_razon_social}</span>
           )}
-          <p className="cot-card__destino">{cot.destino_nombre ?? `Destino #${cot.destino_id}`}</p>
+          <p className="cot-card__destino">{textoVisible(cot.destino_nombre, SIN_DATO.destino)}</p>
           <p className="cot-card__precio">
             {cot.precio_cotizado_eur !== null
               ? `€ ${cot.precio_cotizado_eur.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`
@@ -51,7 +52,7 @@ export default function VistaTarjetasCotizaciones({
               accion="imprimir"
               onClick={() => onImprimir(cot)}
               disabled={imprimiendo}
-              ariaLabel={`Imprimir cotización de ${cot.cliente_nombre ?? `cliente #${cot.cliente_id}`}`}
+              ariaLabel={`Imprimir cotización de ${textoVisible(cot.cliente_nombre, SIN_DATO.cliente)}`}
             />
             {!soloLectura && (
               <>

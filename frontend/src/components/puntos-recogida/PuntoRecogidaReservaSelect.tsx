@@ -78,7 +78,7 @@ export default function PuntoRecogidaReservaSelect({
     if (mostrarTodasParadas || misPuntosEnRuta.length === 0) {
       return paradas.map((p) => ({
         id: p.punto_recogida_id,
-        label: p.punto_nombre ?? `Punto #${p.punto_recogida_id}`,
+        label: p.punto_nombre ?? 'Domicilio de recogida',
         esMio: misPuntos.some((mp) => mp.id === p.punto_recogida_id),
       }));
     }

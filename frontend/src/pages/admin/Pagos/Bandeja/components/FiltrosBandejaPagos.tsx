@@ -36,13 +36,6 @@ export default function FiltrosBandejaPagos({
             <option key={k} value={k}>{v}</option>
           ))}
         </select>
-        <input
-          className="drawer-form__input"
-          type="number"
-          placeholder="ID reserva"
-          value={filtros.reserva_id}
-          onChange={(e) => onChange({ ...filtros, reserva_id: e.target.value })}
-        />
         <select
           className="drawer-form__input"
           value={filtros.metodo_pago_id}

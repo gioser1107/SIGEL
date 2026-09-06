@@ -23,7 +23,7 @@ export interface DashboardAdminData {
 function calcularDestinosTop(cotizaciones: Cotizacion[], limite: number) {
   const conteo: Record<string, number> = {};
   for (const c of cotizaciones) {
-    const nombre = c.destino_nombre ?? `Destino #${c.destino_id}`;
+    const nombre = c.destino_nombre?.trim() || 'Destino no asignado';
     conteo[nombre] = (conteo[nombre] ?? 0) + 1;
   }
   return Object.entries(conteo)

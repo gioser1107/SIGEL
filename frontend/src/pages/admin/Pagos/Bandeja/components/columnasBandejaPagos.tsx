@@ -2,6 +2,7 @@ import type { Columna } from '../../../../../components/admin';
 import { EtiquetaEstado } from '../../../../../components/admin';
 import type { PagoGlobal } from '../../../../../types/pagos';
 import { ETIQUETA_ESTADO_PAGO_PORTAL } from '../../../../../types/pagosPortal';
+import { codigoReserva } from '../../../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../../../utils/formatoMoneda';
 import { etiquetaMetodoCorta } from '../../../Reservas/Pagos/utils/metodosPagoUi';
 import { formatearMontoPago } from '../../../Reservas/Pagos/utils/formatoPago';
@@ -13,11 +14,10 @@ const VARIANTE_ESTADO: Record<string, 'advertencia' | 'exito' | 'error'> = {
 };
 
 export const columnasBandejaPagos: Columna<PagoGlobal>[] = [
-  { id: 'id', encabezado: 'ID', accessor: (p) => p.id },
   {
     id: 'reserva',
     encabezado: 'Reserva',
-    accessor: (p) => `RES-${p.reserva_id}`,
+    accessor: (p) => codigoReserva(p.reserva_id),
   },
   {
     id: 'metodo',

@@ -1,5 +1,24 @@
 /* FormularioClienteCampos.css — validación y campos del drawer */
 
+.fp-form-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #e8edf2);
+  border-radius: 10px;
+  background: var(--color-bg-card, #fff);
+}
+
+.fp-form-seccion__titulo {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--color-primary, #0055a0);
+}
+
 .clientes__campo-error {
   font-size: var(--font-size-xs);
   color: var(--color-error);

@@ -21,6 +21,7 @@ import { listarClientesParaSelect } from '../../../services/clientes';
 import { obtenerViajes } from '../../../services/viajes';
 import { LIMITE_PAGINA_MAX, type FiltroListado } from '../../../types/paginacion';
 import type { ReservaCliente, ReservaEnriquecida } from '../../../types/reservas';
+import { codigoReserva, SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
 import { nombreCompleto } from '../../../utils/nombrePersona';
 import PanelDetalleReserva from './components/PanelDetalleReserva';
 import ModalEliminarReserva from './components/ModalEliminarReserva';
@@ -49,6 +50,7 @@ const ETIQUETA_ESTADO_RESERVA: Record<string, string> = {
   confirmada: 'Confirmada',
   abonada: 'Abonada',
   cancelada: 'Cancelada',
+  anulado: 'Anulada',
 };
 
 const COLUMNAS_REPORTE_RESERVAS = [
@@ -143,7 +145,6 @@ export default function Reservas() {
     return reservas.filter((r) => {
       const coincideBusqueda =
         !q ||
-        r.id.toString().includes(q) ||
         r.clienteObj?.nombre.toLowerCase().includes(q) ||
         r.clienteObj?.apellido.toLowerCase().includes(q) ||
         r.viajeObj?.destino_nombre?.toLowerCase().includes(q);
@@ -181,11 +182,11 @@ export default function Reservas() {
   const filasReporte = useMemo(
     () =>
       reservasFiltradas.map((r) => ({
-        codigo: `RES-${r.id}`,
+        codigo: codigoReserva(r.id),
         cliente: r.clienteObj
           ? nombreCompleto(r.clienteObj.nombre, r.clienteObj.apellido)
-          : `Cliente #${r.cliente_id}`,
-        viaje: r.viajeObj?.destino_nombre ?? `Viaje #${r.viaje_id}`,
+          : SIN_DATO.cliente,
+        viaje: textoVisible(r.viajeObj?.destino_nombre, SIN_DATO.viaje),
         fecha: new Date(r.fecha_reserva).toLocaleDateString('es-VE'),
         estado: ETIQUETA_ESTADO_RESERVA[r.estado] ?? r.estado,
       })),
@@ -227,15 +228,15 @@ export default function Reservas() {
   const columnas: Columna<ReservaEnriquecida>[] = [
     {
       id: 'id',
-      encabezado: 'Cod.',
-      accessor: (r) => `RES-${r.id}`,
+      encabezado: 'Código',
+      accessor: (r) => codigoReserva(r.id),
     },
     {
       id: 'cliente',
       encabezado: 'Cliente',
       accessor: (r) => (
         <div className="reservas__tabla-nombre">
-          <strong>{r.clienteObj ? nombreCompleto(r.clienteObj.nombre, r.clienteObj.apellido) : `Cliente #${r.cliente_id}`}</strong>
+          <strong>{r.clienteObj ? nombreCompleto(r.clienteObj.nombre, r.clienteObj.apellido) : SIN_DATO.cliente}</strong>
         </div>
       ),
     },
@@ -244,7 +245,7 @@ export default function Reservas() {
       encabezado: 'Viaje / Destino',
       accessor: (r) => (
         <div className="reservas__tabla-nombre">
-          <strong>{r.viajeObj?.destino_nombre || `Viaje #${r.viaje_id}`}</strong>
+          <strong>{textoVisible(r.viajeObj?.destino_nombre, SIN_DATO.viaje)}</strong>
         </div>
       ),
     },
@@ -261,7 +262,7 @@ export default function Reservas() {
       encabezado: 'Estado',
       accessor: (r) => (
         <EtiquetaEstado
-          etiqueta={r.estado.charAt(0).toUpperCase() + r.estado.slice(1)}
+          etiqueta={ETIQUETA_ESTADO_RESERVA[r.estado] ?? r.estado}
           variante={ESTADO_VARIANTE[r.estado] ?? 'neutro'}
         />
       ),
@@ -317,7 +318,7 @@ export default function Reservas() {
             </svg>
             <input
               type="text"
-              placeholder="Buscar por cliente, viaje o ID..."
+              placeholder="Buscar por cliente o destino..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               aria-label="Buscar reservas"

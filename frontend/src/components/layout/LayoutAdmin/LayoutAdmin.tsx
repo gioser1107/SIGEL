@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import { useNotificaciones } from '../../../hooks/useNotificaciones';
@@ -7,6 +7,27 @@ import { esRolClientePortal } from '../../../utils/permisosModulos';
 import PanelNotificaciones from './PanelNotificaciones';
 import LogoMarca from '../../ui/LogoMarca/LogoMarca';
 import './LayoutAdmin.css';
+
+const RUTAS_POR_GRUPO: Record<string, string[]> = {
+  operacion: ['/admin/planificacion', '/admin/reservas', '/admin/abordaje', '/admin/pagos'],
+  comercial: ['/admin/cotizaciones', '/admin/clientes', '/admin/resenas'],
+  catalogos: ['/admin/destinos', '/admin/flota', '/admin/puntos-recogida'],
+  reportes: ['/admin/reportes', '/admin/reporte-viaje'],
+  configuracion: ['/admin/bitacora', '/admin/usuarios-roles'],
+};
+
+function rutaEstaActiva(pathname: string, to: string): boolean {
+  return pathname === to || pathname.startsWith(`${to}/`);
+}
+
+function grupoPorRuta(pathname: string): string | null {
+  for (const [id, rutas] of Object.entries(RUTAS_POR_GRUPO)) {
+    if (rutas.some((ruta) => rutaEstaActiva(pathname, ruta))) {
+      return id;
+    }
+  }
+  return null;
+}
 
 function iniciales(nombre: string): string {
   return nombre
@@ -17,20 +38,37 @@ function iniciales(nombre: string): string {
     .join('');
 }
 
+type SubEnlaceMenu = {
+  to: string;
+  label: string;
+  visible: boolean;
+};
+
+type EnlaceMenu =
+  | {
+      to: string;
+      label: string;
+      visible: boolean;
+      icon: ReactNode;
+    }
+  | {
+      id: string;
+      label: string;
+      visible: boolean;
+      icon: ReactNode;
+      subItems: SubEnlaceMenu[];
+    };
+
 export default function LayoutAdmin() {
   const [estaColapsado, setEstaColapsado] = useState(false);
   const [estaAbiertoMovil, setEstaAbiertoMovil] = useState(false);
   const [panelNotificacionesAbierto, setPanelNotificacionesAbierto] = useState(false);
   
   const ubicacion = useLocation();
-  const [menusAbiertos, setMenusAbiertos] = useState<Record<string, boolean>>(() => ({
-    reportes:
-      ubicacion.pathname.startsWith('/admin/reportes') ||
-      ubicacion.pathname.includes('/admin/reporte-viaje'),
-    configuracion:
-      ubicacion.pathname.includes('/admin/bitacora') ||
-      ubicacion.pathname.includes('/admin/usuarios-roles'),
-  }));
+  const [menusAbiertos, setMenusAbiertos] = useState<Record<string, boolean>>(() => {
+    const grupo = grupoPorRuta(ubicacion.pathname);
+    return grupo ? { [grupo]: true } : {};
+  });
   const contenedorNotificacionesRef = useRef<HTMLDivElement>(null);
   const { usuario, cerrarSesion, puedeLeer, puedeAccederSeguridad } = useAutenticacion();
   const notificaciones = useNotificaciones();
@@ -38,18 +76,8 @@ export default function LayoutAdmin() {
   useEffect(() => {
     setEstaAbiertoMovil(false);
     setPanelNotificacionesAbierto(false);
-    if (
-      ubicacion.pathname.startsWith('/admin/reportes') ||
-      ubicacion.pathname.includes('/admin/reporte-viaje')
-    ) {
-      setMenusAbiertos((prev) => ({ ...prev, reportes: true }));
-    }
-    if (
-      ubicacion.pathname.includes('/admin/bitacora') ||
-      ubicacion.pathname.includes('/admin/usuarios-roles')
-    ) {
-      setMenusAbiertos((prev) => ({ ...prev, configuracion: true }));
-    }
+    const grupo = grupoPorRuta(ubicacion.pathname);
+    setMenusAbiertos(grupo ? { [grupo]: true } : {});
   }, [ubicacion.pathname]);
 
   useEffect(() => {
@@ -72,7 +100,7 @@ export default function LayoutAdmin() {
     return <Navigate to="/client/dashboard" replace />;
   }
 
-  const enlacesBarraLateral = [
+  const enlacesBarraLateral: EnlaceMenu[] = [
     {
       to: '/admin/dashboard',
       label: 'Dashboard',
@@ -84,81 +112,104 @@ export default function LayoutAdmin() {
           <rect x="14" y="12" width="7" height="9" rx="1" />
           <rect x="3" y="16" width="7" height="5" rx="1" />
         </svg>
-      )
-    },
-    {
-      to: '/admin/destinos',
-      label: 'Destinos',
-      visible: puedeLeer('destinos'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-          <line x1="9" y1="3" x2="9" y2="18" />
-          <line x1="15" y1="6" x2="15" y2="21" />
-        </svg>
-      )
-    },
-    {
-      to: '/admin/planificacion',
-      label: 'Planificación',
-      visible: puedeLeer('planificacion'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="1" y="3" width="15" height="13" rx="2" />
-          <path d="M16 8h4l3 3v5a2 2 0 0 1-2 2h-1" />
-          <circle cx="5.5" cy="18.5" r="2.5" />
-          <circle cx="18.5" cy="18.5" r="2.5" />
-        </svg>
-      )
-    },
-    {
-      to: '/admin/flota',
-      label: 'Flota',
-      visible: puedeLeer('transporte_flota'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="2" y="7" width="20" height="11" rx="2" ry="2" />
-          <path d="M2 13h20" />
-          <path d="M6 7v-2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2" />
-          <circle cx="7" cy="18" r="2" />
-          <circle cx="17" cy="18" r="2" />
-        </svg>
-      )
-    },
-    {
-      to: '/admin/cotizaciones',
-      label: 'Cotizaciones',
-      visible: puedeLeer('cotizaciones'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="16" y1="13" x2="8" y2="13" />
-          <line x1="16" y1="17" x2="8" y2="17" />
-        </svg>
-      )
-    },
-    {
-      to: '/admin/clientes',
-      label: 'Clientes',
-      visible: puedeLeer('clientes'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
       ),
     },
     {
-      to: '/admin/puntos-recogida',
-      label: 'Puntos recogida',
-      visible: puedeLeer('puntos_recogida'),
+      id: 'operacion',
+      label: 'Operación',
+      visible:
+        puedeLeer('planificacion') ||
+        puedeLeer('reservas') ||
+        puedeLeer('abordaje') ||
+        puedeLeer('reportes_pago'),
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z" />
-          <circle cx="12" cy="11" r="2.5" />
+          <rect x="8" y="2" width="8" height="4" rx="1" />
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <path d="M9 12h6" />
+          <path d="M9 16h6" />
         </svg>
       ),
+      subItems: [
+        {
+          to: '/admin/planificacion',
+          label: 'Planificación',
+          visible: puedeLeer('planificacion'),
+        },
+        {
+          to: '/admin/reservas',
+          label: 'Reservas',
+          visible: puedeLeer('reservas'),
+        },
+        {
+          to: '/admin/abordaje',
+          label: 'Abordaje',
+          visible: puedeLeer('abordaje'),
+        },
+        {
+          to: '/admin/pagos',
+          label: 'Pagos',
+          visible: puedeLeer('reportes_pago'),
+        },
+      ],
+    },
+    {
+      id: 'comercial',
+      label: 'Comercial',
+      visible: puedeLeer('cotizaciones') || puedeLeer('clientes') || puedeLeer('resenas'),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+      ),
+      subItems: [
+        {
+          to: '/admin/cotizaciones',
+          label: 'Cotizaciones',
+          visible: puedeLeer('cotizaciones'),
+        },
+        {
+          to: '/admin/clientes',
+          label: 'Clientes',
+          visible: puedeLeer('clientes'),
+        },
+        {
+          to: '/admin/resenas',
+          label: 'Reseñas',
+          visible: puedeLeer('resenas'),
+        },
+      ],
+    },
+    {
+      id: 'catalogos',
+      label: 'Catálogos',
+      visible: puedeLeer('destinos') || puedeLeer('transporte_flota') || puedeLeer('puntos_recogida'),
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+      ),
+      subItems: [
+        {
+          to: '/admin/destinos',
+          label: 'Destinos',
+          visible: puedeLeer('destinos'),
+        },
+        {
+          to: '/admin/flota',
+          label: 'Flota',
+          visible: puedeLeer('transporte_flota'),
+        },
+        {
+          to: '/admin/puntos-recogida',
+          label: 'Puntos recogida',
+          visible: puedeLeer('puntos_recogida'),
+        },
+      ],
     },
     {
       id: 'reportes',
@@ -189,55 +240,6 @@ export default function LayoutAdmin() {
       ],
     },
     {
-      to: '/admin/abordaje',
-      label: 'Abordaje',
-      visible: puedeLeer('abordaje'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M16 3h5v5" />
-          <path d="M8 3H3v5" />
-          <path d="M12 22v-8" />
-          <path d="M3 12h18" />
-          <path d="m21 3-9 9" />
-          <path d="m3 3 9 9" />
-        </svg>
-      ),
-    },
-    {
-      to: '/admin/reservas',
-      label: 'Reservas',
-      visible: puedeLeer('reservas'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
-        </svg>
-      )
-    },
-    {
-      to: '/admin/pagos',
-      label: 'Pagos',
-      visible: puedeLeer('reportes_pago'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-          <line x1="1" y1="10" x2="23" y2="10" />
-        </svg>
-      ),
-    },
-    {
-      to: '/admin/resenas',
-      label: 'Reseñas',
-      visible: puedeLeer('resenas'),
-      icon: (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      ),
-    },
-    {
       id: 'configuracion',
       label: 'Configuración',
       visible: puedeLeer('bitacora') || puedeAccederSeguridad(),
@@ -251,14 +253,14 @@ export default function LayoutAdmin() {
         {
           to: '/admin/bitacora',
           label: 'Bitácora',
-          visible: puedeLeer('bitacora')
+          visible: puedeLeer('bitacora'),
         },
         {
           to: '/admin/usuarios-roles',
           label: 'Usuarios y roles',
-          visible: puedeAccederSeguridad()
-        }
-      ]
+          visible: puedeAccederSeguridad(),
+        },
+      ],
     },
   ].filter((enlace) => enlace.visible);
 
@@ -303,18 +305,26 @@ export default function LayoutAdmin() {
         {/* Links de Navegación */}
         <nav className="barra-lateral__navegacion">
           {enlacesBarraLateral.map((enlace) => {
-            if ('subItems' in enlace && enlace.subItems) {
-              const itemsVisibles = enlace.subItems.filter((s: { visible?: boolean }) => s.visible);
+            if ('subItems' in enlace) {
+              const itemsVisibles = enlace.subItems.filter((s) => s.visible);
               if (itemsVisibles.length === 0) return null;
-              const idGrupo = String(enlace.id || enlace.label);
+              const idGrupo = enlace.id;
               const abierto = Boolean(menusAbiertos[idGrupo]);
+              const tieneActivo = itemsVisibles.some((sub) =>
+                rutaEstaActiva(ubicacion.pathname, sub.to)
+              );
 
               return (
                 <div key={idGrupo} className="barra-lateral__grupo">
                   <button
-                    className={`barra-lateral__enlace barra-lateral__boton-acordeon ${abierto && !estaColapsado ? 'barra-lateral__boton-acordeon--abierto' : ''}`}
+                    type="button"
+                    title={enlace.label}
+                    aria-expanded={abierto && !estaColapsado}
+                    className={`barra-lateral__enlace barra-lateral__boton-acordeon${
+                      abierto && !estaColapsado ? ' barra-lateral__boton-acordeon--abierto' : ''
+                    }${tieneActivo ? ' barra-lateral__boton-acordeon--activo' : ''}`}
                     onClick={() => {
-                      setMenusAbiertos((prev) => ({ ...prev, [idGrupo]: !prev[idGrupo] }));
+                      setMenusAbiertos((prev) => ({ [idGrupo]: !prev[idGrupo] }));
                       if (estaColapsado) setEstaColapsado(false);
                     }}
                   >
@@ -328,10 +338,11 @@ export default function LayoutAdmin() {
                   </button>
                   {abierto && !estaColapsado && (
                     <div className="barra-lateral__sub-navegacion">
-                      {itemsVisibles.map((sub: { to: string; label: string }) => (
+                      {itemsVisibles.map((sub) => (
                         <NavLink
                           key={sub.to}
                           to={sub.to}
+                          title={sub.label}
                           className={({ isActive }) =>
                             `barra-lateral__enlace barra-lateral__sub-enlace ${isActive ? 'barra-lateral__enlace--activo' : ''}`
                           }
@@ -349,7 +360,8 @@ export default function LayoutAdmin() {
             return (
               <NavLink
                 key={enlace.to}
-                to={enlace.to as string}
+                to={enlace.to}
+                title={enlace.label}
                 className={({ isActive }) =>
                   `barra-lateral__enlace ${isActive ? 'barra-lateral__enlace--activo' : ''}`
                 }

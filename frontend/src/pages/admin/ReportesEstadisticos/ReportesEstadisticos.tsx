@@ -4,6 +4,7 @@ import type { Columna } from '../../../components/admin';
 import Boton from '../../../components/ui/Boton/Boton';
 import BtnImprimirReporte from '../../../components/ui/BtnImprimirReporte/BtnImprimirReporte';
 import CabeceraReporteImpresion from '../../../components/ui/CabeceraReporteImpresion/CabeceraReporteImpresion';
+import { etiquetaEstado } from '../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../utils/formatoMoneda';
 import type {
   OcupacionViajeReporte,
@@ -390,7 +391,7 @@ export default function ReportesEstadisticos() {
                   vacio="Sin reservas en este rango."
                   filas={(reporte?.reservas_por_estado ?? []).map((item) => ({
                     clave: item.estado ?? 'estado',
-                    titulo: item.estado ?? '—',
+                    titulo: etiquetaEstado(item.estado),
                     valor: item.total,
                     etiquetaValor: String(item.total),
                   }))}
@@ -472,7 +473,7 @@ export default function ReportesEstadisticos() {
                   vacio="Sin pagos en este rango."
                   filas={(reporte?.pagos_por_estado ?? []).map((item) => ({
                     clave: item.estado ?? 'estado',
-                    titulo: item.estado ?? '—',
+                    titulo: etiquetaEstado(item.estado),
                     valor: item.total,
                     etiquetaValor: String(item.total),
                   }))}
@@ -564,7 +565,7 @@ export default function ReportesEstadisticos() {
                   vacio="Sin cotizaciones en este rango."
                   filas={(reporte?.cotizaciones_por_estado ?? []).map((item) => ({
                     clave: item.estado ?? 'estado',
-                    titulo: item.estado ?? '—',
+                    titulo: etiquetaEstado(item.estado),
                     valor: item.total,
                     etiquetaValor: String(item.total),
                   }))}

@@ -61,7 +61,7 @@ export default function DocumentoCotizacion({ cotizacion, lineas }: DocumentoCot
             <p className="doc-cotizacion__nombre">
               {cotizacion.cliente_razon_social ??
                 cotizacion.cliente_nombre ??
-                `Cliente #${cotizacion.cliente_id}`}
+                'Cliente sin nombre'}
             </p>
             {cotizacion.cliente_razon_social && cotizacion.cliente_nombre && (
               <p>Contacto: {cotizacion.cliente_nombre}</p>
@@ -70,7 +70,7 @@ export default function DocumentoCotizacion({ cotizacion, lineas }: DocumentoCot
           <div>
             <h2>Servicio cotizado</h2>
             <p className="doc-cotizacion__nombre">
-              {cotizacion.destino_nombre ?? `Destino #${cotizacion.destino_id}`}
+              {cotizacion.destino_nombre ?? 'Destino no asignado'}
             </p>
             <p>Excursión / viaje grupal TravelBqto</p>
           </div>

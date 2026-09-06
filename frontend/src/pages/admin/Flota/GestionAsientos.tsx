@@ -280,7 +280,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
                 <p className="drawer-form__intro" style={{ marginBottom: '1rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>Añadir un asiento extra manualmente</p>
                 <div className="drawer-form__fila-2">
                   <div className="drawer-form__campo">
-                    <label className="drawer-form__label">Número / ID Asiento</label>
+                    <label className="drawer-form__label">Número de asiento</label>
                     <input
                       className="drawer-form__input"
                       type="text"
@@ -333,7 +333,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
             
             <div className="flota-modal__cuerpo">
               <div className="flota-modal__campo">
-                <label className="flota-modal__label">Número / ID</label>
+                <label className="flota-modal__label">Número de asiento</label>
                 <input
                   className="flota-modal__input"
                   type="text"

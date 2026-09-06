@@ -3,6 +3,7 @@ import type { PagoGlobal, PagoReserva } from '../../../../../types/pagos';
 import { ETIQUETA_ESTADO_PAGO, ETIQUETA_TIPO_PAGO } from '../../../Reservas/Pagos/constants';
 import { formatearMontoPago } from '../../../Reservas/Pagos/utils/formatoPago';
 import { etiquetaMetodoCorta } from '../../../Reservas/Pagos/utils/metodosPagoUi';
+import { codigoReserva } from '../../../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../../../utils/formatoMoneda';
 import { resolverUrlArchivo } from '../../../../../utils/resolverUrlArchivo';
 import './ModalDetallePago.css';
@@ -53,7 +54,7 @@ export default function ContenidoDetallePago({ pago }: ContenidoDetallePagoProps
       <dl className="detalle-pago-admin__lista">
         <div>
           <dt>Reserva</dt>
-          <dd>RES-{pago.reserva_id}</dd>
+          <dd>{codigoReserva(pago.reserva_id)}</dd>
         </div>
         <div>
           <dt>Método</dt>

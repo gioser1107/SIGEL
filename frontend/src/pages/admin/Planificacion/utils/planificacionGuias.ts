@@ -70,7 +70,7 @@ export function combinarOpcionesGuias(
     if (!mapa.has(g.id)) mapa.set(g.id, g.nombre);
   }
   if (viaje?.guia_id && !mapa.has(viaje.guia_id)) {
-    mapa.set(viaje.guia_id, viaje.guia_nombre ?? `Guía #${viaje.guia_id}`);
+    mapa.set(viaje.guia_id, viaje.guia_nombre ?? 'Guía sin nombre');
   }
   return [...mapa.entries()]
     .map(([id, etiqueta]) => ({ id, etiqueta }))

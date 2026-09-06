@@ -191,13 +191,25 @@
   transform: rotate(90deg);
 }
 
+.barra-lateral__boton-acordeon--activo {
+  background: var(--color-primary-glow);
+  color: var(--color-primary);
+  border: 1px solid rgba(0, 85, 160, 0.1);
+}
+
+.barra-lateral__boton-acordeon--activo .barra-lateral__enlace-icono svg {
+  stroke: var(--color-primary);
+}
+
 .barra-lateral__sub-navegacion {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding-left: 2.8rem;
+  padding-left: 1.35rem;
   margin-top: 0.25rem;
   margin-bottom: 0.5rem;
+  margin-left: 1.35rem;
+  border-left: 2px solid rgba(0, 85, 160, 0.1);
 }
 
 .barra-lateral__sub-enlace {

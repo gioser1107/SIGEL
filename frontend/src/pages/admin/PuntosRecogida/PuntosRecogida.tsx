@@ -20,7 +20,7 @@ function nombreClienteFila(p: PuntoRecogidaListado): string {
   if (p.cliente_nombre || p.cliente_apellido) {
     return `${p.cliente_nombre ?? ''} ${p.cliente_apellido ?? ''}`.trim();
   }
-  if (p.cliente_id) return `Cliente #${p.cliente_id}`;
+  if (p.cliente_id) return 'Cliente sin nombre';
   return '—';
 }
 

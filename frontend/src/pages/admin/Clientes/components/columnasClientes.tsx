@@ -3,6 +3,7 @@ import type { Columna } from '../../../../components/admin';
 import type { Cliente } from '../../../../types/cliente';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
 import { ETIQUETA_TIPO } from '../constants';
+import { inicialesCliente, nombreVisibleCliente } from '../utils/inicialesCliente';
 import './TablaClientes.css';
 
 export const columnasClientes: Columna<Cliente>[] = [
@@ -10,10 +11,15 @@ export const columnasClientes: Columna<Cliente>[] = [
     id: 'nombre',
     encabezado: 'Cliente',
     accessor: (c) => (
-      <div className="clientes__tabla-nombre">
-        <strong>{nombreCompleto(c.nombre, c.apellido)}</strong>
-        {c.razon_social && <span className="clientes__tabla-razon">{c.razon_social}</span>}
-        {!c.usuario_id && <span className="clientes__tabla-sin-cuenta">Sin cuenta de portal</span>}
+      <div className="clientes__tabla-persona">
+        <span className="clientes__tabla-avatar" aria-hidden="true">{inicialesCliente(c)}</span>
+        <div className="clientes__tabla-nombre">
+          <strong>{nombreVisibleCliente(c)}</strong>
+          {c.tipo_cliente === 'juridico' && (
+            <span className="clientes__tabla-razon">{nombreCompleto(c.nombre, c.apellido)}</span>
+          )}
+          {!c.usuario_id && <span className="clientes__tabla-sin-cuenta">Sin cuenta de portal</span>}
+        </div>
       </div>
     ),
   },

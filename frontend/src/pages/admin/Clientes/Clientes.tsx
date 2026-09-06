@@ -137,6 +137,7 @@ export default function Clientes() {
       <CabeceraModulo
         migaja="TravelBqto / Admin"
         titulo="Clientes"
+        descripcion="Abre un cliente para ver su ficha: contacto, ubicación, recogida y reservas."
         contador={total}
         acciones={
           puedeCrearCliente ? (

@@ -9,7 +9,7 @@ export const columnasPuntosVenta: Columna<PuntoVenta>[] = [
   {
     id: 'banco',
     encabezado: 'Banco',
-    accessor: (p) => p.banco?.nombre ?? `Banco #${p.banco_id}`,
+    accessor: (p) => p.banco?.nombre ?? 'Banco no asignado',
   },
   {
     id: 'activo',

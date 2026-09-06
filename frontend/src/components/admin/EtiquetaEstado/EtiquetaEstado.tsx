@@ -1,3 +1,4 @@
+import { claveEstado, etiquetaEstado } from '../../../utils/etiquetasNegocio';
 import './EtiquetaEstado.css';
 
 export type VarianteBadge = 'exito' | 'advertencia' | 'error' | 'info' | 'neutro';
@@ -18,14 +19,20 @@ const MAPA_ESTADOS: Record<string, VarianteBadge> = {
   cancelada: 'error',
   pendiente: 'advertencia',
   confirmada: 'exito',
+  abonada: 'info',
+  anulado: 'error',
+  anulada: 'error',
   abordado: 'exito',
   no_presentado: 'error',
   aprobado: 'exito',
   rechazado: 'error',
+  en_validacion: 'advertencia',
+  activo: 'exito',
+  inactivo: 'neutro',
 };
 
 export function resolverVariante(estado: string): VarianteBadge {
-  return MAPA_ESTADOS[estado.toLowerCase()] ?? 'neutro';
+  return MAPA_ESTADOS[claveEstado(estado)] ?? 'neutro';
 }
 
 export default function EtiquetaEstado({ etiqueta, variante }: EtiquetaEstadoProps) {
@@ -33,7 +40,7 @@ export default function EtiquetaEstado({ etiqueta, variante }: EtiquetaEstadoPro
   return (
     <span className={`etiqueta-estado etiqueta-estado--${v}`}>
       <span className="etiqueta-estado__punto" aria-hidden="true" />
-      {etiqueta}
+      {etiquetaEstado(etiqueta)}
     </span>
   );
 }

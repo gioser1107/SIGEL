@@ -1,6 +1,10 @@
+import { EtiquetaEstado, resolverVariante } from '../../../../../components/admin';
 import type { DatosViajeNuevo, Viaje } from '../../../../../types/viaje';
+import { formatearEuro } from '../../../../../utils/formatoMoneda';
 import CampoGuiasViaje from '../../components/CampoGuiasViaje';
 import { ESTADOS_VIAJE, ETIQUETA_ESTADO } from '../../constants';
+import { formatFecha } from '../../utils/formatearViaje';
+import { etiquetaGuiasViaje } from '../../utils/planificacionGuias';
 
 interface PropsTabInfo {
   viaje: Viaje;
@@ -26,22 +30,55 @@ export default function TabInfoViaje({
     onFormChange({ ...form, [campo]: valor });
   };
 
+  const otrosGuias = (viaje.guias ?? []).filter((g) => !g.es_principal).map((g) => g.nombre);
+
   return (
     <div className="drawer-form">
-      <p className="drawer-form__intro">
-        Define a dónde va el viaje, qué bus asignas y cuándo sale. Es la ficha principal de la salida.
-      </p>
-
       <div className="drawer-form__ficha">
         <div className="drawer-form__ficha-item">
           <span className="drawer-form__ficha-etiqueta">Destino</span>
           <strong>{viaje.destino_nombre ?? 'Sin destino'}</strong>
         </div>
         <div className="drawer-form__ficha-item">
-          <span className="drawer-form__ficha-etiqueta">Unidad de transporte</span>
+          <span className="drawer-form__ficha-etiqueta">Unidad</span>
           <strong>{viaje.unidad_placa ?? 'Sin unidad'}</strong>
         </div>
+        <div className="drawer-form__ficha-item">
+          <span className="drawer-form__ficha-etiqueta">Estado</span>
+          <EtiquetaEstado
+            etiqueta={ETIQUETA_ESTADO[viaje.estado] ?? viaje.estado}
+            variante={resolverVariante(viaje.estado)}
+          />
+        </div>
+        <div className="drawer-form__ficha-item">
+          <span className="drawer-form__ficha-etiqueta">Salida</span>
+          <strong>{formatFecha(viaje.fecha_salida)}</strong>
+        </div>
+        <div className="drawer-form__ficha-item">
+          <span className="drawer-form__ficha-etiqueta">Regreso</span>
+          <strong>{formatFecha(viaje.fecha_regreso)}</strong>
+        </div>
+        <div className="drawer-form__ficha-item">
+          <span className="drawer-form__ficha-etiqueta">Guía</span>
+          <strong>{etiquetaGuiasViaje(viaje)}</strong>
+        </div>
+        {otrosGuias.length > 0 && (
+          <div className="drawer-form__ficha-item">
+            <span className="drawer-form__ficha-etiqueta">Guías de apoyo</span>
+            <strong>{otrosGuias.join(', ')}</strong>
+          </div>
+        )}
+        {viaje.precio_base != null && (
+          <div className="drawer-form__ficha-item">
+            <span className="drawer-form__ficha-etiqueta">Precio base</span>
+            <strong>{formatearEuro(viaje.precio_base)}</strong>
+          </div>
+        )}
       </div>
+
+      <p className="drawer-form__intro">
+        Cambia fechas, estado o guías. El destino y la unidad se asignan al crear el viaje.
+      </p>
 
       <CampoGuiasViaje
         guiasIds={form.guias_ids ?? []}

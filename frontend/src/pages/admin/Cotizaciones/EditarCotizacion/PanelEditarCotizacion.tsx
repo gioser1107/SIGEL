@@ -7,6 +7,7 @@ import type {
   DatosCotizacionNueva,
   EstadoCotizacion,
 } from '../../../../types/cotizacion';
+import { etiquetaEstado, SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { esBloqueada } from '../utils/formatearCotizacion';
 import TabDesgloseCotizacion from './components/TabDesgloseCotizacion';
 import TabInfoCotizacion from './components/TabInfoCotizacion';
@@ -73,8 +74,8 @@ export default function PanelEditarCotizacion({
     <PanelDeslizable
       abierto={abierto}
       onCerrar={onCerrar}
-      titulo={`Cotización #${cotizacion.id}`}
-      subtitulo={`${cotizacion.destino_nombre ?? ''} · ${cotizacion.estado}`}
+      titulo={textoVisible(cotizacion.destino_nombre, 'Editar cotización')}
+      subtitulo={`${textoVisible(cotizacion.cliente_nombre, SIN_DATO.cliente)} · ${etiquetaEstado(cotizacion.estado)}`}
       pie={
         <>
           <div className="cot-drawer__pie-imprimir">

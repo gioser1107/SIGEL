@@ -1,6 +1,7 @@
 import { EtiquetaEstado, resolverVariante } from '../../../../components/admin';
 import type { Columna } from '../../../../components/admin';
 import type { Viaje } from '../../../../types/viaje';
+import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatFecha } from '../utils/formatearViaje';
 import { etiquetaGuiasViaje } from '../utils/planificacionGuias';
 
@@ -14,7 +15,7 @@ export function columnasViajes(): Columna<Viaje>[] {
       accessor: (v) => (
         <div className="plan-tabla__destino">
           <span className="plan-tabla__destino-nombre">
-            {v.destino_nombre ?? `Destino #${v.destino_id}`}
+            {textoVisible(v.destino_nombre, SIN_DATO.destino)}
           </span>
           <span className="plan-tabla__guia">
             Guía: {etiquetaGuiasViaje(v)}
@@ -32,7 +33,7 @@ export function columnasViajes(): Columna<Viaje>[] {
       id: 'unidad',
       encabezado: 'Unidad',
       accessor: (v) => (
-        <span className="plan-tabla__placa">{v.unidad_placa ?? `Unidad #${v.unidad_id}`}</span>
+        <span className="plan-tabla__placa">{textoVisible(v.unidad_placa, SIN_DATO.unidad)}</span>
       ),
     },
     {

@@ -10,6 +10,8 @@ export interface Reserva {
   estado: "pendiente" | "confirmada" | "abonada" | "cancelada";
   creado_en: string;
   actualizado_en: string;
+  destino_nombre?: string | null;
+  fecha_salida?: string | null;
 }
 
 export type ReservaEnriquecida = Reserva & {

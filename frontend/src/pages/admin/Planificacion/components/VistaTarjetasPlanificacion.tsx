@@ -1,5 +1,6 @@
 import { CuadriculaTarjetas, EtiquetaEstado, resolverVariante, BotonAccionTabla } from '../../../../components/admin';
 import type { Viaje } from '../../../../types/viaje';
+import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatFecha } from '../utils/formatearViaje';
 
 interface PropsVistaTarjetas {
@@ -28,7 +29,7 @@ export default function VistaTarjetasPlanificacion({
         <div key={viaje.id} className="plan-card">
           <div className="plan-card__header">
             <span className="plan-card__destino">
-              {viaje.destino_nombre ?? `Destino #${viaje.destino_id}`}
+              {textoVisible(viaje.destino_nombre, SIN_DATO.destino)}
             </span>
             <EtiquetaEstado etiqueta={viaje.estado} variante={resolverVariante(viaje.estado)} />
           </div>
@@ -50,7 +51,7 @@ export default function VistaTarjetasPlanificacion({
               <circle cx="5.5" cy="18.5" r="2.5" />
               <circle cx="18.5" cy="18.5" r="2.5" />
             </svg>
-            {viaje.unidad_placa ?? `Unidad #${viaje.unidad_id}`}
+            {textoVisible(viaje.unidad_placa, SIN_DATO.unidad)}
           </p>
           <div className="plan-card__acciones">
             {!soloLectura && (

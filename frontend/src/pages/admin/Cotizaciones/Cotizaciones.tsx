@@ -22,6 +22,7 @@ import VistaTarjetasCotizaciones from './components/VistaTarjetasCotizaciones';
 import type { FiltroListado } from '../../../types/paginacion';
 import { ETIQUETA_ESTADO, PESTANIAS_FILTRO } from './constants';
 import { useCotizaciones } from './hooks/useCotizaciones';
+import { SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
 import { etiquetaCliente, formatFecha } from './utils/formatearCotizacion';
 import './Cotizaciones.css';
 
@@ -131,7 +132,7 @@ export default function Cotizaciones() {
     () =>
       cotizacionesFiltradas.map((c) => ({
         cliente: etiquetaCliente(c),
-        destino: c.destino_nombre ?? `Destino #${c.destino_id}`,
+        destino: textoVisible(c.destino_nombre, SIN_DATO.destino),
         precio:
           c.precio_cotizado_eur !== null
             ? `€ ${c.precio_cotizado_eur.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`
@@ -236,7 +237,7 @@ export default function Cotizaciones() {
               accion="imprimir"
               onClick={() => imprimirPdf(c)}
               disabled={imprimiendoPdf}
-              ariaLabel={`Imprimir cotización de ${c.cliente_nombre ?? `cliente #${c.cliente_id}`}`}
+              ariaLabel={`Imprimir cotización de ${textoVisible(c.cliente_nombre, SIN_DATO.cliente)}`}
             />
           )}
         />

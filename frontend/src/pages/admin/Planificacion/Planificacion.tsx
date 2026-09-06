@@ -22,6 +22,7 @@ import VistaTarjetasPlanificacion from './components/VistaTarjetasPlanificacion'
 import { ETIQUETA_ESTADO, PESTANIAS_FILTRO } from './constants';
 import { etiquetaGuiasViaje } from './utils/planificacionGuias';
 import { usePlanificacion } from './hooks/usePlanificacion';
+import { SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
 import { formatFecha } from './utils/formatearViaje';
 import './Planificacion.css';
 
@@ -119,9 +120,9 @@ export default function Planificacion() {
   const filasReporte = useMemo(
     () =>
       viajesFiltrados.map((v) => ({
-        destino: v.destino_nombre ?? `Destino #${v.destino_id}`,
+        destino: textoVisible(v.destino_nombre, SIN_DATO.destino),
         fecha: formatFecha(v.fecha_salida),
-        unidad: v.unidad_placa ?? `Unidad #${v.unidad_id}`,
+        unidad: textoVisible(v.unidad_placa, SIN_DATO.unidad),
         estado: ETIQUETA_ESTADO[v.estado] ?? v.estado,
         guia: etiquetaGuiasViaje(v),
       })),

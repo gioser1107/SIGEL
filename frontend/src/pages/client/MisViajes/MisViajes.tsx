@@ -140,7 +140,7 @@ export default function MisViajes() {
                 <div className="mis-viajes__ticket-body">
                   <div className="mis-viajes__ticket-top">
                     <h3 className="mis-viajes__ticket-titulo">
-                      {reserva.destino_nombre ?? `Reserva #${reserva.id}`}
+                      {reserva.destino_nombre ?? 'Tu viaje'}
                     </h3>
                     <span className={`mis-viajes__badge ${badge.clase}`}>{badge.label}</span>
                   </div>
@@ -202,7 +202,6 @@ export default function MisViajes() {
                           Abonar saldo
                         </Link>
                       )}
-                      <span className="mis-viajes__ticket-id">RES-{reserva.id}</span>
                     </div>
                   </div>
                 </div>

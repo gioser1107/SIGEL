@@ -43,7 +43,10 @@
   .admin-contenido,
   .planificacion,
   .cotizaciones,
-  .reservas {
+  .reservas,
+  .reporte-viaje,
+  .modulo-admin,
+  .clientes {
     display: block !important;
     width: 100% !important;
     margin: 0 !important;
@@ -416,5 +419,163 @@
   .logo-marca__icono {
     background: var(--color-primary, #0055a0) !important;
     color: #ffffff !important;
+  }
+
+  /* Reporte operativo de viaje */
+  .doc-viaje {
+    display: block !important;
+    max-width: 100%;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    color: var(--color-text-primary, #12284b);
+  }
+
+  .doc-viaje__cabecera {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-bottom: 0.85rem;
+    margin-bottom: 0.4rem;
+    border-bottom: 3px solid var(--color-primary, #0055a0);
+  }
+
+  .doc-viaje__tipo {
+    text-align: right;
+  }
+
+  .doc-viaje__tipo-etiqueta {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--color-text-muted, #64748b);
+    margin-bottom: 0.15rem;
+  }
+
+  .doc-viaje__numero {
+    display: block;
+    font-family: var(--font-heading, 'Outfit', sans-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .doc-viaje__generado {
+    margin: 0 0 0.9rem;
+    font-size: 0.72rem;
+    color: var(--color-text-muted, #64748b);
+    text-align: right;
+  }
+
+  .doc-viaje__meta,
+  .doc-viaje__kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .doc-viaje__kpis {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .doc-viaje__meta > div,
+  .doc-viaje__kpis > div {
+    border: 1px solid var(--color-border, #e2e8f0);
+    border-radius: 8px;
+    padding: 0.45rem 0.6rem;
+    background: #f8fafc;
+  }
+
+  .doc-viaje__meta span,
+  .doc-viaje__kpis span {
+    display: block;
+    font-size: 0.58rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-muted, #64748b);
+    margin-bottom: 0.15rem;
+  }
+
+  .doc-viaje__meta strong,
+  .doc-viaje__kpis strong {
+    font-size: 0.82rem;
+    color: var(--color-text-primary, #12284b);
+  }
+
+  .doc-viaje__bloque {
+    margin-bottom: 1.1rem;
+    page-break-inside: avoid;
+  }
+
+  .doc-viaje h2 {
+    margin: 0 0 0.4rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .doc-viaje__tabla {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.7rem;
+  }
+
+  .doc-viaje__tabla th {
+    background: var(--color-primary, #0055a0);
+    color: #ffffff;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.4rem 0.45rem;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .doc-viaje__tabla td {
+    padding: 0.38rem 0.45rem;
+    border-bottom: 1px solid var(--color-border, #e2e8f0);
+    vertical-align: top;
+  }
+
+  .doc-viaje__tabla tbody tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  .doc-viaje__col-monto {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .doc-viaje__vacio {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .doc-viaje__pie {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-top: 1.25rem;
+    padding-top: 0.7rem;
+    border-top: 2px solid var(--color-primary, #0055a0);
+    font-size: 0.68rem;
+    color: var(--color-text-muted, #64748b);
+  }
+
+  .doc-viaje__pie strong {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--color-primary, #0055a0);
+  }
+
+  .doc-viaje__pie p {
+    margin: 0.1rem 0 0;
   }
 }

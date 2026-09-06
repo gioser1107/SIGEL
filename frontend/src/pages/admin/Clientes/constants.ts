@@ -1,4 +1,4 @@
-import type { PestaniaFiltro } from '../../../components/admin';
+import type { PestaniaFiltro, PestaniaPanel } from '../../../components/admin';
 import type { FormularioCliente } from '../../../utils/validacionesCliente';
 
 export const MODULO = 'clientes';
@@ -15,6 +15,11 @@ export const ETIQUETA_TIPO: Record<string, string> = {
   natural: 'Persona natural',
   juridico: 'Empresa',
 };
+
+export const PESTANIAS_PANEL: PestaniaPanel[] = [
+  { id: 'ficha', etiqueta: 'Ficha' },
+  { id: 'editar', etiqueta: 'Editar' },
+];
 
 export const FORM_VACIO: FormularioCliente = {
   tipo_cliente: 'natural',
