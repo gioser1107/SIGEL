@@ -37,6 +37,15 @@ ETIQUETAS_ESTADO_PAGO = {
 }
 DEPOSITO_MINIMO_EUR = Decimal("5.00")
 TOLERANCIA_EUR = 0.01
+# Efectivo $ y Zelle: la agencia cobra 1 USD = 1 EUR (no cruce BCV).
+CODIGOS_USD_EQUIVALENTE_EUR = frozenset({"zelle", "efectivo_usd", "otro"})
+
+
+def es_pago_usd_equivalente_eur(metodo: MetodoPago, moneda: Moneda | None) -> bool:
+    codigo = (metodo.codigo or "").strip().lower()
+    if codigo in CODIGOS_USD_EQUIVALENTE_EUR:
+        return True
+    return codigo == "efectivo" and moneda is not None and moneda.codigo == "USD"
 
 
 class Pago(Base):
@@ -150,7 +159,7 @@ def calcular_monto_en_moneda_desde_eur(
     if valor_tasa <= 0:
         raise HTTPException(status_code=400, detail="La tasa indicada no es valida")
 
-    if moneda.codigo == "EUR":
+    if moneda.codigo == "EUR" or es_pago_usd_equivalente_eur(metodo, moneda):
         monto_moneda = monto_eur
     elif moneda.codigo == "VES" and moneda_tasa.codigo == "EUR":
         monto_moneda = round(monto_eur * valor_tasa, 2)
@@ -444,6 +453,9 @@ def convertir_monto_pago_a_eur(db: Session, pago: Pago) -> tuple[float, bool]:
     monto = float(pago.monto)
 
     if moneda.codigo == "EUR":
+        return _redondear_eur(monto), False
+
+    if es_pago_usd_equivalente_eur(metodo, moneda):
         return _redondear_eur(monto), False
 
     if moneda.codigo == "VES" and moneda_tasa.codigo == "EUR":

@@ -6,6 +6,15 @@ No sustituye el SRS ni los RF. Sirve para defensa: qué cambió, por qué, y qu�
 
 ---
 
+## 2026-09-06 — Efectivo $ y Zelle a la par (1 USD = 1 EUR)
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/modelos/pago_modelo.py`
+- **Qué se hizo:** `convertir_monto_pago_a_eur` y `calcular_monto_en_moneda_desde_eur` tratan efectivo en dólares (`efectivo_usd`, `efectivo`+USD, `otro`) y Zelle como 1 USD = 1 EUR. Ya no cruzan tasa BCV USD/EUR.
+- **Por qué:** un viaje de 35 € pagado con 35 $ en efectivo se descontaba ~30 € (cruce Bs/USD ÷ Bs/EUR). La agencia cobra el efectivo dólares a la par; el formulario admin ya lo mostraba así.
+- **Qué no se tocó:** pago móvil, transferencia y TPV en bolívares (siguen usando tasa Bs/€). Reservas, cupos y conciliación.
+- **Cómo probarlo:** registrar 35 USD en efectivo sobre una reserva de 35 €; el saldo debe quedar en 0,00 €.
+
 ## 2026-09-06 — Dificultad del destino (Fácil / Moderado / Difícil)
 
 - **Autor:** agente (Cursor)
