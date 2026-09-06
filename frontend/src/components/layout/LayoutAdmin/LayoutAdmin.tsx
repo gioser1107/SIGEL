@@ -5,6 +5,7 @@ import { useNotificaciones } from '../../../hooks/useNotificaciones';
 import { nombreCompleto } from '../../../utils/nombrePersona';
 import { esRolClientePortal } from '../../../utils/permisosModulos';
 import PanelNotificaciones from './PanelNotificaciones';
+import LogoMarca from '../../ui/LogoMarca/LogoMarca';
 import './LayoutAdmin.css';
 
 function iniciales(nombre: string): string {
@@ -280,10 +281,7 @@ export default function LayoutAdmin() {
       >
         {/* Logo */}
         <div className="barra-lateral__cabecera">
-          <div className="barra-lateral__logo-icono">✈</div>
-          <span className="barra-lateral__logo-texto">
-            Travel<span>Bqto</span>
-          </span>
+          <LogoMarca compacto />
           <button
             className="barra-lateral__boton-colapsar-top"
             onClick={() => setEstaColapsado(!estaColapsado)}

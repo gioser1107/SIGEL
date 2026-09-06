@@ -17,10 +17,21 @@
     border-color var(--transition-fast);
 }
 
-.boton-accion-tabla:hover:not(:disabled) {
-  color: var(--color-text-primary);
-  background: var(--color-bg-dark);
-  border-color: var(--color-border);
+.boton-accion-tabla {
+  -webkit-tap-highlight-color: rgba(0, 85, 160, 0.22);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .boton-accion-tabla:hover:not(:disabled) {
+    color: var(--color-text-primary);
+    background: var(--color-bg-dark);
+    border-color: var(--color-border);
+  }
+}
+
+.boton-accion-tabla:active:not(:disabled) {
+  transform: scale(0.94);
+  filter: brightness(0.9);
 }
 
 .boton-accion-tabla:focus-visible {

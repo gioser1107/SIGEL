@@ -62,47 +62,66 @@ app = FastAPI(title="API Travel BQTO", version="1.3.0", lifespan=lifespan)
 asegurar_carpeta_uploads()
 app.mount("/api/archivos", StaticFiles(directory=Path(UPLOAD_ROOT)), name="archivos")
 
+def _cuerpo_error(mensaje: str) -> dict:
+    """Mismo texto en `detalle` (API del proyecto) y `detail` (FastAPI / cliente)."""
+    return {"detalle": mensaje, "detail": mensaje}
+
+
 @app.exception_handler(IntegrityError)
 def manejar_conflicto_integridad(request: Request, error: IntegrityError):
     return JSONResponse(
         status_code=409,
-        content={
-            "detalle": "Conflicto de concurrencia: el cupo, asiento o registro ya fue tomado",
-        },
+        content=_cuerpo_error(
+            "Conflicto de concurrencia: el cupo, asiento o registro ya fue tomado"
+        ),
     )
+
 
 @app.exception_handler(SQLAlchemyError)
 def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
     logger.exception("Fallo de base de datos: %s", error)
     return JSONResponse(
         status_code=503,
-        content={
-            "detalle": "El servicio no puede completar la operación. Intente de nuevo más tarde.",
-        },
+        content=_cuerpo_error(
+            "El servicio no puede completar la operación. Intente de nuevo más tarde."
+        ),
     )
+
 
 @app.exception_handler(Exception)
 def manejar_error_general(request: Request, error: Exception):
     logger.exception("Error interno no controlado: %s", error)
     return JSONResponse(
         status_code=500,
-        content={
-            "detalle": "Error interno del servidor",
-        },
+        content=_cuerpo_error("Error interno del servidor"),
     )
+
+
+ORIGENES_DESARROLLO = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+]
+
+
+def _origenes_cors() -> list[str]:
+    extra = os.getenv("CORS_ORIGENES", "")
+    origenes = list(ORIGENES_DESARROLLO)
+    for parte in extra.split(","):
+        url = parte.strip()
+        if url and url not in origenes:
+            origenes.append(url)
+    return origenes
+
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=_origenes_cors(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

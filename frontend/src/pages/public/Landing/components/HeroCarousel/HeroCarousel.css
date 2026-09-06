@@ -75,21 +75,22 @@
 }
 
 .hero-carousel__btn {
-    padding: var(--spacing-md) var(--spacing-xl);
+    min-height: 2.5rem;
+    padding: 0.45rem 1rem;
     background: var(--color-primary);
     color: white;
     border: none;
     border-radius: var(--radius-md);
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
     font-weight: 600;
     cursor: pointer;
-    transition: all var(--transition-base);
-    box-shadow: var(--shadow-md);
+    transition: background var(--transition-fast);
 }
 
-.hero-carousel__btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-glow);
+.hero-carousel__btn:active {
+    background: var(--color-secondary-dark);
+    color: white;
+    transform: scale(0.98);
 }
 
 .hero-carousel__btn--secundario {
@@ -99,9 +100,20 @@
     box-shadow: none;
 }
 
-.hero-carousel__btn--secundario:hover {
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: none;
+.hero-carousel__btn--secundario:active {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .hero-carousel__btn:hover {
+        background: var(--color-secondary-dark);
+        color: white;
+    }
+
+    .hero-carousel__btn--secundario:hover {
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: none;
+    }
 }
 
 .hero-carousel__controls {
@@ -176,16 +188,35 @@
     }
 
     .hero-carousel__overlay {
-        padding: var(--spacing-xl);
+        padding: calc(var(--navbar-height) + 1.5rem) 1.25rem 5.5rem;
+        justify-content: flex-end;
+    }
+
+    .hero-carousel__desc {
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .hero-carousel__info {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        max-width: 100%;
+    }
+
+    .hero-carousel__btn,
+    .hero-carousel__btn--secundario {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0.4rem;
     }
 
     .hero-carousel__cards {
         display: none;
-        /* Oculta las tarjetas en móviles */
     }
 
     .hero-carousel__controls {
-        right: var(--spacing-xl);
-        bottom: var(--spacing-xl);
+        right: var(--spacing-md);
+        bottom: var(--spacing-md);
     }
 }

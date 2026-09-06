@@ -4,6 +4,7 @@ import PuntosRecogidaEditor from '../../../components/puntos-recogida/PuntosReco
 import { draftAPayloadPuntos } from '../../../components/puntos-recogida/utils';
 import '../../../components/puntos-recogida/puntos-recogida.css';
 import Boton from '../../../components/ui/Boton/Boton';
+import LogoMarca from '../../../components/ui/LogoMarca/LogoMarca';
 import Entrada from '../../../components/ui/Entrada/Entrada';
 import { useAutenticacionContext } from '../../../context/Autenticacion';
 import { useReservas } from '../../../context/Reservas';
@@ -111,9 +112,8 @@ export default function Registro() {
       <div className="inicio-sesion__contenedor registro-page__contenedor">
         <div className="inicio-sesion__bloque-formulario">
           <div className="inicio-sesion__header">
-            <Link to="/" className="inicio-sesion__logo">
-              <span className="inicio-sesion__logo-icon">✈</span>
-              <span className="inicio-sesion__logo-text">Travel<span>Bqto</span></span>
+            <Link to="/" className="inicio-sesion__logo" aria-label="TravelBqto — inicio">
+              <LogoMarca compacto />
             </Link>
             <h1 className="inicio-sesion__title">Crear cuenta</h1>
             <p className="inicio-sesion__subtitle">Paso {paso} de 3 — Registro en el portal de clientes</p>

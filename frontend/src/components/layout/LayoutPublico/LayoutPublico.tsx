@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import LogoMarca from '../../ui/LogoMarca/LogoMarca';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import './LayoutPublico.css';
 
@@ -77,11 +78,11 @@ export default function LayoutPublico() {
         aria-label="Navegación principal"
       >
         {/* Logo */}
-        <Link to="/" className="navbar__logo">
-          <div className="navbar__logo-icon">✈</div>
-          <div className="navbar__logo-text">
-            Travel<span>Bqto</span>
-          </div>
+        <Link to="/" className="navbar__logo" aria-label="TravelBqto — inicio">
+          <LogoMarca
+            compacto
+            sobreOscuro={estaMenuMovilAbierto || (esPaginaPrincipal && !estaScrolleado)}
+          />
         </Link>
 
         {/* Links */}
@@ -152,8 +153,7 @@ export default function LayoutPublico() {
           {/* Marca */}
           <div className="footer__brand">
             <div className="footer__brand-logo">
-              <div className="footer__brand-icon">✈</div>
-              <span className="footer__brand-name">TravelBqto</span>
+              <LogoMarca compacto />
             </div>
             <p className="footer__brand-desc">
               Descubre los mejores destinos turísticos de Barquisimeto y el estado Lara.

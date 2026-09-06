@@ -226,10 +226,10 @@ export default function FormularioPasajeros({
         </div>
 
         <div className="formulario-pago__footer" style={{ display: 'flex', gap: '1rem' }}>
-          <Boton type="button" variante="secundario" tamano="lg" onClick={onBack}>
+          <Boton type="button" variante="secundario" tamano="md" onClick={onBack}>
             Atrás
           </Boton>
-          <Boton type="submit" variante="primario" tamano="lg" anchoCompleto>
+          <Boton type="submit" variante="primario" tamano="md" anchoCompleto>
             Continuar
           </Boton>
         </div>

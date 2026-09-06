@@ -19,7 +19,26 @@ SQLALCHEMY_DATABASE_URL = (
     f"mysql+pymysql://{usuario_bd}:{contrasena_bd}@{host_bd}:{puerto_bd}/{nombre_bd}"
 )
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_pre_ping=True)
+
+def _entero_entorno(nombre: str, predeterminado: int) -> int:
+    bruto = os.getenv(nombre, "").strip()
+    if not bruto:
+        return predeterminado
+    try:
+        valor = int(bruto)
+    except ValueError:
+        return predeterminado
+    return valor if valor >= 0 else predeterminado
+
+
+# Pool pequeño: hosting compartido corta conexiones inactivas (~300 s).
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=_entero_entorno("DB_POOL_RECICLO", 280),
+    pool_size=_entero_entorno("DB_POOL_TAMANO", 2),
+    max_overflow=_entero_entorno("DB_POOL_EXTRA", 3),
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

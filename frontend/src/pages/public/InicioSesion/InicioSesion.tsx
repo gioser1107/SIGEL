@@ -13,6 +13,7 @@ import {
   sanitizarNombrePersona,
   sanitizarSoloDigitos,
 } from '../../../utils/validacionesFormulario';
+import LogoMarca from '../../../components/ui/LogoMarca/LogoMarca';
 import './InicioSesion.css';
 
 const TIPOS_DOCUMENTO = [
@@ -223,9 +224,8 @@ export default function InicioSesion() {
         {/* Lado Izquierdo: Formulario */}
         <div className="inicio-sesion__bloque-formulario">
           <div className="inicio-sesion__header">
-            <Link to="/" className="inicio-sesion__logo">
-              <span className="inicio-sesion__logo-icon">✈</span>
-              <span className="inicio-sesion__logo-text">Travel<span>Bqto</span></span>
+            <Link to="/" className="inicio-sesion__logo" aria-label="TravelBqto — inicio">
+              <LogoMarca compacto />
             </Link>
             <h1 className="inicio-sesion__title">
               {esRegistro ? 'Crear cuenta' : '¡Bienvenido!'}
@@ -372,7 +372,7 @@ export default function InicioSesion() {
               </>
             )}
 
-            <Boton type="submit" variante="primario" tamano="lg" anchoCompleto disabled={cargando}>
+            <Boton type="submit" variante="primario" tamano="md" anchoCompleto disabled={cargando}>
               {cargando
                 ? (esRegistro ? 'Registrando...' : 'Iniciando sesión...')
                 : (esRegistro ? 'Registrarse' : 'Iniciar Sesión')}

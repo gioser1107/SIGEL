@@ -1,5 +1,5 @@
 /**
- * api.ts ��� Configuraci?n base de las peticiones HTTP.
+ * Configuración base de las peticiones HTTP.
  */
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
@@ -23,7 +23,7 @@ export class ErrorApi extends Error {
 type Manejador401 = () => void;
 let manejador401: Manejador401 | null = null;
 
-/** Registra callback global para cerrar sesi?n ante un 401. */
+/** Registra callback global para cerrar sesión ante un 401. */
 export function registrarManejador401(callback: Manejador401): void {
   manejador401 = callback;
 }
@@ -54,7 +54,7 @@ export function obtenerTokenSesion(): string | null {
 export function guardarTokenSesion(token: string): void {
   const limpio = token.trim();
   if (!esJwtValido(limpio)) {
-    throw new Error('El servidor devolvi? un token de sesi?n inv?lido');
+    throw new Error('El servidor devolvió un token de sesión inválido');
   }
   localStorage.setItem('auth_token', limpio);
 }
@@ -64,16 +64,31 @@ export function limpiarSesionLocal(): void {
   localStorage.removeItem('auth_usuario');
 }
 
-function extraerMensajeError(error: Record<string, unknown>, status: number): string {
-  if (typeof error.detail === 'string') return error.detail;
-  if (Array.isArray(error.detail) && error.detail.length > 0) {
-    const primero = error.detail[0] as { msg?: string };
-    if (primero?.msg) return primero.msg;
+function textoError(valor: unknown): string | null {
+  if (typeof valor === 'string' && valor.trim()) return valor.trim();
+  if (Array.isArray(valor) && valor.length > 0) {
+    const primero = valor[0] as unknown;
+    if (typeof primero === 'string' && primero.trim()) return primero.trim();
+    if (primero && typeof primero === 'object') {
+      const obj = primero as { msg?: string; message?: string };
+      if (obj.msg) return obj.msg;
+      if (obj.message) return obj.message;
+    }
   }
-  if (typeof error.mensaje === 'string') return error.mensaje;
-  if (typeof error.message === 'string') return error.message;
-  if (status === 403) return 'No tienes permiso para realizar esta acci?n.';
-  if (status === 401) return 'Sesi?n inv?lida o expirada.';
+  return null;
+}
+
+function extraerMensajeError(error: Record<string, unknown>, status: number): string {
+  const mensaje =
+    textoError(error.detalle) ??
+    textoError(error.detail) ??
+    textoError(error.mensaje) ??
+    textoError(error.message);
+  if (mensaje) return mensaje;
+  if (status === 403) return 'No tienes permiso para realizar esta acción.';
+  if (status === 401) return 'Sesión inválida o expirada.';
+  if (status === 409) return 'El registro ya fue tomado. Actualiza e intenta de nuevo.';
+  if (status === 503) return 'El servicio no está disponible. Intenta de nuevo en unos segundos.';
   return `Error del servidor (${status})`;
 }
 
@@ -91,7 +106,7 @@ export async function apiRequest<T>(
   if (requiresAuth) {
     const token = obtenerTokenSesion();
     if (!token) {
-      throw new ErrorApi('No hay sesi?n activa. Inicia sesi?n.', 401);
+      throw new ErrorApi('No hay sesión activa. Inicia sesión.', 401);
     }
     headers.Authorization = `Bearer ${token}`;
   }
@@ -145,7 +160,7 @@ export async function apiSubirArchivo<T>(
   if (requiresAuth) {
     const token = obtenerTokenSesion();
     if (!token) {
-      throw new ErrorApi('No hay sesi?n activa. Inicia sesi?n.', 401);
+      throw new ErrorApi('No hay sesión activa. Inicia sesión.', 401);
     }
     headers.Authorization = `Bearer ${token}`;
   }

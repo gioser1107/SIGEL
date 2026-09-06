@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import LogoMarca from '../../ui/LogoMarca/LogoMarca';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import { nombreCompleto } from '../../../utils/nombrePersona';
 import './LayoutCliente.css';
@@ -18,11 +19,8 @@ export default function LayoutCliente() {
       <header className="cabecera-cliente">
         <div className="cabecera-cliente__contenedor">
           {/* Logo */}
-          <Link to="/" className="cabecera-cliente__logo">
-            <div className="cabecera-cliente__logo-icono">✈</div>
-            <div className="cabecera-cliente__logo-texto">
-              Travel<span>Bqto</span>
-            </div>
+          <Link to="/" className="cabecera-cliente__logo" aria-label="TravelBqto — inicio">
+            <LogoMarca compacto />
           </Link>
 
           {/* User Section */}

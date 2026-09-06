@@ -398,6 +398,11 @@
    RESPONSIVO
    ============== */
 @media (max-width: 900px) {
+  .inicio-sesion {
+    padding: var(--spacing-md);
+    align-items: flex-start;
+  }
+
   .inicio-sesion__contenedor {
     grid-template-columns: 1fr;
     max-width: 500px;
@@ -409,6 +414,6 @@
   }
 
   .inicio-sesion__bloque-formulario {
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-xl) var(--spacing-lg);
   }
 }

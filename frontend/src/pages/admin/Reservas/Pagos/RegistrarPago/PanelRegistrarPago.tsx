@@ -185,7 +185,7 @@ export default function PanelRegistrarPago({
 
           <Boton
             variante="primario"
-            tamano="lg"
+            tamano="md"
             anchoCompleto
             className="pagos-registrar__btn"
             onClick={guardar}

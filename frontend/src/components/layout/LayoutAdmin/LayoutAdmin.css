@@ -51,42 +51,18 @@
   flex-shrink: 0;
 }
 
-.barra-lateral__logo-icono {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  border-radius: var(--radius-xl);
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-size-xl);
-  color: white;
-  box-shadow: var(--shadow-glow);
+.barra-lateral__cabecera .logo-marca {
+  flex: 1;
+  min-width: 0;
 }
 
-.barra-lateral__logo-texto {
-  font-family: var(--font-heading);
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  opacity: 1;
-  overflow: hidden;
-  transition: opacity var(--transition-fast);
+.barra-lateral--colapsada .barra-lateral__cabecera .logo-marca__texto {
+  display: none;
 }
 
-.barra-lateral__logo-texto span {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.barra-lateral--colapsada .barra-lateral__logo-texto {
-  opacity: 0;
-  width: 0;
-  pointer-events: none;
+.barra-lateral--colapsada .barra-lateral__cabecera .logo-marca__archivo {
+  height: 1.75rem;
+  max-width: 1.85rem;
 }
 
 /* Etiqueta Menú */

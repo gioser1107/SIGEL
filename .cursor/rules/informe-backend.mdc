@@ -1,0 +1,28 @@
+---
+description: Tras cada cambio de código en backend/, añadir un informe con qué se hizo y por qué.
+globs: backend/**
+alwaysApply: false
+---
+
+# Informe obligatorio de cambios de backend
+
+Si el trabajo **modificó, creó o eliminó** archivos bajo `backend/` (Python, SQL de migraciones, `.env.example`, `requirements.txt`), **antes de dar por terminada** la tarea:
+
+1. Añade una entrada **nueva** al inicio de `docs/informes-backend/REGISTRO.md` (la más reciente arriba).
+2. No sustituyas informes viejos. No dejes el registro para “después”.
+3. Si solo cambió frontend, docs o `.cursor`, **no** inventes un informe de backend.
+
+## Plantilla (completa todas las secciones)
+
+```markdown
+## AAAA-MM-DD — título corto
+
+- **Autor:** (agente / persona)
+- **Archivos:** rutas concretas
+- **Qué se hizo:** hechos, no vaguedades (“ajusté el API” no vale)
+- **Por qué:** problema, RF/RNF o defecto que lo exige
+- **Qué no se tocó:** reglas de negocio, módulos o arquitectura que se dejaron igual
+- **Cómo probarlo:** un paso verificable
+```
+
+Está prohibido cambiar backend “en silencio”. El registro es parte de la entrega universitaria.

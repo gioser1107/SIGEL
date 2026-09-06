@@ -422,10 +422,10 @@ export default function FormularioPago({
 
       {/* Footer con botones */}
       <div className="formulario-pago__footer" style={{ display: 'flex', gap: '1rem' }}>
-        <Boton type="button" variante="secundario" tamano="lg" onClick={onBack}>
+        <Boton type="button" variante="secundario" tamano="md" onClick={onBack}>
           Atrás
         </Boton>
-        <Boton type="submit" variante="primario" tamano="lg" anchoCompleto className="formulario-pago__submit-btn" disabled={sinTasa || cargandoResumen}>
+        <Boton type="submit" variante="primario" tamano="md" anchoCompleto className="formulario-pago__submit-btn" disabled={sinTasa || cargandoResumen}>
           Registrar pago
         </Boton>
       </div>
