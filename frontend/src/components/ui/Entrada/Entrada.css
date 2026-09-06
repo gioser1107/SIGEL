@@ -50,3 +50,10 @@
   font-size: var(--font-size-xs);
   color: var(--color-error);
 }
+
+@media (max-width: 768px) {
+  .grupo-entrada__campo {
+    font-size: 16px;
+    min-height: 2.75rem;
+  }
+}

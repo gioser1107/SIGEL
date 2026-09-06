@@ -74,6 +74,13 @@
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
 }
 
+.hero-carousel__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
 .hero-carousel__btn {
     min-height: 2.5rem;
     padding: 0.45rem 1rem;
@@ -94,7 +101,6 @@
 }
 
 .hero-carousel__btn--secundario {
-    margin-left: var(--spacing-sm);
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.35);
     box-shadow: none;
@@ -183,18 +189,36 @@
 }
 
 @media (max-width: 768px) {
+    .hero-carousel {
+        height: 100svh;
+        min-height: 32rem;
+    }
+
     .hero-carousel__title {
-        font-size: var(--font-size-3xl);
+        font-size: clamp(1.75rem, 7vw, var(--font-size-3xl));
+        overflow-wrap: anywhere;
     }
 
     .hero-carousel__overlay {
-        padding: calc(var(--navbar-height) + 1.5rem) 1.25rem 5.5rem;
+        background: linear-gradient(
+            to top,
+            rgba(10, 14, 23, 0.92) 0%,
+            rgba(10, 14, 23, 0.55) 48%,
+            rgba(10, 14, 23, 0.2) 100%
+        );
+        padding: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + 1.25rem)
+            1.25rem
+            calc(5rem + env(safe-area-inset-bottom, 0px));
         justify-content: flex-end;
     }
 
     .hero-carousel__desc {
         font-size: var(--font-size-sm);
         margin-bottom: var(--spacing-md);
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
     .hero-carousel__info {
@@ -204,11 +228,15 @@
         max-width: 100%;
     }
 
+    .hero-carousel__acciones {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
     .hero-carousel__btn,
     .hero-carousel__btn--secundario {
         width: 100%;
-        margin-left: 0;
-        margin-top: 0.4rem;
+        min-height: 2.75rem;
     }
 
     .hero-carousel__cards {
@@ -217,6 +245,11 @@
 
     .hero-carousel__controls {
         right: var(--spacing-md);
-        bottom: var(--spacing-md);
+        bottom: calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .control-btn {
+        width: 44px;
+        height: 44px;
     }
 }

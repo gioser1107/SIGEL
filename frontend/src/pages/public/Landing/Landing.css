@@ -2,7 +2,7 @@
 
 .landing #destinos,
 .landing #nosotros {
-  scroll-margin-top: calc(var(--navbar-height) + 1rem);
+  scroll-margin-top: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + 1rem);
 }
 
 .landing__hero {

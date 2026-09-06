@@ -649,6 +649,11 @@
     min-width: 0;
   }
 
+  .admin-cabecera {
+    height: calc(var(--admin-cabecera-height) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
   .admin-cabecera__alternador-movil {
     display: flex;
   }

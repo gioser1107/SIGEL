@@ -185,11 +185,19 @@
 }
 
 @media (max-width: 640px) {
+    .seccion-comentarios {
+        padding: 2.5rem 1.25rem 3rem;
+    }
+
     .seccion-comentarios__grid {
         grid-template-columns: 1fr;
     }
 
     .seccion-comentarios__titulo {
         font-size: var(--font-size-3xl);
+    }
+
+    .seccion-comentarios__header {
+        margin-bottom: 1.75rem;
     }
 }

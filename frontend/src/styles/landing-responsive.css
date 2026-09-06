@@ -1,6 +1,7 @@
 /* ============================================
    Landing pública — responsive compartido
    Complementa media queries de cada sección
+   RNF-14: usable desde 320 px, sin scroll horizontal
    ============================================ */
 
 @media (max-width: 768px) {
@@ -16,6 +17,15 @@
     font-size: var(--font-size-3xl);
   }
 
+  .seccion-beneficios__subtitulo {
+    font-size: var(--font-size-base);
+    padding: 0 0.25rem;
+  }
+
+  .seccion-beneficios__cuadricula {
+    gap: var(--spacing-xl);
+  }
+
   .seccion-viajes {
     padding: 2.5rem 1.25rem;
   }
@@ -26,6 +36,19 @@
 
   .tarjeta-viaje__contenedor-imagen {
     height: 200px;
+  }
+
+  .seccion-viajes__btn-agenda {
+    width: 100%;
+    min-height: 2.75rem;
+  }
+
+  .seccion-comentarios {
+    padding: 2.5rem 1.25rem 3rem;
+  }
+
+  .seccion-comentarios__titulo {
+    font-size: var(--font-size-3xl);
   }
 }
 
@@ -42,6 +65,11 @@
     font-size: var(--font-size-2xl);
   }
 
+  .seccion-beneficios__cuadricula {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg) var(--spacing-md);
+  }
+
   .seccion-viajes__cuadricula {
     grid-template-columns: 1fr;
   }
@@ -52,5 +80,19 @@
 
   .calendario-viajes__titulo {
     font-size: var(--font-size-2xl);
+  }
+
+  .seccion-comentarios {
+    padding: 2rem 1rem 2.5rem;
+  }
+
+  .seccion-comentarios__titulo {
+    font-size: var(--font-size-2xl);
+  }
+}
+
+@media (max-width: 360px) {
+  .seccion-beneficios__cuadricula {
+    grid-template-columns: 1fr;
   }
 }

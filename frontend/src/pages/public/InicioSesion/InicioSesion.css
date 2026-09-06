@@ -399,8 +399,11 @@
    ============== */
 @media (max-width: 900px) {
   .inicio-sesion {
-    padding: var(--spacing-md);
+    padding: calc(var(--spacing-md) + env(safe-area-inset-top, 0px))
+      var(--spacing-md)
+      calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
     align-items: flex-start;
+    min-height: 100svh;
   }
 
   .inicio-sesion__contenedor {
@@ -415,5 +418,44 @@
 
   .inicio-sesion__bloque-formulario {
     padding: var(--spacing-xl) var(--spacing-lg);
+  }
+
+  .inicio-sesion__title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .inicio-sesion__input-group .grupo-entrada__campo,
+  .campo-contrasena__campo,
+  .inicio-sesion__select {
+    font-size: 16px;
+    min-height: 2.75rem;
+  }
+
+  .inicio-sesion__prefijo-telefono {
+    flex: 0 0 6.25rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .inicio-sesion {
+    padding-left: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+  }
+
+  .inicio-sesion__contenedor {
+    border-radius: var(--radius-xl);
+  }
+
+  .inicio-sesion__bloque-formulario {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+
+  .inicio-sesion__fila-telefono {
+    flex-direction: column;
+  }
+
+  .inicio-sesion__prefijo-telefono {
+    flex: 1 1 auto;
+    width: 100%;
   }
 }

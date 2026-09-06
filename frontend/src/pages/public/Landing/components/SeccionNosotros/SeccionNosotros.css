@@ -188,8 +188,8 @@
     }
 
     .seccion-nosotros__badge {
-        bottom: -20px;
-        right: -10px;
+        bottom: 12px;
+        right: 12px;
         width: 120px;
         height: 120px;
     }
@@ -221,6 +221,17 @@
     }
 
     .seccion-nosotros__imagen {
-        height: 300px;
+        height: 260px;
+    }
+
+    .seccion-nosotros__badge {
+        bottom: 12px;
+        right: 12px;
+        width: 96px;
+        height: 96px;
+    }
+
+    .seccion-nosotros__badge-text {
+        font-size: 0.75rem;
     }
 }

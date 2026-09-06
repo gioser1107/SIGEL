@@ -7,7 +7,7 @@
 .agenda {
     min-height: 100vh;
     background: var(--color-bg-deep);
-    padding-top: var(--navbar-height);
+    padding-top: calc(var(--navbar-height) + env(safe-area-inset-top, 0px));
 }
 
 /* ══════════════════════════════════════════
@@ -614,15 +614,16 @@
 ══════════════════════════════════════════ */
 @media (max-width: 768px) {
     .agenda__hero {
-        padding: 2.5rem 1.25rem 3rem;
+        padding: 2.25rem 1.25rem 2.5rem;
     }
 
     .agenda__hero-h1 {
-        font-size: var(--font-size-4xl);
+        font-size: clamp(1.75rem, 8vw, var(--font-size-3xl));
+        letter-spacing: -0.5px;
     }
 
     .agenda__main {
-        padding: 1.75rem 1.25rem 4rem;
+        padding: 1.75rem 1.25rem calc(4rem + env(safe-area-inset-bottom, 0px));
     }
 
     .agenda__mes-nombre {
@@ -640,19 +641,40 @@
     .agenda__panel-titulo {
         font-size: var(--font-size-xl);
     }
+
+    .agenda__panel-header {
+        flex-wrap: wrap;
+        gap: 0.85rem;
+    }
 }
 
 @media (max-width: 480px) {
+    .agenda__hero {
+        padding: 2rem 1rem 2.25rem;
+    }
+
+    .agenda__main {
+        padding: 1.25rem 0.85rem calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .agenda__semana-header,
+    .agenda__grilla {
+        gap: 3px;
+    }
+
     .agenda__semana-dia {
         font-size: 0.62rem;
         letter-spacing: 0;
-    }
-
-    .agenda__grilla {
-        gap: 4px;
+        padding: 0.25rem 0;
     }
 
     .agenda__celda {
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-sm);
+        gap: 3px;
+    }
+
+    .agenda__celda-punto {
+        width: 4px;
+        height: 4px;
     }
 }

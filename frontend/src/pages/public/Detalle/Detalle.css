@@ -1,0 +1,111 @@
+.pagina-detalle {
+  padding: var(--spacing-4xl) var(--spacing-2xl);
+  padding-top: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + var(--spacing-3xl));
+  padding-bottom: calc(var(--spacing-4xl) + env(safe-area-inset-bottom, 0px));
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.pagina-detalle__volver {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  font-weight: 600;
+}
+
+.pagina-detalle__portada {
+  margin-top: var(--spacing-xl);
+  border-radius: 16px;
+  height: 280px;
+  background-size: cover;
+  background-position: center;
+}
+
+.pagina-detalle__galeria {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.pagina-detalle__miniatura {
+  width: 72px;
+  height: 52px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.pagina-detalle__miniatura--activa {
+  border-color: var(--color-primary);
+}
+
+.pagina-detalle__titulo {
+  margin-top: var(--spacing-xl);
+}
+
+.pagina-detalle__precio {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.pagina-detalle__descripcion {
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-md);
+  white-space: pre-wrap;
+}
+
+.pagina-detalle__subtitulo {
+  margin-top: var(--spacing-2xl);
+}
+
+.pagina-detalle__lista {
+  margin-top: var(--spacing-md);
+  padding-left: 1.25rem;
+}
+
+.pagina-detalle__lista li {
+  margin-bottom: var(--spacing-sm);
+}
+
+.pagina-detalle__agenda {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: var(--spacing-xl);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  .pagina-detalle {
+    padding: var(--spacing-xl) 1.25rem;
+    padding-top: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + var(--spacing-xl));
+  }
+
+  .pagina-detalle__portada {
+    height: 200px;
+    border-radius: 12px;
+  }
+
+  .pagina-detalle__titulo {
+    font-size: var(--font-size-2xl);
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagina-detalle {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .pagina-detalle__portada {
+    height: 180px;
+  }
+}

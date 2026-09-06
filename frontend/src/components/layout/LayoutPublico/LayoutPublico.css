@@ -42,11 +42,11 @@ body.layout-publico--menu-abierto {
   left: 0;
   right: 0;
   z-index: var(--z-navbar);
-  height: var(--navbar-height);
+  height: calc(var(--navbar-height) + env(safe-area-inset-top, 0px));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--spacing-2xl);
+  padding: env(safe-area-inset-top, 0px) var(--spacing-2xl) 0;
   background: transparent;
   transition: background var(--transition-base), box-shadow var(--transition-base), backdrop-filter var(--transition-base);
   gap: var(--spacing-md);
@@ -264,7 +264,7 @@ body.layout-publico--menu-abierto {
   border-top: 1px solid var(--color-border);
   padding: var(--spacing-3xl) var(--spacing-2xl) var(--spacing-xl);
   overflow: hidden;
-  scroll-margin-top: calc(var(--navbar-height) + 1rem);
+  scroll-margin-top: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + 1rem);
 }
 
 .footer::before {
@@ -399,7 +399,7 @@ body.layout-publico--menu-abierto {
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 1024px) {
   .navbar {
-    padding: 0 var(--spacing-lg);
+    padding: env(safe-area-inset-top, 0px) var(--spacing-lg) 0;
   }
 
   .navbar__links {
@@ -427,7 +427,7 @@ body.layout-publico--menu-abierto {
     overflow-y: auto;
     overscroll-behavior: contain;
     touch-action: pan-y;
-    padding: calc(var(--navbar-height) + var(--spacing-xl)) var(--spacing-lg) var(--spacing-2xl);
+    padding: calc(var(--navbar-height) + env(safe-area-inset-top, 0px) + var(--spacing-xl)) var(--spacing-lg) var(--spacing-2xl);
     -webkit-overflow-scrolling: touch;
   }
 
@@ -446,10 +446,15 @@ body.layout-publico--menu-abierto {
   .navbar__link {
     font-size: var(--font-size-2xl);
     text-transform: none;
+    min-height: 2.75rem;
+    display: inline-flex;
+    align-items: center;
   }
 
   .navbar__admin-btn {
     margin-top: var(--spacing-sm);
+    min-height: 2.75rem;
+    padding: 0.65rem 1.25rem;
   }
 
   .navbar__toggle {
@@ -487,10 +492,14 @@ body.layout-publico--menu-abierto {
 
 @media (max-width: 480px) {
   .navbar {
-    padding: 0 var(--spacing-md);
+    padding: env(safe-area-inset-top, 0px) var(--spacing-md) 0;
   }
 
   .navbar__link {
     font-size: var(--font-size-xl);
+  }
+
+  .footer {
+    padding: var(--spacing-2xl) var(--spacing-md) calc(var(--spacing-xl) + env(safe-area-inset-bottom, 0px));
   }
 }

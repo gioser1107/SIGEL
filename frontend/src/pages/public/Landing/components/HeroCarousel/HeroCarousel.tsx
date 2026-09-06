@@ -49,13 +49,15 @@ export default function HeroCarousel() {
                         <p className="hero-carousel__desc">
                             Explora nuestra agenda de viajes y reserva tu próxima aventura.
                         </p>
-                        <button
-                            type="button"
-                            className="hero-carousel__btn"
-                            onClick={() => navegar('/agenda')}
-                        >
-                            Ver agenda →
-                        </button>
+                        <div className="hero-carousel__acciones">
+                            <button
+                                type="button"
+                                className="hero-carousel__btn"
+                                onClick={() => navegar('/agenda')}
+                            >
+                                Ver agenda →
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -89,20 +91,22 @@ export default function HeroCarousel() {
                     <span className="hero-carousel__tag">✈ Descubre Lara</span>
                     <h1 className="hero-carousel__title">{destinoActual.titulo}</h1>
                     <p className="hero-carousel__desc">{destinoActual.subtitulo}</p>
-                    <button
-                        type="button"
-                        className="hero-carousel__btn"
-                        onClick={() => navegar(`/destino/${destinoActual.id}`)}
-                    >
-                        Explorar destino →
-                    </button>
-                    <button
-                        type="button"
-                        className="hero-carousel__btn hero-carousel__btn--secundario"
-                        onClick={() => navegar('/agenda')}
-                    >
-                        Ver agenda
-                    </button>
+                    <div className="hero-carousel__acciones">
+                        <button
+                            type="button"
+                            className="hero-carousel__btn"
+                            onClick={() => navegar(`/destino/${destinoActual.id}`)}
+                        >
+                            Explorar destino →
+                        </button>
+                        <button
+                            type="button"
+                            className="hero-carousel__btn hero-carousel__btn--secundario"
+                            onClick={() => navegar('/agenda')}
+                        >
+                            Ver agenda
+                        </button>
+                    </div>
                 </div>
 
                 <div className="hero-carousel__cards">
