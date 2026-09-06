@@ -14,6 +14,26 @@ IMAGEN_DEFAULT = (
     "?q=80&w=800&auto=format&fit=crop"
 )
 
+DIFICULTADES_DESTINO = ("Fácil", "Moderado", "Difícil")
+DIFICULTAD_POR_DEFECTO = "Moderado"
+
+
+def dificultad_efectiva(valor: str | None) -> str:
+    if valor in DIFICULTADES_DESTINO:
+        return valor
+    return DIFICULTAD_POR_DEFECTO
+
+
+def normalizar_dificultad(valor: str | None) -> str:
+    if valor is None or (isinstance(valor, str) and not valor.strip()):
+        return DIFICULTAD_POR_DEFECTO
+    if valor not in DIFICULTADES_DESTINO:
+        raise HTTPException(
+            status_code=400,
+            detail="La dificultad debe ser Fácil, Moderado o Difícil",
+        )
+    return valor
+
 
 class Destino(Base):
     __tablename__ = "destinos"
@@ -23,6 +43,7 @@ class Destino(Base):
     descripcion = Column(Text, nullable=True)
     precio_base_eur = Column(Numeric(12, 2), nullable=False, default=0)
     recargo_menor_eur = Column(Numeric(12, 2), nullable=False, default=0)
+    dificultad = Column(String(20), nullable=False, default=DIFICULTAD_POR_DEFECTO)
     activo = Column(Boolean, nullable=False, default=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
@@ -73,6 +94,7 @@ def destino_a_dict(
         "descripcion": destino.descripcion,
         "precio_base_eur": float(precio) if precio is not None else 0.0,
         "recargo_menor_eur": float(destino.recargo_menor_eur) if destino.recargo_menor_eur is not None else 0.0,
+        "dificultad": dificultad_efectiva(destino.dificultad),
         "imagen": portada,
         "activo": destino.activo,
         "creado_en": destino.creado_en,
@@ -236,6 +258,7 @@ def crear_destino(
     descripcion: str | None,
     precio_base_eur: Decimal,
     recargo_menor_eur: Decimal = Decimal("0.00"),
+    dificultad: str = DIFICULTAD_POR_DEFECTO,
     activo: bool = True,
     url_portada: str | None = None,
 ) -> Destino:
@@ -243,6 +266,7 @@ def crear_destino(
 
     nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
     validar_nombre_no_repetido(db, nombre_limpio)
+    dificultad_limpia = normalizar_dificultad(dificultad)
 
     ahora = datetime.now()
     nuevo_destino = Destino(
@@ -250,6 +274,7 @@ def crear_destino(
         descripcion=descripcion,
         precio_base_eur=precio_base_eur,
         recargo_menor_eur=recargo_menor_eur,
+        dificultad=dificultad_limpia,
         activo=activo,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -272,6 +297,7 @@ def actualizar_destino(
     descripcion: str | None,
     precio_base_eur: Decimal | None,
     recargo_menor_eur: Decimal | None = None,
+    dificultad: str | None = None,
     activo: bool | None = None,
     url_portada: str | None = None,
 ) -> Destino:
@@ -292,6 +318,9 @@ def actualizar_destino(
 
     if recargo_menor_eur is not None:
         destino.recargo_menor_eur = recargo_menor_eur
+
+    if dificultad is not None:
+        destino.dificultad = normalizar_dificultad(dificultad)
 
     if activo is not None:
         destino.activo = activo

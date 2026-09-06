@@ -102,6 +102,7 @@ export function useDestinos() {
       nombre: destino.nombre,
       descripcion: destino.descripcion ?? '',
       precio_base_eur: destino.precio_base_eur,
+      dificultad: destino.dificultad ?? 'Moderado',
       activo: destino.activo,
     });
     setArchivoNuevo(null);
@@ -136,6 +137,7 @@ export function useDestinos() {
         nombre: form.nombre.trim(),
         descripcion: form.descripcion?.trim() || null,
         precio_base_eur: form.precio_base_eur,
+        dificultad: form.dificultad,
         activo: form.activo,
       };
 

@@ -10,7 +10,7 @@ from database import Base
 from modelos.asiento_modelo import Asiento
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.costo_operativo_modelo import CostoOperativo
-from modelos.destino_modelo import Destino, IMAGEN_DEFAULT, imagenes_destino
+from modelos.destino_modelo import Destino, IMAGEN_DEFAULT, dificultad_efectiva, imagenes_destino
 from modelos.unidad_transporte_modelo import UnidadTransporte
 from modelos.viaje_guia_modelo import asignar_guias_si_provisto, guias_en_respuesta_viaje
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
@@ -580,11 +580,7 @@ def viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
 
     fecha_clave = viaje.fecha_salida.strftime("%Y-%m-%d")
     duracion = calcular_duracion(viaje.fecha_salida, viaje.fecha_regreso)
-    dificultad = "Moderado"
-    if duracion.startswith("1") and "hora" in duracion and int(duracion.split()[0]) <= 8:
-        dificultad = "Fácil"
-    elif "días" in duracion:
-        dificultad = "Moderado"
+    dificultad = dificultad_efectiva(destino.dificultad if destino is not None else None)
 
     return {
         "id": viaje.id,

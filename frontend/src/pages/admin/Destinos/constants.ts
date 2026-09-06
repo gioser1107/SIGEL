@@ -1,5 +1,7 @@
 import type { PestaniaFiltro } from '../../../components/admin';
-import type { DatosDestinoNuevo } from '../../../types/destino';
+import type { DatosDestinoNuevo, DificultadDestino } from '../../../types/destino';
+
+export const NIVELES_DIFICULTAD: DificultadDestino[] = ['Fácil', 'Moderado', 'Difícil'];
 
 export const PESTANIAS_FILTRO: PestaniaFiltro[] = [
   { id: 'todos', etiqueta: 'Todos' },
@@ -17,5 +19,6 @@ export const FORM_VACIO: DatosDestinoNuevo = {
   nombre: '',
   descripcion: '',
   precio_base_eur: 0,
+  dificultad: 'Moderado',
   activo: true,
 };

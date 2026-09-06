@@ -40,7 +40,7 @@ export default function LogoMarca({ compacto = false, sobreOscuro = false }: Log
               Travel<span>Bqto</span>
             </strong>
             {!compacto && (
-              <span className="logo-marca__eslogan">Turismo · Barquisimeto, Lara</span>
+              <span className="logo-marca__eslogan">Turismo y excursiones</span>
             )}
           </div>
         </>

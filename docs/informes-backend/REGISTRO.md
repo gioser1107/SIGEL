@@ -6,6 +6,15 @@ No sustituye el SRS ni los RF. Sirve para defensa: qué cambió, por qué, y qu�
 
 ---
 
+## 2026-09-06 — Dificultad del destino (Fácil / Moderado / Difícil)
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/modelos/destino_modelo.py`, `backend/controladores/destino_controlador.py`, `backend/modelos/viaje_modelo.py`, `backend/migraciones/20260906_destino_dificultad.sql`, `instalacion/travel_bqto_limpia.sql`
+- **Qué se hizo:** columna `destinos.dificultad` (Fácil, Moderado, Difícil); create/update/listado la persisten y el catálogo de viajes la usa. Ya no se infiere por duración del viaje.
+- **Por qué:** el nivel de esfuerzo lo decide la agencia según el destino (terreno, caminata, público), no un cálculo automático. Un viaje de 3 días a la playa no es «Difícil» solo por durar más.
+- **Qué no se tocó:** reservas, cupos, asientos, precios, estados de viaje.
+- **Cómo probarlo:** crear o editar un destino con dificultad «Difícil»; en Agenda el viaje de ese destino debe mostrar esa etiqueta.
+
 ## 2026-09-06 — Pool MySQL, mensajes de error y migraciones en shared
 
 - **Autor:** agente (Cursor)

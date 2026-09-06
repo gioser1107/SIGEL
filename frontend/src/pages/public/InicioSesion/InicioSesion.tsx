@@ -413,10 +413,10 @@ export default function InicioSesion() {
           <div className="inicio-sesion__visual-contenido">
             <div className="inicio-sesion__badge">Destino favorito</div>
             <h2 className="inicio-sesion__visual-titulo">
-              Descubre los rincones mágicos de Barquisimeto
+              Descubre destinos inolvidables
             </h2>
             <p className="inicio-sesion__visual-desc">
-              Viaja con total seguridad, reserva tus asientos cómodamente y explora el estado Lara con los mejores tours guiados.
+              Viaja con total seguridad, reserva tus asientos cómodamente y explora con los mejores tours guiados.
             </p>
           </div>
         </div>

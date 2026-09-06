@@ -28,6 +28,12 @@ export function columnasDestinos(esAnulados = false): Columna<Destino>[] {
       ),
     },
     {
+      id: 'dificultad',
+      encabezado: 'Dificultad',
+      alineacion: 'center',
+      accessor: (d) => d.dificultad ?? 'Moderado',
+    },
+    {
       id: 'activo',
       encabezado: esAnulados ? 'Anulado' : 'Estado',
       alineacion: 'center',

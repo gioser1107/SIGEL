@@ -5,6 +5,7 @@
 import apiRequest from './api';
 import { resolverUrlArchivo } from '../utils/resolverUrlArchivo';
 import type { ViajeAgenda } from '../types/viaje';
+import type { DificultadDestino } from '../types/destino';
 
 export interface DestinoImagen {
   id: number;
@@ -18,6 +19,7 @@ export interface DestinoCatalogo {
   nombre: string;
   descripcion: string | null;
   precio_base_eur: number | null;
+  dificultad?: DificultadDestino;
   imagen: string;
   activo: boolean;
   imagenes?: DestinoImagen[];
@@ -104,7 +106,7 @@ export function destinoComoViaje(destino: DestinoCatalogo): ViajeAgenda {
     hora: 'Consultar',
     cupos: 0,
     duracion: 'Variable',
-    dificultad: 'Moderado',
+    dificultad: destino.dificultad ?? 'Moderado',
     descripcion: destino.descripcion ?? '',
   };
 }

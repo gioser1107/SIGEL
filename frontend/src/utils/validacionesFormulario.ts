@@ -4,7 +4,6 @@ export const CODIGOS_TELEFONO_VE = ['0424', '0414', '0426', '0416', '0412', '042
 const REGEX_CORREO = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const REGEX_NOMBRE_PERSONA = /^[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:\s+[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+){0,6}$/;
 const REGEX_CODIGO = /^[A-Za-z0-9_\-]{1,30}$/;
-const REGEX_PLACA_VE = /^([A-Z]{2,3}\d{1,4}[A-Z]{0,2}|\d{1,4}[A-Z]{2,3})$/i;
 const REGEX_MONTO_EUR = /^\d{1,7}(\.\d{1,2})?$/;
 
 export function esCorreoValido(correo: string): boolean {
@@ -51,10 +50,6 @@ export function esCodigoValido(codigo: string): boolean {
   return REGEX_CODIGO.test(codigo.trim());
 }
 
-export function esPlacaVeValida(placa: string): boolean {
-  return REGEX_PLACA_VE.test(placa.trim().replace(/\s/g, ''));
-}
-
 export function esMontoEurValido(valor: number): boolean {
   if (!Number.isFinite(valor) || valor <= 0) return false;
   return REGEX_MONTO_EUR.test(String(valor));
@@ -87,9 +82,7 @@ export function validarFormularioUnidad(form: {
 }): string | null {
   const placa = form.placa.trim();
   if (!placa) return 'La placa es obligatoria.';
-  if (!esPlacaVeValida(placa)) {
-    return 'Placa no válida (ej: AA0TRV01 o 123ABC).';
-  }
+  if (placa.length > 16) return 'La placa no puede superar 16 caracteres.';
 
   const modelo = (form.modelo ?? '').trim();
   if (modelo && modelo.length < 2) return 'El modelo debe tener al menos 2 caracteres.';

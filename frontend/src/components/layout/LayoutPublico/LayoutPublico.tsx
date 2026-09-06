@@ -156,7 +156,7 @@ export default function LayoutPublico() {
               <LogoMarca compacto />
             </div>
             <p className="footer__brand-desc">
-              Descubre los mejores destinos turísticos de Barquisimeto y el estado Lara.
+              Descubre destinos turísticos en todo el país.
               Vive experiencias únicas con los mejores precios.
             </p>
           </div>

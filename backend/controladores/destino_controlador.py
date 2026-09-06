@@ -36,6 +36,7 @@ class DatosDestinoCrear(BaseModel):
     descripcion: str | None = None
     precio_base_eur: Decimal = Field(default=Decimal("0.00"), ge=0)
     recargo_menor_eur: Decimal = Field(default=Decimal("0.00"), ge=0)
+    dificultad: str = "Moderado"
     activo: bool = True
     url_portada: str | None = None
 
@@ -45,6 +46,7 @@ class DatosDestinoActualizar(BaseModel):
     descripcion: str | None = None
     precio_base_eur: Decimal | None = Field(default=None, ge=0)
     recargo_menor_eur: Decimal | None = Field(default=None, ge=0)
+    dificultad: str | None = None
     activo: bool | None = None
     url_portada: str | None = None
 
@@ -93,6 +95,7 @@ def crear_destino_endpoint(
         descripcion=datos.descripcion,
         precio_base_eur=datos.precio_base_eur,
         recargo_menor_eur=datos.recargo_menor_eur,
+        dificultad=datos.dificultad,
         activo=datos.activo,
         url_portada=datos.url_portada,
     )
@@ -134,6 +137,7 @@ def actualizar_destino_endpoint(
         descripcion=datos.descripcion,
         precio_base_eur=datos.precio_base_eur,
         recargo_menor_eur=datos.recargo_menor_eur,
+        dificultad=datos.dificultad,
         activo=datos.activo,
         url_portada=datos.url_portada,
     )

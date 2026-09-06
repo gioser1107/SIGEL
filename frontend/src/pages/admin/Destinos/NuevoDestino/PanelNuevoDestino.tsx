@@ -1,8 +1,10 @@
 import { PanelDeslizable } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
-import type { DatosDestinoNuevo } from '../../../../types/destino';
+import type { DatosDestinoNuevo, DificultadDestino } from '../../../../types/destino';
 import SelectorImagenArchivo from '../components/SelectorImagenArchivo';
 import { sanitizarNombrePersona } from '../../../../utils/validacionesFormulario';
+import CampoMonto from '../../../../components/ui/CampoMonto/CampoMonto';
+import { NIVELES_DIFICULTAD } from '../constants';
 
 interface PropsPanelNuevo {
   abierto: boolean;
@@ -97,15 +99,35 @@ export default function PanelNuevoDestino({
           <label className="drawer-form__label" htmlFor="destino-precio">
             Precio base (EUR) <span className="drawer-form__req">*</span>
           </label>
-          <input
+          <CampoMonto
             id="destino-precio"
             className="drawer-form__input"
-            type="number"
-            min="0"
-            step="0.01"
+            placeholder="Ej: 45"
             value={form.precio_base_eur}
-            onChange={(e) => actualizarCampo('precio_base_eur', Number(e.target.value))}
+            onValorNumerico={(n) => actualizarCampo('precio_base_eur', n)}
           />
+        </div>
+
+        <div className="drawer-form__campo">
+          <label className="drawer-form__label" htmlFor="destino-dificultad">
+            Dificultad
+          </label>
+          <select
+            id="destino-dificultad"
+            className="drawer-form__input"
+            value={form.dificultad}
+            onChange={(e) => actualizarCampo('dificultad', e.target.value as DificultadDestino)}
+          >
+            {NIVELES_DIFICULTAD.map((nivel) => (
+              <option key={nivel} value={nivel}>
+                {nivel}
+              </option>
+            ))}
+          </select>
+          <p className="drawer-form__ayuda">
+            Lo elige la agencia según el destino: terreno, caminata, público o exigencia física.
+            No se calcula por la duración del viaje.
+          </p>
         </div>
 
         <div className="drawer-form__campo">

@@ -2,6 +2,8 @@
  * Tipos del módulo admin de destinos turísticos.
  */
 
+export type DificultadDestino = 'Fácil' | 'Moderado' | 'Difícil';
+
 export interface DestinoImagen {
   id: number;
   url: string;
@@ -14,6 +16,7 @@ export interface Destino {
   nombre: string;
   descripcion: string | null;
   precio_base_eur: number;
+  dificultad: DificultadDestino;
   activo: boolean;
   imagen?: string;
   imagenes?: DestinoImagen[];
@@ -26,6 +29,7 @@ export interface DatosDestinoNuevo {
   nombre: string;
   descripcion?: string | null;
   precio_base_eur: number;
+  dificultad: DificultadDestino;
   activo?: boolean;
 }
 

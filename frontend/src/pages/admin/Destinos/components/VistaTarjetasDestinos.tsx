@@ -52,6 +52,7 @@ export default function VistaTarjetasDestinos({
             <p className="dest-card__descripcion">{destino.descripcion}</p>
           )}
           <p className="dest-card__precio">{formatPrecio(destino.precio_base_eur)}</p>
+          <p className="dest-card__dificultad">{destino.dificultad ?? 'Moderado'}</p>
           {!soloLectura && (
             <div className="dest-card__acciones">
               <BotonAccionTabla accion="editar" onClick={() => onEditar(destino)} />

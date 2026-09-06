@@ -23,6 +23,7 @@ CREATE TABLE destinos (
 	descripcion TEXT, 
 	precio_base_eur NUMERIC(12, 2) NOT NULL, 
 	recargo_menor_eur NUMERIC(12, 2) NOT NULL, 
+	dificultad VARCHAR(20) NOT NULL DEFAULT 'Moderado', 
 	activo BOOL NOT NULL, 
 	creado_en DATETIME NOT NULL, 
 	actualizado_en DATETIME NOT NULL, 

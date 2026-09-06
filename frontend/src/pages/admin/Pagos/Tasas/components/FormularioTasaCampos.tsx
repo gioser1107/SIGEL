@@ -1,6 +1,7 @@
 import type { Moneda } from '../../../../../types/pagos';
 import type { FormularioTasa } from '../constants';
 import { fechaHoyIso } from '../../../../../utils/validacionesFormulario';
+import CampoMonto from '../../../../../components/ui/CampoMonto/CampoMonto';
 
 interface FormularioTasaCamposProps {
   form: FormularioTasa;
@@ -38,15 +39,12 @@ export default function FormularioTasaCampos({ form, monedas, onChange }: Formul
       </div>
       <div className="drawer-form__campo">
         <label className="drawer-form__label" htmlFor="tasa-valor">Valor (Bs por 1 unidad)</label>
-        <input
+        <CampoMonto
           id="tasa-valor"
-          type="number"
-          min="0"
-          step="0.01"
           className="drawer-form__input"
-          value={form.valor}
-          onChange={(e) => onChange({ ...form, valor: e.target.value })}
           placeholder="45.00"
+          value={form.valor}
+          onTexto={(texto) => onChange({ ...form, valor: texto })}
         />
       </div>
     </div>

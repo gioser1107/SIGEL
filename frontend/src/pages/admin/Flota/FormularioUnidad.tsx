@@ -113,9 +113,10 @@ export default function FormularioUnidad({ abierto, onCerrar, unidad, onGuardado
             <input
               className="flota-modal__input"
               type="text"
-              placeholder="Ej: ABC-1234"
+              maxLength={16}
+              placeholder="Placa del autobús"
               value={form.placa}
-              onChange={(e) => setForm((f) => ({ ...f, placa: e.target.value.toUpperCase() }))}
+              onChange={(e) => setForm((f) => ({ ...f, placa: e.target.value }))}
             />
           </div>
 

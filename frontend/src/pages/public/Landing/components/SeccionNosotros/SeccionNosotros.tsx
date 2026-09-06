@@ -96,9 +96,9 @@ export default function SeccionNosotros() {
                     </h2>
                     <p className="seccion-nosotros__descripcion">
                         En TravelBqto nos dedicamos a crear experiencias únicas
-                        en el estado Lara. Cada viaje está diseñado con pasión,
-                        seguridad y el mejor servicio para que vivas momentos
-                        que recordarás por siempre.
+                        en destinos de todo el país. Cada viaje está diseñado con
+                        pasión, seguridad y el mejor servicio para que vivas
+                        momentos que recordarás por siempre.
                     </p>
 
                     <div className="seccion-nosotros__estadisticas">
@@ -118,7 +118,7 @@ export default function SeccionNosotros() {
                     <div className="seccion-nosotros__imagen-wrapper">
                         <img
                             src="https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=800&auto=format&fit=crop"
-                            alt="Senderista contemplando el paisaje larense"
+                            alt="Viajeros contemplando el paisaje"
                             className="seccion-nosotros__imagen"
                         />
                         <Link to="/agenda" className="seccion-nosotros__badge">

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Boton from '../../../../../components/ui/Boton/Boton';
-import Entrada from '../../../../../components/ui/Entrada/Entrada';
+import '../../../../../components/ui/Entrada/Entrada.css';
 import SelectorPuntoRecogidaReserva from '../../../../../components/puntos-recogida/SelectorPuntoRecogidaReserva';
 import DomicilioRecogidaAcompanante, {
   type ValorDomicilioAcompanante,
@@ -11,6 +11,7 @@ import type { PasajeroDraft } from '../../../../../types/reservas';
 import type { Cliente } from '../../../../../types/cliente';
 import type { PuntoRecogida } from '../../../../../types/puntoRecogida';
 import { validarPasajerosReserva } from '../../../../../utils/validacionesFormulario';
+import CampoMonto from '../../../../../components/ui/CampoMonto/CampoMonto';
 
 // ─── SelectBuscador ──────────────────────────────────────────────
 
@@ -409,27 +410,27 @@ export default function PasoPasajeros({
             {/* Precio */}
             <div className="campo-grupo">
               <label className="campo-label">Precio (€)</label>
-              <Entrada
-                etiqueta=""
-                type="number"
-                value={String(p.precio_pasajero_eur)}
-                onChange={(e) =>
-                  actualizarCampo(p.id_temporal, 'precio_pasajero_eur', parseFloat(e.target.value) || 0)
-                }
-              />
+              <div className="grupo-entrada">
+                <CampoMonto
+                  className="grupo-entrada__campo"
+                  value={p.precio_pasajero_eur}
+                  onValorNumerico={(n) =>
+                    actualizarCampo(p.id_temporal, 'precio_pasajero_eur', n)
+                  }
+                />
+              </div>
             </div>
 
             {/* Recargo */}
             <div className="campo-grupo">
               <label className="campo-label">Recargo (€)</label>
-              <Entrada
-                etiqueta=""
-                type="number"
-                value={String(p.recargo_eur)}
-                onChange={(e) =>
-                  actualizarCampo(p.id_temporal, 'recargo_eur', parseFloat(e.target.value) || 0)
-                }
-              />
+              <div className="grupo-entrada">
+                <CampoMonto
+                  className="grupo-entrada__campo"
+                  value={p.recargo_eur}
+                  onValorNumerico={(n) => actualizarCampo(p.id_temporal, 'recargo_eur', n)}
+                />
+              </div>
             </div>
           </div>
 
