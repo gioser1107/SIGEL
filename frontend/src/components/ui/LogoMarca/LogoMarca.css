@@ -1,87 +1,23 @@
 .logo-marca {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  color: var(--color-primary);
   min-width: 0;
 }
 
 .logo-marca__archivo {
   display: block;
-  height: 2.35rem;
-  width: auto;
-  max-width: 9.5rem;
+  height: 3rem;
+  width: 3rem;
   object-fit: contain;
-}
-
-.logo-marca__icono {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: var(--radius-md);
-  background: var(--color-primary);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 50%;
   flex-shrink: 0;
 }
 
-.logo-marca__icono svg {
-  width: 1.2rem;
-  height: 1.2rem;
-}
-
-.logo-marca__texto {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  line-height: 1.15;
-  min-width: 0;
-}
-
-.logo-marca__texto strong {
-  font-family: var(--font-heading);
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--color-text-primary);
-  letter-spacing: -0.2px;
-}
-
-.logo-marca__texto strong span {
-  color: var(--color-primary);
-}
-
-.logo-marca__eslogan {
-  font-size: 0.65rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-}
-
 .logo-marca--compacto .logo-marca__archivo {
-  height: 1.75rem;
-  max-width: 7rem;
+  height: 2.5rem;
+  width: 2.5rem;
 }
 
-.logo-marca--compacto .logo-marca__icono {
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--radius-sm);
-}
-
-.logo-marca--compacto .logo-marca__icono svg {
-  width: 0.95rem;
-  height: 0.95rem;
-}
-
-.logo-marca--compacto .logo-marca__texto strong {
-  font-size: 0.95rem;
-}
-
-.logo-marca--sobre-oscuro .logo-marca__texto strong,
-.logo-marca--sobre-oscuro .logo-marca__texto strong span {
-  color: #ffffff;
-}
-
-.logo-marca--sobre-oscuro .logo-marca__eslogan {
-  color: rgba(255, 255, 255, 0.72);
+.logo-marca--sobre-oscuro .logo-marca__archivo {
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.28));
 }

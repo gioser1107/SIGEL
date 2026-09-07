@@ -421,6 +421,13 @@
     color: #ffffff !important;
   }
 
+  .logo-marca__archivo {
+    height: 2.75rem !important;
+    width: 2.75rem !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
   /* Reporte operativo de viaje */
   .doc-viaje {
     display: block !important;

@@ -11,49 +11,20 @@ interface Comentario {
   calificacion: number;
 }
 
-const COMENTARIOS_FALLBACK: Comentario[] = [
-  {
-    id: 1,
-    nombre: 'María González',
-    rol: 'Viajera',
-    texto: 'Viajar con ellos es realmente increíble. Destinos hermosos, servicio amable y momentos inolvidables. ¡Lo recomiendo al 100%!',
-    calificacion: 5.0,
-  },
-  {
-    id: 2,
-    nombre: 'Carlos Mendoza',
-    rol: 'Aventurero',
-    texto: 'Itinerario muy bien planificado, guías locales expertos y atención al cliente de primera. Mi aventura no solo fue divertida, sino libre de estrés.',
-    calificacion: 4.9,
-  },
-  {
-    id: 3,
-    nombre: 'Ana Rodríguez',
-    rol: 'Familia',
-    texto: '¡Las vacaciones perfectas en familia! El destino ideal para todos, con servicio cálido y planes flexibles. Nos hizo crear recuerdos maravillosos.',
-    calificacion: 5.0,
-  },
-  {
-    id: 4,
-    nombre: 'Luis Pérez',
-    rol: 'Viajero frecuente',
-    texto: 'Nuestras vacaciones familiares fueron extraordinarias. Itinerario bien organizado, guías locales amigables y una experiencia inolvidable de principio a fin.',
-    calificacion: 4.9,
-  },
-];
-
-function resenaAComentario(resena: Resena): Comentario {
+function resenaAComentario(resena: Resena): Comentario | null {
+  const texto = resena.comentario?.trim();
+  if (!texto) return null;
   return {
     id: resena.id,
     nombre: resena.nombre_cliente,
-    rol: 'Viajero',
-    texto: resena.comentario ?? 'Excelente experiencia con Travel Bqto.',
+    rol: resena.destino_titulo || 'Viajero',
+    texto,
     calificacion: resena.calificacion,
   };
 }
 
 export default function SeccionComentarios() {
-  const [comentarios, setComentarios] = useState<Comentario[]>(COMENTARIOS_FALLBACK);
+  const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
@@ -63,11 +34,13 @@ export default function SeccionComentarios() {
       try {
         const resenas = await obtenerResenasPublicas();
         if (!activo) return;
-        if (resenas.length > 0) {
-          setComentarios(resenas.map(resenaAComentario));
-        }
+        setComentarios(
+          resenas
+            .map(resenaAComentario)
+            .filter((comentario): comentario is Comentario => comentario !== null),
+        );
       } catch {
-        /* Mantener fallback si la API no responde */
+        if (activo) setComentarios([]);
       } finally {
         if (activo) setCargando(false);
       }
@@ -79,18 +52,22 @@ export default function SeccionComentarios() {
     };
   }, []);
 
+  if (!cargando && comentarios.length === 0) {
+    return null;
+  }
+
   return (
     <section className="seccion-comentarios">
       <div className="seccion-comentarios__header">
-        <span className="seccion-comentarios__eyebrow">Testimonios</span>
+        <span className="seccion-comentarios__eyebrow">Reseñas</span>
         <h2 className="seccion-comentarios__titulo">Lo que dicen nuestros viajeros</h2>
         <p className="seccion-comentarios__descripcion">
-          Experiencias reales de personas que confiaron en nosotros para sus aventuras
+          Comentarios de clientes que ya viajaron con Travel Bqto
         </p>
       </div>
 
       {cargando ? (
-        <p className="seccion-comentarios__cargando">Cargando testimonios...</p>
+        <p className="seccion-comentarios__cargando">Cargando reseñas...</p>
       ) : (
         <div className="seccion-comentarios__grid">
           {comentarios.map((comentario, idx) => (

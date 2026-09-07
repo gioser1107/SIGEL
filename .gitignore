@@ -13,6 +13,9 @@ frontend/node_modules/
 # Sistema operativo
 .DS_Store
 
+# Cursor (configuración local del editor)
+.cursor/
+
 # Entorno Backend (Python/FastAPI)
 venv/
 .venv/

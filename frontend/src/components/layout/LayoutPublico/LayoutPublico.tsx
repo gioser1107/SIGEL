@@ -80,7 +80,6 @@ export default function LayoutPublico() {
         {/* Logo */}
         <Link to="/" className="navbar__logo" aria-label="TravelBqto — inicio">
           <LogoMarca
-            compacto
             sobreOscuro={estaMenuMovilAbierto || (esPaginaPrincipal && !estaScrolleado)}
           />
         </Link>
