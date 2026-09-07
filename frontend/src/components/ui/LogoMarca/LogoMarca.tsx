@@ -23,7 +23,13 @@ export default function LogoMarca({ compacto = false, sobreOscuro = false }: Log
 
   return (
     <div className={clases}>
-      <img className="logo-marca__archivo" src={RUTA_LOGO} alt="TravelBqto" />
+      <img className="logo-marca__archivo" src={RUTA_LOGO} alt="" />
+      <div className="logo-marca__texto">
+        <strong>
+          Travel<span>Bqto</span>
+        </strong>
+        {!compacto && <span className="logo-marca__eslogan">Turismo y excursiones</span>}
+      </div>
     </div>
   );
 }

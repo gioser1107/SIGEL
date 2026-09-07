@@ -15,6 +15,18 @@ MAX_LADO_PX = 1920
 MAX_LADO_THUMB_PX = 600
 CALIDAD_WEBP = 82
 TIPOS_PERMITIDOS = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
+TIPOS_GENERICOS = {"", "application/octet-stream", "binary/octet-stream"}
+MAX_BYTES_DESTINO = 5 * 1024 * 1024
+
+
+def tipo_archivo_no_es_imagen(tipo: str | None) -> bool:
+    """True solo si el MIME es explícito y no es imagen (iPhone a veces no manda tipo)."""
+    normalizado = (tipo or "").lower().strip()
+    if normalizado in TIPOS_GENERICOS or normalizado in TIPOS_PERMITIDOS:
+        return False
+    if normalizado.startswith("image/"):
+        return False
+    return True
 
 
 class DestinoImagen(Base):
@@ -66,11 +78,10 @@ async def procesar_y_guardar_imagen_destino(
     if not contenido:
         raise HTTPException(status_code=400, detail="El archivo está vacío")
 
-    if len(contenido) > MAX_BYTES:
+    if len(contenido) > MAX_BYTES_DESTINO:
         raise HTTPException(status_code=400, detail="La imagen no puede superar 5 MB")
 
-    tipo = (archivo.content_type or "").lower()
-    if tipo not in TIPOS_PERMITIDOS:
+    if tipo_archivo_no_es_imagen(archivo.content_type):
         raise HTTPException(
             status_code=400,
             detail="Formato no permitido. Usa JPG, PNG o WebP.",
@@ -91,7 +102,7 @@ async def procesar_y_guardar_imagen_destino(
     except UnidentifiedImageError as exc:
         raise HTTPException(
             status_code=400,
-            detail="El archivo no es una imagen válida",
+            detail="El archivo no es una imagen válida. Usa JPG, PNG o WebP (no HEIC).",
         ) from exc
 
     carpeta = UPLOAD_ROOT / "destinos" / str(destino_id)
@@ -147,8 +158,7 @@ def procesar_y_guardar_bytes_comprobante(contenido: bytes) -> str:
 
 async def procesar_y_guardar_comprobante_pago(archivo: UploadFile) -> str:
     contenido = await archivo.read()
-    tipo = (archivo.content_type or "").lower()
-    if tipo and tipo not in TIPOS_PERMITIDOS:
+    if tipo_archivo_no_es_imagen(archivo.content_type):
         raise HTTPException(
             status_code=400,
             detail="Formato no permitido. Usa JPG, PNG o WebP.",

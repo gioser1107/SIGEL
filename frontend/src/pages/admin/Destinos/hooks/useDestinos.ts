@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useVistaModuloResponsive } from '../../../../hooks/useVistaModuloResponsive';
 import { usePaginacionListado } from '../../../../hooks/usePaginacionListado';
 import {
@@ -43,6 +43,7 @@ export function useDestinos() {
   const [archivoPortada, setArchivoPortada] = useState<File | null>(null);
   const [cargandoImagenes, setCargandoImagenes] = useState(false);
   const [errorImagenes, setErrorImagenes] = useState<string | null>(null);
+  const cargaImagenesSeq = useRef(0);
   const { pagina, setTotal, total, totalPaginas, irPagina, reiniciarPagina, limite } = usePaginacionListado();
 
   const cargarDestinos = useCallback(async () => {
@@ -69,17 +70,22 @@ export function useDestinos() {
   );
 
   const cargarImagenesDestino = async (destinoId: number) => {
+    const seq = ++cargaImagenesSeq.current;
     setCargandoImagenes(true);
     setErrorImagenes(null);
     try {
       const detalle = await obtenerDestinoPorId(destinoId);
+      if (seq !== cargaImagenesSeq.current) return;
       setDestinoActivo(detalle);
       setImagenes(detalle.imagenes ?? []);
     } catch (e) {
+      if (seq !== cargaImagenesSeq.current) return;
       setErrorImagenes(e instanceof Error ? e.message : 'Error al cargar imágenes');
       setImagenes([]);
     } finally {
-      setCargandoImagenes(false);
+      if (seq === cargaImagenesSeq.current) {
+        setCargandoImagenes(false);
+      }
     }
   };
 
@@ -107,6 +113,7 @@ export function useDestinos() {
     });
     setArchivoNuevo(null);
     setArchivoPortada(null);
+    setImagenes([]);
     setErrorImagenes(null);
     setErrorForm(null);
     setDrawerAbierto(true);

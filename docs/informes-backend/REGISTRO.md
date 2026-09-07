@@ -6,6 +6,24 @@ No sustituye el SRS ni los RF. Sirve para defensa: qué cambió, por qué, y qu�
 
 ---
 
+## 2026-09-07 — Subida de imágenes de destino sin MIME
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/modelos/destino_imagen_modelo.py`
+- **Qué se hizo:** `procesar_y_guardar_imagen_destino` ya no rechaza el archivo solo porque el `Content-Type` venga vacío o como `application/octet-stream` (típico en iPhone). Pillow valida que sea una imagen real. El tope de destino queda en 5 MB, alineado con el formulario.
+- **Por qué:** al editar la galería de un destino, «Agregar imagen» no cargaba nada: el teléfono envía la foto sin tipo MIME y el API respondía 400. El error casi no se veía en el panel.
+- **Qué no se tocó:** rutas `/api/destinos/{id}/imagenes*`, permisos, almacenamiento en `uploads/destinos/{id}/`, conversión a WebP.
+- **Cómo probarlo:** en Destinos → Editar, tocar la zona de foto, elegir un JPG/PNG y pulsar «Agregar imagen»; debe aparecer en la galería.
+
+## 2026-09-07 — Tasa BCV automática todos los días a la 1:00
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/utilidades/tasa_bcv_programada.py`, `backend/main.py`, `backend/.env.example`, `instalacion/env.ejemplo.txt`
+- **Qué se hizo:** además de la sincronización al arrancar (`TASA_BCV_AUTO`), el API deja un bucle en segundo plano que consulta dolarapi y hace upsert de EUR/USD a la 1:00 de America/Caracas (`TASA_BCV_DIARIA` + `TASA_BCV_HORA`). Son interruptores distintos: el arranque puede quedar en 0 y la tarea de la 1:00 seguir activa.
+- **Por qué:** la tasa del día es obligatoria para pagos en VES/EUR; si el servidor queda encendido de un día para otro no había recarga hasta el siguiente reinicio o hasta pulsar «Sincronizar BCV».
+- **Qué no se tocó:** endpoint manual `/api/tasas/sincronizar-bcv`, origen `bcv`/`manual`, validación de tasa del día en pagos, frontend.
+- **Cómo probarlo:** con `TASA_BCV_AUTO=1` y `TASA_BCV_HORA` unos minutos en el futuro, reiniciar uvicorn y revisar el log «Tasa oficial BCV cargada para hoy» a esa hora.
+
 ## 2026-09-06 — Bitácora: listado sin vista inexistente
 
 - **Autor:** agente (Cursor)

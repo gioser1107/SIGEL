@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import ModalDetalleViaje from '../../../components/ui/ModalDetalleViaje/ModalDetalleViaje';
 import type { ViajeAgenda } from '../../../types/viaje';
 import { agruparViajesPorFecha, obtenerViajesCatalogo } from '../../../services/catalogo';
@@ -34,6 +34,7 @@ const DIFICULTAD_COLOR: Record<string, string> = {
    COMPONENTE
 ───────────────────────────────────────── */
 export default function Agenda() {
+    const enPortal = useLocation().pathname.startsWith('/client');
     const hoy = new Date();
     const [mesActual, setMesActual] = useState(hoy.getMonth());
     const [anioActual, setAnioActual] = useState(hoy.getFullYear());
@@ -128,28 +129,35 @@ export default function Agenda() {
     const puedoRetroceder = !esMesPasado(mesActual - 1 < 0 ? 11 : mesActual - 1, mesActual - 1 < 0 ? anioActual - 1 : anioActual);
 
     return (
-        <div className="agenda">
-            {/* ── HERO / ENCABEZADO ── */}
-            <header className="agenda__hero">
-                <div className="agenda__hero-inner">
-                    <Link to="/" className="agenda__back-link">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M19 12H5M12 5l-7 7 7 7" />
-                        </svg>
-                        Inicio
-                    </Link>
-                    <div className="agenda__hero-titulo">
-                        <span className="agenda__hero-eyebrow">Agenda de Experiencias</span>
-                        <h1 className="agenda__hero-h1">Calendario de Viajes</h1>
-                        <p className="agenda__hero-desc">
-                            Selecciona un día para ver los planes disponibles. Los días marcados tienen experiencias esperándote.
-                        </p>
+        <div className={enPortal ? 'agenda agenda--portal' : 'agenda'}>
+            {enPortal ? (
+                <header className="agenda__cabecera-portal">
+                    <h1 className="agenda__cabecera-portal-titulo">Agenda</h1>
+                    <p className="agenda__cabecera-portal-desc">
+                        Selecciona un día para ver los planes disponibles. Los días marcados tienen experiencias esperándote.
+                    </p>
+                </header>
+            ) : (
+                <header className="agenda__hero">
+                    <div className="agenda__hero-inner">
+                        <Link to="/" className="agenda__back-link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M19 12H5M12 5l-7 7 7 7" />
+                            </svg>
+                            Inicio
+                        </Link>
+                        <div className="agenda__hero-titulo">
+                            <span className="agenda__hero-eyebrow">Agenda de Experiencias</span>
+                            <h1 className="agenda__hero-h1">Calendario de Viajes</h1>
+                            <p className="agenda__hero-desc">
+                                Selecciona un día para ver los planes disponibles. Los días marcados tienen experiencias esperándote.
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </header>
+                </header>
+            )}
 
-            {/* ── CALENDARIO ── */}
-            <main className="agenda__main">
+            <div className="agenda__main">
                 {errorAgenda && (
                     <p className="agenda__error" role="alert">
                         {errorAgenda}
@@ -346,7 +354,7 @@ export default function Agenda() {
                         Hoy
                     </span>
                 </div>
-            </main>
+            </div>
             {/* ── MODAL DE DETALLE ── */}
             {viajeParaModal && diaSeleccionado && (
                 <ModalDetalleViaje

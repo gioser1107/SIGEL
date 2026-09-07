@@ -1,6 +1,7 @@
 .logo-marca {
   display: flex;
   align-items: center;
+  gap: 0.55rem;
   min-width: 0;
 }
 
@@ -13,11 +14,50 @@
   flex-shrink: 0;
 }
 
+.logo-marca__texto {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+.logo-marca__texto strong {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.2px;
+}
+
+.logo-marca__texto strong span {
+  color: var(--color-primary);
+}
+
+.logo-marca__eslogan {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
 .logo-marca--compacto .logo-marca__archivo {
   height: 2.5rem;
   width: 2.5rem;
 }
 
+.logo-marca--compacto .logo-marca__texto strong {
+  font-size: 0.95rem;
+}
+
 .logo-marca--sobre-oscuro .logo-marca__archivo {
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.28));
+}
+
+.logo-marca--sobre-oscuro .logo-marca__texto strong,
+.logo-marca--sobre-oscuro .logo-marca__texto strong span {
+  color: #ffffff;
+}
+
+.logo-marca--sobre-oscuro .logo-marca__eslogan {
+  color: rgba(255, 255, 255, 0.72);
 }

@@ -208,6 +208,7 @@ export default function App() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<MisViajes />} />
+            <Route path="agenda" element={<Agenda />} />
             <Route path="reservas/:reservaId/abonar" element={<AbonarReserva />} />
             <Route path="registrar-pago" element={<RegistrarPago />} />
             <Route path="solicitudes" element={<MisSolicitudes />} />

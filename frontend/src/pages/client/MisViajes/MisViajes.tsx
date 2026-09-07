@@ -64,7 +64,7 @@ export default function MisViajes() {
             Gestiona tus reservas y revisa el estado de tus pagos.
           </p>
         </div>
-        <Link to="/agenda" className="mis-viajes__btn-explorar">
+        <Link to="/client/agenda" className="mis-viajes__btn-explorar">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M12 5v14M5 12h14" />
           </svg>
@@ -86,7 +86,7 @@ export default function MisViajes() {
           <p className="mis-viajes__vacio-desc">
             Explora la agenda de experiencias y reserva tu próxima aventura.
           </p>
-          <Link to="/agenda" className="mis-viajes__vacio-btn">
+          <Link to="/client/agenda" className="mis-viajes__vacio-btn">
             Ver calendario de viajes
           </Link>
         </div>

@@ -648,6 +648,48 @@
     }
 }
 
+/* ══════════════════════════════════════════
+   VARIANTE PORTAL CLIENTE
+══════════════════════════════════════════ */
+.agenda--portal {
+    min-height: 0;
+    padding-top: 0;
+    background: transparent;
+}
+
+.agenda__cabecera-portal {
+    margin-bottom: var(--spacing-2xl);
+}
+
+.agenda__cabecera-portal-titulo {
+    font-family: var(--font-heading);
+    font-size: var(--font-size-3xl);
+    font-weight: 800;
+    color: var(--color-text-primary);
+    letter-spacing: -0.5px;
+    margin: 0 0 var(--spacing-xs);
+}
+
+.agenda__cabecera-portal-desc {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+    max-width: 36rem;
+    line-height: 1.6;
+}
+
+.agenda--portal .agenda__main {
+    max-width: none;
+    margin: 0;
+    padding: 0 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .agenda--portal .agenda__main {
+        padding: 0 0 1.5rem;
+    }
+}
+
 @media (max-width: 480px) {
     .agenda__hero {
         padding: 2rem 1rem 2.25rem;

@@ -42,7 +42,7 @@ export default function FormularioImagenesDestino({
         <SelectorImagenArchivo
           etiqueta="Nueva imagen"
           archivo={archivoNuevo}
-          cargando={cargando}
+          cargando={cargando && !!archivoNuevo}
           onArchivoChange={onArchivoChange}
         />
         <Boton
@@ -51,17 +51,26 @@ export default function FormularioImagenesDestino({
           onClick={onSubir}
           disabled={cargando || !archivoNuevo}
         >
-          {cargando ? 'Subiendo…' : 'Agregar imagen'}
+          {cargando && archivoNuevo ? 'Subiendo…' : 'Agregar imagen'}
         </Boton>
       </div>
 
-      {imagenes.length === 0 ? (
+      {cargando && imagenes.length === 0 ? (
+        <p className="dest-imagenes__vacio">Cargando imágenes…</p>
+      ) : imagenes.length === 0 ? (
         <p className="dest-imagenes__vacio">Sin imágenes. Sube una foto para mostrar portada.</p>
       ) : (
         <ul className="dest-imagenes__lista">
           {imagenes.map((img) => (
             <li key={img.id} className="dest-imagenes__item">
-              <img src={img.url} alt="" className="dest-imagenes__miniatura" />
+              <img
+                src={img.url}
+                alt=""
+                className="dest-imagenes__miniatura"
+                onError={(e) => {
+                  e.currentTarget.classList.add('dest-imagenes__miniatura--rota');
+                }}
+              />
               <div className="dest-imagenes__info">
                 <span className="dest-imagenes__url" title={img.url}>
                   {img.es_portada ? 'Imagen de portada' : `Imagen ${img.orden + 1}`}

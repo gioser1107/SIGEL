@@ -57,7 +57,7 @@ export default function LayoutCliente() {
         </NavLink>
 
         <NavLink
-          to="/agenda"
+          to="/client/agenda"
           className={({ isActive }) => `tab-bar__item ${isActive ? 'tab-bar__item--activo' : ''}`}
         >
           <svg className="tab-bar__icono" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

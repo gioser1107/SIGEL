@@ -125,7 +125,7 @@ export default function RegistrarPago() {
 
   useEffect(() => {
     if (!viajePendiente && paso !== 4) {
-      navegar('/agenda');
+      navegar('/client/agenda');
     }
   }, [viajePendiente, paso, navegar]);
 
@@ -305,7 +305,7 @@ export default function RegistrarPago() {
 
   const manejarCancelar = () => {
     limpiarProgresoReserva();
-    navegar('/agenda');
+    navegar('/client/agenda');
   };
 
   const manejarIrMisViajes = () => {
