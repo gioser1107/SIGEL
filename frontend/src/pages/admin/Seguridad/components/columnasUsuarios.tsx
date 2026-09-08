@@ -31,6 +31,12 @@ export const columnasUsuarios: Columna<UsuarioSistema>[] = [
   {
     id: 'rol',
     encabezado: 'Rol',
-    accessor: (u) => <span className="seguridad__insignia-rol">{u.rol}</span>,
+    accessor: (u) => (
+      <span
+        className={`seguridad__insignia-rol${u.rol.trim().toLowerCase() === 'cliente' ? ' seguridad__insignia-rol--cliente' : ''}`}
+      >
+        {u.rol}
+      </span>
+    ),
   },
 ];

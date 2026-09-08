@@ -40,6 +40,7 @@ export interface PasajeroExtraPublicoDTO {
 export interface CrearReservaClienteDTO {
   viaje_id: number;
   titular_punto_recogida_id?: number | null;
+  titular_puntos_recogida?: PuntoRecogidaInline[];
   pasajeros_extra?: PasajeroExtraPublicoDTO[];
   asientos_ids?: number[];
 }

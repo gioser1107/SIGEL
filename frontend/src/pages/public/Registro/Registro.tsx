@@ -43,7 +43,7 @@ const MAX_DIGITOS_TELEFONO = 7;
 
 const PASOS = [
   { id: 1, titulo: 'Tus datos', hint: 'Identidad y acceso' },
-  { id: 2, titulo: 'Ubicación', hint: 'Estado y ciudad' },
+  { id: 2, titulo: 'Ubicación', hint: 'Dirección y ciudad' },
   { id: 3, titulo: 'Recogida', hint: 'Domicilio opcional' },
 ] as const;
 
@@ -140,6 +140,7 @@ export default function Registro() {
 
   const [estados, setEstados] = useState<{ id: number; nombre: string }[]>([]);
   const [ciudades, setCiudades] = useState<{ id: number; nombre: string }[]>([]);
+  const [direccion, setDireccion] = useState('');
   const [estadoId, setEstadoId] = useState('');
   const [ciudadId, setCiudadId] = useState('');
 
@@ -206,6 +207,7 @@ export default function Registro() {
         tipo_documento: tipoDocumento,
         numero_documento: numeroDocumento.trim(),
         telefono: telefonoCompleto || undefined,
+        direccion: direccion.trim() || undefined,
         estado_id: estadoId ? Number(estadoId) : undefined,
         ciudad_id: ciudadId ? Number(ciudadId) : undefined,
         ...puntosPayload,
@@ -405,8 +407,18 @@ export default function Registro() {
               {paso === 2 && (
                 <div className="registro-page__ubicacion">
                   <p className="registro-page__nota">
-                    Primero elige el estado; después selecciona la ciudad. Puedes completar esto más tarde.
+                    Indica tu dirección y luego el estado y la ciudad. Puedes completar esto más tarde.
                   </p>
+                  <Entrada
+                    etiqueta="Dirección"
+                    type="text"
+                    placeholder="Calle, número, urbanización, edificio, piso, apto."
+                    value={direccion}
+                    onChange={(e) => setDireccion(e.target.value)}
+                    maxLength={255}
+                    autoComplete="street-address"
+                    className="inicio-sesion__input-group"
+                  />
                   <div className="registro-page__fila">
                     <div className="grupo-entrada inicio-sesion__input-group">
                       <label htmlFor="registro-estado" className="grupo-entrada__etiqueta">

@@ -18,6 +18,7 @@ from modelos.cliente_modelo import (
 from modelos.destino_modelo import Destino, imagenes_destino
 from modelos.punto_recogida_modelo import (
     PuntoRecogida,
+    asignar_puntos_a_cliente,
     obtener_punto_predeterminado_cliente,
     punto_pertenece_a_cliente,
     punto_recogida_a_dict,
@@ -305,6 +306,7 @@ def crear_reserva_desde_landing(
     titular_punto_recogida_id: Optional[int],
     pasajeros_extra: list,
     asientos_ids: Optional[list[int]] = None,
+    titular_puntos_recogida: Optional[list] = None,
 ) -> Reserva:
     cliente = db.query(Cliente).filter(
         Cliente.id == cliente_id,
@@ -338,13 +340,21 @@ def crear_reserva_desde_landing(
     destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
     recargo_menor = float(destino.recargo_menor_eur) if destino and destino.recargo_menor_eur else 0.0
 
+    if titular_puntos_recogida:
+        asignar_puntos_a_cliente(
+            db,
+            cliente_id,
+            puntos_nuevos=titular_puntos_recogida,
+            creado_por_usuario_id=usuario_id,
+        )
+
     if titular_punto_recogida_id is None:
         titular_punto_recogida_id = obtener_punto_predeterminado_cliente(db, cliente_id)
 
     if titular_punto_recogida_id is None:
         raise HTTPException(
             status_code=400,
-            detail="Debe registrar un domicilio de recogida en su perfil antes de reservar",
+            detail="Indica la dirección de recogida para crear la reserva",
         )
 
     validar_punto_recogida(db, cliente_id, titular_punto_recogida_id)

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { listarPermisos, listarRoles, listarUsuarios } from '../../../../services/seguridad';
 import type { Permiso, Rol, SeccionSeguridad, UsuarioSistema } from '../../../../types/seguridad';
 import { LIMITE_PAGINA_MAX } from '../../../../types/paginacion';
-import { MODULOS_SEGURIDAD } from '../constants';
+import { MODULOS_SEGURIDAD, type FiltroTipoUsuario } from '../constants';
 import { mensajeError } from '../utils/mensajeError';
 
 interface UseDatosSeguridadOptions {
@@ -12,6 +12,7 @@ interface UseDatosSeguridadOptions {
   pagina: number;
   limite: number;
   setTotal: (total: number) => void;
+  filtroUsuarios?: FiltroTipoUsuario;
 }
 
 export default function useDatosSeguridad({
@@ -21,6 +22,7 @@ export default function useDatosSeguridad({
   pagina,
   limite,
   setTotal,
+  filtroUsuarios = 'todos',
 }: UseDatosSeguridadOptions) {
   const [usuarios, setUsuarios] = useState<UsuarioSistema[]>([]);
   const [roles, setRoles] = useState<Rol[]>([]);
@@ -37,7 +39,7 @@ export default function useDatosSeguridad({
       if (puedeLeer(MODULOS_SEGURIDAD.usuarios)) {
         if (seccion === 'usuarios') {
           tareas.push(
-            listarUsuarios({ pagina, limite }).then((respuesta) => {
+            listarUsuarios({ pagina, limite, filtro: filtroUsuarios }).then((respuesta) => {
               setUsuarios(respuesta.items);
               setTotal(respuesta.total);
             }),
@@ -85,7 +87,7 @@ export default function useDatosSeguridad({
     } finally {
       setCargando(false);
     }
-  }, [puedeLeer, onError, seccion, pagina, limite, setTotal]);
+  }, [puedeLeer, onError, seccion, pagina, limite, setTotal, filtroUsuarios]);
 
   useEffect(() => {
     cargarDatos();

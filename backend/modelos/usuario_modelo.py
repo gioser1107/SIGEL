@@ -135,12 +135,25 @@ def usuario_a_dict_con_rol(db: Session, usuario: Usuario) -> dict:
     return usuario_a_dict(usuario, nombre_rol)
 
 
-def listar_usuarios(db: Session, pagina: int = 1, limite: int = 10) -> dict:
+def listar_usuarios(
+    db: Session,
+    pagina: int = 1,
+    limite: int = 10,
+    filtro: str = "todos",
+) -> dict:
     consulta = (
         db.query(Usuario)
+        .join(Rol, Usuario.rol_id == Rol.id)
         .filter(Usuario.eliminado_en.is_(None))
-        .order_by(Usuario.apellido.asc(), Usuario.nombre.asc())
     )
+
+    filtro_efectivo = (filtro or "todos").strip().lower()
+    if filtro_efectivo == "clientes":
+        consulta = consulta.filter(Rol.nombre.ilike("cliente"))
+    elif filtro_efectivo == "sistema":
+        consulta = consulta.filter(~Rol.nombre.ilike("cliente"))
+
+    consulta = consulta.order_by(Usuario.apellido.asc(), Usuario.nombre.asc())
     usuarios, total = paginar_consulta(consulta, pagina, limite)
     items = [usuario_a_dict_con_rol(db, usuario) for usuario in usuarios]
     return respuesta_paginada(items, total, pagina, limite)

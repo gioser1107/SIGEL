@@ -187,6 +187,9 @@ export default function RegistrarPago() {
       const respuesta = await crearReservaCliente({
         viaje_id: viajePendiente.viaje.id,
         titular_punto_recogida_id: datosPasajeros.titularPuntoRecogidaId ?? null,
+        titular_puntos_recogida: datosPasajeros.titularDomicilioNuevo
+          ? [datosPasajeros.titularDomicilioNuevo]
+          : undefined,
         pasajeros_extra: datosPasajeros.pasajeros.map((p) =>
           acompananteFormularioAPayload(p.ficha, p.es_menor, p.domicilio),
         ),

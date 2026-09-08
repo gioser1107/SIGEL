@@ -239,17 +239,16 @@ export default function FormularioClienteCampos({
         )}
       </section>
 
-      {!esAcompanante && (
-        <div className="drawer-form__campo">
-          <label className="drawer-form__label" htmlFor={id('direccion')}>Dirección</label>
-          <input
-            id={id('direccion')}
-            className="drawer-form__input"
-            value={form.direccion}
-            onChange={(e) => onChange((f) => ({ ...f, direccion: e.target.value }))}
-          />
-        </div>
-      )}
+      <div className="drawer-form__campo">
+        <label className="drawer-form__label" htmlFor={id('direccion')}>Dirección</label>
+        <input
+          id={id('direccion')}
+          className="drawer-form__input"
+          value={form.direccion}
+          onChange={(e) => onChange((f) => ({ ...f, direccion: e.target.value }))}
+          placeholder="Calle, número, urbanización, edificio, piso, apto."
+        />
+      </div>
 
       <section className="fp-form-seccion">
         <h3 className="fp-form-seccion__titulo">Ubicación</h3>

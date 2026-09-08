@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { clienteAFormulario } from '../../../pages/admin/Clientes/utils/mapeoFormulario';
 import { buscarClientePorDocumento } from '../../../services/clientes';
 import type { Cliente } from '../../../types/cliente';
-import type { PuntoRecogida } from '../../../types/puntoRecogida';
+import type { PuntoRecogida, PuntoRecogidaInline } from '../../../types/puntoRecogida';
 import type { ValorDomicilioAcompanante } from '../../puntos-recogida/DomicilioRecogidaAcompanante';
 import useUbicacionesCliente from '../../../pages/admin/Clientes/hooks/useUbicacionesCliente';
 import ModalAcompananteDatos from './ModalAcompananteDatos';
@@ -36,6 +36,7 @@ interface PropsModalAcompanante {
   recargoMenorEur: number;
   domiciliosTitular: PuntoRecogida[];
   titularPuntoRecogidaId: number | null;
+  titularDomicilioNuevo?: PuntoRecogidaInline | null;
   onCerrar: () => void;
   onGuardar: (pasajero: PasajeroPublico) => void;
 }
@@ -47,6 +48,7 @@ export default function ModalAcompanante({
   recargoMenorEur,
   domiciliosTitular,
   titularPuntoRecogidaId,
+  titularDomicilioNuevo = null,
   onCerrar,
   onGuardar,
 }: PropsModalAcompanante) {
@@ -268,6 +270,7 @@ export default function ModalAcompanante({
         borrador={borrador}
         domiciliosTitular={domiciliosTitular}
         titularPuntoRecogidaId={titularPuntoRecogidaId}
+        titularDomicilioNuevo={titularDomicilioNuevo}
         errorDomicilio={errorDomicilio}
         onCerrar={onCerrar}
         onAtras={() => setPaso('datos')}

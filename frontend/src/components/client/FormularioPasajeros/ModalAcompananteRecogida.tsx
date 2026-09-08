@@ -4,7 +4,7 @@ import DomicilioRecogidaAcompanante, {
   type ValorDomicilioAcompanante,
 } from '../../puntos-recogida/DomicilioRecogidaAcompanante';
 import { etiquetaPunto, referenciaPunto } from '../../puntos-recogida/utils';
-import type { PuntoRecogida } from '../../../types/puntoRecogida';
+import type { PuntoRecogida, PuntoRecogidaInline } from '../../../types/puntoRecogida';
 import type { PasajeroPublico } from './pasajeroPublico';
 
 type OpcionRecogida = 'titular' | 'otro' | null;
@@ -14,6 +14,7 @@ interface PropsModalAcompananteRecogida {
   borrador: PasajeroPublico;
   domiciliosTitular: PuntoRecogida[];
   titularPuntoRecogidaId: number | null;
+  titularDomicilioNuevo?: PuntoRecogidaInline | null;
   errorDomicilio: string | null;
   onCerrar: () => void;
   onAtras: () => void;
@@ -35,8 +36,18 @@ function resolverIdTitular(
 function inferirOpcionInicial(
   domicilio: ValorDomicilioAcompanante,
   idTitular: number | null,
+  titularNuevo: PuntoRecogidaInline | null,
 ): OpcionRecogida {
   if (idTitular != null && domicilio.punto_recogida_id === idTitular && !domicilio.puntos_recogida) {
+    return 'titular';
+  }
+  if (
+    titularNuevo &&
+    domicilio.puntos_recogida &&
+    domicilio.punto_recogida_id == null &&
+    domicilio.puntos_recogida.direccion === titularNuevo.direccion &&
+    domicilio.puntos_recogida.nombre === titularNuevo.nombre
+  ) {
     return 'titular';
   }
   if (domicilio.punto_recogida_id != null || domicilio.puntos_recogida) {
@@ -50,6 +61,7 @@ export default function ModalAcompananteRecogida({
   borrador,
   domiciliosTitular,
   titularPuntoRecogidaId,
+  titularDomicilioNuevo = null,
   errorDomicilio,
   onCerrar,
   onAtras,
@@ -72,19 +84,23 @@ export default function ModalAcompananteRecogida({
 
   useEffect(() => {
     if (!abierto) return;
-    setOpcion(inferirOpcionInicial(borrador.domicilio, idTitular));
+    setOpcion(inferirOpcionInicial(borrador.domicilio, idTitular, titularDomicilioNuevo));
     setErrorLocal(null);
-  }, [abierto, borrador.id, borrador.domicilio, idTitular]);
+  }, [abierto, borrador.id, borrador.domicilio, idTitular, titularDomicilioNuevo]);
 
   const nombreAcompanante =
     `${borrador.ficha.nombre} ${borrador.ficha.apellido}`.trim() || 'este acompañante';
 
   const seleccionarTitular = () => {
-    if (idTitular == null) return;
+    if (idTitular == null && !titularDomicilioNuevo) return;
     setOpcion('titular');
     setErrorLocal(null);
     onLimpiarError();
-    onChangeDomicilio({ punto_recogida_id: idTitular, puntos_recogida: null });
+    onChangeDomicilio(
+      idTitular != null
+        ? { punto_recogida_id: idTitular, puntos_recogida: null }
+        : { punto_recogida_id: null, puntos_recogida: titularDomicilioNuevo },
+    );
   };
 
   const seleccionarOtro = () => {
@@ -101,11 +117,15 @@ export default function ModalAcompananteRecogida({
     }
 
     if (opcion === 'titular') {
-      if (idTitular == null) {
-        setErrorLocal('El titular aún no tiene un domicilio de recogida seleccionado.');
+      if (idTitular != null) {
+        onGuardar({ punto_recogida_id: idTitular, puntos_recogida: null });
         return;
       }
-      onGuardar({ punto_recogida_id: idTitular, puntos_recogida: null });
+      if (titularDomicilioNuevo) {
+        onGuardar({ punto_recogida_id: null, puntos_recogida: titularDomicilioNuevo });
+        return;
+      }
+      setErrorLocal('El titular aún no tiene un domicilio de recogida seleccionado.');
       return;
     }
 
@@ -163,7 +183,7 @@ export default function ModalAcompananteRecogida({
               type="button"
               className={`fp-recogida-opcion ${opcion === 'titular' ? 'fp-recogida-opcion--activa' : ''}`}
               onClick={seleccionarTitular}
-              disabled={idTitular == null}
+              disabled={idTitular == null && !titularDomicilioNuevo}
             >
               <span className="fp-recogida-opcion__radio" aria-hidden />
               <span className="fp-recogida-opcion__cuerpo">
@@ -176,9 +196,14 @@ export default function ModalAcompananteRecogida({
                       ? ` (Ref: ${referenciaPunto(domicilioTitular)})`
                       : ''}
                   </span>
+                ) : titularDomicilioNuevo ? (
+                  <span className="fp-recogida-opcion__detalle">
+                    {titularDomicilioNuevo.nombre}
+                    {titularDomicilioNuevo.direccion ? ` — ${titularDomicilioNuevo.direccion}` : ''}
+                  </span>
                 ) : (
                   <span className="fp-recogida-opcion__detalle fp-recogida-opcion__detalle--aviso">
-                    Primero selecciona el domicilio del titular en el paso anterior.
+                    Primero indica la dirección del titular en el paso anterior.
                   </span>
                 )}
               </span>

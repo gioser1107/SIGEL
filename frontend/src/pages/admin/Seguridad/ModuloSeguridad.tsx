@@ -13,7 +13,7 @@ import type { Permiso, Rol, SeccionSeguridad, UsuarioSistema } from '../../../ty
 import { columnasPermisos } from './components/columnasPermisos';
 import { columnasRoles } from './components/columnasRoles';
 import { columnasUsuarios } from './components/columnasUsuarios';
-import { ETIQUETAS_SECCION, MODULOS_SEGURIDAD } from './constants';
+import { ETIQUETAS_SECCION, FILTROS_TIPO_USUARIO, MODULOS_SEGURIDAD, type FiltroTipoUsuario } from './constants';
 import useDatosSeguridad from './hooks/useDatosSeguridad';
 import PanelCrearPermiso from './Permisos/CrearPermiso/PanelCrearPermiso';
 import PanelEditarPermiso from './Permisos/EditarPermiso/PanelEditarPermiso';
@@ -50,6 +50,7 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
 
   const [seccion, setSeccion] = useState<SeccionSeguridad>(seccionInicial);
   const [busqueda, setBusqueda] = useState('');
+  const [filtroUsuarios, setFiltroUsuarios] = useState<FiltroTipoUsuario>('todos');
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState<string | null>(null);
   const { pagina, setTotal, total, totalPaginas, irPagina, reiniciarPagina, limite } = usePaginacionListado();
@@ -62,6 +63,7 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
     pagina,
     limite,
     setTotal,
+    filtroUsuarios,
   });
 
   const puedeCrearUsuario = puedeCrear(MODULOS_SEGURIDAD.usuarios);
@@ -105,7 +107,7 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
 
   useEffect(() => {
     reiniciarPagina();
-  }, [seccion, reiniciarPagina]);
+  }, [seccion, filtroUsuarios, reiniciarPagina]);
 
   const usuariosFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
@@ -309,6 +311,20 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
               aria-label="Buscar"
             />
           </div>
+          {seccion === 'usuarios' && (
+            <select
+              className="seguridad__filtro"
+              value={filtroUsuarios}
+              onChange={(e) => setFiltroUsuarios(e.target.value as FiltroTipoUsuario)}
+              aria-label="Filtrar por tipo de usuario"
+            >
+              {FILTROS_TIPO_USUARIO.map((opcion) => (
+                <option key={opcion.valor} value={opcion.valor}>
+                  {opcion.etiqueta}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -317,7 +333,13 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
           columnas={columnasUsuarios}
           datos={usuariosFiltrados}
           cargando={cargando}
-          mensajeVacio="No hay usuarios registrados."
+          mensajeVacio={
+            filtroUsuarios === 'sistema'
+              ? 'No hay usuarios del sistema.'
+              : filtroUsuarios === 'clientes'
+                ? 'No hay clientes con cuenta de portal.'
+                : 'No hay usuarios registrados.'
+          }
           idFila={(u) => u.id}
           onFilaClick={puedeEditarUsuario ? abrirEditarUsuario : undefined}
           accionesFila={

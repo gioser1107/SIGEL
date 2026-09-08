@@ -3,6 +3,25 @@
 .seguridad {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.seguridad__filtro {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.seguridad__filtro:focus {
+  outline: none;
+  border-color: var(--color-primary);
 }
 
 .seguridad__alerta--exito {

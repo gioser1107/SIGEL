@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import Boton from '../../ui/Boton/Boton';
-import SelectorPuntoRecogidaReserva from '../../puntos-recogida/SelectorPuntoRecogidaReserva';
+import DomicilioRecogidaAcompanante, {
+  type ValorDomicilioAcompanante,
+} from '../../puntos-recogida/DomicilioRecogidaAcompanante';
 import { listarMisPuntosRecogida } from '../../../services/puntos_recogida';
-import type { PuntoRecogida } from '../../../types/puntoRecogida';
+import type { PuntoRecogida, PuntoRecogidaInline } from '../../../types/puntoRecogida';
 import ListaResumenAcompanantes from './ListaResumenAcompanantes';
 import ModalAcompanante from './ModalAcompanante';
 import { pasajeroVacio, clonarPasajero, type PasajeroPublico } from './pasajeroPublico';
@@ -17,6 +18,7 @@ export type { PasajeroPublico };
 
 export interface EstadoFormularioPasajeros {
   titularPuntoRecogidaId: number | null;
+  titularDomicilioNuevo?: PuntoRecogidaInline | null;
   pasajeros: PasajeroPublico[];
   proximoId: number;
 }
@@ -37,9 +39,11 @@ export default function FormularioPasajeros({
 }: FormularioPasajerosProps) {
   const [domiciliosTitular, setDomiciliosTitular] = useState<PuntoRecogida[]>([]);
   const [cargandoDomiciliosTitular, setCargandoDomiciliosTitular] = useState(true);
-  const [titularPuntoRecogidaId, setTitularPuntoRecogidaId] = useState<number | null>(
-    () => estadoInicial?.titularPuntoRecogidaId ?? null,
-  );
+  const [titularDomicilio, setTitularDomicilio] = useState<ValorDomicilioAcompanante>(() => ({
+    punto_recogida_id: estadoInicial?.titularPuntoRecogidaId ?? null,
+    puntos_recogida: estadoInicial?.titularDomicilioNuevo ?? null,
+  }));
+  const titularPuntoRecogidaId = titularDomicilio.punto_recogida_id;
   const [pasajeros, setPasajeros] = useState<PasajeroPublico[]>(
     () => estadoInicial?.pasajeros.map(clonarPasajero) ?? [],
   );
@@ -51,7 +55,10 @@ export default function FormularioPasajeros({
 
   useEffect(() => {
     if (!estadoInicial) return;
-    setTitularPuntoRecogidaId(estadoInicial.titularPuntoRecogidaId);
+    setTitularDomicilio({
+      punto_recogida_id: estadoInicial.titularPuntoRecogidaId,
+      puntos_recogida: estadoInicial.titularDomicilioNuevo ?? null,
+    });
     setPasajeros(estadoInicial.pasajeros.map(clonarPasajero));
     setProximoId(estadoInicial.proximoId);
   }, [estadoInicial]);
@@ -61,10 +68,10 @@ export default function FormularioPasajeros({
     listarMisPuntosRecogida()
       .then((lista) => {
         setDomiciliosTitular(lista);
-        setTitularPuntoRecogidaId((actual) => {
-          if (actual != null) return actual;
+        setTitularDomicilio((actual) => {
+          if (actual.punto_recogida_id != null || actual.puntos_recogida) return actual;
           const predeterminado = lista.find((d) => d.es_predeterminado)?.id ?? null;
-          return predeterminado;
+          return { punto_recogida_id: predeterminado, puntos_recogida: null };
         });
       })
       .catch(() => setDomiciliosTitular([]))
@@ -113,14 +120,16 @@ export default function FormularioPasajeros({
   const manejarEnvio = (e: { preventDefault(): void }) => {
     e.preventDefault();
 
-    if (domiciliosTitular.length === 0) {
-      setErrorFormulario('Debe registrar un domicilio de recogida en su perfil antes de reservar.');
-      return;
-    }
-
-    const titularId = resolverDomicilioTitular(titularPuntoRecogidaId);
-    if (!titularId) {
-      setErrorFormulario('Selecciona tu domicilio de recogida.');
+    const titularNuevo = titularDomicilio.puntos_recogida;
+    const titularId = titularNuevo
+      ? null
+      : resolverDomicilioTitular(titularDomicilio.punto_recogida_id);
+    if (!titularId && !titularNuevo) {
+      setErrorFormulario(
+        domiciliosTitular.length > 0
+          ? 'Selecciona tu domicilio o completa la dirección de recogida.'
+          : 'Completa la dirección de recogida (etiqueta, dirección, estado y ciudad).',
+      );
       return;
     }
 
@@ -148,19 +157,21 @@ export default function FormularioPasajeros({
         clon.domicilio.punto_recogida_id != null &&
         idsDomiciliosTitular.has(clon.domicilio.punto_recogida_id)
       ) {
-        clon.domicilio = { punto_recogida_id: titularId, puntos_recogida: null };
+        clon.domicilio = titularNuevo
+          ? { punto_recogida_id: null, puntos_recogida: titularNuevo }
+          : { punto_recogida_id: titularId, puntos_recogida: null };
       }
       return clon;
     });
     onSubmit({
       titularPuntoRecogidaId: titularId,
+      titularDomicilioNuevo: titularNuevo,
       pasajeros: pasajerosNormalizados,
       proximoId,
     });
   };
 
   const totalRecargo = pasajeros.filter((p) => p.es_menor).length * recargo_menor_eur;
-  const hayPredeterminadoTitular = domiciliosTitular.some((d) => d.es_predeterminado);
 
   return (
     <>
@@ -177,25 +188,21 @@ export default function FormularioPasajeros({
           <div className="fp-card">
             <h4 className="fp-card__titulo">Datos del Titular</h4>
             <p className="fp-card__subtitulo">
-              Tus datos personales ya están registrados. Indica dónde debe pasar la agencia a recogerte.
+              Tus datos personales ya están registrados. Escribe la dirección donde debe recogerte
+              la agencia o elige un domicilio que ya tengas guardado.
             </p>
 
             <div className="formulario-pago__field">
-              <SelectorPuntoRecogidaReserva
+              <DomicilioRecogidaAcompanante
+                idPrefix="titular-recogida"
                 domicilios={domiciliosTitular}
-                cargando={cargandoDomiciliosTitular}
-                value={titularPuntoRecogidaId}
-                onChange={(id) => {
+                cargandoDomicilios={cargandoDomiciliosTitular}
+                value={titularDomicilio}
+                onChange={(valor) => {
                   setErrorFormulario(null);
-                  setTitularPuntoRecogidaId(id);
+                  setTitularDomicilio(valor);
                 }}
-                requerido={!hayPredeterminadoTitular}
               />
-              {domiciliosTitular.length === 0 && !cargandoDomiciliosTitular && (
-                <p className="fp-card__enlace-perfil">
-                  <Link to="/client/puntos-recogida">Registrar domicilio en mi perfil</Link>
-                </p>
-              )}
             </div>
           </div>
 
@@ -242,6 +249,7 @@ export default function FormularioPasajeros({
         recargoMenorEur={recargo_menor_eur}
         domiciliosTitular={domiciliosTitular}
         titularPuntoRecogidaId={titularPuntoRecogidaId}
+        titularDomicilioNuevo={titularDomicilio.puntos_recogida}
         onCerrar={cerrarModal}
         onGuardar={guardarDesdeModal}
       />

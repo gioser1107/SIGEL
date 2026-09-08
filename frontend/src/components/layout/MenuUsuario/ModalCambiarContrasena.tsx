@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import Boton from '../../ui/Boton/Boton';
 import { ErrorApi } from '../../../services/api';
 import { cambiarMiContrasena } from '../../../services/autenticacion';
@@ -145,7 +146,7 @@ export default function ModalCambiarContrasena({ abierto, onCerrar }: ModalCambi
 
   if (!abierto) return null;
 
-  return (
+  return createPortal(
     <div
       className="modal-contrasena__superposicion"
       onClick={() => {
@@ -226,6 +227,7 @@ export default function ModalCambiarContrasena({ abierto, onCerrar }: ModalCambi
           </form>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

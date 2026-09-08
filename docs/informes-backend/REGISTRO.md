@@ -6,6 +6,24 @@ No sustituye el SRS ni los RF. Sirve para defensa: qué cambió, por qué, y qu�
 
 ---
 
+## 2026-09-07 — Filtro sistema/clientes en listado de usuarios
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/controladores/usuario_controlador.py`, `backend/modelos/usuario_modelo.py`
+- **Qué se hizo:** `GET /api/usuarios/` acepta `filtro=todos|sistema|clientes`. `sistema` excluye el rol Cliente; `clientes` deja solo ese rol. El join es con `roles` y no cambia la forma de cada ítem.
+- **Por qué:** en el panel, las cuentas del sistema y las del portal salían mezcladas en la misma página. El filtro tiene que ir al API para que la paginación y el total coincidan.
+- **Qué no se tocó:** alta, edición, roles, permisos, login ni el módulo de clientes.
+- **Cómo probarlo:** Usuarios y roles → filtro «Usuarios del sistema» no debe listar rol Cliente; «Clientes del portal» solo ese rol.
+
+## 2026-09-07 — Reserva portal acepta domicilio nuevo del titular
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/controladores/reservas_controlador.py`, `backend/modelos/reservas_modelo.py`
+- **Qué se hizo:** `POST /api/reservas/cliente` acepta `titular_puntos_recogida` (dirección inline). Se crea el domicilio, se vincula al cliente y se usa en la reserva si no viene `titular_punto_recogida_id`.
+- **Por qué:** el portal solo dejaba elegir puntos ya guardados; sin domicilio previo la reserva pedía ir al perfil. Ahora el cliente puede escribir la dirección al reservar.
+- **Qué no se tocó:** cupo, asientos, acompañantes, validación de punto existente ni el flujo admin.
+- **Cómo probarlo:** portal → reservar un viaje sin puntos guardados → completar etiqueta, dirección, estado y ciudad → continuar. La reserva debe crearse y el domicilio quedar en «Mis puntos».
+
 ## 2026-09-07 — Galería de destinos en el listado
 
 - **Autor:** agente (Cursor)

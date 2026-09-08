@@ -49,3 +49,11 @@ export const ETIQUETAS_SECCION: Record<SeccionSeguridad, string> = {
   roles: 'Roles y permisos',
   permisos: 'Permisos',
 };
+
+export type FiltroTipoUsuario = 'todos' | 'sistema' | 'clientes';
+
+export const FILTROS_TIPO_USUARIO: { valor: FiltroTipoUsuario; etiqueta: string }[] = [
+  { valor: 'todos', etiqueta: 'Todos' },
+  { valor: 'sistema', etiqueta: 'Usuarios del sistema' },
+  { valor: 'clientes', etiqueta: 'Clientes del portal' },
+];
