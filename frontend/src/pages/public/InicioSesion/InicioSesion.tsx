@@ -396,8 +396,8 @@ export default function InicioSesion() {
               </p>
             ) : (
               <p>
-                ¿No tienes una cuenta?{' '}
-                <Link to="/registro">Créala gratis</Link>
+                ¿No tienes cuenta?{' '}
+                <Link to="/registro">Regístrate con tu documento</Link>
               </p>
             )}
           </div>

@@ -5,6 +5,7 @@ import { useNotificaciones } from '../../../hooks/useNotificaciones';
 import { nombreCompleto } from '../../../utils/nombrePersona';
 import { esRolClientePortal } from '../../../utils/permisosModulos';
 import PanelNotificaciones from './PanelNotificaciones';
+import MenuUsuario from '../MenuUsuario/MenuUsuario';
 import LogoMarca from '../../ui/LogoMarca/LogoMarca';
 import './LayoutAdmin.css';
 
@@ -454,7 +455,7 @@ export default function LayoutAdmin() {
             </div>
 
             {/* Avatar & Perfil Info */}
-            <div className="admin-cabecera__perfil">
+            <MenuUsuario triggerClassName="admin-cabecera__perfil">
               <div className="admin-cabecera__avatar">
                 {usuario ? iniciales(nombreCompleto(usuario.nombre, usuario.apellido)) : '—'}
               </div>
@@ -464,7 +465,7 @@ export default function LayoutAdmin() {
                 </span>
                 <span className="admin-cabecera__perfil-rol">{usuario?.rol ?? '—'}</span>
               </div>
-            </div>
+            </MenuUsuario>
           </div>
         </header>
 

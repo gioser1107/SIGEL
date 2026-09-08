@@ -238,7 +238,7 @@ export default function Registro() {
             <h1 className="inicio-sesion__title">Crear cuenta</h1>
             <p className="inicio-sesion__subtitle">
               {paso === 1
-                ? 'Regístrate para planificar tus próximos viajes.'
+                ? 'Elige un correo y una contraseña para entrar al portal.'
                 : `Paso ${paso} de 3 — ${subtitulo}.`}
             </p>
           </div>

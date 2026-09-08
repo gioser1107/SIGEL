@@ -79,6 +79,13 @@
   color: #059669;
 }
 
+.ficha-cliente__portal-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary, #475569);
+}
+
 .ficha-cliente__seccion {
   display: flex;
   flex-direction: column;

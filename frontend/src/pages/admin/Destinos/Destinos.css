@@ -231,11 +231,16 @@
 
 .dest-selector-imagen__input {
   position: absolute;
-  width: 1px;
-  height: 1px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  cursor: pointer;
+  z-index: 1;
+}
+
+.dest-selector-imagen__input:disabled {
+  cursor: not-allowed;
 }
 
 .dest-selector-imagen__placeholder {

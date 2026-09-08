@@ -84,7 +84,7 @@ def imagenes_destino(db: Session, destino_id: int) -> tuple[str, list[dict]]:
 def destino_a_dict(
     db: Session,
     destino: Destino,
-    incluir_galeria: bool = False,
+    incluir_galeria: bool = True,
 ) -> dict:
     precio = destino.precio_base_eur
     portada, imagenes = imagenes_destino(db, destino.id)

@@ -21,7 +21,7 @@ interface PropsPanelEditar {
   onGuardar: () => void;
   onFormChange: (form: DatosDestinoNuevo) => void;
   onArchivoNuevoChange: (archivo: File | null) => void;
-  onSubirImagen: () => void;
+  onSubirImagen: (archivo?: File | null) => void;
   onMarcarPortada: (imagenId: number) => void;
   onQuitarImagen: (imagenId: number) => void;
 }

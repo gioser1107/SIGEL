@@ -6,6 +6,24 @@ No sustituye el SRS ni los RF. Sirve para defensa: qué cambió, por qué, y qu�
 
 ---
 
+## 2026-09-07 — Galería de destinos en el listado
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/modelos/destino_modelo.py`, `backend/migraciones/20260906_destino_dificultad.sql` (aplicada en local)
+- **Qué se hizo:** `destino_a_dict` incluye `imagenes` por defecto (ya se consultaban para la portada). En la base local se añadió `destinos.dificultad` (la migración ya existía y no estaba aplicada).
+- **Por qué:** sin `dificultad` cualquier consulta a destinos devolvía 503, así que la galería no cargaba y no se podía subir fotos.
+- **Qué no se tocó:** rutas `/api/destinos/{id}/imagenes*`, permisos, conversión a WebP, soft-delete de fotos, catálogo público.
+- **Cómo probarlo:** Destinos → Editar → debe verse la galería; elegir un JPG/PNG la agrega.
+
+## 2026-09-07 — Registro portal vincula ficha admin sin pisar datos
+
+- **Autor:** agente (Cursor)
+- **Archivos:** `backend/modelos/usuario_modelo.py`
+- **Qué se hizo:** `POST /api/auth/registro` sigue reclamando la ficha admin (`usuario_id` nulo) por el mismo tipo + número de documento. Si el cliente deja teléfono, dirección o ubicación vacíos, no se borran los datos de la agencia. La respuesta incluye `ficha_vinculada` y un mensaje distinto cuando se vincula.
+- **Por qué:** el alta desde admin no crea usuario; el cliente debe registrarse en el portal. Al omitir el paso de ubicación se vaciaban estado, ciudad y teléfono de la ficha.
+- **Qué no se tocó:** login, creación admin de clientes, roles, reservas ni el empareje por nombre de `asegurar_perfil_cliente_usuario`.
+- **Cómo probarlo:** crear un cliente en admin (sin cuenta). En `/registro` usar el mismo documento y omitir ciudad. La ficha debe quedar con `usuario_id` y conservar la ubicación original.
+
 ## 2026-09-07 — Subida de imágenes de destino sin MIME
 
 - **Autor:** agente (Cursor)

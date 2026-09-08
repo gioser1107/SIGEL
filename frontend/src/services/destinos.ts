@@ -65,11 +65,12 @@ export async function actualizarDestino(
   id: number,
   datos: DatosDestinoActualizar,
 ): Promise<{ mensaje: string; destino: Destino }> {
-  return apiRequest<{ mensaje: string; destino: Destino }>(`/destinos/${id}`, {
+  const respuesta = await apiRequest<{ mensaje: string; destino: Destino }>(`/destinos/${id}`, {
     method: 'PUT',
     requiresAuth: true,
     body: JSON.stringify(datos),
   });
+  return { ...respuesta, destino: normalizarDestino(respuesta.destino) };
 }
 
 export async function anularDestino(id: number): Promise<{ mensaje: string; destino_id: number }> {

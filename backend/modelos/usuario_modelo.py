@@ -405,6 +405,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
     db.add(nuevo_usuario)
     db.flush()
 
+    ficha_vinculada = False
     if cliente_existente is None:
         nuevo_cliente = Cliente(
             usuario_id=nuevo_usuario.id,
@@ -427,16 +428,26 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
 
         db.add(nuevo_cliente)
     else:
+        # Ficha creada desde admin (sin usuario): se reclama con el mismo documento.
+        # No se pisan teléfono, dirección ni ubicación si el portal los dejó vacíos.
+        ficha_vinculada = True
         nuevo_cliente = cliente_existente
         nuevo_cliente.usuario_id = nuevo_usuario.id
         nuevo_cliente.nombre = campos["nombre"]
         nuevo_cliente.apellido = campos["apellido"]
-        nuevo_cliente.razon_social = campos["razon_social"] or datos.razon_social
-        nuevo_cliente.telefono = telefono_limpio
-        nuevo_cliente.telefono_secundario = telefono_sec_limpio
-        nuevo_cliente.direccion = datos.direccion
-        nuevo_cliente.estado_id = datos.estado_id
-        nuevo_cliente.ciudad_id = datos.ciudad_id
+        razon_social_nueva = campos["razon_social"] or datos.razon_social
+        if razon_social_nueva:
+            nuevo_cliente.razon_social = razon_social_nueva
+        if telefono_limpio:
+            nuevo_cliente.telefono = telefono_limpio
+        if telefono_sec_limpio:
+            nuevo_cliente.telefono_secundario = telefono_sec_limpio
+        if datos.direccion:
+            nuevo_cliente.direccion = datos.direccion
+        if datos.estado_id is not None:
+            nuevo_cliente.estado_id = datos.estado_id
+        if datos.ciudad_id is not None:
+            nuevo_cliente.ciudad_id = datos.ciudad_id
         nuevo_cliente.actualizado_por = nuevo_usuario.id
         nuevo_cliente.actualizado_en = ahora
 
@@ -475,8 +486,15 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
     usuario_dict["permisos"] = cliente_dict["permisos"]
     usuario_dict["cliente_id"] = nuevo_cliente.id
 
+    mensaje = (
+        "Encontramos tu ficha en la agencia. Tu cuenta quedó vinculada."
+        if ficha_vinculada
+        else "Cuenta de cliente creada con éxito"
+    )
+
     return {
-        "mensaje": "Cuenta de cliente creada con éxito",
+        "mensaje": mensaje,
+        "ficha_vinculada": ficha_vinculada,
         "token": token,
         "tipo_token": "Bearer",
         "expira_en_segundos": expira_en_segundos,

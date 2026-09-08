@@ -76,6 +76,7 @@ export async function validarToken(): Promise<SesionUsuario> {
 
 interface RespuestaRegistroApi {
   mensaje: string;
+  ficha_vinculada?: boolean;
   token: string;
   tipo_token?: string;
   expira_en_segundos?: number;
@@ -104,7 +105,7 @@ export interface DatosRegistroCliente {
 
 export async function registrarCliente(
   datos: DatosRegistroCliente,
-): Promise<{ token: string; usuario: SesionUsuario }> {
+): Promise<{ token: string; usuario: SesionUsuario; fichaVinculada: boolean; mensaje: string }> {
   limpiarSesionLocal();
 
   const response = await apiRequest<RespuestaRegistroApi>('/auth/registro', {
@@ -125,7 +126,23 @@ export async function registrarCliente(
   return {
     token: response.token,
     usuario: response.usuario,
+    fichaVinculada: Boolean(response.ficha_vinculada),
+    mensaje: response.mensaje,
   };
+}
+
+export async function cambiarMiContrasena(
+  contrasenaActual: string,
+  contrasenaNueva: string,
+): Promise<void> {
+  await apiRequest<{ mensaje: string }>('/usuarios/mi-contrasena', {
+    method: 'PUT',
+    requiresAuth: true,
+    body: JSON.stringify({
+      contrasena_actual: contrasenaActual,
+      contrasena_nueva: contrasenaNueva,
+    }),
+  });
 }
 
 export function cerrarSesion(): void {

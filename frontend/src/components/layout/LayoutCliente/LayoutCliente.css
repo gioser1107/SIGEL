@@ -55,6 +55,33 @@
   gap: var(--spacing-lg);
 }
 
+.cabecera-cliente__perfil {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0.35rem var(--spacing-sm);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+.cabecera-cliente__perfil:hover {
+  background: rgba(18, 40, 75, 0.04);
+}
+
+.cabecera-cliente__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 2px 10px rgba(0, 85, 160, 0.15);
+}
+
 .cabecera-cliente__bienvenida {
   display: flex;
   flex-direction: column;

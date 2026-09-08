@@ -156,6 +156,12 @@ export default function FichaCliente({ cliente, activa }: FichaClienteProps) {
               {cliente.usuario_id ? 'Con cuenta de portal' : 'Sin cuenta de portal'}
             </span>
           </div>
+          {!cliente.usuario_id && (
+            <p className="ficha-cliente__portal-hint">
+              Puede crear su usuario en el portal con el documento {cliente.tipo_documento}-
+              {cliente.numero_documento}. La cuenta se vincula a esta ficha.
+            </p>
+          )}
         </div>
       </header>
 

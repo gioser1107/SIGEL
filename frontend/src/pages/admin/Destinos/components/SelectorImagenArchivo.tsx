@@ -52,11 +52,6 @@ export default function SelectorImagenArchivo({
     return () => URL.revokeObjectURL(url);
   }, [archivo]);
 
-  const abrirSelector = () => {
-    if (cargando) return;
-    inputRef.current?.click();
-  };
-
   const manejarSeleccion = (lista: FileList | null) => {
     const seleccionado = lista?.[0] ?? null;
     if (inputRef.current) {
@@ -87,24 +82,14 @@ export default function SelectorImagenArchivo({
 
       <div
         className={`dest-selector-imagen__zona ${archivo ? 'dest-selector-imagen__zona--con-archivo' : ''}`}
-        onClick={abrirSelector}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            abrirSelector();
-          }
-        }}
-        role="button"
-        tabIndex={cargando ? -1 : 0}
-        aria-label={etiqueta}
       >
         <input
           ref={inputRef}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp,image/*"
           className="dest-selector-imagen__input"
           disabled={cargando}
-          onClick={(e) => e.stopPropagation()}
+          aria-label={etiqueta}
           onChange={(e) => manejarSeleccion(e.target.files)}
         />
         {vistaPrevia ? (

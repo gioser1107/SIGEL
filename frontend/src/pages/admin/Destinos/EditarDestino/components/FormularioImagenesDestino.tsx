@@ -8,7 +8,7 @@ interface PropsFormularioImagenes {
   cargando: boolean;
   error: string | null;
   onArchivoChange: (archivo: File | null) => void;
-  onSubir: () => void;
+  onSubir: (archivo?: File | null) => void;
   onMarcarPortada: (imagenId: number) => void;
   onQuitar: (imagenId: number) => void;
 }
@@ -28,7 +28,7 @@ export default function FormularioImagenesDestino({
       <div className="dest-imagenes__encabezado">
         <span className="drawer-form__label">Galería de imágenes</span>
         <p className="drawer-form__ayuda">
-          Sube fotos desde tu dispositivo. La primera imagen será la portada del catálogo.
+          Elige una foto y se sube sola. Puedes marcar portada o quitar las que ya están.
         </p>
       </div>
 
@@ -43,16 +43,21 @@ export default function FormularioImagenesDestino({
           etiqueta="Nueva imagen"
           archivo={archivoNuevo}
           cargando={cargando && !!archivoNuevo}
-          onArchivoChange={onArchivoChange}
+          onArchivoChange={(archivo) => {
+            onArchivoChange(archivo);
+            if (archivo) onSubir(archivo);
+          }}
         />
-        <Boton
-          variante="secundario"
-          tamano="sm"
-          onClick={onSubir}
-          disabled={cargando || !archivoNuevo}
-        >
-          {cargando && archivoNuevo ? 'Subiendo…' : 'Agregar imagen'}
-        </Boton>
+        {archivoNuevo && (
+          <Boton
+            variante="secundario"
+            tamano="sm"
+            onClick={() => onSubir(archivoNuevo)}
+            disabled={cargando}
+          >
+            {cargando ? 'Subiendo…' : 'Reintentar subida'}
+          </Boton>
+        )}
       </div>
 
       {cargando && imagenes.length === 0 ? (

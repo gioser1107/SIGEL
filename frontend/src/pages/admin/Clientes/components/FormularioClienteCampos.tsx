@@ -48,7 +48,9 @@ export default function FormularioClienteCampos({
     <div className={`drawer-form${esAcompanante ? ' drawer-form--acompanante' : ''}`}>
       {!ocultarIntro && (
         <p className="drawer-form__intro">
-          Registro administrativo de la ficha del cliente. No se crea cuenta de portal ni se solicita correo.
+          Solo se guarda la ficha (documento, contacto y ubicación). No se crea usuario ni se pide
+          correo. Si más adelante quiere entrar al portal, se registra allí con el mismo documento:
+          el sistema vincula la cuenta a esta ficha y conserva sus reservas.
         </p>
       )}
 

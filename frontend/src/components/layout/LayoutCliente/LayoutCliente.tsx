@@ -1,8 +1,18 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import LogoMarca from '../../ui/LogoMarca/LogoMarca';
+import MenuUsuario from '../MenuUsuario/MenuUsuario';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import { nombreCompleto } from '../../../utils/nombrePersona';
 import './LayoutCliente.css';
+
+function iniciales(nombre: string): string {
+  return nombre
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? '')
+    .join('');
+}
 
 export default function LayoutCliente() {
   const { usuario, cerrarSesion } = useAutenticacion();
@@ -25,10 +35,17 @@ export default function LayoutCliente() {
 
           {/* User Section */}
           <div className="cabecera-cliente__seccion-usuario">
-            <div className="cabecera-cliente__bienvenida">
-              <span className="cabecera-cliente__saludo">Hola,</span>
-              <span className="cabecera-cliente__nombre-usuario">{usuario ? nombreCompleto(usuario.nombre, usuario.apellido) : 'Pasajero'}</span>
-            </div>
+            <MenuUsuario triggerClassName="cabecera-cliente__perfil">
+              <div className="cabecera-cliente__bienvenida">
+                <span className="cabecera-cliente__saludo">Hola,</span>
+                <span className="cabecera-cliente__nombre-usuario">
+                  {usuario ? nombreCompleto(usuario.nombre, usuario.apellido) : 'Pasajero'}
+                </span>
+              </div>
+              <div className="cabecera-cliente__avatar" aria-hidden="true">
+                {usuario ? iniciales(nombreCompleto(usuario.nombre, usuario.apellido)) : '—'}
+              </div>
+            </MenuUsuario>
           </div>
         </div>
       </header>

@@ -113,7 +113,7 @@ export function useDestinos() {
     });
     setArchivoNuevo(null);
     setArchivoPortada(null);
-    setImagenes([]);
+    setImagenes(destino.imagenes ?? []);
     setErrorImagenes(null);
     setErrorForm(null);
     setDrawerAbierto(true);
@@ -155,6 +155,9 @@ export function useDestinos() {
         }
       } else if (destinoActivo) {
         await actualizarDestino(destinoActivo.id, datosBase);
+        if (archivoNuevo) {
+          await subirImagenDestino(destinoActivo.id, archivoNuevo, imagenes.length === 0);
+        }
       }
 
       await cargarDestinos();
@@ -198,12 +201,13 @@ export function useDestinos() {
     setErrorAnular(null);
   };
 
-  const subirImagen = async () => {
-    if (!destinoActivo || !archivoNuevo) return;
+  const subirImagen = async (archivo?: File | null) => {
+    const archivoASubir = archivo ?? archivoNuevo;
+    if (!destinoActivo || !archivoASubir) return;
     setCargandoImagenes(true);
     setErrorImagenes(null);
     try {
-      await subirImagenDestino(destinoActivo.id, archivoNuevo, imagenes.length === 0);
+      await subirImagenDestino(destinoActivo.id, archivoASubir, imagenes.length === 0);
       setArchivoNuevo(null);
       await cargarImagenesDestino(destinoActivo.id);
       await cargarDestinos();
