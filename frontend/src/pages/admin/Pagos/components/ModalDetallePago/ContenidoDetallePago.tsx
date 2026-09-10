@@ -65,10 +65,12 @@ export default function ContenidoDetallePago({ pago }: ContenidoDetallePagoProps
           <dd>{formatearMontoPago(pago.monto, pago.metodo_pago)}</dd>
         </div>
         <div>
-          <dt>Equivalente EUR</dt>
+          <dt>Equivale en euros</dt>
           <dd>
             {pago.monto_eur != null ? formatearEuro(pago.monto_eur) : '—'}
-            {conversionAproximada && ' *'}
+            {conversionAproximada && (
+              <span title="Aproximado: pago en dólares sin tasa USD registrada"> *</span>
+            )}
           </dd>
         </div>
         <div>

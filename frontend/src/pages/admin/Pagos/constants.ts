@@ -19,7 +19,7 @@ export const GRUPOS_PAGOS: { etiqueta: string; secciones: MetaSeccionPagos[] }[]
         id: 'bandeja',
         etiqueta: 'Bandeja de pagos',
         titulo: 'Bandeja de pagos',
-        descripcion: 'Revisa, aprueba o rechaza los pagos reportados en reservas.',
+        descripcion: 'Pagos reportados por clientes o el personal. Revisa el comprobante: si cuadra, aprueba para que sume a la reserva; si no, recházalo.',
       },
       {
         id: 'tasas',

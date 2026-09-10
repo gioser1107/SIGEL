@@ -25,6 +25,10 @@ export function useBandejaPagos({ activo, onExito, onError }: UseBandejaPagosPar
   const [filtros, setFiltros] = useState<FiltrosBandeja>(FILTROS_BANDEJA_VACIOS);
   const [filtrosAplicados, setFiltrosAplicados] = useState<FiltrosBandeja>(FILTROS_BANDEJA_VACIOS);
   const [pagoAEliminar, setPagoAEliminar] = useState<PagoGlobal | null>(null);
+  const [pagoAConfirmar, setPagoAConfirmar] = useState<{
+    pago: PagoGlobal;
+    estado: 'aprobado' | 'rechazado';
+  } | null>(null);
 
   const {
     pagina,
@@ -70,7 +74,13 @@ export function useBandejaPagos({ activo, onExito, onError }: UseBandejaPagosPar
     if (activo) recargar();
   }, [activo, recargar]);
 
-  async function cambiarEstado(pago: PagoGlobal, estado: 'aprobado' | 'rechazado') {
+  function pedirCambioEstado(pago: PagoGlobal, estado: 'aprobado' | 'rechazado') {
+    setPagoAConfirmar({ pago, estado });
+  }
+
+  async function confirmarCambioEstado() {
+    if (!pagoAConfirmar) return;
+    const { pago, estado } = pagoAConfirmar;
     setProcesando(true);
     try {
       if (estado === 'aprobado') {
@@ -78,7 +88,10 @@ export function useBandejaPagos({ activo, onExito, onError }: UseBandejaPagosPar
       } else {
         await actualizarPagoReserva(pago.reserva_id, pago.id, { estado });
       }
-      onExito(`Pago ${estado === 'aprobado' ? 'aprobado' : 'rechazado'}.`);
+      onExito(estado === 'aprobado'
+        ? 'Pago aprobado. Ya suma al saldo de la reserva.'
+        : 'Pago rechazado. No afecta el saldo cobrado.');
+      setPagoAConfirmar(null);
       await recargar();
     } catch (err) {
       onError(mensajeError(err, 'pagos'));
@@ -92,10 +105,23 @@ export function useBandejaPagos({ activo, onExito, onError }: UseBandejaPagosPar
     setFiltrosAplicados({ ...filtros });
   }
 
-  function restablecerFiltros() {
+  function cambiarPestania(id: string) {
+    const estado = id === 'todos' ? '' : id;
+    setFiltros((actual) => ({ ...actual, estado }));
     reiniciarPagina();
-    setFiltros(FILTROS_BANDEJA_VACIOS);
-    setFiltrosAplicados(FILTROS_BANDEJA_VACIOS);
+    setFiltrosAplicados((actual) => ({ ...actual, estado }));
+  }
+
+  function limpiarFiltrosExtra() {
+    reiniciarPagina();
+    setFiltros((actual) => ({
+      ...FILTROS_BANDEJA_VACIOS,
+      estado: actual.estado,
+    }));
+    setFiltrosAplicados((actual) => ({
+      ...FILTROS_BANDEJA_VACIOS,
+      estado: actual.estado,
+    }));
   }
 
   return {
@@ -104,10 +130,15 @@ export function useBandejaPagos({ activo, onExito, onError }: UseBandejaPagosPar
     cargando,
     procesando,
     filtros,
+    filtrosAplicados,
     setFiltros,
     aplicarFiltros,
-    restablecerFiltros,
-    cambiarEstado,
+    cambiarPestania,
+    limpiarFiltrosExtra,
+    pedirCambioEstado,
+    confirmarCambioEstado,
+    pagoAConfirmar,
+    setPagoAConfirmar,
     pagoAEliminar,
     setPagoAEliminar,
     recargar,

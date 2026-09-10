@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import Boton from '../../../../../components/ui/Boton/Boton';
 import type { PagoReserva } from '../../../../../types/pagos';
+import { codigoReserva } from '../../../../../utils/etiquetasNegocio';
 import { useDetallePagoAdmin } from '../../hooks/useDetallePagoAdmin';
 import ContenidoDetallePago from './ContenidoDetallePago';
 import './ModalDetallePago.css';
@@ -11,6 +12,10 @@ interface ModalDetallePagoProps {
   pagoId: number | null;
   pagoInicial?: PagoReserva | null;
   onCerrar: () => void;
+  puedeValidar?: boolean;
+  procesando?: boolean;
+  onAprobar?: () => void;
+  onRechazar?: () => void;
 }
 
 export default function ModalDetallePago({
@@ -19,6 +24,10 @@ export default function ModalDetallePago({
   pagoId,
   pagoInicial,
   onCerrar,
+  puedeValidar = false,
+  procesando = false,
+  onAprobar,
+  onRechazar,
 }: ModalDetallePagoProps) {
   const { detalle, cargando, error, cargar, limpiar } = useDetallePagoAdmin();
 
@@ -53,9 +62,11 @@ export default function ModalDetallePago({
       >
         <div className="modal-detalle-pago__cabecera">
           <div>
-            <span className="modal-detalle-pago__etiqueta">Detalle de pago</span>
+            <span className="modal-detalle-pago__etiqueta">
+              {reservaId ? `Reserva ${codigoReserva(reservaId)}` : 'Detalle de pago'}
+            </span>
             <h2 id="modal-detalle-pago-titulo" className="modal-detalle-pago__titulo">
-              Pago #{pagoId}
+              {puedeValidar ? 'Revisa el comprobante' : 'Detalle del pago'}
             </h2>
           </div>
           <button
@@ -78,6 +89,16 @@ export default function ModalDetallePago({
           <Boton variante="secundario" tamano="sm" onClick={onCerrar}>
             Cerrar
           </Boton>
+          {puedeValidar && onRechazar && onAprobar && (
+            <div className="modal-detalle-pago__acciones-validar">
+              <Boton variante="peligro" tamano="sm" onClick={onRechazar} disabled={procesando}>
+                Rechazar
+              </Boton>
+              <Boton variante="primario" tamano="sm" onClick={onAprobar} disabled={procesando}>
+                Aprobar y sumar
+              </Boton>
+            </div>
+          )}
         </div>
       </div>
     </div>
