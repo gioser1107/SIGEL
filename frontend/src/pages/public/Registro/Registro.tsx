@@ -264,6 +264,9 @@ export default function Registro() {
               );
             })}
           </ol>
+          <p className="registro-page__paso-actual">
+            Paso {paso} de {PASOS.length}: {PASOS[paso - 1].titulo}
+          </p>
 
           {error && (
             <div className="inicio-sesion__error" role="alert">
@@ -303,7 +306,7 @@ export default function Registro() {
                   <Entrada
                     etiqueta="Correo electrónico"
                     type="email"
-                    placeholder="ej: cliente@travelbqto.com"
+                    placeholder="ej: tu@correo.com"
                     value={correo}
                     onChange={(e) => setCorreo(e.target.value)}
                     required

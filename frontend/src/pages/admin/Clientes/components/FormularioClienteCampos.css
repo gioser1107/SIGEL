@@ -38,3 +38,19 @@
   color: var(--color-text-muted, #64748b);
   line-height: 1.4;
 }
+
+@media (max-width: 640px) {
+  .drawer-form {
+    gap: 0.85rem;
+    min-width: 0;
+  }
+
+  .drawer-form__intro {
+    font-size: 0.8125rem;
+  }
+
+  .drawer-form__fila-2,
+  .drawer-form__fila-2--doc {
+    grid-template-columns: 1fr;
+  }
+}
