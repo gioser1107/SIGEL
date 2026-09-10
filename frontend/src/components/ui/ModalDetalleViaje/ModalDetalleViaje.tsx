@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useReservas } from '../../../context/Reservas';
+import { URL_LOGIN_PARA_RESERVA, useReservas } from '../../../context/Reservas';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import type { ViajeAgenda } from '../../../types/viaje';
 import { formatearEuro } from '../../../utils/formatoMoneda';
@@ -22,7 +22,7 @@ export default function ModalDetalleViaje({ viaje, fecha, fechaFormateada, onCer
     if (estaAutenticado) {
       navegar('/client/registrar-pago');
     } else {
-      navegar('/iniciar-sesion');
+      navegar(URL_LOGIN_PARA_RESERVA);
     }
   };
 

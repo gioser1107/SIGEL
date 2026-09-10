@@ -1,9 +1,13 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import Boton from '../../../components/ui/Boton/Boton';
 import Entrada from '../../../components/ui/Entrada/Entrada';
 import useAutenticacion from '../../../hooks/useAutenticacion';
-import { useReservas } from '../../../context/Reservas';
+import {
+  destinoClienteTrasAuth,
+  enlaceAuthPreservandoReserva,
+  useReservas,
+} from '../../../context/Reservas';
 import { registrarCliente } from '../../../services/autenticacion';
 import { useAutenticacionContext } from '../../../context/Autenticacion';
 import { ErrorApi } from '../../../services/api';
@@ -136,9 +140,18 @@ export default function InicioSesion() {
   const [error, setError] = useState('');
   const [cargando, setCargando] = useState(false);
   const navegar = useNavigate();
+  const { search } = useLocation();
   const { iniciarSesion } = useAutenticacion();
   const { establecerSesionTrasRegistro } = useAutenticacionContext();
-  const { viajePendiente } = useReservas();
+  const { viajePendiente, limpiarViajePendiente } = useReservas();
+
+  function irAlPortalCliente() {
+    const destino = destinoClienteTrasAuth(viajePendiente, search);
+    if (destino !== '/client/registrar-pago') {
+      limpiarViajePendiente();
+    }
+    navegar(destino);
+  }
 
   const limpiarCamposRegistro = () => {
     setNombre('');
@@ -217,7 +230,7 @@ export default function InicioSesion() {
           ...(telefonoCompleto ? { telefono: telefonoCompleto } : {}),
         });
         establecerSesionTrasRegistro(usuario);
-        navegar(viajePendiente ? '/client/registrar-pago' : '/client/dashboard');
+        irAlPortalCliente();
       } catch (err) {
         setError(extraerMensajeError(err));
       } finally {
@@ -239,7 +252,7 @@ export default function InicioSesion() {
       if (resultado.esPanelAdmin) {
         navegar('/admin/dashboard');
       } else {
-        navegar(viajePendiente ? '/client/registrar-pago' : '/client/dashboard');
+        irAlPortalCliente();
       }
     } else {
       setError(resultado.mensaje ?? 'Credenciales incorrectas. Verifica tu correo y contraseña.');
@@ -425,7 +438,9 @@ export default function InicioSesion() {
             ) : (
               <p>
                 ¿No tienes cuenta?{' '}
-                <Link to="/registro">Regístrate con tu documento</Link>
+                <Link to={enlaceAuthPreservandoReserva('/registro', search)}>
+                  Regístrate con tu documento
+                </Link>
               </p>
             )}
           </div>

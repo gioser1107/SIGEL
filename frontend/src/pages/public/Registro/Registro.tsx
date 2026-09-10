@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import PuntosRecogidaEditor from '../../../components/puntos-recogida/PuntosRecogidaEditor';
 import { draftAPayloadPuntos } from '../../../components/puntos-recogida/utils';
 import '../../../components/puntos-recogida/puntos-recogida.css';
@@ -7,7 +7,11 @@ import Boton from '../../../components/ui/Boton/Boton';
 import LogoMarca from '../../../components/ui/LogoMarca/LogoMarca';
 import Entrada from '../../../components/ui/Entrada/Entrada';
 import { useAutenticacionContext } from '../../../context/Autenticacion';
-import { useReservas } from '../../../context/Reservas';
+import {
+  destinoClienteTrasAuth,
+  enlaceAuthPreservandoReserva,
+  useReservas,
+} from '../../../context/Reservas';
 import { registrarCliente } from '../../../services/autenticacion';
 import { listarCiudadesPorEstado, listarEstados } from '../../../services/ubicaciones';
 import { ErrorApi } from '../../../services/api';
@@ -121,8 +125,9 @@ function CampoContrasena({
 
 export default function Registro() {
   const navegar = useNavigate();
+  const { search } = useLocation();
   const { establecerSesionTrasRegistro } = useAutenticacionContext();
-  const { viajePendiente } = useReservas();
+  const { viajePendiente, limpiarViajePendiente } = useReservas();
 
   const [paso, setPaso] = useState(1);
   const [error, setError] = useState('');
@@ -250,7 +255,11 @@ export default function Registro() {
         ...puntosPayload,
       });
       establecerSesionTrasRegistro(usuario);
-      navegar(viajePendiente ? '/client/registrar-pago' : '/client/puntos-recogida');
+      const destino = destinoClienteTrasAuth(viajePendiente, search);
+      if (destino !== '/client/registrar-pago') {
+        limpiarViajePendiente();
+      }
+      navegar(destino);
     } catch (err) {
       setError(err instanceof ErrorApi || err instanceof Error ? err.message : 'Error al registrarse.');
     } finally {
@@ -543,7 +552,8 @@ export default function Registro() {
           )}
 
           <p className="inicio-sesion__toggle">
-            ¿Ya tienes una cuenta? <Link to="/iniciar-sesion">Inicia sesión</Link>
+            ¿Ya tienes una cuenta?{' '}
+            <Link to={enlaceAuthPreservandoReserva('/iniciar-sesion', search)}>Inicia sesión</Link>
           </p>
 
           <div className="inicio-sesion__back">
