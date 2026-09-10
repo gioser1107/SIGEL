@@ -318,6 +318,7 @@
    ========================= */
 .inicio-sesion__bloque-visual {
   position: relative;
+  overflow: hidden;
   background-image: url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1200');
   background-size: cover;
   background-position: center;
@@ -326,6 +327,20 @@
   justify-content: flex-end;
   padding: var(--spacing-3xl) var(--spacing-2xl);
   color: white;
+}
+
+.inicio-sesion__visual-fondo {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+  z-index: 0;
+}
+
+.inicio-sesion__visual-fondo--activo {
+  opacity: 1;
 }
 
 /* Overlay degradado */
@@ -389,6 +404,12 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.4);
   transition: all var(--transition-base);
+}
+
+button.inicio-sesion__indicador {
+  padding: 0;
+  border: none;
+  cursor: pointer;
 }
 
 .inicio-sesion__indicador.activo {

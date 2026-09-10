@@ -14,6 +14,7 @@ import {
   sanitizarSoloDigitos,
 } from '../../../utils/validacionesFormulario';
 import LogoMarca from '../../../components/ui/LogoMarca/LogoMarca';
+import PanelVisualAuth from './PanelVisualAuth';
 import './InicioSesion.css';
 
 const TIPOS_DOCUMENTO = [
@@ -407,19 +408,7 @@ export default function InicioSesion() {
           </div>
         </div>
 
-        {/* Lado Derecho: Panel Visual Premium */}
-        <div className="inicio-sesion__bloque-visual">
-          <div className="inicio-sesion__visual-overlay" />
-          <div className="inicio-sesion__visual-contenido">
-            <div className="inicio-sesion__badge">Destino favorito</div>
-            <h2 className="inicio-sesion__visual-titulo">
-              Descubre destinos inolvidables
-            </h2>
-            <p className="inicio-sesion__visual-desc">
-              Viaja con total seguridad, reserva tus asientos cómodamente y explora con los mejores tours guiados.
-            </p>
-          </div>
-        </div>
+        <PanelVisualAuth badge="Nuestros viajes" mostrarIndicadoresCarrusel />
       </div>
     </div>
   );

@@ -19,6 +19,7 @@ import {
 } from '../../../utils/validacionesFormulario';
 import type { PuntosRecogidaDraft } from '../../../types/puntoRecogida';
 import { PUNTOS_RECOGIDA_DRAFT_VACIO } from '../../../types/puntoRecogida';
+import PanelVisualAuth from '../InicioSesion/PanelVisualAuth';
 import '../InicioSesion/InicioSesion.css';
 import './Registro.css';
 
@@ -264,9 +265,6 @@ export default function Registro() {
               );
             })}
           </ol>
-          <p className="registro-page__paso-actual">
-            Paso {paso} de {PASOS.length}: {PASOS[paso - 1].titulo}
-          </p>
 
           {error && (
             <div className="inicio-sesion__error" role="alert">
@@ -517,21 +515,17 @@ export default function Registro() {
           </div>
         </div>
 
-        <div className="inicio-sesion__bloque-visual">
-          <div className="inicio-sesion__visual-overlay" />
-          <div className="inicio-sesion__visual-contenido">
-            <div className="inicio-sesion__badge">Portal de clientes</div>
-            <h2 className="inicio-sesion__visual-titulo">Tu próxima aventura empieza aquí</h2>
-            <p className="inicio-sesion__visual-desc">
-              Crea tu cuenta, reserva asientos y viaja con la agencia de confianza de Barquisimeto.
-            </p>
-            <div className="inicio-sesion__indicadores" aria-hidden="true">
-              <span className={`inicio-sesion__indicador${paso === 1 ? ' activo' : ''}`} />
-              <span className={`inicio-sesion__indicador${paso === 2 ? ' activo' : ''}`} />
-              <span className={`inicio-sesion__indicador${paso === 3 ? ' activo' : ''}`} />
-            </div>
+        <PanelVisualAuth
+          badge="Portal de clientes"
+          tituloFijo="Tu próxima aventura empieza aquí"
+          descripcionFija="Crea tu cuenta, reserva asientos y viaja con la agencia de confianza de Barquisimeto."
+        >
+          <div className="inicio-sesion__indicadores" aria-hidden="true">
+            <span className={`inicio-sesion__indicador${paso === 1 ? ' activo' : ''}`} />
+            <span className={`inicio-sesion__indicador${paso === 2 ? ' activo' : ''}`} />
+            <span className={`inicio-sesion__indicador${paso === 3 ? ' activo' : ''}`} />
           </div>
-        </div>
+        </PanelVisualAuth>
       </div>
     </div>
   );

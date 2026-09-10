@@ -1,27 +1,45 @@
 /* Registro — misma tarjeta del login, adaptada al flujo de 3 pasos */
 
 .registro-page.inicio-sesion {
-  align-items: flex-start;
-  padding-block: var(--spacing-xl);
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  padding: 1rem 2rem;
 }
 
 .registro-page__contenedor.inicio-sesion__contenedor {
   max-width: 1100px;
   min-height: auto;
+  max-height: calc(100svh - 2rem);
   grid-template-columns: 1.15fr 0.85fr;
 }
 
 .registro-page .inicio-sesion__bloque-formulario {
   justify-content: flex-start;
-  padding: var(--spacing-2xl) var(--spacing-2xl);
+  padding: 1.35rem 2rem 1.15rem;
 }
 
 .registro-page .inicio-sesion__header {
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 0.85rem;
+}
+
+.registro-page .inicio-sesion__logo {
+  margin-bottom: 0.45rem;
 }
 
 .registro-page .inicio-sesion__title {
   font-size: var(--font-size-2xl);
+}
+
+.registro-page .inicio-sesion__form {
+  gap: 0.7rem;
+}
+
+.registro-page .inicio-sesion__input-group .grupo-entrada__campo,
+.registro-page .campo-contrasena__campo,
+.registro-page .inicio-sesion__select {
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
 }
 
 /* Stepper horizontal */
@@ -30,8 +48,8 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
   list-style: none;
-  margin: 0 0 var(--spacing-lg);
-  padding: 0.85rem 0.75rem;
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.75rem;
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid rgba(18, 40, 75, 0.08);
   border-radius: var(--radius-xl);
@@ -95,16 +113,12 @@
   flex-direction: column;
   gap: 0.1rem;
   min-width: 0;
-  max-width: 100%;
-  padding-inline: 0.2rem;
 }
 
 .registro-page__paso-textos strong {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  overflow-wrap: anywhere;
-  line-height: 1.25;
 }
 
 .registro-page__paso-textos span {
@@ -114,10 +128,6 @@
 
 .registro-page__paso--activo .registro-page__paso-textos strong {
   color: var(--color-primary);
-}
-
-.registro-page__paso-actual {
-  display: none;
 }
 
 .registro-page__fila {
@@ -166,50 +176,35 @@
 }
 
 .registro-page .inicio-sesion__toggle {
-  margin-top: var(--spacing-md);
+  margin-top: 0.7rem;
 }
 
 .registro-page .inicio-sesion__back {
-  margin-top: var(--spacing-sm);
+  margin-top: 0.3rem;
 }
 
 @media (max-width: 900px) {
   .registro-page.inicio-sesion {
-    padding-inline: var(--spacing-md);
     padding-block: calc(var(--spacing-md) + env(safe-area-inset-top, 0px))
       calc(var(--spacing-md) + env(safe-area-inset-bottom, 0px));
   }
 
   .registro-page__contenedor.inicio-sesion__contenedor {
     max-width: 520px;
-    overflow: visible;
-    min-width: 0;
-  }
-
-  /* Gana a .registro-page .inicio-sesion__bloque-formulario (padding de escritorio). */
-  .registro-page .inicio-sesion__bloque-formulario {
-    padding: var(--spacing-lg) var(--spacing-md);
-  }
-
-  .registro-page .inicio-sesion__header {
-    margin-bottom: var(--spacing-md);
-  }
-
-  .registro-page__fila,
-  .registro-page__fila--documento {
+    max-height: none;
     grid-template-columns: 1fr;
   }
 
-  .registro-page .inicio-sesion__fila-telefono {
-    flex-wrap: wrap;
+  .registro-page .inicio-sesion__bloque-visual {
+    display: none;
   }
 
-  .registro-page .inicio-sesion__prefijo-telefono {
-    flex: 0 0 6.5rem;
+  .registro-page .inicio-sesion__bloque-formulario {
+    padding: var(--spacing-xl) var(--spacing-lg);
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 560px) {
   .registro-page.inicio-sesion {
     padding-inline: 0.75rem;
   }
@@ -218,69 +213,41 @@
     padding: 1.1rem 0.95rem 1.25rem;
   }
 
-  .registro-page__stepper {
-    margin-bottom: 0.45rem;
-    padding: 0.7rem 0.4rem 0.55rem;
+  .registro-page__fila,
+  .registro-page__fila--documento {
+    grid-template-columns: 1fr;
+    min-width: 0;
   }
 
-  .registro-page__paso-textos {
+  .registro-page .grupo-entrada,
+  .registro-page .inicio-sesion__form {
+    min-width: 0;
+  }
+
+  .registro-page__stepper {
+    padding: 0.7rem 0.45rem 0.55rem;
+  }
+
+  .registro-page__paso-textos span {
     display: none;
   }
 
-  .registro-page__paso-actual {
-    display: block;
-    margin: 0 0 var(--spacing-md);
-    text-align: center;
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    color: var(--color-primary);
+  .registro-page__paso-textos strong {
+    font-size: 0.625rem;
+    white-space: nowrap;
   }
 
-  .registro-page .inicio-sesion__fila-telefono {
-    flex-direction: column;
-  }
-
-  .registro-page .inicio-sesion__prefijo-telefono {
-    flex: 1 1 auto;
-    width: 100%;
+  .registro-page .campo-contrasena__campo {
+    padding-right: 2.75rem;
   }
 
   .registro-page__acciones {
     flex-direction: column;
   }
 
-  .registro-page__acciones .boton,
-  .registro-page__acciones .boton--primario {
+  .registro-page__acciones .boton {
     width: 100%;
-    flex: 1 1 auto;
-  }
-
-  .registro-page .campo-contrasena__campo {
-    padding-right: 2.85rem;
-  }
-
-  .registro-page__recogida .pr-form-inline__fila,
-  .registro-page__recogida .pr-editor__form-acciones,
-  .registro-page__recogida .pr-editor__tabs {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .registro-page__recogida .pr-btn {
-    width: 100%;
-  }
-}
-
-@media (max-width: 380px) {
-  .registro-page.inicio-sesion {
-    padding-inline: 0.5rem;
-  }
-
-  .registro-page__contenedor.inicio-sesion__contenedor {
-    border-radius: var(--radius-xl);
-  }
-
-  .registro-page .inicio-sesion__bloque-formulario {
-    padding: 0.95rem 0.8rem 1.1rem;
+    min-height: 2.5rem;
+    height: 2.5rem;
   }
 }
