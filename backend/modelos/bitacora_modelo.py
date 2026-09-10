@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import HTTPException, Request
 from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, JSON, String, func, or_
@@ -40,6 +40,18 @@ ALIAS_MODULO = {
 }
 
 
+def _ahora_utc_naive() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _marcar_utc(valor: datetime | None) -> datetime | None:
+    if valor is None:
+        return None
+    if valor.tzinfo is None:
+        return valor.replace(tzinfo=timezone.utc)
+    return valor.astimezone(timezone.utc)
+
+
 class Bitacora(Base):
     __tablename__ = "bitacora"
 
@@ -62,7 +74,7 @@ class Bitacora(Base):
     resumen = Column(String(500), nullable=False)
     detalle = Column(JSON, nullable=True)
     ip_origen = Column(String(45), nullable=True)
-    creado_en = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    creado_en = Column(DateTime, nullable=False, default=_ahora_utc_naive, index=True)
 
 
 def obtener_ip_origen(request: Request | None) -> str | None:
@@ -99,7 +111,7 @@ def registrar_evento(
             resumen=resumen[:500],
             detalle=detalle,
             ip_origen=ip_origen,
-            creado_en=datetime.now(),
+            creado_en=_ahora_utc_naive(),
         )
         db.add(entrada)
         db.commit()
@@ -119,7 +131,7 @@ def verificar_permiso_bitacora(usuario_actual: dict) -> None:
 def _entrada_listado_a_dict(entrada: Bitacora, usuario: Usuario | None) -> dict:
     return {
         "id": entrada.id,
-        "creado_en": entrada.creado_en,
+        "creado_en": _marcar_utc(entrada.creado_en),
         "modulo": entrada.modulo,
         "accion": entrada.accion,
         "tabla_afectada": entrada.tabla_afectada,
@@ -199,7 +211,7 @@ def obtener_detalle_bitacora(db: Session, entrada_id: int) -> dict:
 
     return {
         "id": entrada.id,
-        "creado_en": entrada.creado_en,
+        "creado_en": _marcar_utc(entrada.creado_en),
         "modulo": entrada.modulo,
         "accion": entrada.accion,
         "tabla_afectada": entrada.tabla_afectada,

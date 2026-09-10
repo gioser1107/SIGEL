@@ -7,6 +7,7 @@ import re
 import urllib.error
 import urllib.request
 from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from fastapi import HTTPException
@@ -22,9 +23,22 @@ _REGEX_URL_HTTP = re.compile(
 _REGEX_RUTA_ARCHIVO = re.compile(r"^/api/archivos/[A-Za-z0-9._\-/]{1,480}$")
 _REGEX_TELEFONO = re.compile(r"^\+?[0-9]{7,20}$")
 
+_REGEX_PLACA = re.compile(r"^[A-Za-z0-9\-]{4,16}$")
+_REGEX_ASIENTO = re.compile(r"^[A-Za-z0-9\-]{1,10}$")
+
 _TIPOS_DOCUMENTO = frozenset({"V", "E", "P", "J", "G"})
 _TIPOS_DOCUMENTO_NUMERICOS = frozenset({"V", "E", "P"})
 _TIPOS_CLIENTE = frozenset({"natural", "juridico"})
+_CATEGORIAS_COSTO = frozenset(
+    {"combustible", "logistica", "pago_guia", "alimentacion", "peajes", "otro"}
+)
+_POSICIONES_ASIENTO = frozenset({"ventana", "pasillo", "medio", "otro"})
+_ESTADOS_VIAJE = frozenset({"planificado", "en_curso", "finalizado", "cancelado"})
+_ESTADOS_COTIZACION = frozenset(
+    {"solicitada", "pendiente", "aceptada", "vencida", "cancelada"}
+)
+_ESTADOS_RESERVA = frozenset({"pendiente", "confirmada", "abonada", "cancelada"})
+_MONTO_MAXIMO = Decimal("9999999.99")
 
 
 class ValidadorEntrada:
@@ -81,10 +95,7 @@ class ValidadorEntrada:
         if len(limpio) < 2:
             cls._error(campo, "debe tener al menos 2 caracteres")
         if not _REGEX_NOMBRE_ENTIDAD.fullmatch(limpio):
-            cls._error(
-                campo,
-                "contiene caracteres no permitidos (usa letras, números, espacios y .-'&)",
-            )
+            cls._error(campo, "no es válido")
         return limpio
 
     @classmethod
@@ -248,7 +259,7 @@ class ValidadorEntrada:
             if not re.fullmatch(r"\d{4,9}", limpio):
                 cls._error("numero_documento", "la cédula solo puede contener 4 a 9 dígitos")
         elif not re.fullmatch(r"[A-Za-z0-9]{4,15}", limpio):
-            cls._error("numero_documento", "debe tener entre 4 y 15 caracteres alfanuméricos")
+            cls._error("numero_documento", "no es válido")
         return limpio
 
     @classmethod
@@ -258,6 +269,130 @@ class ValidadorEntrada:
         if len(str(valor)) < minimo:
             cls._error("contrasena", f"debe tener al menos {minimo} caracteres")
         return str(valor)
+
+    @classmethod
+    def valor_catalogo(
+        cls,
+        valor: str | None,
+        campo: str,
+        permitidos: frozenset[str],
+        *,
+        obligatorio: bool = True,
+    ) -> str:
+        if valor is None or not str(valor).strip():
+            if obligatorio:
+                cls._error(campo, "es obligatorio")
+            return ""
+        limpio = str(valor).strip()
+        if limpio not in permitidos:
+            cls._error(campo, "no es válido")
+        return limpio
+
+    @classmethod
+    def texto_libre(
+        cls,
+        valor: str | None,
+        campo: str,
+        *,
+        obligatorio: bool = False,
+        minimo: int = 0,
+        maximo: int = 255,
+    ) -> str:
+        if valor is None or not str(valor).strip():
+            if obligatorio:
+                cls._error(campo, "es obligatorio")
+            return ""
+        limpio = str(valor).strip()
+        if "\x00" in limpio:
+            cls._error(campo, "contiene caracteres no permitidos")
+        if minimo and len(limpio) < minimo:
+            cls._error(campo, f"debe tener al menos {minimo} caracteres")
+        if len(limpio) > maximo:
+            cls._error(campo, f"no puede superar {maximo} caracteres")
+        return limpio
+
+    @classmethod
+    def monto(
+        cls,
+        valor: Any,
+        campo: str,
+        *,
+        permitir_cero: bool = False,
+    ) -> Decimal:
+        if valor is None:
+            cls._error(campo, "es obligatorio")
+        try:
+            dec = valor if isinstance(valor, Decimal) else Decimal(str(valor))
+        except (InvalidOperation, ValueError, TypeError):
+            cls._error(campo, "no es un monto válido")
+        if not dec.is_finite():
+            cls._error(campo, "no es un monto válido")
+        if dec < 0:
+            cls._error(campo, "no puede ser negativo")
+        if dec == 0 and not permitir_cero:
+            cls._error(campo, "debe ser mayor a 0")
+        exponente = dec.as_tuple().exponent
+        if isinstance(exponente, int) and exponente < -2:
+            cls._error(campo, "admite máximo 2 decimales")
+        if dec > _MONTO_MAXIMO:
+            cls._error(campo, "excede el máximo permitido")
+        return dec
+
+    @classmethod
+    def placa(cls, valor: str | None, campo: str = "placa") -> str:
+        limpio = cls._texto_obligatorio(valor, campo).upper().replace(" ", "")
+        if not _REGEX_PLACA.fullmatch(limpio):
+            cls._error(campo, "solo letras, números y guiones (4 a 16 caracteres)")
+        return limpio
+
+    @classmethod
+    def numero_asiento(cls, valor: str | None, campo: str = "numero") -> str:
+        limpio = cls._texto_obligatorio(valor, campo).upper().replace(" ", "")
+        if not _REGEX_ASIENTO.fullmatch(limpio):
+            cls._error(campo, "solo letras, números y guiones (máx. 10)")
+        return limpio
+
+    @classmethod
+    def posicion_asiento(cls, valor: str | None, campo: str = "posicion") -> str:
+        return cls.valor_catalogo(valor, campo, _POSICIONES_ASIENTO)
+
+    @classmethod
+    def capacidad_pasajeros(cls, valor: Any, campo: str = "capacidad") -> int:
+        if valor is None:
+            cls._error(campo, "es obligatorio")
+        try:
+            entero = int(valor)
+        except (TypeError, ValueError):
+            cls._error(campo, "debe ser un número entero")
+        if entero < 1 or entero > 100:
+            cls._error(campo, "debe estar entre 1 y 100")
+        return entero
+
+    @classmethod
+    def categoria_costo(cls, valor: str | None, campo: str = "categoria") -> str:
+        return cls.valor_catalogo(valor, campo, _CATEGORIAS_COSTO)
+
+    @classmethod
+    def estado_viaje(cls, valor: str | None, campo: str = "estado") -> str:
+        return cls.valor_catalogo(valor, campo, _ESTADOS_VIAJE)
+
+    @classmethod
+    def estado_cotizacion(cls, valor: str | None, campo: str = "estado") -> str:
+        return cls.valor_catalogo(valor, campo, _ESTADOS_COTIZACION)
+
+    @classmethod
+    def estado_reserva(cls, valor: str | None, campo: str = "estado") -> str:
+        return cls.valor_catalogo(valor, campo, _ESTADOS_RESERVA)
+
+    @classmethod
+    def codigo(cls, valor: str | None, campo: str = "codigo") -> str:
+        limpio = cls._texto_obligatorio(valor, campo)
+        if not _REGEX_CODIGO.fullmatch(limpio):
+            cls._error(
+                campo,
+                "usa solo letras, números, guiones y guiones bajos",
+            )
+        return limpio
 
 
 def validar_datos_cliente_entrada(datos: Any, *, parcial: bool = False) -> None:
@@ -296,6 +431,14 @@ def validar_datos_cliente_entrada(datos: Any, *, parcial: bool = False) -> None:
                 "razon_social",
                 obligatorio=not parcial,
             )
+
+    direccion = getattr(datos, "direccion", None)
+    if direccion is not None:
+        ValidadorEntrada.texto_libre(direccion, "direccion", maximo=255)
+
+    notas = getattr(datos, "notas", None)
+    if notas is not None:
+        ValidadorEntrada.texto_libre(notas, "notas", maximo=1000)
 
 
 def normalizar_datos_cliente(datos: Any) -> dict[str, Any]:

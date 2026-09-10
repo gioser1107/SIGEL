@@ -3,8 +3,22 @@ export const CODIGOS_TELEFONO_VE = ['0424', '0414', '0426', '0416', '0412', '042
 
 const REGEX_CORREO = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const REGEX_NOMBRE_PERSONA = /^[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+(?:\s+[A-Za-záéíóúÁÉÍÓÚüÜñÑ]+){0,6}$/;
+const REGEX_NOMBRE_ENTIDAD = /^[A-Za-záéíóúÁÉÍÓÚüÜñÑ0-9\s'.&-]{2,160}$/;
 const REGEX_CODIGO = /^[A-Za-z0-9_\-]{1,30}$/;
 const REGEX_MONTO_EUR = /^\d{1,7}(\.\d{1,2})?$/;
+const REGEX_PLACA = /^[A-Za-z0-9\-]{4,16}$/;
+const REGEX_ASIENTO = /^[A-Za-z0-9\-]{1,10}$/;
+
+export const CATEGORIAS_COSTO_PERMITIDAS = [
+  'combustible',
+  'logistica',
+  'pago_guia',
+  'alimentacion',
+  'peajes',
+  'otro',
+] as const;
+
+export const POSICIONES_ASIENTO = ['ventana', 'pasillo', 'medio', 'otro'] as const;
 
 export function esCorreoValido(correo: string): boolean {
   return REGEX_CORREO.test(correo.trim());
@@ -18,6 +32,14 @@ export function sanitizarNombrePersona(valor: string): string {
 /** Quita letras y símbolos de un teléfono. Solo dígitos. */
 export function sanitizarSoloDigitos(valor: string, maximo = 20): string {
   return valor.replace(/\D/g, '').slice(0, maximo);
+}
+
+export function sanitizarPlaca(valor: string): string {
+  return valor.replace(/[^A-Za-z0-9\-]/g, '').toUpperCase().slice(0, 16);
+}
+
+export function sanitizarNumeroAsiento(valor: string): string {
+  return valor.replace(/[^A-Za-z0-9\-]/g, '').toUpperCase().slice(0, 10);
 }
 
 export function fechaHoyIso(): string {
@@ -67,6 +89,7 @@ export function validarFormularioDestino(form: {
 
   const desc = (form.descripcion ?? '').trim();
   if (desc && desc.length < 10) return 'La descripción debe tener al menos 10 caracteres.';
+  if (desc.length > 2000) return 'La descripción no puede superar 2000 caracteres.';
 
   if (form.precio_base_eur < 0) return 'El precio base no puede ser negativo.';
   if (form.precio_base_eur === 0) return 'El precio base debe ser mayor a 0.';
@@ -80,12 +103,18 @@ export function validarFormularioUnidad(form: {
   modelo?: string | null;
   capacidad: number;
 }): string | null {
-  const placa = form.placa.trim();
+  const placa = form.placa.trim().toUpperCase().replace(/\s/g, '');
   if (!placa) return 'La placa es obligatoria.';
-  if (placa.length > 16) return 'La placa no puede superar 16 caracteres.';
+  if (!REGEX_PLACA.test(placa)) {
+    return 'La placa solo admite letras, números y guiones (4 a 16 caracteres).';
+  }
 
   const modelo = (form.modelo ?? '').trim();
   if (modelo && modelo.length < 2) return 'El modelo debe tener al menos 2 caracteres.';
+  if (modelo && !REGEX_NOMBRE_ENTIDAD.test(modelo)) {
+    return 'Revisa el modelo.';
+  }
+  if (modelo.length > 80) return 'El modelo no puede superar 80 caracteres.';
 
   if (!Number.isInteger(form.capacidad) || form.capacidad < 1) {
     return 'La capacidad debe ser un entero mayor a 0.';
@@ -122,6 +151,7 @@ export function validarFormularioCotizacion(form: {
   destino_id?: number;
   precio_cotizado_eur?: number | null;
   valida_hasta?: string | null;
+  requisitos?: string | null;
 }): string | null {
   if (!form.cliente_id) return 'Selecciona un cliente.';
   if (!form.destino_id) return 'Selecciona un destino.';
@@ -138,6 +168,12 @@ export function validarFormularioCotizacion(form: {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
     if (hasta < hoy) return 'La fecha de vigencia no puede ser anterior a hoy.';
+  }
+
+  const requisitos = (form.requisitos ?? '').trim();
+  if (requisitos) {
+    if (requisitos.length < 10) return 'Los requisitos deben tener al menos 10 caracteres.';
+    if (requisitos.length > 1000) return 'Los requisitos no pueden superar 1000 caracteres.';
   }
 
   return null;
@@ -303,4 +339,72 @@ export function validarFormularioUsuario(
 
 export function tieneErrores(errores: ErroresFormularioUsuario): boolean {
   return Object.keys(errores).length > 0;
+}
+
+export function validarTextoLibre(
+  valor: string | null | undefined,
+  etiqueta: string,
+  opciones: { obligatorio?: boolean; minimo?: number; maximo?: number } = {},
+): string | null {
+  const { obligatorio = false, minimo = 0, maximo = 255 } = opciones;
+  const limpio = (valor ?? '').trim();
+  if (!limpio) {
+    return obligatorio ? `${etiqueta} es obligatorio.` : null;
+  }
+  if (minimo && limpio.length < minimo) {
+    return `${etiqueta} debe tener al menos ${minimo} caracteres.`;
+  }
+  if (limpio.length > maximo) {
+    return `${etiqueta} no puede superar ${maximo} caracteres.`;
+  }
+  return null;
+}
+
+export function validarFormularioLogin(correo: string, contrasena: string): string | null {
+  if (!correo.trim()) return 'Ingresa tu correo.';
+  if (!esCorreoValido(correo)) return 'Ingresa un correo electrónico válido (ej: usuario@travelbqto.com).';
+  if (!contrasena) return 'Ingresa tu contraseña.';
+  return null;
+}
+
+export function validarFormularioAsiento(numero: string, posicion: string): string | null {
+  const limpio = numero.trim().toUpperCase().replace(/\s/g, '');
+  if (!limpio) return 'El número de asiento es obligatorio.';
+  if (!REGEX_ASIENTO.test(limpio)) {
+    return 'El asiento solo admite letras, números y guiones (máx. 10).';
+  }
+  if (!POSICIONES_ASIENTO.includes(posicion as (typeof POSICIONES_ASIENTO)[number])) {
+    return 'Selecciona una posición válida (ventana, pasillo, medio u otro).';
+  }
+  return null;
+}
+
+export function validarLineaCosto(form: {
+  categoria: string;
+  monto_eur: string | number;
+  descripcion?: string | null;
+}): string | null {
+  if (!CATEGORIAS_COSTO_PERMITIDAS.includes(form.categoria as (typeof CATEGORIAS_COSTO_PERMITIDAS)[number])) {
+    return 'Selecciona una categoría válida.';
+  }
+  const monto = Number(form.monto_eur);
+  if (!esMontoEurValido(monto)) {
+    return 'El monto debe ser mayor a 0 y tener máximo 2 decimales.';
+  }
+  return validarTextoLibre(form.descripcion, 'La descripción', { maximo: 255 });
+}
+
+export function validarRequisitosCotizacion(
+  texto: string,
+  obligatorio = false,
+): string | null {
+  return validarTextoLibre(texto, 'Los requisitos', {
+    obligatorio,
+    minimo: 10,
+    maximo: 1000,
+  });
+}
+
+export function validarComentarioResena(texto: string): string | null {
+  return validarTextoLibre(texto, 'El comentario', { maximo: 1000 });
 }

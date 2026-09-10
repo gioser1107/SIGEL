@@ -353,10 +353,14 @@ def registrar_cliente_para_reserva(
             getattr(datos, "telefono_secundario", None),
             "telefono_secundario",
         ) or None,
-        direccion=getattr(datos, "direccion", None),
+        direccion=ValidadorEntrada.texto_libre(
+            getattr(datos, "direccion", None),
+            "direccion",
+            maximo=255,
+        ) or None,
         estado_id=getattr(datos, "estado_id", None),
         ciudad_id=getattr(datos, "ciudad_id", None),
-        notas=getattr(datos, "notas", None),
+        notas=ValidadorEntrada.texto_libre(getattr(datos, "notas", None), "notas", maximo=1000) or None,
         creado_por=creado_por_usuario_id,
         actualizado_por=creado_por_usuario_id,
         creado_en=ahora,
@@ -468,10 +472,10 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
         razon_social=campos["razon_social"] or datos.razon_social,
         telefono=ValidadorEntrada.telefono(datos.telefono, "telefono") or None,
         telefono_secundario=ValidadorEntrada.telefono(datos.telefono_secundario, "telefono_secundario") or None,
-        direccion=(datos.direccion or "").strip() or None,
+        direccion=ValidadorEntrada.texto_libre(datos.direccion, "direccion", maximo=255) or None,
         estado_id=datos.estado_id,
         ciudad_id=datos.ciudad_id,
-        notas=datos.notas,
+        notas=ValidadorEntrada.texto_libre(datos.notas, "notas", maximo=1000) or None,
         creado_por=usuario_actual_id,
         actualizado_por=usuario_actual_id,
         creado_en=ahora,
@@ -565,7 +569,7 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
         )
 
     if datos.direccion is not None:
-        cliente.direccion = datos.direccion
+        cliente.direccion = ValidadorEntrada.texto_libre(datos.direccion, "direccion", maximo=255) or None
 
     estado_id_final = datos.estado_id if datos.estado_id is not None else cliente.estado_id
     ciudad_id_final = datos.ciudad_id if datos.ciudad_id is not None else cliente.ciudad_id
@@ -575,7 +579,7 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
         cliente.ciudad_id = ciudad_id_final
 
     if datos.notas is not None:
-        cliente.notas = datos.notas
+        cliente.notas = ValidadorEntrada.texto_libre(datos.notas, "notas", maximo=1000) or None
 
     punto_ids = getattr(datos, "punto_recogida_ids", None)
     puntos_nuevos = getattr(datos, "puntos_recogida", None)

@@ -343,7 +343,7 @@ def registrar_abordaje_pasajero(
             abordado_en=momento,
             registrado_por=registrado_por_usuario_id,
             estado=estado,
-            notas=notas,
+            notas=ValidadorEntrada.texto_libre(notas, "notas", maximo=255) or None,
             creado_en=ahora,
             actualizado_en=ahora,
         )
@@ -353,7 +353,7 @@ def registrar_abordaje_pasajero(
         abordaje.estado = estado
         abordaje.abordado_en = momento
         abordaje.registrado_por = registrado_por_usuario_id
-        abordaje.notas = notas
+        abordaje.notas = ValidadorEntrada.texto_libre(notas, "notas", maximo=255) or None
         abordaje.actualizado_en = ahora
 
     db.commit()
@@ -417,7 +417,7 @@ def actualizar_abordaje(
     if estado is not None:
         abordaje.estado = _validar_estado_abordaje(estado)
     if notas is not None:
-        abordaje.notas = notas
+        abordaje.notas = ValidadorEntrada.texto_libre(notas, "notas", maximo=255) or None
     if abordado_en is not None:
         abordaje.abordado_en = abordado_en
     if registrado_por_usuario_id is not None:

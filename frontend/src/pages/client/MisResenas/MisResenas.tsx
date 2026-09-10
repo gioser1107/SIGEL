@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Boton from '../../../components/ui/Boton/Boton';
 import { crearResena, obtenerMisReservasElegibles } from '../../../services/resenas';
 import type { ReservaElegibleResena } from '../../../types/resenas';
+import { validarComentarioResena } from '../../../utils/validacionesFormulario';
 import './MisResenas.css';
 
 function formatearFecha(fechaISO: string): string {
@@ -34,6 +35,15 @@ function FormularioResena({ reservaId, onEnviada }: FormularioResenaProps) {
   const [error, setError] = useState<string | null>(null);
 
   const manejarEnviar = async () => {
+    const errorComentario = validarComentarioResena(comentario);
+    if (errorComentario) {
+      setError(errorComentario);
+      return;
+    }
+    if (calificacion < 1 || calificacion > 5) {
+      setError('La calificación debe estar entre 1 y 5 estrellas.');
+      return;
+    }
     setEnviando(true);
     setError(null);
     try {

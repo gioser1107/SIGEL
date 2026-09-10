@@ -267,13 +267,25 @@ def crear_destino(
     nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
     validar_nombre_no_repetido(db, nombre_limpio)
     dificultad_limpia = normalizar_dificultad(dificultad)
+    descripcion_limpia = ValidadorEntrada.texto_libre(
+        descripcion,
+        "descripcion",
+        minimo=10,
+        maximo=2000,
+    ) or None
+    precio_limpio = ValidadorEntrada.monto(precio_base_eur, "precio_base_eur")
+    recargo_limpio = ValidadorEntrada.monto(
+        recargo_menor_eur,
+        "recargo_menor_eur",
+        permitir_cero=True,
+    )
 
     ahora = datetime.now()
     nuevo_destino = Destino(
         nombre=nombre_limpio,
-        descripcion=descripcion,
-        precio_base_eur=precio_base_eur,
-        recargo_menor_eur=recargo_menor_eur,
+        descripcion=descripcion_limpia,
+        precio_base_eur=precio_limpio,
+        recargo_menor_eur=recargo_limpio,
         dificultad=dificultad_limpia,
         activo=activo,
         creado_en=ahora,
@@ -301,23 +313,32 @@ def actualizar_destino(
     activo: bool | None = None,
     url_portada: str | None = None,
 ) -> Destino:
+    from utilidades.validaciones import ValidadorEntrada
+
     destino = buscar_destino_activo(db, destino_id)
 
     if nombre is not None:
-        from utilidades.validaciones import ValidadorEntrada
-
         nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
         validar_nombre_no_repetido(db, nombre_limpio, destino_id)
         destino.nombre = nombre_limpio
 
     if descripcion is not None:
-        destino.descripcion = descripcion
+        destino.descripcion = ValidadorEntrada.texto_libre(
+            descripcion,
+            "descripcion",
+            minimo=10,
+            maximo=2000,
+        ) or None
 
     if precio_base_eur is not None:
-        destino.precio_base_eur = precio_base_eur
+        destino.precio_base_eur = ValidadorEntrada.monto(precio_base_eur, "precio_base_eur")
 
     if recargo_menor_eur is not None:
-        destino.recargo_menor_eur = recargo_menor_eur
+        destino.recargo_menor_eur = ValidadorEntrada.monto(
+            recargo_menor_eur,
+            "recargo_menor_eur",
+            permitir_cero=True,
+        )
 
     if dificultad is not None:
         destino.dificultad = normalizar_dificultad(dificultad)

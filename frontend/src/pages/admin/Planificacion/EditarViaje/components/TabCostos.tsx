@@ -152,7 +152,8 @@ export default function TabCostos({
             type="text"
             placeholder="Ej: Combustible ida y vuelta Morrocoy"
             value={nuevoCosto.descripcion}
-            onChange={(e) => onNuevoCostoChange({ ...nuevoCosto, descripcion: e.target.value })}
+            onChange={(e) => onNuevoCostoChange({ ...nuevoCosto, descripcion: e.target.value.slice(0, 255) })}
+            maxLength={255}
           />
         </div>
         <Boton variante="secundario" tamano="sm" onClick={onAgregar} disabled={guardando}>

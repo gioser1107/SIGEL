@@ -18,6 +18,7 @@ import {
   obtenerResumenLineasCotizacion,
 } from '../../../services/cotizaciones';
 import { obtenerDestinosCatalogo } from '../../../services/catalogo';
+import { validarRequisitosCotizacion } from '../../../utils/validacionesFormulario';
 import type { DestinoCatalogo } from '../../../services/catalogo';
 import type { Cotizacion, EstadoCotizacion, ResumenLineasCotizacion } from '../../../types/cotizacion';
 import { LIMITE_PAGINA_MAX } from '../../../types/paginacion';
@@ -212,7 +213,8 @@ export default function MisSolicitudes() {
     };
   }, [cargarDatos]);
 
-  const formularioValido = destinoId !== '' && requisitos.trim().length > 10;
+  const errorRequisitos = validarRequisitosCotizacion(requisitos, true);
+  const formularioValido = destinoId !== '' && !errorRequisitos;
 
   const abrirModal = () => setModalAbierto(true);
   const cerrarModal = () => {

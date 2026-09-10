@@ -9,13 +9,13 @@ export default function SeccionViajes() {
 
     useEffect(() => {
         obtenerDestinosCatalogo()
-            .then((lista) => setDestinos(lista.slice(0, 4)))
+            .then((lista) => setDestinos(lista))
             .catch(() => setDestinos([]));
     }, []);
 
     return (
         <section className="seccion-viajes" id="destinos">
-            <h2 className="seccion-viajes__titulo">Los favoritos del momento</h2>
+            <h2 className="seccion-viajes__titulo">Nuestros destinos</h2>
 
             <div className="seccion-viajes__cuadricula">
                 {destinos.map((destino) => (

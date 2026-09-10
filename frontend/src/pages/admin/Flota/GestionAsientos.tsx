@@ -4,6 +4,7 @@ import Boton from '../../../components/ui/Boton/Boton';
 import { actualizarAsiento, crearAsiento, eliminarAsiento, obtenerAsientos } from '../../../services/asientos';
 import type { Asiento } from '../../../types/asiento';
 import type { UnidadTransporte } from '../../../types/unidad';
+import { sanitizarNumeroAsiento, validarFormularioAsiento } from '../../../utils/validacionesFormulario';
 
 interface GestionAsientosProps {
   abierto: boolean;
@@ -49,8 +50,14 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
   }, [abierto, unidad]);
 
   const agregarAsiento = async () => {
-    if (!unidad || !nuevoNum.trim()) return;
+    if (!unidad) return;
+    const errorAsiento = validarFormularioAsiento(nuevoNum, nuevaPos);
+    if (errorAsiento) {
+      setError(errorAsiento);
+      return;
+    }
     setCargando(true);
+    setError(null);
     try {
       await crearAsiento({
         unidad_id: unidad.id,
@@ -77,6 +84,11 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
 
   const guardarEdicionAsiento = async () => {
     if (!asientoEditando) return;
+    const errorAsiento = validarFormularioAsiento(editNum, editPos);
+    if (errorAsiento) {
+      alert(errorAsiento);
+      return;
+    }
     setCargando(true);
     try {
       await actualizarAsiento(asientoEditando.id, {
@@ -286,7 +298,8 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
                       type="text"
                       placeholder="Ej: 1A, VIP..."
                       value={nuevoNum}
-                      onChange={(e) => setNuevoNum(e.target.value.toUpperCase())}
+                      maxLength={10}
+                      onChange={(e) => setNuevoNum(sanitizarNumeroAsiento(e.target.value))}
                     />
                   </div>
                   <div className="drawer-form__campo">
@@ -338,7 +351,8 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
                   className="flota-modal__input"
                   type="text"
                   value={editNum}
-                  onChange={(e) => setEditNum(e.target.value.toUpperCase())}
+                  maxLength={10}
+                  onChange={(e) => setEditNum(sanitizarNumeroAsiento(e.target.value))}
                 />
               </div>
               <div className="flota-modal__campo">

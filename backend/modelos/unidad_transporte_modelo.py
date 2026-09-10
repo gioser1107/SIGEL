@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class UnidadTransporte(Base):
@@ -71,13 +72,18 @@ def crear_unidad(
     modelo: Optional[str],
     capacidad: int,
 ) -> UnidadTransporte:
-    _validar_placa_no_repetida(db, placa)
+    placa_limpia = ValidadorEntrada.placa(placa)
+    modelo_limpio = ValidadorEntrada.nombre_entidad(modelo, "modelo", obligatorio=False) or None
+    if modelo_limpio and len(modelo_limpio) > 80:
+        raise HTTPException(status_code=422, detail="modelo: no puede superar 80 caracteres")
+    capacidad_limpia = ValidadorEntrada.capacidad_pasajeros(capacidad)
+    _validar_placa_no_repetida(db, placa_limpia)
 
     ahora = datetime.now()
     nueva_unidad = UnidadTransporte(
-        placa=placa,
-        modelo=modelo,
-        capacidad=capacidad,
+        placa=placa_limpia,
+        modelo=modelo_limpio,
+        capacidad=capacidad_limpia,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -97,15 +103,19 @@ def actualizar_unidad(
     unidad = obtener_unidad_activa(db, unidad_id)
 
     if placa is not None:
-        if placa != unidad.placa:
-            _validar_placa_no_repetida(db, placa, unidad_id)
-        unidad.placa = placa
+        placa_limpia = ValidadorEntrada.placa(placa)
+        if placa_limpia != unidad.placa:
+            _validar_placa_no_repetida(db, placa_limpia, unidad_id)
+        unidad.placa = placa_limpia
 
     if modelo is not None:
-        unidad.modelo = modelo
+        modelo_limpio = ValidadorEntrada.nombre_entidad(modelo, "modelo", obligatorio=False) or None
+        if modelo_limpio and len(modelo_limpio) > 80:
+            raise HTTPException(status_code=422, detail="modelo: no puede superar 80 caracteres")
+        unidad.modelo = modelo_limpio
 
     if capacidad is not None:
-        unidad.capacidad = capacidad
+        unidad.capacidad = ValidadorEntrada.capacidad_pasajeros(capacidad)
 
     unidad.actualizado_en = datetime.now()
     db.commit()
@@ -120,7 +130,7 @@ def eliminar_unidad(db: Session, unidad_id: int) -> None:
     viajes_activos = db.query(Viaje).filter(
         Viaje.unidad_id == unidad_id,
         Viaje.eliminado_en.is_(None),
-        Viaje.estado.in_(["planificado", "en_progreso"]),
+        Viaje.estado.in_(["planificado", "en_curso"]),
     ).first()
 
     if viajes_activos:

@@ -23,7 +23,7 @@ import type {
 import type { FiltroListado } from '../../../../types/paginacion';
 import type { OpcionSelectBuscador } from '../../../../components/admin';
 import { FORM_VACIO, LINEA_FORM_VACIO } from '../constants';
-import { validarFormularioCotizacion } from '../../../../utils/validacionesFormulario';
+import { validarFormularioCotizacion, validarLineaCosto } from '../../../../utils/validacionesFormulario';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
 
 export function useCotizaciones() {
@@ -224,7 +224,12 @@ export function useCotizaciones() {
 
   // Agrega una línea de desglose y recalcula el precio total
   const agregarLinea = async () => {
-    if (!cotizacionActiva || !lineaForm.monto_eur) return;
+    if (!cotizacionActiva) return;
+    const errorLinea = validarLineaCosto(lineaForm);
+    if (errorLinea) {
+      alert(errorLinea);
+      return;
+    }
     try {
       const res = await crearLineaCotizacion(cotizacionActiva.id, {
         categoria: lineaForm.categoria,

@@ -319,7 +319,8 @@ export default function FormularioClienteCampos({
             id={id('notas')}
             className="drawer-form__input drawer-form__textarea"
             value={form.notas}
-            onChange={(e) => onChange((f) => ({ ...f, notas: e.target.value }))}
+            onChange={(e) => onChange((f) => ({ ...f, notas: e.target.value.slice(0, 1000) }))}
+            maxLength={1000}
             placeholder="Ej: Cliente interesado en Morrocoy, captado por WhatsApp…"
           />
         </div>

@@ -169,7 +169,6 @@ export default function Planificacion() {
           migaja="TravelBqto / Admin"
           titulo="Planificación de viajes"
           contador={total}
-          descripcion="Marca viajes para imprimir solo esos en el listado. El reporte operativo (pasajeros, asientos y cobros) se abre con el icono de impresora."
           acciones={
             <>
               <BtnImprimirReporte

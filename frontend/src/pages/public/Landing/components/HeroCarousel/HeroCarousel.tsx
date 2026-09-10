@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { URL_WHATSAPP } from '../../../../../config/contacto';
 import './HeroCarousel.css';
 import TarjetaDestino from './TarjetaDestino';
 import { obtenerDestinosCatalogo } from '../../../../../services/catalogo';
@@ -20,7 +21,7 @@ export default function HeroCarousel() {
         obtenerDestinosCatalogo()
             .then((lista) => {
                 setDestinos(
-                    lista.slice(0, 6).map((d) => ({
+                    lista.map((d) => ({
                         id: d.id,
                         titulo: d.nombre.toUpperCase(),
                         subtitulo: d.descripcion?.slice(0, 120) ?? '',
@@ -45,14 +46,22 @@ export default function HeroCarousel() {
                 <div className="hero-carousel__overlay">
                     <div className="hero-carousel__info">
                         <span className="hero-carousel__tag">Travel Bqto</span>
-                        <h1 className="hero-carousel__title">Tu próxima aventura</h1>
+                        <h1 className="hero-carousel__title">Nuestros destinos</h1>
                         <p className="hero-carousel__desc">
-                            Explora nuestra agenda de viajes y reserva tu próximo destino.
+                            Explora nuestra agenda de viajes y reserva el destino que más te guste.
                         </p>
                         <div className="hero-carousel__acciones">
+                            <a
+                                href={URL_WHATSAPP}
+                                className="hero-carousel__btn"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                Contáctanos
+                            </a>
                             <button
                                 type="button"
-                                className="hero-carousel__btn"
+                                className="hero-carousel__btn hero-carousel__btn--secundario"
                                 onClick={() => navegar('/agenda')}
                             >
                                 Ver agenda →
@@ -88,7 +97,7 @@ export default function HeroCarousel() {
 
             <div className="hero-carousel__overlay">
                 <div className="hero-carousel__info">
-                    <span className="hero-carousel__tag">Próximo destino</span>
+                    <span className="hero-carousel__tag">Nuestros destinos</span>
                     <h1 className="hero-carousel__title">{destinoActual.titulo}</h1>
                     <p className="hero-carousel__desc">{destinoActual.subtitulo}</p>
                     <div className="hero-carousel__acciones">
@@ -99,6 +108,14 @@ export default function HeroCarousel() {
                         >
                             Explorar destino →
                         </button>
+                        <a
+                            href={URL_WHATSAPP}
+                            className="hero-carousel__btn"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Contáctanos
+                        </a>
                         <button
                             type="button"
                             className="hero-carousel__btn hero-carousel__btn--secundario"
@@ -109,15 +126,17 @@ export default function HeroCarousel() {
                     </div>
                 </div>
 
-                <div className="hero-carousel__cards">
-                    <TarjetaDestino
-                        key={siguienteDestino.id}
-                        titulo={siguienteDestino.titulo}
-                        imagenFondo={siguienteDestino.imagenFondo}
-                        activo={true}
-                        onClick={() => navegar(`/destino/${siguienteDestino.id}`)}
-                    />
-                </div>
+                {destinos.length > 1 && (
+                    <div className="hero-carousel__cards">
+                        <TarjetaDestino
+                            key={siguienteDestino.id}
+                            titulo={siguienteDestino.titulo}
+                            imagenFondo={siguienteDestino.imagenFondo}
+                            activo={true}
+                            onClick={() => navegar(`/destino/${siguienteDestino.id}`)}
+                        />
+                    </div>
+                )}
 
                 <div className="hero-carousel__controls">
                     <button type="button" onClick={manejarAnterior} className="control-btn" aria-label="Destino anterior">←</button>

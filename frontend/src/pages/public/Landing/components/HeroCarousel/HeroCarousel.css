@@ -91,6 +91,10 @@
     font-size: var(--font-size-sm);
     font-weight: 600;
     cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: background var(--transition-fast);
 }
 

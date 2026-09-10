@@ -10,6 +10,7 @@ from modelos.cliente_modelo import Cliente
 from modelos.destino_modelo import Destino
 from modelos.reservas_modelo import Reserva, obtener_reserva_activa
 from modelos.viaje_modelo import Viaje
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Resena(Base):
@@ -227,7 +228,11 @@ def crear_resena(
     if cliente is None:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
-    comentario_limpio = comentario.strip() if comentario else None
+    comentario_limpio = ValidadorEntrada.texto_libre(
+        comentario,
+        "comentario",
+        maximo=1000,
+    ) or None
     ahora = datetime.now()
     nueva = Resena(
         reserva_id=reserva_id,

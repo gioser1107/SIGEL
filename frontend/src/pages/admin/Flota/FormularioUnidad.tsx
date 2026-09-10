@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Boton from '../../../components/ui/Boton/Boton';
 import { actualizarUnidad, crearUnidad } from '../../../services/unidades';
 import type { DatosUnidadCrear, UnidadTransporte } from '../../../types/unidad';
+import { sanitizarPlaca } from '../../../utils/validacionesFormulario';
 import { validarUnidadForm } from './constants';
 
 interface FormularioUnidadProps {
@@ -116,7 +117,7 @@ export default function FormularioUnidad({ abierto, onCerrar, unidad, onGuardado
               maxLength={16}
               placeholder="Placa del autobús"
               value={form.placa}
-              onChange={(e) => setForm((f) => ({ ...f, placa: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, placa: sanitizarPlaca(e.target.value) }))}
             />
           </div>
 
@@ -127,7 +128,8 @@ export default function FormularioUnidad({ abierto, onCerrar, unidad, onGuardado
               type="text"
               placeholder="Ej: Mercedes-Benz Sprinter"
               value={form.modelo ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, modelo: e.target.value }))}
+              maxLength={80}
+              onChange={(e) => setForm((f) => ({ ...f, modelo: e.target.value.slice(0, 80) }))}
             />
           </div>
 

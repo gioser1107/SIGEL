@@ -21,11 +21,20 @@ export function validarDomicilioRecogida(
   opciones?: { referenciaOpcional?: boolean },
 ): string | null {
   if (!valores.nombre.trim()) return 'Ingresa una etiqueta (ej. Mi casa, Casa de mamá).';
+  if (valores.nombre.trim().length < 2) return 'La etiqueta debe tener al menos 2 caracteres.';
   if (!valores.direccion.trim()) return 'Ingresa la dirección exacta.';
+  if (valores.direccion.trim().length < 5) return 'La dirección debe tener al menos 5 caracteres.';
+  if (valores.direccion.trim().length > 255) return 'La dirección no puede superar 255 caracteres.';
   if (!estadoId) return 'Selecciona el estado.';
   if (!ciudadId) return 'Selecciona la ciudad.';
   if (!opciones?.referenciaOpcional && !valores.notas.trim()) {
     return 'Ingresa una referencia (portón, timbre, punto de referencia).';
+  }
+  if (valores.notas.trim() && valores.notas.trim().length < 2) {
+    return 'La referencia debe tener al menos 2 caracteres.';
+  }
+  if (valores.notas.trim().length > 255) {
+    return 'La referencia no puede superar 255 caracteres.';
   }
   return null;
 }

@@ -22,7 +22,7 @@ import {
   guiasDesdeViaje,
   payloadViajeConGuias,
 } from '../utils/planificacionGuias';
-import { validarFormularioViaje } from '../../../../utils/validacionesFormulario';
+import { validarFormularioViaje, validarLineaCosto } from '../../../../utils/validacionesFormulario';
 
 export function usePlanificacion() {
   const [viajes, setViajes] = useState<Viaje[]>([]);
@@ -222,7 +222,12 @@ export function usePlanificacion() {
   };
 
   const agregarCosto = async () => {
-    if (!viajeActivo || !nuevoCosto.monto_eur) return;
+    if (!viajeActivo) return;
+    const errorCosto = validarLineaCosto(nuevoCosto);
+    if (errorCosto) {
+      alert(errorCosto);
+      return;
+    }
     setGuardandoCosto(true);
     try {
       await crearCosto(viajeActivo.id, {

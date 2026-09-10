@@ -38,6 +38,7 @@ from utilidades.persistencia import (
     _persistir,
     _revertir_transaccion,
 )
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Reserva(Base):
@@ -641,13 +642,14 @@ def crear_reserva(
         )
 
     _exigir_cupo_disponible(db, viaje, 1)
+    estado_limpio = ValidadorEntrada.estado_reserva(estado)
 
     ahora = datetime.now()
     nueva_reserva = Reserva(
         cliente_id=cliente_id,
         viaje_id=viaje_id,
         fecha_reserva=ahora,
-        estado=estado,
+        estado=estado_limpio,
         creado_por=usuario_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -658,7 +660,7 @@ def crear_reserva(
 def actualizar_reserva(db: Session, reserva_id: int, estado: Optional[str]) -> Reserva:
     reserva = obtener_reserva_activa(db, reserva_id)
     if estado:
-        reserva.estado = estado
+        reserva.estado = ValidadorEntrada.estado_reserva(estado)
     reserva.actualizado_en = datetime.now()
     _confirmar_transaccion(db)
     db.refresh(reserva)
@@ -756,9 +758,13 @@ def agregar_pasajero(
         es_titular=es_el_titular,
         es_menor=es_menor,
         ocupa_asiento=ocupa_asiento,
-        precio_pasajero_eur=precio_pasajero_eur,
-        recargo_eur=recargo_eur,
-        notas_tarifa=notas_tarifa,
+        precio_pasajero_eur=ValidadorEntrada.monto(
+            precio_pasajero_eur,
+            "precio_pasajero_eur",
+            permitir_cero=True,
+        ),
+        recargo_eur=ValidadorEntrada.monto(recargo_eur, "recargo_eur", permitir_cero=True),
+        notas_tarifa=ValidadorEntrada.texto_libre(notas_tarifa, "notas_tarifa", maximo=255) or None,
         punto_recogida_id=punto_recogida_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -786,11 +792,15 @@ def actualizar_pasajero(
     if ocupa_asiento is not None:
         pasajero.ocupa_asiento = ocupa_asiento
     if precio_pasajero_eur is not None:
-        pasajero.precio_pasajero_eur = precio_pasajero_eur
+        pasajero.precio_pasajero_eur = ValidadorEntrada.monto(
+            precio_pasajero_eur,
+            "precio_pasajero_eur",
+            permitir_cero=True,
+        )
     if recargo_eur is not None:
-        pasajero.recargo_eur = recargo_eur
+        pasajero.recargo_eur = ValidadorEntrada.monto(recargo_eur, "recargo_eur", permitir_cero=True)
     if notas_tarifa is not None:
-        pasajero.notas_tarifa = notas_tarifa
+        pasajero.notas_tarifa = ValidadorEntrada.texto_libre(notas_tarifa, "notas_tarifa", maximo=255) or None
     if actualizar_punto:
         if punto_recogida_id is not None:
             validar_punto_recogida(db, pasajero.cliente_id, punto_recogida_id)

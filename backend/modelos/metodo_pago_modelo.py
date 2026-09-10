@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.moneda_modelo import Moneda, buscar_moneda_por_id, moneda_a_dict, validar_moneda_existente
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class MetodoPago(Base):
@@ -59,7 +60,8 @@ def listar_metodos_pago(db: Session, pagina: int = 1, limite: int = 10) -> dict:
 
 def crear_metodo_pago(db: Session, codigo: str, nombre: str, moneda_id: int) -> MetodoPago:
     validar_moneda_existente(db, moneda_id)
-    codigo_limpio = codigo.strip().lower()
+    codigo_limpio = ValidadorEntrada.codigo(codigo).lower()
+    nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
     existe = db.query(MetodoPago).filter(
         MetodoPago.codigo == codigo_limpio,
         MetodoPago.eliminado_en.is_(None),
@@ -67,7 +69,7 @@ def crear_metodo_pago(db: Session, codigo: str, nombre: str, moneda_id: int) -> 
     if existe:
         raise HTTPException(status_code=400, detail="Ya existe un metodo de pago con ese codigo")
 
-    nuevo = MetodoPago(codigo=codigo_limpio, nombre=nombre.strip(), moneda_id=moneda_id)
+    nuevo = MetodoPago(codigo=codigo_limpio, nombre=nombre_limpio, moneda_id=moneda_id)
     db.add(nuevo)
     db.commit()
     db.refresh(nuevo)
@@ -88,7 +90,7 @@ def actualizar_metodo_pago(
         metodo.moneda_id = moneda_id
 
     if codigo is not None:
-        codigo_limpio = codigo.strip().lower()
+        codigo_limpio = ValidadorEntrada.codigo(codigo).lower()
         repetido = db.query(MetodoPago).filter(
             MetodoPago.codigo == codigo_limpio,
             MetodoPago.id != metodo_id,
@@ -99,7 +101,7 @@ def actualizar_metodo_pago(
         metodo.codigo = codigo_limpio
 
     if nombre is not None:
-        metodo.nombre = nombre.strip()
+        metodo.nombre = ValidadorEntrada.nombre_entidad(nombre, "nombre")
 
     db.commit()
     db.refresh(metodo)

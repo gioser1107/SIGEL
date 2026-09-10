@@ -6,6 +6,7 @@ from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Session
 
 from database import Base
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Asiento(Base):
@@ -51,6 +52,24 @@ def listar_asientos(db: Session, unidad_id: Optional[int] = None) -> list[dict]:
     return [asiento_a_dict(a) for a in asientos]
 
 
+def _validar_numero_asiento_no_repetido(
+    db: Session,
+    unidad_id: int,
+    numero: str,
+    asiento_id_actual: int | None = None,
+) -> None:
+    existente = db.query(Asiento).filter(
+        Asiento.unidad_id == unidad_id,
+        Asiento.numero == numero,
+        Asiento.eliminado_en.is_(None),
+    ).first()
+    if existente and existente.id != asiento_id_actual:
+        raise HTTPException(
+            status_code=400,
+            detail="Ya existe un asiento con ese número en esta unidad",
+        )
+
+
 def crear_asiento(
     db: Session,
     unidad_id: int,
@@ -69,11 +88,15 @@ def crear_asiento(
             detail="Unidad de transporte no encontrada o está eliminada",
         )
 
+    numero_limpio = ValidadorEntrada.numero_asiento(numero)
+    posicion_limpia = ValidadorEntrada.posicion_asiento(posicion)
+    _validar_numero_asiento_no_repetido(db, unidad_id, numero_limpio)
+
     ahora = datetime.now()
     nuevo_asiento = Asiento(
         unidad_id=unidad_id,
-        numero=numero,
-        posicion=posicion,
+        numero=numero_limpio,
+        posicion=posicion_limpia,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -92,9 +115,11 @@ def actualizar_asiento(
     asiento = obtener_asiento_activo(db, asiento_id)
 
     if numero is not None:
-        asiento.numero = numero
+        numero_limpio = ValidadorEntrada.numero_asiento(numero)
+        _validar_numero_asiento_no_repetido(db, asiento.unidad_id, numero_limpio, asiento_id)
+        asiento.numero = numero_limpio
     if posicion is not None:
-        asiento.posicion = posicion
+        asiento.posicion = ValidadorEntrada.posicion_asiento(posicion)
 
     asiento.actualizado_en = datetime.now()
     db.commit()

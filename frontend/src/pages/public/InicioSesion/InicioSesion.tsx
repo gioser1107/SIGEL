@@ -9,9 +9,11 @@ import { useAutenticacionContext } from '../../../context/Autenticacion';
 import { ErrorApi } from '../../../services/api';
 import {
   MENSAJE_NOMBRE_PERSONA,
+  esCorreoValido,
   esNombreValido,
   sanitizarNombrePersona,
   sanitizarSoloDigitos,
+  validarFormularioLogin,
 } from '../../../utils/validacionesFormulario';
 import LogoMarca from '../../../components/ui/LogoMarca/LogoMarca';
 import PanelVisualAuth from './PanelVisualAuth';
@@ -155,6 +157,14 @@ export default function InicioSesion() {
     setError('');
 
     if (esRegistro) {
+      if (!correo.trim()) {
+        setError('Ingresa tu correo.');
+        return;
+      }
+      if (!esCorreoValido(correo)) {
+        setError('Ingresa un correo electrónico válido (ej: usuario@travelbqto.com).');
+        return;
+      }
       if (contrasena !== confirmarContrasena) {
         setError('Las contraseñas no coinciden.');
         return;
@@ -177,6 +187,18 @@ export default function InicioSesion() {
       }
       if (!numeroDocumento.trim()) {
         setError('Ingresa tu número de documento.');
+        return;
+      }
+      if (!/^\d{4,9}$/.test(numeroDocumento.trim()) && tipoDocumento !== 'J') {
+        setError('La cédula debe tener entre 4 y 9 dígitos.');
+        return;
+      }
+      if (tipoDocumento === 'J' && !/^[A-Za-z0-9]{4,15}$/.test(numeroDocumento.trim())) {
+        setError('Revisa el número de documento.');
+        return;
+      }
+      if (numeroTelefono.trim() && !/^\d{7}$/.test(numeroTelefono.trim())) {
+        setError('El teléfono debe tener exactamente 7 dígitos.');
         return;
       }
       const telefonoCompleto = numeroTelefono.trim()
@@ -204,6 +226,11 @@ export default function InicioSesion() {
       return;
     }
 
+    const errorLogin = validarFormularioLogin(correo, contrasena);
+    if (errorLogin) {
+      setError(errorLogin);
+      return;
+    }
     setCargando(true);
     const resultado = await iniciarSesion(correo, contrasena);
     setCargando(false);

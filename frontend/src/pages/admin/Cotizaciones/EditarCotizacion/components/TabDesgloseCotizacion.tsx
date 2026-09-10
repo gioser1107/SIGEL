@@ -104,7 +104,8 @@ export default function TabDesgloseCotizacion({
             type="text"
             placeholder="Descripción"
             value={lineaForm.descripcion}
-            onChange={(e) => onLineaFormChange({ ...lineaForm, descripcion: e.target.value })}
+            onChange={(e) => onLineaFormChange({ ...lineaForm, descripcion: e.target.value.slice(0, 255) })}
+            maxLength={255}
           />
           <Boton variante="secundario" tamano="sm" onClick={onAgregarLinea}>
             Agregar

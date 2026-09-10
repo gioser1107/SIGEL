@@ -18,9 +18,18 @@ export function resolverVarianteAccion(accion: string): VarianteBadge {
   return mapa[accion] ?? 'neutro';
 }
 
-// Convierte la fecha ISO a formato legible dd/mm/aaaa hh:mm (zona VE)
+function parsearFechaBitacora(iso: string): Date {
+  const texto = iso.trim();
+  const tieneZona = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(texto);
+  return new Date(tieneZona ? texto : `${texto.replace(' ', 'T')}Z`);
+}
+
+// Convierte la fecha ISO (UTC) a formato legible dd/mm/aaaa hh:mm en hora de Caracas
 export function formatFechaHora(iso: string): string {
-  return new Date(iso).toLocaleString('es-VE', {
+  const fecha = parsearFechaBitacora(iso);
+  if (Number.isNaN(fecha.getTime())) return iso;
+  return fecha.toLocaleString('es-VE', {
+    timeZone: 'America/Caracas',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

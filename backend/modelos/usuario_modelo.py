@@ -329,6 +329,8 @@ def iniciar_sesion(db: Session, correo: str, contrasena: str) -> dict:
     from dependencias.auth_dependencia import obtener_permisos_del_rol
 
     correo_limpio = ValidadorEntrada.correo(correo)
+    if contrasena is None or not str(contrasena):
+        raise HTTPException(status_code=422, detail="contrasena: es obligatoria")
 
     consulta = db.query(Usuario).filter(
         Usuario.correo == correo_limpio,

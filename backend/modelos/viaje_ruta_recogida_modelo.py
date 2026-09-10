@@ -10,6 +10,7 @@ from modelos.punto_recogida_modelo import PuntoRecogida, punto_recogida_a_dict
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
 from modelos.viaje_modelo import Viaje
+from utilidades.validaciones import ValidadorEntrada
 
 
 class ViajeRutaRecogida(Base):
@@ -342,7 +343,7 @@ def guardar_ruta_recogida(
                 reserva_cliente_id=item.reserva_cliente_id,
                 orden=item.orden,
                 hora_programada=item.hora_programada,
-                notas=item.notas,
+                notas=ValidadorEntrada.texto_libre(item.notas, "notas", maximo=255) or None,
                 creado_en=ahora,
                 actualizado_en=ahora,
             )

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from database import Base
 from modelos.cotizacion_modelo import Cotizacion, obtener_cotizacion_activa
+from utilidades.validaciones import ValidadorEntrada
 
 
 class CotizacionLinea(Base):
@@ -106,12 +107,16 @@ def crear_linea_cotizacion(
     if cotizacion.estado in ("aceptada", "cancelada"):
         raise HTTPException(status_code=400, detail="No se puede modificar el desglose en este estado")
 
+    categoria_limpia = ValidadorEntrada.categoria_costo(categoria)
+    monto_limpio = ValidadorEntrada.monto(monto_eur, "monto_eur")
+    descripcion_limpia = ValidadorEntrada.texto_libre(descripcion, "descripcion") or None
+
     ahora = datetime.now()
     nueva_linea = CotizacionLinea(
         cotizacion_id=cotizacion_id,
-        categoria=categoria,
-        monto_eur=monto_eur,
-        descripcion=descripcion,
+        categoria=categoria_limpia,
+        monto_eur=monto_limpio,
+        descripcion=descripcion_limpia,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -144,11 +149,11 @@ def actualizar_linea_cotizacion(
         raise HTTPException(status_code=404, detail="Línea no encontrada")
 
     if categoria is not None:
-        linea.categoria = categoria
+        linea.categoria = ValidadorEntrada.categoria_costo(categoria)
     if monto_eur is not None:
-        linea.monto_eur = monto_eur
+        linea.monto_eur = ValidadorEntrada.monto(monto_eur, "monto_eur")
     if descripcion is not None:
-        linea.descripcion = descripcion
+        linea.descripcion = ValidadorEntrada.texto_libre(descripcion, "descripcion") or None
     linea.actualizado_en = datetime.now()
 
     recalcular_precio_cotizacion(db, cotizacion)

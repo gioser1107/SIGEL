@@ -49,7 +49,8 @@ export default function TabInfoCotizacion({
         <textarea
           className="drawer-form__input drawer-form__textarea"
           value={form.requisitos ?? ''}
-          onChange={(e) => actualizarCampo('requisitos', e.target.value)}
+          onChange={(e) => actualizarCampo('requisitos', e.target.value.slice(0, 1000))}
+          maxLength={1000}
           placeholder="Ej: Empresa ACME, 2 buses, 80 empleados, salida flexible mayo..."
           rows={3}
           disabled={bloqueada}

@@ -58,7 +58,8 @@ export default function ModalNotasAbordaje({
           className="modal-notas-abordaje__textarea drawer-form__input"
           rows={3}
           value={notas}
-          onChange={(e) => setNotas(e.target.value)}
+          maxLength={255}
+          onChange={(e) => setNotas(e.target.value.slice(0, 255))}
           placeholder="Ej.: No respondió llamada"
         />
         <div className="modal-notas-abordaje__acciones">

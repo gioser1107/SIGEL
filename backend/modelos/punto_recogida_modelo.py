@@ -72,22 +72,22 @@ def validar_datos_domicilio_cliente(
     from utilidades.validaciones import ValidadorEntrada
 
     nombre_limpio = ValidadorEntrada.etiqueta_texto(nombre, "nombre")
-    direccion_limpia = _texto_normalizado(direccion)
-    ciudad_limpia = _texto_normalizado(ciudad)
-    estado_limpio = _texto_normalizado(estado)
-    referencia_limpia = _texto_normalizado(notas_referencia)
-
-    if not direccion_limpia:
-        raise HTTPException(status_code=422, detail="La direccion exacta de recogida es requerida")
-    if not ciudad_limpia:
-        raise HTTPException(status_code=422, detail="La ciudad del domicilio es requerida")
-    if not estado_limpio:
-        raise HTTPException(status_code=422, detail="El estado del domicilio es requerido")
-    if not referencia_limpia:
-        raise HTTPException(
-            status_code=422,
-            detail="La referencia del domicilio es requerida (ej. casa esquinera, porton azul)",
-        )
+    direccion_limpia = ValidadorEntrada.texto_libre(
+        direccion,
+        "direccion",
+        obligatorio=True,
+        minimo=5,
+        maximo=255,
+    )
+    ciudad_limpia = ValidadorEntrada.etiqueta_texto(ciudad, "ciudad")
+    estado_limpio = ValidadorEntrada.etiqueta_texto(estado, "estado")
+    referencia_limpia = ValidadorEntrada.texto_libre(
+        notas_referencia,
+        "notas_referencia",
+        obligatorio=True,
+        minimo=2,
+        maximo=255,
+    )
 
     return nombre_limpio, direccion_limpia, ciudad_limpia, estado_limpio, referencia_limpia
 

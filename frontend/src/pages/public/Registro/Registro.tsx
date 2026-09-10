@@ -13,6 +13,7 @@ import { listarCiudadesPorEstado, listarEstados } from '../../../services/ubicac
 import { ErrorApi } from '../../../services/api';
 import {
   MENSAJE_NOMBRE_PERSONA,
+  esCorreoValido,
   esNombreValido,
   sanitizarNombrePersona,
   sanitizarSoloDigitos,
@@ -164,9 +165,29 @@ export default function Registro() {
     if (!nombre.trim() || !apellido.trim()) return 'Completa nombre y apellido.';
     if (!esNombreValido(nombre) || !esNombreValido(apellido)) return MENSAJE_NOMBRE_PERSONA;
     if (!correo.trim()) return 'Ingresa tu correo.';
+    if (!esCorreoValido(correo)) return 'Ingresa un correo electrónico válido (ej: usuario@travelbqto.com).';
     if (contrasena.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
     if (contrasena !== confirmar) return 'Las contraseñas no coinciden.';
     if (!numeroDocumento.trim()) return 'Ingresa tu documento.';
+    if (tipoDocumento !== 'J' && !/^\d{4,9}$/.test(numeroDocumento.trim())) {
+      return 'La cédula debe tener entre 4 y 9 dígitos.';
+    }
+    if (tipoDocumento === 'J' && !/^[A-Za-z0-9]{4,15}$/.test(numeroDocumento.trim())) {
+      return 'Revisa el número de documento.';
+    }
+    if (numeroTelefono.trim() && !/^\d{7}$/.test(numeroTelefono.trim())) {
+      return 'El teléfono debe tener exactamente 7 dígitos.';
+    }
+    return null;
+  }
+
+  function validarPaso2(): string | null {
+    const hayUbicacion = direccion.trim() || estadoId || ciudadId;
+    if (!hayUbicacion) return null;
+    if (direccion.trim().length < 5) return 'La dirección debe tener al menos 5 caracteres.';
+    if (direccion.trim().length > 255) return 'La dirección no puede superar 255 caracteres.';
+    if (!estadoId) return 'Selecciona un estado.';
+    if (!ciudadId) return 'Selecciona una ciudad.';
     return null;
   }
 
@@ -176,6 +197,14 @@ export default function Registro() {
       if (err) {
         setError(err);
         setPaso(1);
+        return;
+      }
+    }
+    if (siguiente > 2) {
+      const errUbicacion = validarPaso2();
+      if (errUbicacion) {
+        setError(errUbicacion);
+        setPaso(2);
         return;
       }
     }
@@ -190,6 +219,13 @@ export default function Registro() {
     if (err1) {
       setError(err1);
       setPaso(1);
+      return;
+    }
+
+    const err2 = validarPaso2();
+    if (err2) {
+      setError(err2);
+      setPaso(2);
       return;
     }
 

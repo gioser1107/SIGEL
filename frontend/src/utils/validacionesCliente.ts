@@ -101,6 +101,7 @@ export interface ErroresFormularioCliente {
   direccion?: string;
   estado_id?: string;
   ciudad_id?: string;
+  notas?: string;
 }
 
 export function validarFormularioCliente(datos: FormularioCliente): ErroresFormularioCliente {
@@ -166,6 +167,18 @@ export function validarFormularioCliente(datos: FormularioCliente): ErroresFormu
 
   if (!datos.ciudad_id) {
     errores.ciudad_id = 'Selecciona una ciudad.';
+  }
+
+  const direccion = datos.direccion.trim();
+  if (direccion && direccion.length < 5) {
+    errores.direccion = 'La dirección debe tener al menos 5 caracteres.';
+  } else if (direccion.length > 255) {
+    errores.direccion = 'La dirección no puede superar 255 caracteres.';
+  }
+
+  const notas = datos.notas.trim();
+  if (notas.length > 1000) {
+    errores.notas = 'Las notas no pueden superar 1000 caracteres.';
   }
 
   return errores;

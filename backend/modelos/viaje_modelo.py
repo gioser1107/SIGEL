@@ -14,6 +14,7 @@ from modelos.destino_modelo import Destino, IMAGEN_DEFAULT, dificultad_efectiva,
 from modelos.unidad_transporte_modelo import UnidadTransporte
 from modelos.viaje_guia_modelo import asignar_guias_si_provisto, guias_en_respuesta_viaje
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Viaje(Base):
@@ -319,6 +320,7 @@ def crear_viaje(
     obtener_destino_activo(db, destino_id)
     obtener_unidad_activa(db, unidad_id)
     validar_fechas_viaje(fecha_salida, fecha_regreso)
+    estado_limpio = ValidadorEntrada.estado_viaje(estado)
 
     ahora = datetime.now()
     nuevo_viaje = Viaje(
@@ -326,7 +328,7 @@ def crear_viaje(
         unidad_id=unidad_id,
         fecha_salida=fecha_salida,
         fecha_regreso=fecha_regreso,
-        estado=estado,
+        estado=estado_limpio,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -376,7 +378,7 @@ def actualizar_viaje(
     if fecha_regreso is not None:
         viaje.fecha_regreso = fecha_regreso
     if estado is not None:
-        viaje.estado = estado
+        viaje.estado = ValidadorEntrada.estado_viaje(estado)
 
     validar_fechas_viaje(viaje.fecha_salida, viaje.fecha_regreso)
 
@@ -453,13 +455,16 @@ def crear_costo(
     descripcion: Optional[str] = None,
 ) -> CostoOperativo:
     obtener_viaje_activo(db, viaje_id)
+    categoria_limpia = ValidadorEntrada.categoria_costo(categoria)
+    monto_limpio = ValidadorEntrada.monto(monto_eur, "monto_eur")
+    descripcion_limpia = ValidadorEntrada.texto_libre(descripcion, "descripcion") or None
 
     ahora = datetime.now()
     nuevo_costo = CostoOperativo(
         viaje_id=viaje_id,
-        categoria=categoria,
-        monto_eur=monto_eur,
-        descripcion=descripcion,
+        categoria=categoria_limpia,
+        monto_eur=monto_limpio,
+        descripcion=descripcion_limpia,
         creado_en=ahora,
         actualizado_en=ahora,
     )
@@ -489,11 +494,11 @@ def actualizar_costo(
         raise HTTPException(status_code=404, detail="Costo operativo no encontrado")
 
     if categoria is not None:
-        costo.categoria = categoria
+        costo.categoria = ValidadorEntrada.categoria_costo(categoria)
     if monto_eur is not None:
-        costo.monto_eur = monto_eur
+        costo.monto_eur = ValidadorEntrada.monto(monto_eur, "monto_eur")
     if descripcion is not None:
-        costo.descripcion = descripcion
+        costo.descripcion = ValidadorEntrada.texto_libre(descripcion, "descripcion") or None
 
     costo.actualizado_en = datetime.now()
     db.commit()

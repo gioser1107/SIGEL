@@ -7,6 +7,7 @@ import SeccionBeneficios from './components/SeccionBeneficios/SeccionBeneficios'
 import SeccionViajes from './components/SeccionViajes/SeccionViajes';
 import SeccionComentarios from './components/SeccionComentarios/SeccionComentarios';
 import SeccionNosotros from './components/SeccionNosotros/SeccionNosotros';
+import SeccionContacto from './components/SeccionContacto/SeccionContacto';
 
 /**
  * Landing — Página principal del catálogo turístico.
@@ -35,6 +36,8 @@ export default function Landing() {
       <SeccionComentarios />
 
       <SeccionNosotros />
+
+      <SeccionContacto />
     </div>
   );
 }

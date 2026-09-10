@@ -107,7 +107,8 @@ export default function PanelEditarDestino({
             className="drawer-form__input drawer-form__textarea"
             rows={4}
             value={form.descripcion ?? ''}
-            onChange={(e) => actualizarCampo('descripcion', e.target.value)}
+            onChange={(e) => actualizarCampo('descripcion', e.target.value.slice(0, 2000))}
+            maxLength={2000}
           />
         </div>
 

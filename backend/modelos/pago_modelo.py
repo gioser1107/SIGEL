@@ -875,6 +875,7 @@ def registrar_pago_reserva(
     comprobante_url = normalizar_comprobante_url(comprobante_url)
     validar_monto_pago_reserva(db, reserva, metodo_pago_id, tasa_id, monto)
     telefono_origen = ValidadorEntrada.telefono(telefono_origen, "telefono_origen") or None
+    correo_origen = ValidadorEntrada.correo(correo_origen, obligatorio=False) or None
     fecha_pago = ValidadorEntrada.fecha_no_futura(
         fecha_pago or date.today(),
         "fecha_pago",
@@ -898,7 +899,7 @@ def registrar_pago_reserva(
         telefono_origen=telefono_origen,
         correo_origen=correo_origen,
         comprobante_url=comprobante_url,
-        notas=notas,
+        notas=ValidadorEntrada.texto_libre(notas, "notas", maximo=255) or None,
         creado_por=usuario_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -987,13 +988,13 @@ def actualizar_pago_reserva(
         pago.telefono_origen = ValidadorEntrada.telefono(telefono_origen, "telefono_origen") or None
 
     if correo_origen is not None:
-        pago.correo_origen = correo_origen
+        pago.correo_origen = ValidadorEntrada.correo(correo_origen, obligatorio=False) or None
 
     if comprobante_url is not None:
         pago.comprobante_url = normalizar_comprobante_url(comprobante_url)
 
     if notas is not None:
-        pago.notas = notas
+        pago.notas = ValidadorEntrada.texto_libre(notas, "notas", maximo=255) or None
 
     pago.actualizado_en = datetime.now()
     actualizar_estado_reserva_por_pagos(db, reserva)

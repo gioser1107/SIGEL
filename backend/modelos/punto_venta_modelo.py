@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from database import Base
 from modelos.banco_modelo import Banco, banco_a_dict, validar_banco_activo
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class PuntoVenta(Base):
@@ -77,7 +78,15 @@ def crear_punto_venta(
     activo: bool,
 ) -> PuntoVenta:
     validar_banco_activo(db, banco_id)
-    codigo_limpio = codigo.strip()
+    codigo_limpio = ValidadorEntrada.codigo(codigo)
+    nombre_limpio = ValidadorEntrada.nombre_entidad(nombre, "nombre")
+    terminal_limpio = ValidadorEntrada.texto_libre(
+        numero_terminal,
+        "numero_terminal",
+        obligatorio=True,
+        minimo=2,
+        maximo=60,
+    )
     existe = db.query(PuntoVenta).filter(
         PuntoVenta.codigo == codigo_limpio,
         PuntoVenta.eliminado_en.is_(None),
@@ -89,8 +98,8 @@ def crear_punto_venta(
     nuevo = PuntoVenta(
         banco_id=banco_id,
         codigo=codigo_limpio,
-        nombre=nombre.strip(),
-        numero_terminal=numero_terminal,
+        nombre=nombre_limpio,
+        numero_terminal=terminal_limpio,
         activo=activo,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -117,7 +126,7 @@ def actualizar_punto_venta(
         punto.banco_id = banco_id
 
     if codigo is not None:
-        codigo_limpio = codigo.strip()
+        codigo_limpio = ValidadorEntrada.codigo(codigo)
         repetido = db.query(PuntoVenta).filter(
             PuntoVenta.codigo == codigo_limpio,
             PuntoVenta.id != punto_id,
@@ -128,10 +137,16 @@ def actualizar_punto_venta(
         punto.codigo = codigo_limpio
 
     if nombre is not None:
-        punto.nombre = nombre.strip()
+        punto.nombre = ValidadorEntrada.nombre_entidad(nombre, "nombre")
 
     if numero_terminal is not None:
-        punto.numero_terminal = numero_terminal
+        punto.numero_terminal = ValidadorEntrada.texto_libre(
+            numero_terminal,
+            "numero_terminal",
+            obligatorio=True,
+            minimo=2,
+            maximo=60,
+        )
 
     if activo is not None:
         punto.activo = activo

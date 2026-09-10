@@ -12,6 +12,7 @@ from modelos.destino_modelo import Destino
 from modelos.cliente_modelo import es_rol_cliente, obtener_cliente_por_usuario_id
 from modelos.usuario_modelo import nombre_completo_de
 from utilidades.paginacion import offset_pagina, respuesta_paginada
+from utilidades.validaciones import ValidadorEntrada
 
 
 class Cotizacion(Base):
@@ -193,19 +194,36 @@ def crear_cotizacion(
         cliente_id_final = cliente.id
         precio = None
         estado_final = "solicitada"
+        requisitos_limpios = ValidadorEntrada.texto_libre(
+            requisitos,
+            "requisitos",
+            obligatorio=True,
+            minimo=10,
+            maximo=1000,
+        )
     else:
         if cliente_id is None:
             raise HTTPException(status_code=400, detail="cliente_id es requerido")
         obtener_cliente_activo(db, cliente_id)
         cliente_id_final = cliente_id
-        precio = precio_cotizado_eur
-        estado_final = estado
+        precio = (
+            ValidadorEntrada.monto(precio_cotizado_eur, "precio_cotizado_eur", permitir_cero=True)
+            if precio_cotizado_eur is not None
+            else None
+        )
+        estado_final = ValidadorEntrada.estado_cotizacion(estado)
+        requisitos_limpios = ValidadorEntrada.texto_libre(
+            requisitos,
+            "requisitos",
+            minimo=10,
+            maximo=1000,
+        ) or None
 
     ahora = datetime.now()
     nueva_cotizacion = Cotizacion(
         cliente_id=cliente_id_final,
         destino_id=destino_id,
-        requisitos=requisitos,
+        requisitos=requisitos_limpios,
         precio_cotizado_eur=precio,
         valida_hasta=valida_hasta,
         estado=estado_final,
@@ -250,14 +268,24 @@ def actualizar_cotizacion(
             raise HTTPException(status_code=400, detail="Solo puedes editar requisitos en estado solicitada")
     else:
         if precio_cotizado_eur is not None:
-            cotizacion.precio_cotizado_eur = precio_cotizado_eur
+            cotizacion.precio_cotizado_eur = ValidadorEntrada.monto(
+                precio_cotizado_eur,
+                "precio_cotizado_eur",
+                permitir_cero=True,
+            )
         if valida_hasta is not None:
             cotizacion.valida_hasta = valida_hasta
 
     if requisitos is not None:
-        cotizacion.requisitos = requisitos
+        cotizacion.requisitos = ValidadorEntrada.texto_libre(
+            requisitos,
+            "requisitos",
+            obligatorio=es_cliente,
+            minimo=10,
+            maximo=1000,
+        ) or None
     if estado is not None:
-        cotizacion.estado = estado
+        cotizacion.estado = ValidadorEntrada.estado_cotizacion(estado)
 
     cotizacion.actualizado_en = datetime.now()
     db.commit()
