@@ -76,10 +76,11 @@ def obtener_tasas_hoy_endpoint(
 @router.post("/sincronizar-bcv")
 def sincronizar_tasa_bcv_endpoint(
     solo_si_falta: bool = Query(default=False),
+    fecha: date | None = Query(default=None),
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_REPORTES_PAGO)),
 ):
-    return sincronizar_tasas_bcv(db, solo_si_falta=solo_si_falta)
+    return sincronizar_tasas_bcv(db, solo_si_falta=solo_si_falta, fecha_efectiva=fecha)
 
 
 @router.get("/{tasa_id}")

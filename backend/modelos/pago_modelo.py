@@ -22,8 +22,10 @@ from modelos.tasa_modelo import (
     Tasa,
     obtener_tasa_eur_del_dia_o_error,
     obtener_tasa_eur_reciente,
+    obtener_tasa_moneda_en_o_antes,
     validar_tasa_eur_es_del_dia,
 )
+from utilidades.fecha_operativa import fecha_operativa_hoy
 from modelos.viaje_modelo import Viaje
 from utilidades.paginacion import offset_pagina, paginar_consulta, respuesta_paginada
 from utilidades.validaciones import ValidadorEntrada
@@ -468,12 +470,7 @@ def convertir_monto_pago_a_eur(db: Session, pago: Pago) -> tuple[float, bool]:
         moneda_usd = buscar_moneda_por_codigo(db, "USD")
         tasa_usd = None
         if moneda_usd:
-            tasa_usd = (
-                db.query(Tasa)
-                .filter(Tasa.moneda_id == moneda_usd.id)
-                .order_by(Tasa.fecha.desc(), Tasa.id.desc())
-                .first()
-            )
+            tasa_usd = obtener_tasa_moneda_en_o_antes(db, moneda_usd.id)
 
         tasa_eur = tasa if moneda_tasa.codigo == "EUR" else None
         if not tasa_eur:
@@ -742,6 +739,7 @@ def obtener_catalogo_pagos(db: Session) -> dict:
 
     tasas = (
         db.query(Tasa)
+        .filter(Tasa.eliminado_en.is_(None), Tasa.fecha <= fecha_operativa_hoy())
         .order_by(Tasa.fecha.desc(), Tasa.id.desc())
         .limit(30)
         .all()

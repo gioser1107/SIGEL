@@ -1,0 +1,23 @@
+Job diario de tasa BCV (misma lógica que Stockflow).
+
+A última hora el BCV ya muestra lo que aplica desde el día siguiente.
+El cron de las 20:15 (Caracas) guarda esa tasa con fecha = mañana.
+Al cobrar se usa la tasa de HOY, no la más nueva.
+
+cPanel → Advanced → Cron Jobs
+Zona horaria: America/Caracas
+Minuto 15, Hora 20, resto *
+
+Comando:
+
+/home/kontrola/virtualenv/repositories/SIGEL/backend/3.10/bin/python /home/kontrola/repositories/SIGEL/backend/jobs/sincronizar_tasa_bcv.py >> /home/kontrola/logs/tasa_bcv.log 2>&1
+
+Si el cron de cPanel está en UTC y no deja cambiar zona: 00:15 UTC (20:15 Caracas = 00:15 UTC del día siguiente).
+
+Probar a mano (guarda mañana):
+
+/home/kontrola/virtualenv/repositories/SIGEL/backend/3.10/bin/python /home/kontrola/repositories/SIGEL/backend/jobs/sincronizar_tasa_bcv.py
+
+Cargar la de hoy (rescate):
+
+.../python .../jobs/sincronizar_tasa_bcv.py --hoy

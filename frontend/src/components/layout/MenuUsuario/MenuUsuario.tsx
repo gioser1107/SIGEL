@@ -66,7 +66,9 @@ export default function MenuUsuario({ children, triggerClassName = '' }: MenuUsu
         </div>
       )}
 
-      <ModalCambiarContrasena abierto={modalAbierto} onCerrar={() => setModalAbierto(false)} />
+      {modalAbierto && (
+        <ModalCambiarContrasena abierto={modalAbierto} onCerrar={() => setModalAbierto(false)} />
+      )}
     </div>
   );
 }

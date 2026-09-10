@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CabeceraModulo,
   EtiquetaEstado,
@@ -38,14 +39,21 @@ function etiquetaPago(p: PasajeroReporteViaje): string {
 }
 
 export default function ReporteViaje() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [viajes, setViajes] = useState<Viaje[]>([]);
   const [cargandoViajes, setCargandoViajes] = useState(true);
   const [busquedaViaje, setBusquedaViaje] = useState('');
-  const [viajeId, setViajeId] = useState<number | null>(null);
   const [reporte, setReporte] = useState<ReporteViajeData | null>(null);
   const [cargandoReporte, setCargandoReporte] = useState(false);
   const [busquedaPasajero, setBusquedaPasajero] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const viajeId = useMemo(() => {
+    const raw = searchParams.get('viaje');
+    if (!raw) return null;
+    const id = Number(raw);
+    return Number.isInteger(id) && id > 0 ? id : null;
+  }, [searchParams]);
 
   useEffect(() => {
     setCargandoViajes(true);
@@ -205,11 +213,15 @@ export default function ReporteViaje() {
     [],
   );
 
+  function seleccionarViaje(id: number) {
+    setSearchParams({ viaje: String(id) }, { replace: true });
+  }
+
   function volverSelector() {
-    setViajeId(null);
     setReporte(null);
     setError(null);
     setBusquedaPasajero('');
+    setSearchParams({}, { replace: true });
   }
 
   const ocupacionPct = reporte && reporte.ocupacion.total_asientos > 0
@@ -255,7 +267,7 @@ export default function ReporteViaje() {
               cargando={cargandoViajes}
               mensajeVacio="No hay viajes que coincidan con la búsqueda."
               idFila={(v) => v.id}
-              onFilaClick={(v) => setViajeId(v.id)}
+              onFilaClick={(v) => seleccionarViaje(v.id)}
             />
           </>
         ) : (

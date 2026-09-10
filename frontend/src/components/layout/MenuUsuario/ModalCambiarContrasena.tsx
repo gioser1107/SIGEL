@@ -93,9 +93,13 @@ export default function ModalCambiarContrasena({ abierto, onCerrar }: ModalCambi
   const [error, setError] = useState<string | null>(null);
   const [exito, setExito] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [animar, setAnimar] = useState(false);
 
   useEffect(() => {
-    if (!abierto) return;
+    if (!abierto) {
+      setAnimar(false);
+      return;
+    }
 
     setActual('');
     setNueva('');
@@ -106,6 +110,9 @@ export default function ModalCambiarContrasena({ abierto, onCerrar }: ModalCambi
     setError(null);
     setExito(false);
     setGuardando(false);
+
+    const id = requestAnimationFrame(() => setAnimar(true));
+    return () => cancelAnimationFrame(id);
   }, [abierto]);
 
   useEffect(() => {
@@ -148,14 +155,14 @@ export default function ModalCambiarContrasena({ abierto, onCerrar }: ModalCambi
 
   return createPortal(
     <div
-      className="modal-contrasena__superposicion"
+      className={`modal-contrasena__superposicion${animar ? ' modal-contrasena__superposicion--animar' : ''}`}
       onClick={() => {
         if (!guardando) onCerrar();
       }}
       role="presentation"
     >
       <div
-        className="modal-contrasena"
+        className={`modal-contrasena${animar ? ' modal-contrasena--animar' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-contrasena-titulo"

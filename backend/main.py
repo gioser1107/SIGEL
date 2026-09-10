@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Optional
 from contextlib import asynccontextmanager
-import asyncio
 import logging
 import os
 
@@ -44,24 +43,13 @@ logger = logging.getLogger("sigel")
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     from utilidades.tasa_bcv_programada import (
-        bucle_tasa_bcv_diaria,
         ejecutar_sincronizacion_bcv,
         tasa_bcv_auto_activa,
-        tasa_bcv_diaria_activa,
     )
 
-    tarea_bcv = None
     if tasa_bcv_auto_activa():
         ejecutar_sincronizacion_bcv(solo_si_falta=True)
-    if tasa_bcv_diaria_activa():
-        tarea_bcv = asyncio.create_task(bucle_tasa_bcv_diaria())
     yield
-    if tarea_bcv is not None:
-        tarea_bcv.cancel()
-        try:
-            await tarea_bcv
-        except asyncio.CancelledError:
-            pass
 
 
 app = FastAPI(title="API Travel BQTO", version="1.3.0", lifespan=lifespan)

@@ -9,6 +9,7 @@ interface PropsVistaTarjetas {
   soloLectura?: boolean;
   onEditar: (viaje: Viaje) => void;
   onAnular: (viaje: Viaje) => void;
+  onVerReporte: (viaje: Viaje) => void;
 }
 
 // Renderiza la vista en tarjetas del listado de viajes planificados
@@ -18,6 +19,7 @@ export default function VistaTarjetasPlanificacion({
   soloLectura = false,
   onEditar,
   onAnular,
+  onVerReporte,
 }: PropsVistaTarjetas) {
   return (
     <CuadriculaTarjetas
@@ -54,6 +56,11 @@ export default function VistaTarjetasPlanificacion({
             {textoVisible(viaje.unidad_placa, SIN_DATO.unidad)}
           </p>
           <div className="plan-card__acciones">
+            <BotonAccionTabla
+              accion="imprimir"
+              titulo="Reporte operativo"
+              onClick={() => onVerReporte(viaje)}
+            />
             {!soloLectura && (
               <>
                 <BotonAccionTabla accion="editar" onClick={() => onEditar(viaje)} />

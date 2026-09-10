@@ -14,6 +14,7 @@ from modelos.moneda_modelo import (
     moneda_a_dict,
     validar_moneda_existente,
 )
+from utilidades.fecha_operativa import fecha_operativa_hoy
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
 from utilidades.validaciones import ValidadorEntrada
 
@@ -42,17 +43,30 @@ def tasa_a_dict(tasa: Tasa, moneda: Moneda) -> dict:
     }
 
 
+def obtener_tasa_moneda_en_o_antes(
+    db: Session,
+    moneda_id: int,
+    fecha: Optional[date] = None,
+) -> Tasa | None:
+    limite = fecha or fecha_operativa_hoy()
+    return (
+        db.query(Tasa)
+        .filter(
+            Tasa.moneda_id == moneda_id,
+            Tasa.fecha <= limite,
+            Tasa.eliminado_en.is_(None),
+        )
+        .order_by(Tasa.fecha.desc(), Tasa.id.desc())
+        .first()
+    )
+
+
 def obtener_tasa_eur_reciente(db: Session) -> tuple[Tasa, Moneda] | None:
     moneda_eur = buscar_moneda_por_codigo(db, "EUR")
     if not moneda_eur:
         return None
 
-    tasa = (
-        db.query(Tasa)
-        .filter(Tasa.moneda_id == moneda_eur.id, Tasa.eliminado_en.is_(None))
-        .order_by(Tasa.fecha.desc(), Tasa.id.desc())
-        .first()
-    )
+    tasa = obtener_tasa_moneda_en_o_antes(db, moneda_eur.id)
     if not tasa:
         return None
 
@@ -64,7 +78,7 @@ def obtener_tasa_eur_del_dia(db: Session) -> dict | None:
     if not moneda_eur:
         return None
 
-    hoy = date.today()
+    hoy = fecha_operativa_hoy()
     tasa_hoy = (
         db.query(Tasa)
         .filter(
@@ -124,7 +138,7 @@ def listar_tasas(
 
 
 def obtener_tasa_eur_del_dia_o_error(db: Session) -> dict:
-    hoy = date.today()
+    hoy = fecha_operativa_hoy()
     moneda_eur = buscar_moneda_por_codigo(db, "EUR")
     if not moneda_eur:
         raise HTTPException(status_code=503, detail="Moneda EUR no configurada en el sistema")
@@ -150,7 +164,7 @@ def validar_tasa_eur_es_del_dia(db: Session, tasa_id: int) -> Tasa:
             detail="La tasa indicada debe ser la tasa EUR del dia de hoy",
         )
 
-    hoy = date.today()
+    hoy = fecha_operativa_hoy()
     if tasa.fecha != hoy:
         raise HTTPException(
             status_code=503,
@@ -164,7 +178,7 @@ def validar_tasa_eur_es_del_dia(db: Session, tasa_id: int) -> Tasa:
 
 
 def listar_tasas_hoy(db: Session, pagina: int = 1, limite: int = 10) -> dict:
-    hoy = date.today()
+    hoy = fecha_operativa_hoy()
     consulta = (
         db.query(Tasa)
         .filter(Tasa.fecha == hoy, Tasa.eliminado_en.is_(None))
@@ -181,8 +195,10 @@ def crear_tasa(
     valor: Decimal,
     moneda_id: int,
     origen: str = ORIGEN_MANUAL,
+    permitir_fecha_futura: bool = False,
 ) -> Tasa:
-    ValidadorEntrada.fecha_no_futura(fecha, "fecha", obligatorio=True)
+    if not permitir_fecha_futura:
+        ValidadorEntrada.fecha_no_futura(fecha, "fecha", obligatorio=True)
     validar_moneda_existente(db, moneda_id)
     nueva = Tasa(fecha=fecha, valor=valor, moneda_id=moneda_id, origen=origen)
     db.add(nueva)
@@ -218,21 +234,32 @@ def upsert_tasa_del_dia(
         db.commit()
         db.refresh(existente)
         return existente, True
-    return crear_tasa(db, fecha, valor, moneda_id, origen=origen), False
+    return crear_tasa(
+        db,
+        fecha,
+        valor,
+        moneda_id,
+        origen=origen,
+        permitir_fecha_futura=(origen == ORIGEN_BCV),
+    ), False
 
 
-def sincronizar_tasas_bcv(db: Session, solo_si_falta: bool = False) -> dict:
+def sincronizar_tasas_bcv(
+    db: Session,
+    solo_si_falta: bool = False,
+    fecha_efectiva: Optional[date] = None,
+) -> dict:
     from utilidades.tasa_bcv import consultar_tasas_oficiales_bcv
 
-    hoy = date.today()
+    fecha = fecha_efectiva or fecha_operativa_hoy()
     moneda_eur = buscar_moneda_por_codigo(db, "EUR")
     if not moneda_eur:
         raise HTTPException(status_code=503, detail="Moneda EUR no configurada en el sistema")
 
-    if solo_si_falta and _tasa_del_dia_moneda(db, moneda_eur.id, hoy):
+    if solo_si_falta and _tasa_del_dia_moneda(db, moneda_eur.id, fecha):
         return {
             "omitido": True,
-            "mensaje": "Ya hay tasa EUR de hoy. No se consultó el BCV.",
+            "mensaje": f"Ya hay tasa EUR para {fecha.isoformat()}. No se consultó el BCV.",
             "tasas": [],
         }
 
@@ -242,7 +269,7 @@ def sincronizar_tasas_bcv(db: Session, solo_si_falta: bool = False) -> dict:
         moneda = buscar_moneda_por_codigo(db, codigo)
         if not moneda:
             continue
-        tasa, actualizada = upsert_tasa_del_dia(db, hoy, valor, moneda.id, ORIGEN_BCV)
+        tasa, actualizada = upsert_tasa_del_dia(db, fecha, valor, moneda.id, ORIGEN_BCV)
         creadas.append({"tasa": tasa_a_dict(tasa, moneda), "actualizada": actualizada})
 
     if not creadas:
@@ -250,7 +277,7 @@ def sincronizar_tasas_bcv(db: Session, solo_si_falta: bool = False) -> dict:
 
     return {
         "omitido": False,
-        "mensaje": "Tasa oficial BCV cargada para hoy.",
+        "mensaje": f"Tasa oficial BCV cargada para {fecha.isoformat()}.",
         "tasas": [item["tasa"] for item in creadas],
     }
 

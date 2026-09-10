@@ -140,7 +140,10 @@ export default function TablaDatos<T>({
                 onClick={onFilaClick ? () => onFilaClick(fila) : undefined}
               >
                 {seleccionMultiple && (
-                  <td className="tabla-datos__celda tabla-datos__celda--casilla">
+                  <td
+                    className="tabla-datos__celda tabla-datos__celda--casilla"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <input
                       type="checkbox"
                       checked={seleccionada}

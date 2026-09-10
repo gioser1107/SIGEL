@@ -21,6 +21,19 @@
   flex-wrap: wrap;
 }
 
+.planificacion__acciones-lote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.planificacion__seleccion-info {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+}
+
 .planificacion__busqueda {
   display: flex;
   align-items: center;
@@ -47,6 +60,12 @@
 }
 .planificacion__busqueda input::placeholder {
   color: var(--color-text-muted);
+}
+
+@media (max-width: 640px) {
+  .planificacion__acciones-lote {
+    width: 100%;
+  }
 }
 
 /* ─── Error ─── */

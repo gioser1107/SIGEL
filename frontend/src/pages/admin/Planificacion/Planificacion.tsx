@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlternadorVista,
   BotonAccionTabla,
@@ -34,7 +35,22 @@ const COLUMNAS_REPORTE_PLANIFICACION = [
   { encabezado: 'Guía', clave: 'guia' },
 ] as const;
 
+function rutaReporteOperativo(viajeId: number): string {
+  return `/admin/reporte-viaje?viaje=${viajeId}`;
+}
+
+function filasListadoImpresion(viajes: Viaje[]) {
+  return viajes.map((v) => ({
+    destino: textoVisible(v.destino_nombre, SIN_DATO.destino),
+    fecha: formatFecha(v.fecha_salida),
+    unidad: textoVisible(v.unidad_placa, SIN_DATO.unidad),
+    estado: ETIQUETA_ESTADO[v.estado] ?? v.estado,
+    guia: etiquetaGuiasViaje(v),
+  }));
+}
+
 export default function Planificacion() {
+  const navegar = useNavigate();
   const {
     viajesFiltrados,
     cargando,
@@ -86,7 +102,12 @@ export default function Planificacion() {
     cancelarEliminar,
   } = usePlanificacion();
 
+  const [idsSeleccionados, setIdsSeleccionados] = useState<Set<string | number>>(new Set());
   const esTabAnulados = filtroEstado === 'anulado';
+
+  useEffect(() => {
+    setIdsSeleccionados(new Set());
+  }, [filtroEstado, pagina, busqueda]);
 
   const columnas = useMemo(() => columnasViajes(), []);
 
@@ -98,36 +119,48 @@ export default function Planificacion() {
   const etiquetaFiltroActivo =
     PESTANIAS_FILTRO.find((p) => p.id === filtroEstado)?.etiqueta ?? 'Todos';
 
+  const haySeleccion = idsSeleccionados.size > 0;
+  const viajesReporte = useMemo(
+    () =>
+      haySeleccion
+        ? viajesFiltrados.filter((v) => idsSeleccionados.has(v.id))
+        : viajesFiltrados,
+    [haySeleccion, idsSeleccionados, viajesFiltrados],
+  );
+  const idSeleccionadoUnico =
+    idsSeleccionados.size === 1 ? Number([...idsSeleccionados][0]) : null;
+
   const resumenReporte = useMemo(
     () => [
-      { etiqueta: 'Registros', valor: viajesFiltrados.length },
+      { etiqueta: 'Registros', valor: viajesReporte.length },
       {
         etiqueta: 'Planificados',
-        valor: viajesFiltrados.filter((v) => v.estado === 'planificado').length,
+        valor: viajesReporte.filter((v) => v.estado === 'planificado').length,
       },
       {
         etiqueta: 'En curso',
-        valor: viajesFiltrados.filter((v) => v.estado === 'en_curso').length,
+        valor: viajesReporte.filter((v) => v.estado === 'en_curso').length,
       },
       {
         etiqueta: 'Finalizados',
-        valor: viajesFiltrados.filter((v) => v.estado === 'finalizado').length,
+        valor: viajesReporte.filter((v) => v.estado === 'finalizado').length,
       },
     ],
-    [viajesFiltrados],
+    [viajesReporte],
   );
 
   const filasReporte = useMemo(
-    () =>
-      viajesFiltrados.map((v) => ({
-        destino: textoVisible(v.destino_nombre, SIN_DATO.destino),
-        fecha: formatFecha(v.fecha_salida),
-        unidad: textoVisible(v.unidad_placa, SIN_DATO.unidad),
-        estado: ETIQUETA_ESTADO[v.estado] ?? v.estado,
-        guia: etiquetaGuiasViaje(v),
-      })),
-    [viajesFiltrados],
+    () => filasListadoImpresion(viajesReporte),
+    [viajesReporte],
   );
+
+  function abrirReporteOperativo(viajeId: number) {
+    navegar(rutaReporteOperativo(viajeId));
+  }
+
+  const etiquetaImprimir = haySeleccion
+    ? `Imprimir listado (${idsSeleccionados.size})`
+    : 'Imprimir listado';
 
   return (
     <div className="planificacion">
@@ -136,9 +169,13 @@ export default function Planificacion() {
           migaja="TravelBqto / Admin"
           titulo="Planificación de viajes"
           contador={total}
+          descripcion="Marca viajes para imprimir solo esos en el listado. El reporte operativo (pasajeros, asientos y cobros) se abre con el icono de impresora."
           acciones={
             <>
-              <BtnImprimirReporte deshabilitado={cargando || viajesFiltrados.length === 0} />
+              <BtnImprimirReporte
+                etiqueta={etiquetaImprimir}
+                deshabilitado={cargando || viajesReporte.length === 0}
+              />
               <Boton variante="primario" tamano="sm" onClick={abrirCrear}>
                 + Nuevo viaje
               </Boton>
@@ -149,9 +186,13 @@ export default function Planificacion() {
 
       <div className="zona-imprimible">
         <CabeceraReporteImpresion
-          titulo="Reporte de planificación de viajes"
+          titulo="Listado de planificación de viajes"
           subtitulo="Salidas programadas, unidades asignadas y estado operativo."
-          filtroActivo={etiquetaFiltroActivo}
+          filtroActivo={
+            haySeleccion
+              ? `${etiquetaFiltroActivo} · ${idsSeleccionados.size} seleccionado(s)`
+              : etiquetaFiltroActivo
+          }
           resumen={resumenReporte}
         >
           <TablaReporteImpresion
@@ -195,6 +236,31 @@ export default function Planificacion() {
             />
           </div>
         </div>
+        {haySeleccion && (
+          <div className="planificacion__acciones-lote">
+            <span className="planificacion__seleccion-info">
+              {idsSeleccionados.size === 1
+                ? '1 viaje seleccionado'
+                : `${idsSeleccionados.size} viajes seleccionados`}
+            </span>
+            {idSeleccionadoUnico != null && (
+              <Boton
+                variante="primario"
+                tamano="sm"
+                onClick={() => abrirReporteOperativo(idSeleccionadoUnico)}
+              >
+                Ver reporte operativo
+              </Boton>
+            )}
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              onClick={() => setIdsSeleccionados(new Set())}
+            >
+              Quitar selección
+            </Boton>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -218,24 +284,34 @@ export default function Planificacion() {
           }
           idFila={(v) => v.id}
           seleccionMultiple
-          filasSeleccionadas={new Set<number>()}
-          onSeleccionChange={() => {}}
+          filasSeleccionadas={idsSeleccionados}
+          onSeleccionChange={setIdsSeleccionados}
           onFilaClick={esTabAnulados ? undefined : abrirEditar}
-          accionesFila={
-            esTabAnulados
-              ? undefined
-              : (viaje: Viaje) => (
+          accionesFila={(viaje: Viaje) => (
             <>
               <BotonAccionTabla
-                accion="editar"
-                onClick={() => abrirEditar(viaje)}
-                ariaLabel={`Editar ${viaje.destino_nombre ?? 'viaje'}`}
+                accion="imprimir"
+                titulo="Reporte operativo"
+                ariaLabel={`Reporte operativo de ${viaje.destino_nombre ?? 'viaje'}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  abrirReporteOperativo(viaje.id);
+                }}
               />
-              <BotonAccionTabla
-                accion="anular"
-                onClick={() => confirmarEliminar(viaje)}
-                ariaLabel={`Anular ${viaje.destino_nombre ?? 'viaje'}`}
-              />
+              {!esTabAnulados && (
+                <>
+                  <BotonAccionTabla
+                    accion="editar"
+                    onClick={() => abrirEditar(viaje)}
+                    ariaLabel={`Editar ${viaje.destino_nombre ?? 'viaje'}`}
+                  />
+                  <BotonAccionTabla
+                    accion="anular"
+                    onClick={() => confirmarEliminar(viaje)}
+                    ariaLabel={`Anular ${viaje.destino_nombre ?? 'viaje'}`}
+                  />
+                </>
+              )}
             </>
           )}
         />
@@ -258,6 +334,7 @@ export default function Planificacion() {
           soloLectura={esTabAnulados}
           onEditar={abrirEditar}
           onAnular={confirmarEliminar}
+          onVerReporte={(viaje) => abrirReporteOperativo(viaje.id)}
         />
       )}
         </div>
