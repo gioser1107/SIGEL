@@ -16,7 +16,7 @@ import {
 } from '../../../services/pagosPortal';
 import { crearReservaCliente, asignarAsientosReservaPortal } from '../../../services/reservas';
 import { obtenerAsientosDisponiblesPortal } from '../../../services/viajes';
-import type { AsientoViaje } from '../../../types/viaje';
+import type { AsientoViaje, RespuestaAsientosViaje } from '../../../types/viaje';
 import { ErrorApi } from '../../../services/api';
 import { obtenerUsuarioSesion } from '../../../services/autenticacion';
 import { usePagoPortal } from '../../../hooks/usePagoPortal';
@@ -89,6 +89,7 @@ export default function RegistrarPago() {
     borradorGuardado?.asientosGuardados ?? false,
   );
   const [asientosViaje, setAsientosViaje] = useState<AsientoViaje[]>([]);
+  const [croquisViaje, setCroquisViaje] = useState<RespuestaAsientosViaje['croquis']>();
   const [cargandoAsientos, setCargandoAsientos] = useState(false);
   const [errorAsientos, setErrorAsientos] = useState<string | null>(null);
 
@@ -138,7 +139,10 @@ export default function RegistrarPago() {
 
     obtenerAsientosDisponiblesPortal(viajePendiente.viaje.id)
       .then((respuesta) => {
-        if (activo) setAsientosViaje(respuesta.asientos);
+        if (activo) {
+          setAsientosViaje(respuesta.asientos);
+          setCroquisViaje(respuesta.croquis);
+        }
       })
       .catch((err) => {
         if (activo) {
@@ -442,6 +446,7 @@ export default function RegistrarPago() {
               <MapaAsientos
                 cantidadPuestos={cantidadPuestos}
                 asientos={asientosViaje}
+                croquis={croquisViaje}
                 alConfirmar={manejarConfirmacionAsientos}
                 alRegresar={() => setPaso(1)}
               />

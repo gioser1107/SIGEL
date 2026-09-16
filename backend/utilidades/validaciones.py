@@ -33,6 +33,7 @@ _CATEGORIAS_COSTO = frozenset(
     {"combustible", "logistica", "pago_guia", "alimentacion", "peajes", "otro"}
 )
 _POSICIONES_ASIENTO = frozenset({"ventana", "pasillo", "medio", "otro"})
+_TIPOS_CELDA_CROQUIS = frozenset({"conductor", "puerta"})
 _ESTADOS_VIAJE = frozenset({"planificado", "en_curso", "finalizado", "cancelado"})
 _ESTADOS_COTIZACION = frozenset(
     {"solicitada", "pendiente", "aceptada", "vencida", "cancelada"}
@@ -355,6 +356,43 @@ class ValidadorEntrada:
     @classmethod
     def posicion_asiento(cls, valor: str | None, campo: str = "posicion") -> str:
         return cls.valor_catalogo(valor, campo, _POSICIONES_ASIENTO)
+
+    @classmethod
+    def coordenada_croquis(
+        cls,
+        valor: Any,
+        campo: str,
+        *,
+        obligatorio: bool = False,
+        maximo: int = 14,
+    ) -> int | None:
+        if valor is None or valor == "":
+            if obligatorio:
+                cls._error(campo, "es obligatorio")
+            return None
+        try:
+            entero = int(valor)
+        except (TypeError, ValueError):
+            cls._error(campo, "debe ser un número entero")
+        if entero < 0 or entero > maximo:
+            cls._error(campo, f"debe estar entre 0 y {maximo}")
+        return entero
+
+    @classmethod
+    def dimension_croquis(cls, valor: Any, campo: str, minimo: int, maximo: int) -> int:
+        if valor is None:
+            cls._error(campo, "es obligatorio")
+        try:
+            entero = int(valor)
+        except (TypeError, ValueError):
+            cls._error(campo, "debe ser un número entero")
+        if entero < minimo or entero > maximo:
+            cls._error(campo, f"debe estar entre {minimo} y {maximo}")
+        return entero
+
+    @classmethod
+    def tipo_celda_croquis(cls, valor: str | None, campo: str = "tipo") -> str:
+        return cls.valor_catalogo(valor, campo, _TIPOS_CELDA_CROQUIS)
 
     @classmethod
     def capacidad_pasajeros(cls, valor: Any, campo: str = "capacidad") -> int:

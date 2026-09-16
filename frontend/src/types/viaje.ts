@@ -205,6 +205,8 @@ export interface AsientoViaje {
   id: number;
   numero: string;
   posicion: 'ventana' | 'pasillo' | 'medio' | 'otro';
+  fila: number | null;
+  columna: number | null;
   ocupado: boolean;
 }
 
@@ -215,5 +217,6 @@ export interface RespuestaAsientosViaje {
   total_asientos: number;
   total_ocupados: number;
   total_disponibles: number;
+  croquis?: import('./unidad').CroquisUnidadDatos;
   asientos: AsientoViaje[];
 }

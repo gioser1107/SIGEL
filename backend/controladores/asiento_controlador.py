@@ -8,6 +8,7 @@ from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.asiento_modelo import (
     actualizar_asiento,
+    aplicar_plantilla_croquis,
     crear_asiento,
     eliminar_asiento,
     listar_asientos,
@@ -27,11 +28,20 @@ class DatosAsientoCrear(BaseModel):
     unidad_id: int
     numero: str
     posicion: str = "otro"
+    fila: Optional[int] = None
+    columna: Optional[int] = None
 
 
 class DatosAsientoActualizar(BaseModel):
     numero: Optional[str] = None
     posicion: Optional[str] = None
+    fila: Optional[int] = None
+    columna: Optional[int] = None
+
+
+class DatosPlantillaCroquis(BaseModel):
+    unidad_id: int
+    plantilla: str = "travel_bqto"
 
 
 @router.get("")
@@ -41,6 +51,25 @@ def listar_asientos_endpoint(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_TRANSPORTE_FLOTA)),
 ):
     return listar_asientos(db, unidad_id)
+
+
+@router.post("/plantilla")
+def aplicar_plantilla_croquis_endpoint(
+    datos: DatosPlantillaCroquis,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_TRANSPORTE_FLOTA)),
+):
+    resultado = aplicar_plantilla_croquis(db, datos.unidad_id, datos.plantilla)
+
+    registrar_evento(
+        db, modulo="viajes", accion="UPDATE",
+        resumen=f"Croquis {datos.plantilla} aplicado a unidad {datos.unidad_id}",
+        usuario_id=usuario_actual["id"], tabla_afectada="asientos",
+        registro_id=datos.unidad_id, ip_origen=obtener_ip_origen(request),
+    )
+
+    return resultado
 
 
 @router.post("")
@@ -55,6 +84,8 @@ def crear_asiento_endpoint(
         unidad_id=datos.unidad_id,
         numero=datos.numero,
         posicion=datos.posicion,
+        fila=datos.fila,
+        columna=datos.columna,
     )
 
     registrar_evento(
@@ -75,7 +106,16 @@ def actualizar_asiento_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_TRANSPORTE_FLOTA)),
 ):
-    actualizar_asiento(db, asiento_id, numero=datos.numero, posicion=datos.posicion)
+    actualizar_coordenadas = "fila" in datos.model_fields_set or "columna" in datos.model_fields_set
+    actualizar_asiento(
+        db,
+        asiento_id,
+        numero=datos.numero,
+        posicion=datos.posicion,
+        fila=datos.fila,
+        columna=datos.columna,
+        actualizar_coordenadas=actualizar_coordenadas,
+    )
 
     registrar_evento(
         db, modulo="viajes", accion="UPDATE",

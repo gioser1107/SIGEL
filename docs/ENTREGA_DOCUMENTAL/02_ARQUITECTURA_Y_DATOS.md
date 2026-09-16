@@ -29,6 +29,16 @@ El frontend contiene rutas públicas, rutas protegidas de administración y ruta
 | Seguridad | JWT, sesión, roles y permisos. | `dependencias/auth_dependencia.py`, `permiso_dependencia.py` |
 | Auditoría | Registro de eventos de operación. | `bitacora_modelo.py` |
 
+## Cómo se presenta el MER
+
+Un solo diagrama con las ~31 tablas queda ilegible (Workbench lo demuestra). En la carpeta van **tres hojas**:
+
+1. **Toda la DB por módulos** (`MER_GLOBAL.puml`): dos bases y cinco cajas. No lista cada tabla.
+2. **Zoom comercial** (`MER_RESERVA.puml`): cliente, viaje, reserva, viajero, asiento y pago.
+3. **Zoom seguridad** (`MER_SEGURIDAD.puml`): roles, permisos, usuarios y bitácora.
+
+Las FK `creado_por`, `actualizado_por`, `validado_por` y `registrado_por` **no se grafican**: todas apuntan a `usuarios` y se documentan en el diccionario. Si se dibujan, el diagrama se llena de rayas hacia una sola entidad.
+
 ## Modelo relacional resumido
 
 | Dominio | Tablas principales | Relación relevante |

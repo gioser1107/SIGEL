@@ -1,0 +1,48 @@
+@startuml MER_GLOBAL
+title Toda la base, por módulos — SIGEL / Travel BQTO
+
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 14
+skinparam rectangle {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam package {
+  BackgroundColor #FAFAFA
+  BorderColor black
+  FontStyle plain
+}
+skinparam arrowColor black
+skinparam note {
+  BackgroundColor #FFFFCC
+  BorderColor black
+}
+
+rectangle "  travel_bqto_seguridad  \n\n  usuarios · roles · permisos  \n  roles_permisos · bitácora  " as SEG
+
+package "travel_bqto" {
+  rectangle "  Catálogo  \n  clientes · destinos  \n  flota · puntos  " as CAT
+  rectangle "  Planificación  \n  viajes · guías  \n  costos  " as PLA
+  rectangle "  Comercial  \n  cotizaciones · reservas  \n  viajeros · asientos  " as COM
+  rectangle "  Finanzas  \n  pagos · tasas  \n  métodos  " as FIN
+
+  CAT -right-> PLA : destino / unidad
+  PLA -right-> COM : viaje
+  COM -right-> FIN : cobro
+  CAT -down-> COM : cliente
+}
+
+SEG -right-> CAT : portal
+
+note as N1
+  El reverse engineer de las 31 tablas
+  no se imprime: no se lee.
+  El detalle está en MER_RESERVA
+  y MER_SEGURIDAD.
+end note
+
+N1 .. SEG
+
+@enduml

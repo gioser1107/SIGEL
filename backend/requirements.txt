@@ -6,3 +6,4 @@ python-dotenv
 pyjwt
 python-multipart
 pillow
+openpyxl

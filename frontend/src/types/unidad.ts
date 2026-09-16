@@ -3,8 +3,15 @@ export interface UnidadTransporte {
   placa: string;
   modelo: string | null;
   capacidad: number;
+  croquis?: CroquisUnidadDatos;
   creado_en: string;
   actualizado_en: string;
+}
+
+export interface CroquisUnidadDatos {
+  filas: number | null;
+  columnas: number | null;
+  celdas: { fila: number; columna: number; tipo: 'conductor' | 'puerta' }[];
 }
 
 export interface DatosUnidadCrear {

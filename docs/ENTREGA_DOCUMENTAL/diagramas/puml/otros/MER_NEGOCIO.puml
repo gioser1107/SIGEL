@@ -1,0 +1,434 @@
+@startuml MER_NEGOCIO
+title travel_bqto — MER físico (estilo reverse engineer)
+caption FK hacia usuarios (otra base) no dibujadas: creado_por, actualizado_por, validado_por, registrado_por, usuario_id.
+
+hide circle
+hide methods
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Helvetica
+skinparam defaultFontSize 11
+skinparam linetype polyline
+skinparam nodesep 40
+skinparam ranksep 40
+skinparam packageStyle rectangle
+skinparam package {
+  BackgroundColor #FAFAFA
+  BorderColor #777777
+  FontSize 13
+}
+skinparam entity {
+  BackgroundColor #FFFFE0
+  BorderColor #5B7FA6
+  FontSize 11
+}
+skinparam arrowColor #5B7FA6
+
+package "Ubicación" {
+  entity "estados" as estados {
+    * id : bigint <<PK>>
+    --
+    * nombre : varchar(100)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "ciudades" as ciudades {
+    * id : bigint <<PK>>
+    --
+    * estado_id : bigint <<FK>>
+    * nombre : varchar(120)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+}
+
+package "Clientes" {
+  entity "clientes" as clientes {
+    * id : bigint <<PK>>
+    --
+      usuario_id : bigint <<FK>>
+    * tipo_cliente : varchar(20)
+    * tipo_documento : varchar(20)
+    * numero_documento : varchar(40)
+    * nombre : varchar(80)
+    * apellido : varchar(80)
+      razon_social : varchar(160)
+      telefono : varchar(30)
+      telefono_secundario : varchar(30)
+      direccion : varchar(255)
+      ciudad_id : bigint <<FK>>
+      estado_id : bigint <<FK>>
+      notas : text
+      creado_por : bigint <<FK>>
+      actualizado_por : bigint <<FK>>
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "puntos_recogida" as puntos_recogida {
+    * id : bigint <<PK>>
+    --
+    * nombre : varchar(120)
+      direccion : varchar(255)
+      ciudad : varchar(100)
+      estado : varchar(100)
+      notas_referencia : varchar(255)
+    * tipo : varchar(20)
+    * activo : tinyint(1)
+      creado_por : bigint <<FK>>
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "clientes_puntos_recogida" as clientes_puntos_recogida {
+    * id : bigint <<PK>>
+    --
+    * cliente_id : bigint <<FK>>
+    * punto_recogida_id : bigint <<FK>>
+    * es_predeterminado : tinyint(1)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+}
+
+package "Oferta y flota" {
+  entity "destinos" as destinos {
+    * id : bigint <<PK>>
+    --
+    * nombre : varchar(120)
+      descripcion : text
+    * precio_base_eur : decimal(12,2)
+    * recargo_menor_eur : decimal(12,2)
+    * dificultad : varchar(20)
+    * activo : tinyint(1)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "destino_imagenes" as destino_imagenes {
+    * id : bigint <<PK>>
+    --
+    * destino_id : bigint <<FK>>
+    * url : varchar(512)
+    * orden : smallint
+    * es_portada : tinyint(1)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "unidades_transporte" as unidades_transporte {
+    * id : bigint <<PK>>
+    --
+    * placa : varchar(16)
+      modelo : varchar(80)
+    * capacidad : int
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "asientos" as asientos {
+    * id : bigint <<PK>>
+    --
+    * unidad_id : bigint <<FK>>
+    * numero : varchar(10)
+    * posicion : enum(ventana,pasillo,medio,otro)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+}
+
+package "Planificación" {
+  entity "viajes" as viajes {
+    * id : bigint <<PK>>
+    --
+    * destino_id : bigint <<FK>>
+    * unidad_id : bigint <<FK>>
+    * fecha_salida : datetime
+      fecha_regreso : datetime
+    * estado : enum(planificado,en_curso,finalizado,can
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "viajes_guias" as viajes_guias {
+    * id : bigint <<PK>>
+    --
+    * viaje_id : bigint <<FK>>
+    * usuario_id : bigint <<FK>>
+    * es_principal : tinyint(1)
+      notas : varchar(255)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "costos_operativos" as costos_operativos {
+    * id : bigint <<PK>>
+    --
+    * viaje_id : bigint <<FK>>
+    * categoria : enum(combustible,logistica,pago_guia,ali
+    * monto_eur : decimal(12,2)
+      descripcion : varchar(255)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "viajes_ruta_recogida" as viajes_ruta_recogida {
+    * id : bigint <<PK>>
+    --
+    * viaje_id : bigint <<FK>>
+    * reserva_cliente_id : bigint <<FK>>
+    * orden : int
+      hora_programada : datetime
+      notas : varchar(255)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+}
+
+package "Comercial" {
+  entity "cotizaciones" as cotizaciones {
+    * id : bigint <<PK>>
+    --
+    * cliente_id : bigint <<FK>>
+    * destino_id : bigint <<FK>>
+      requisitos : text
+      precio_cotizado_eur : decimal(12,2)
+      valida_hasta : datetime
+    * estado : enum(solicitada,pendiente,aceptada,venci
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "cotizacion_lineas" as cotizacion_lineas {
+    * id : bigint <<PK>>
+    --
+    * cotizacion_id : bigint <<FK>>
+    * categoria : enum(combustible,logistica,pago_guia,ali
+    * monto_eur : decimal(12,2)
+      descripcion : varchar(255)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "reservas" as reservas {
+    * id : bigint <<PK>>
+    --
+    * cliente_id : bigint <<FK>>
+    * viaje_id : bigint <<FK>>
+    * fecha_reserva : datetime
+    * estado : enum(pendiente,confirmada,abonada,cancel
+      creado_por : bigint <<FK>>
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "reserva_clientes" as reserva_clientes {
+    * id : bigint <<PK>>
+    --
+    * reserva_id : bigint <<FK>>
+    * cliente_id : bigint <<FK>>
+    * es_titular : tinyint(1)
+    * es_menor : tinyint(1)
+    * ocupa_asiento : tinyint(1)
+    * precio_pasajero_eur : decimal(12,2)
+    * recargo_eur : decimal(12,2)
+      notas_tarifa : varchar(255)
+      punto_recogida_id : bigint <<FK>>
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+      cliente_activo_reserva : bigint
+  }
+
+  entity "asientos_reservados" as asientos_reservados {
+    * id : bigint <<PK>>
+    --
+    * reserva_cliente_id : bigint <<FK>>
+    * viaje_id : bigint <<FK>>
+    * asiento_id : bigint <<FK>>
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+      asiento_activo_viaje : bigint
+  }
+
+  entity "abordajes_viaje" as abordajes_viaje {
+    * id : bigint <<PK>>
+    --
+    * reserva_cliente_id : bigint <<FK>>
+    * abordado_en : datetime
+      registrado_por : bigint <<FK>>
+    * estado : enum(abordado,no_presentado)
+      notas : varchar(255)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "resenas" as resenas {
+    * id : bigint <<PK>>
+    --
+    * reserva_id : bigint <<FK>>
+    * calificacion : smallint
+      comentario : text
+    * publico : tinyint(1)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+}
+
+package "Finanzas" {
+  entity "monedas" as monedas {
+    * id : bigint <<PK>>
+    --
+    * codigo : varchar(10)
+    * nombre : varchar(60)
+    * simbolo : varchar(10)
+      eliminado_en : datetime
+  }
+
+  entity "tasas" as tasas {
+    * id : bigint <<PK>>
+    --
+    * fecha : date
+    * valor : decimal(14,4)
+    * moneda_id : bigint <<FK>>
+    * origen : varchar(20)
+      eliminado_en : datetime
+  }
+
+  entity "metodos_pago" as metodos_pago {
+    * id : bigint <<PK>>
+    --
+    * codigo : varchar(40)
+    * nombre : varchar(120)
+    * moneda_id : bigint <<FK>>
+      eliminado_en : datetime
+  }
+
+  entity "bancos" as bancos {
+    * id : bigint <<PK>>
+    --
+    * codigo : varchar(10)
+    * nombre : varchar(120)
+    * activo : tinyint(1)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "puntos_venta" as puntos_venta {
+    * id : bigint <<PK>>
+    --
+    * banco_id : bigint <<FK>>
+    * codigo : varchar(40)
+    * nombre : varchar(120)
+      numero_terminal : varchar(60)
+    * activo : tinyint(1)
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+  entity "pagos" as pagos {
+    * id : bigint <<PK>>
+    --
+    * reserva_id : bigint <<FK>>
+    * metodo_pago_id : bigint <<FK>>
+    * tasa_id : bigint <<FK>>
+    * monto : decimal(14,2)
+    * tipo : varchar(20)
+    * estado : varchar(20)
+      fecha_pago : date
+      referencia : varchar(120)
+      banco_origen_id : bigint <<FK>>
+      banco_destino_id : bigint <<FK>>
+      punto_venta_id : bigint <<FK>>
+      telefono_origen : varchar(30)
+      correo_origen : varchar(160)
+      comprobante_url : varchar(500)
+      validado_por : bigint <<FK>>
+      validado_en : datetime
+      notas : varchar(255)
+      creado_por : bigint <<FK>>
+    * creado_en : datetime
+    * actualizado_en : datetime
+      eliminado_en : datetime
+  }
+
+}
+
+entity "v_reserva_totales_eur" as v_tot <<view>> {
+  reserva_id
+  total_eur
+}
+entity "v_ocupacion_viaje" as v_ocu <<view>> {
+  viaje_id
+  destino_id
+  unidad_id
+  asientos_ocupados
+}
+
+reserva_clientes ||--o{ abordajes_viaje : reserva_cliente_id
+unidades_transporte ||--o{ asientos : unidad_id
+reserva_clientes ||--o{ asientos_reservados : reserva_cliente_id
+viajes ||--o{ asientos_reservados : viaje_id
+asientos ||--o{ asientos_reservados : asiento_id
+estados ||--o{ ciudades : estado_id
+ciudades ||--o{ clientes : ciudad_id
+estados ||--o{ clientes : estado_id
+clientes ||--o{ clientes_puntos_recogida : cliente_id
+puntos_recogida ||--o{ clientes_puntos_recogida : punto_recogida_id
+viajes ||--o{ costos_operativos : viaje_id
+cotizaciones ||--o{ cotizacion_lineas : cotizacion_id
+clientes ||--o{ cotizaciones : cliente_id
+destinos ||--o{ cotizaciones : destino_id
+destinos ||--o{ destino_imagenes : destino_id
+monedas ||--o{ metodos_pago : moneda_id
+tasas ||--o{ pagos : tasa_id
+metodos_pago ||--o{ pagos : metodo_pago_id
+reservas ||--o{ pagos : reserva_id
+bancos ||--o{ pagos : banco_origen_id
+bancos ||--o{ pagos : banco_destino_id
+puntos_venta ||--o{ pagos : punto_venta_id
+bancos ||--o{ puntos_venta : banco_id
+reservas ||--o{ resenas : reserva_id
+reservas ||--o{ reserva_clientes : reserva_id
+clientes ||--o{ reserva_clientes : cliente_id
+puntos_recogida ||--o{ reserva_clientes : punto_recogida_id
+clientes ||--o{ reservas : cliente_id
+viajes ||--o{ reservas : viaje_id
+monedas ||--o{ tasas : moneda_id
+destinos ||--o{ viajes : destino_id
+unidades_transporte ||--o{ viajes : unidad_id
+viajes ||--o{ viajes_guias : viaje_id
+viajes ||--o{ viajes_ruta_recogida : viaje_id
+reserva_clientes ||--o{ viajes_ruta_recogida : reserva_cliente_id
+
+v_tot .. reservas
+v_ocu .. viajes
+
+@enduml

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import MapaAsientos from '../../../../../components/client/MapaAsientos/MapaAsientos';
 import { obtenerAsientosDisponibles } from '../../../../../services/viajes';
-import type { AsientoViaje } from '../../../../../types/viaje';
+import type { AsientoViaje, RespuestaAsientosViaje } from '../../../../../types/viaje';
 
 interface Props {
   viajeId: number;
@@ -22,6 +22,7 @@ export default function PasoAsientos({
   guardando = false,
 }: Props) {
   const [asientosViaje, setAsientosViaje] = useState<AsientoViaje[]>([]);
+  const [croquisViaje, setCroquisViaje] = useState<RespuestaAsientosViaje['croquis']>();
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmando, setConfirmando] = useState(false);
@@ -38,6 +39,7 @@ export default function PasoAsientos({
         const respuesta = await obtenerAsientosDisponibles(viajeId);
         if (activo) {
           setAsientosViaje(respuesta.asientos);
+          setCroquisViaje(respuesta.croquis);
         }
       } catch (err) {
         if (activo) {
@@ -97,6 +99,7 @@ export default function PasoAsientos({
         esAdmin={true}
         cantidadPuestos={maxAsientos}
         asientos={asientosViaje}
+        croquis={croquisViaje}
         alConfirmar={async (asientos) => {
           if (bloqueado) return;
           setConfirmando(true);

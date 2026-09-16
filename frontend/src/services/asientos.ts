@@ -1,5 +1,6 @@
 import apiRequest from './api';
-import type { Asiento, CrearAsientoDTO, ActualizarAsientoDTO } from '../types/asiento';
+import type { Asiento, CrearAsientoDTO, ActualizarAsientoDTO, RespuestaPlantillaCroquis } from '../types/asiento';
+import type { CroquisUnidadDatos } from '../types/unidad';
 
 export async function obtenerAsientos(params?: { unidad_id?: number }): Promise<Asiento[]> {
   const queryStr = params?.unidad_id ? `?unidad_id=${params.unidad_id}` : '';
@@ -28,5 +29,27 @@ export async function eliminarAsiento(id: number): Promise<{ mensaje: string }> 
   return apiRequest<{ mensaje: string }>(`/asientos/${id}`, {
     method: 'DELETE',
     requiresAuth: true,
+  });
+}
+
+export async function aplicarPlantillaCroquis(
+  unidadId: number,
+  plantilla = 'travel_bqto',
+): Promise<RespuestaPlantillaCroquis> {
+  return apiRequest<RespuestaPlantillaCroquis>('/asientos/plantilla', {
+    method: 'POST',
+    requiresAuth: true,
+    body: JSON.stringify({ unidad_id: unidadId, plantilla }),
+  });
+}
+
+export async function actualizarCroquisUnidad(
+  unidadId: number,
+  croquis: { filas: number; columnas: number; celdas: CroquisUnidadDatos['celdas'] },
+): Promise<{ mensaje: string; croquis: CroquisUnidadDatos }> {
+  return apiRequest<{ mensaje: string; croquis: CroquisUnidadDatos }>(`/unidades/${unidadId}/croquis`, {
+    method: 'PUT',
+    requiresAuth: true,
+    body: JSON.stringify(croquis),
   });
 }

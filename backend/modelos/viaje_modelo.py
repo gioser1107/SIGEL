@@ -598,7 +598,7 @@ def asientos_disponibles(db: Session, viaje_id: int) -> dict:
     asientos = db.query(Asiento).filter(
         Asiento.unidad_id == viaje.unidad_id,
         Asiento.eliminado_en.is_(None),
-    ).order_by(Asiento.id).all()
+    ).order_by(Asiento.fila.asc(), Asiento.columna.asc(), Asiento.id.asc()).all()
 
     ids_unidad = {a.id for a in asientos}
     ids_ocupados = ids_asientos_ocupados_viaje(db, viaje_id) & ids_unidad
@@ -608,10 +608,15 @@ def asientos_disponibles(db: Session, viaje_id: int) -> dict:
             "id": a.id,
             "numero": a.numero,
             "posicion": a.posicion,
+            "fila": a.fila,
+            "columna": a.columna,
             "ocupado": a.id in ids_ocupados,
         }
         for a in asientos
     ]
+
+    from modelos.unidad_transporte_modelo import croquis_unidad_a_dict, obtener_unidad_activa
+    unidad = obtener_unidad_activa(db, viaje.unidad_id)
 
     return {
         "viaje_id": viaje_id,
@@ -619,6 +624,7 @@ def asientos_disponibles(db: Session, viaje_id: int) -> dict:
         "total_asientos": len(asientos),
         "total_ocupados": len(ids_ocupados),
         "total_disponibles": len(asientos) - len(ids_ocupados),
+        "croquis": croquis_unidad_a_dict(unidad),
         "asientos": lista_asientos,
     }
 

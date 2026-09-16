@@ -197,28 +197,69 @@
   border-bottom: 1px solid var(--color-border-light, #f3f4f6);
 }
 
-.gestion-asientos__mapa {
-  background: var(--color-bg-dark, #f9fafb);
+.gestion-asientos__herramientas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gestion-asientos__modos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.gestion-asientos__modo {
   border: 1px solid var(--color-border, #e5e7eb);
+  background: #fff;
+  color: var(--color-text-secondary, #4b5563);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gestion-asientos__modo--activo {
+  background: var(--color-primary, #2563eb);
+  border-color: var(--color-primary, #2563eb);
+  color: #fff;
+}
+
+.gestion-asientos__dimensiones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #9ca3af);
+  font-weight: 600;
+}
+
+.gestion-asientos__dimensiones button {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  background: #fff;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.gestion-asientos__mapa {
+  background: transparent;
+  border: none;
   border-radius: var(--radius-xl, 12px);
-  padding: var(--spacing-xl, 2rem) var(--spacing-lg, 1.5rem);
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
-/* Efecto parabrisas arriba */
 .gestion-asientos__mapa::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 10%;
-  right: 10%;
-  height: 20px;
-  background: rgba(0,0,0,0.05);
-  border-radius: 0 0 50% 50%;
+  display: none;
 }
 
 .gestion-asientos__volante {

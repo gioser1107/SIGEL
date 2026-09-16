@@ -8,8 +8,10 @@ from database import get_db
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 from modelos.unidad_transporte_modelo import (
+    actualizar_croquis,
     actualizar_unidad,
     crear_unidad,
+    croquis_unidad_a_dict,
     eliminar_unidad,
     listar_unidades,
     obtener_unidad_activa,
@@ -35,6 +37,12 @@ class DatosUnidadActualizar(BaseModel):
     placa: Optional[str] = None
     modelo: Optional[str] = None
     capacidad: Optional[int] = None
+
+
+class DatosCroquisUnidad(BaseModel):
+    filas: int
+    columnas: int
+    celdas: list[dict] = []
 
 
 @router.get("")
@@ -105,6 +113,32 @@ def actualizar_unidad_endpoint(
     )
 
     return {"mensaje": "Unidad de transporte actualizada con éxito"}
+
+
+@router.put("/{unidad_id}/croquis")
+def actualizar_croquis_endpoint(
+    unidad_id: int,
+    datos: DatosCroquisUnidad,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_TRANSPORTE_FLOTA)),
+):
+    unidad = actualizar_croquis(
+        db,
+        unidad_id,
+        filas=datos.filas,
+        columnas=datos.columnas,
+        celdas=datos.celdas,
+    )
+
+    registrar_evento(
+        db, modulo="viajes", accion="UPDATE",
+        resumen=f"Croquis de unidad {unidad_id} actualizado",
+        usuario_id=usuario_actual["id"], tabla_afectada="unidades_transporte",
+        registro_id=unidad_id, ip_origen=obtener_ip_origen(request),
+    )
+
+    return {"mensaje": "Croquis actualizado", "croquis": croquis_unidad_a_dict(unidad)}
 
 
 @router.delete("/{unidad_id}")

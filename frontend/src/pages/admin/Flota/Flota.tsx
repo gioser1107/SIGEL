@@ -265,7 +265,10 @@ export default function Flota() {
 
       <GestionAsientos
         abierto={asientosAbierto}
-        onCerrar={() => setAsientosAbierto(false)}
+        onCerrar={() => {
+          setAsientosAbierto(false);
+          void cargarDatos();
+        }}
         unidad={unidadParaAsientos}
       />
 

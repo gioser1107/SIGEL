@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react';
 import { PanelDeslizable } from '../../../components/admin';
+import CroquisUnidad from '../../../components/croquis/CroquisUnidad';
+import type { ModoEdicionCroquis } from '../../../components/croquis/CroquisUnidad';
 import Boton from '../../../components/ui/Boton/Boton';
-import { actualizarAsiento, crearAsiento, eliminarAsiento, obtenerAsientos } from '../../../services/asientos';
+import {
+  actualizarAsiento,
+  actualizarCroquisUnidad,
+  aplicarPlantillaCroquis,
+  crearAsiento,
+  eliminarAsiento,
+  obtenerAsientos,
+} from '../../../services/asientos';
+import { obtenerUnidad } from '../../../services/unidades';
 import type { Asiento } from '../../../types/asiento';
-import type { UnidadTransporte } from '../../../types/unidad';
+import type { CroquisUnidadDatos, UnidadTransporte } from '../../../types/unidad';
+import { celdaEspecialEn, resolverLayoutCroquis, sugerirNumeroAsiento } from '../../../utils/croquis';
 import { sanitizarNumeroAsiento, validarFormularioAsiento } from '../../../utils/validacionesFormulario';
 
 interface GestionAsientosProps {
@@ -12,16 +23,28 @@ interface GestionAsientosProps {
   unidad: UnidadTransporte | null;
 }
 
+const CROQUIS_VACIO: CroquisUnidadDatos = { filas: 9, columnas: 5, celdas: [] };
+
+function posicionPorColumna(columna: number, columnas: number): 'ventana' | 'pasillo' | 'medio' | 'otro' {
+  if (columna === 0 || columna === columnas - 1) return 'ventana';
+  if (columna === Math.floor(columnas / 2)) return 'medio';
+  return 'pasillo';
+}
+
 export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAsientosProps) {
   const [asientos, setAsientos] = useState<Asiento[]>([]);
+  const [croquis, setCroquis] = useState<CroquisUnidadDatos>(CROQUIS_VACIO);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [modo, setModo] = useState<ModoEdicionCroquis>('asiento');
+  const [capacidad, setCapacidad] = useState(unidad?.capacidad ?? 0);
 
-  // Formulario rápido para añadir
   const [nuevoNum, setNuevoNum] = useState('');
   const [nuevaPos, setNuevaPos] = useState<'ventana' | 'pasillo' | 'medio' | 'otro'>('otro');
+  const [nuevaFila, setNuevaFila] = useState<number | null>(null);
+  const [nuevaColumna, setNuevaColumna] = useState<number | null>(null);
+  const [formularioNuevo, setFormularioNuevo] = useState(false);
 
-  // Modal de edición de asiento
   const [asientoEditando, setAsientoEditando] = useState<Asiento | null>(null);
   const [editNum, setEditNum] = useState('');
   const [editPos, setEditPos] = useState<'ventana' | 'pasillo' | 'medio' | 'otro'>('otro');
@@ -31,8 +54,13 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
     setCargando(true);
     setError(null);
     try {
-      const data = await obtenerAsientos({ unidad_id: unidad.id });
+      const [data, unidadActual] = await Promise.all([
+        obtenerAsientos({ unidad_id: unidad.id }),
+        obtenerUnidad(unidad.id),
+      ]);
       setAsientos(data);
+      setCroquis(unidadActual.croquis?.filas ? unidadActual.croquis : CROQUIS_VACIO);
+      setCapacidad(unidadActual.capacidad);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al cargar los asientos');
     } finally {
@@ -45,9 +73,31 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
       cargarAsientos();
       setNuevoNum('');
       setNuevaPos('otro');
+      setFormularioNuevo(false);
       setAsientoEditando(null);
+      setModo('asiento');
+      setError(null);
     }
   }, [abierto, unidad]);
+
+  const guardarCroquis = async (siguiente: CroquisUnidadDatos) => {
+    if (!unidad) return;
+    const actualizado = await actualizarCroquisUnidad(unidad.id, {
+      filas: siguiente.filas ?? 9,
+      columnas: siguiente.columnas ?? 5,
+      celdas: siguiente.celdas ?? [],
+    });
+    setCroquis(actualizado.croquis);
+  };
+
+  const abrirAltaEnCelda = (fila: number, columna: number) => {
+    setNuevaFila(fila);
+    setNuevaColumna(columna);
+    setNuevoNum(sugerirNumeroAsiento(asientos.map((a) => a.numero)));
+    setNuevaPos(posicionPorColumna(columna, croquis.columnas ?? 5));
+    setFormularioNuevo(true);
+    setError(null);
+  };
 
   const agregarAsiento = async () => {
     if (!unidad) return;
@@ -63,8 +113,11 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
         unidad_id: unidad.id,
         numero: nuevoNum,
         posicion: nuevaPos,
+        fila: nuevaFila,
+        columna: nuevaColumna,
       });
       setNuevoNum('');
+      setFormularioNuevo(false);
       await cargarAsientos();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al agregar asiento');
@@ -116,56 +169,110 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
     }
   };
 
-  const generarSecuencia = async () => {
+  const aplicarCroquisTravel = async () => {
     if (!unidad) return;
-    if (asientos.length > 0) {
-      if (!window.confirm('Esto añadirá asientos secuencialmente hasta completar la capacidad de la unidad. ¿Continuar?')) {
+    const aviso = asientos.length > 0
+      ? 'Esto reemplazará el mapa actual por el croquis Travel BQTO (A-0, A-00 y A-01 a A-31). ¿Continuar?'
+      : 'Se cargará el croquis más usado de Travel BQTO (33 asientos). ¿Continuar?';
+    if (!window.confirm(aviso)) return;
+
+    setCargando(true);
+    setError(null);
+    try {
+      const resultado = await aplicarPlantillaCroquis(unidad.id);
+      setAsientos(resultado.asientos);
+      setCroquis(resultado.croquis);
+      setCapacidad(Math.max(capacidad, resultado.total_asientos));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo aplicar el croquis');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const cambiarDimension = async (campo: 'filas' | 'columnas', delta: number) => {
+    const actual = {
+      filas: croquis.filas ?? 9,
+      columnas: croquis.columnas ?? 5,
+      celdas: croquis.celdas ?? [],
+    };
+    const siguiente = {
+      ...actual,
+      [campo]: Math.min(campo === 'filas' ? 15 : 7, Math.max(1, actual[campo] + delta)),
+    };
+    const layout = resolverLayoutCroquis(asientos, siguiente);
+    const maxFilaOcupada = Math.max(
+      layout.asientos.reduce((m, a) => Math.max(m, a.fila), -1),
+      (siguiente.celdas ?? []).reduce((m, c) => Math.max(m, c.fila), -1),
+    );
+    const maxColOcupada = Math.max(
+      layout.asientos.reduce((m, a) => Math.max(m, a.columna), -1),
+      (siguiente.celdas ?? []).reduce((m, c) => Math.max(m, c.columna), -1),
+    );
+    if (delta < 0 && (siguiente.filas <= maxFilaOcupada || siguiente.columnas <= maxColOcupada)) {
+      setError('No puedes reducir el croquis mientras haya asientos o celdas en el borde. Muévelos o elimínalos primero.');
+      return;
+    }
+    setCargando(true);
+    setError(null);
+    try {
+      await guardarCroquis(siguiente);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo actualizar el tamaño del croquis');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const manejarClickAsiento = async (asiento: Asiento) => {
+    if (modo === 'vaciar') {
+      await quitarAsiento(asiento.id);
+      return;
+    }
+    abrirModalEditar(asiento);
+  };
+
+  const manejarClickCelda = async (fila: number, columna: number) => {
+    const especial = celdaEspecialEn(croquis.celdas, fila, columna);
+    if (modo === 'asiento') {
+      if (especial) {
+        setError('Quita primero el conductor o la puerta de esa celda.');
         return;
       }
-    }
-    const faltantes = unidad.capacidad - asientos.length;
-    if (faltantes <= 0) {
-      setError('La unidad ya tiene todos los asientos registrados.');
+      abrirAltaEnCelda(fila, columna);
       return;
     }
 
     setCargando(true);
+    setError(null);
     try {
-      const maxActual = asientos.reduce((max, a) => {
-        const num = parseInt(a.numero, 10);
-        return !isNaN(num) && num > max ? num : max;
-      }, 0);
-
-      const promesas = [];
-      for (let i = 1; i <= faltantes; i++) {
-        const numSec = (maxActual + i).toString();
-        // Asignación simple de posición simulando 4 columnas (Ventana, Pasillo, Pasillo, Ventana)
-        const rem = (maxActual + i) % 4;
-        let pos: 'ventana' | 'pasillo' | 'medio' | 'otro' = 'pasillo';
-        if (rem === 1 || rem === 0) pos = 'ventana';
-
-        promesas.push(crearAsiento({
-          unidad_id: unidad.id,
-          numero: numSec,
-          posicion: pos,
-        }));
+      let celdas = [...(croquis.celdas ?? [])].filter((c) => !(c.fila === fila && c.columna === columna));
+      if (modo === 'conductor' || modo === 'puerta') {
+        celdas = celdas.filter((c) => (modo === 'conductor' ? c.tipo !== 'conductor' : true));
+        celdas.push({ fila, columna, tipo: modo });
       }
-
-      await Promise.all(promesas);
-      await cargarAsientos();
+      await guardarCroquis({
+        filas: croquis.filas ?? 9,
+        columnas: croquis.columnas ?? 5,
+        celdas,
+      });
     } catch (e) {
-      setError('Hubo un error al generar asientos: ' + (e instanceof Error ? e.message : ''));
-      await cargarAsientos();
+      setError(e instanceof Error ? e.message : 'No se pudo actualizar la celda');
+    } finally {
+      setCargando(false);
     }
   };
+
+  const layout = resolverLayoutCroquis(asientos, croquis);
 
   return (
     <>
       <PanelDeslizable
         abierto={abierto}
         onCerrar={onCerrar}
-        titulo={`Asientos: ${unidad?.placa || ''}`}
-        subtitulo="Visualiza, agrega o elimina los asientos de esta unidad."
+        ancho="xl"
+        titulo={`Croquis: ${unidad?.placa || ''}`}
+        subtitulo="Personaliza el mapa de asientos de la unidad. El frente del bus queda abajo, como en el croquis impreso."
         pie={
           <Boton variante="secundario" tamano="sm" onClick={onCerrar}>
             Cerrar
@@ -186,13 +293,11 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
                 <line x1="12" y1="16" x2="12" y2="12"></line>
                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
               </svg>
-              Guía de Ayuda para Encargados
+              Croquis personalizable
             </div>
             <p className="gestion-asientos__guia-texto">
-              Cada asiento registrado aquí debe corresponder a un puesto físico real en el autobús. 
-              <strong> Estos son los asientos que los clientes podrán seleccionar</strong> al hacer una reserva. 
-              Asegúrate de que la cantidad total de asientos no exceda la capacidad máxima ({unidad?.capacidad || 0} pax). 
-              Haz clic en un asiento del mapa para <strong>editarlo o eliminarlo</strong>.
+              Aplica el croquis Travel BQTO (A-0 a A-31) o arma el tuyo: coloca asientos, conductor y puerta.
+              Los clientes verán este mismo mapa al reservar.
             </p>
           </div>
 
@@ -203,12 +308,12 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
             </div>
             <div className="gestion-asientos__info-item">
               <span>Capacidad máx.</span>
-              <strong>{unidad?.capacidad || 0} pax</strong>
+              <strong>{capacidad} pax</strong>
             </div>
             <div className="gestion-asientos__info-item">
               <span>Registrados</span>
               <strong>
-                <span style={{ color: asientos.length > (unidad?.capacidad || 0) ? 'var(--color-error, #dc2626)' : 'inherit' }}>
+                <span style={{ color: asientos.length > capacidad ? 'var(--color-error, #dc2626)' : 'inherit' }}>
                   {asientos.length}
                 </span>
               </strong>
@@ -219,116 +324,113 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
             <Boton
               variante="primario"
               tamano="sm"
-              onClick={generarSecuencia}
-              disabled={cargando || (unidad ? asientos.length >= unidad.capacidad : true)}
+              onClick={aplicarCroquisTravel}
+              disabled={cargando}
             >
-              Autocompletar asientos faltantes
+              Usar croquis Travel BQTO
             </Boton>
           </div>
 
-          {cargando && asientos.length === 0 ? (
+          <div className="gestion-asientos__herramientas">
+            <div className="gestion-asientos__modos" role="group" aria-label="Herramienta del croquis">
+              {([
+                ['asiento', 'Asiento'],
+                ['conductor', 'Conductor'],
+                ['puerta', 'Puerta'],
+                ['vaciar', 'Quitar'],
+              ] as const).map(([valor, etiqueta]) => (
+                <button
+                  key={valor}
+                  type="button"
+                  className={`gestion-asientos__modo${modo === valor ? ' gestion-asientos__modo--activo' : ''}`}
+                  onClick={() => setModo(valor)}
+                >
+                  {etiqueta}
+                </button>
+              ))}
+            </div>
+            <div className="gestion-asientos__dimensiones">
+              <span>Filas {layout.filas}</span>
+              <button type="button" onClick={() => cambiarDimension('filas', -1)} disabled={cargando} aria-label="Quitar fila">−</button>
+              <button type="button" onClick={() => cambiarDimension('filas', 1)} disabled={cargando} aria-label="Agregar fila">+</button>
+              <span>Columnas {layout.columnas}</span>
+              <button type="button" onClick={() => cambiarDimension('columnas', -1)} disabled={cargando} aria-label="Quitar columna">−</button>
+              <button type="button" onClick={() => cambiarDimension('columnas', 1)} disabled={cargando} aria-label="Agregar columna">+</button>
+            </div>
+          </div>
+
+          {cargando && asientos.length === 0 && !unidad ? (
             <p className="drawer-form__intro">Cargando mapa de asientos...</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-              
-              {/* Mapa de Asientos Visual */}
-              <div className="gestion-asientos__mapa">
-                <svg className="gestion-asientos__volante" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <circle cx="12" cy="12" r="2"></circle>
-                  <line x1="12" y1="2" x2="12" y2="10"></line>
-                  <line x1="2.27" y1="15" x2="10.27" y2="13"></line>
-                  <line x1="21.73" y1="15" x2="13.73" y2="13"></line>
-                </svg>
-
-                <div className="gestion-asientos__grid">
-                  {asientos.length === 0 && (
-                    <div style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem 0' }}>
-                      No hay asientos registrados para esta unidad.
-                    </div>
-                  )}
-                  {Array.from({ length: Math.ceil(asientos.length / 4) }, (_, i) => asientos.slice(i * 4, i * 4 + 4)).map((fila, i) => (
-                    <div key={i} className="gestion-asientos__fila">
-                      <div className="gestion-asientos__pareja">
-                        {fila[0] && (
-                          <div className="gestion-asientos__asiento" onClick={() => abrirModalEditar(fila[0])}>
-                            <span className="gestion-asientos__asiento-num">{fila[0].numero}</span>
-                            <span className="gestion-asientos__asiento-pos">{fila[0].posicion === 'ventana' ? 'V' : fila[0].posicion === 'pasillo' ? 'P' : fila[0].posicion === 'medio' ? 'M' : 'O'}</span>
-                          </div>
-                        )}
-                        {fila[1] && (
-                          <div className="gestion-asientos__asiento" onClick={() => abrirModalEditar(fila[1])}>
-                            <span className="gestion-asientos__asiento-num">{fila[1].numero}</span>
-                            <span className="gestion-asientos__asiento-pos">{fila[1].posicion === 'ventana' ? 'V' : fila[1].posicion === 'pasillo' ? 'P' : fila[1].posicion === 'medio' ? 'M' : 'O'}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="gestion-asientos__pasillo-espacio">
-                        {i === 0 && <span className="gestion-asientos__pasillo-label">PASILLO</span>}
-                      </div>
-
-                      <div className="gestion-asientos__pareja">
-                        {fila[2] && (
-                          <div className="gestion-asientos__asiento" onClick={() => abrirModalEditar(fila[2])}>
-                            <span className="gestion-asientos__asiento-num">{fila[2].numero}</span>
-                            <span className="gestion-asientos__asiento-pos">{fila[2].posicion === 'ventana' ? 'V' : fila[2].posicion === 'pasillo' ? 'P' : fila[2].posicion === 'medio' ? 'M' : 'O'}</span>
-                          </div>
-                        )}
-                        {fila[3] && (
-                          <div className="gestion-asientos__asiento" onClick={() => abrirModalEditar(fila[3])}>
-                            <span className="gestion-asientos__asiento-num">{fila[3].numero}</span>
-                            <span className="gestion-asientos__asiento-pos">{fila[3].posicion === 'ventana' ? 'V' : fila[3].posicion === 'pasillo' ? 'P' : fila[3].posicion === 'medio' ? 'M' : 'O'}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Añadir Asiento Manual */}
-              <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.5rem' }}>
-                <p className="drawer-form__intro" style={{ marginBottom: '1rem', fontWeight: 600, color: 'var(--color-text-primary)' }}>Añadir un asiento extra manualmente</p>
-                <div className="drawer-form__fila-2">
-                  <div className="drawer-form__campo">
-                    <label className="drawer-form__label">Número de asiento</label>
-                    <input
-                      className="drawer-form__input"
-                      type="text"
-                      placeholder="Ej: 1A, VIP..."
-                      value={nuevoNum}
-                      maxLength={10}
-                      onChange={(e) => setNuevoNum(sanitizarNumeroAsiento(e.target.value))}
-                    />
-                  </div>
-                  <div className="drawer-form__campo">
-                    <label className="drawer-form__label">Posición</label>
-                    <select
-                      className="drawer-form__input"
-                      value={nuevaPos}
-                      onChange={(e) => setNuevaPos(e.target.value as any)}
-                    >
-                      <option value="ventana">Ventana</option>
-                      <option value="pasillo">Pasillo</option>
-                      <option value="medio">Medio</option>
-                      <option value="otro">Otro</option>
-                    </select>
-                  </div>
-                </div>
-                <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
-                  <Boton variante="secundario" tamano="sm" onClick={agregarAsiento} disabled={!nuevoNum.trim() || cargando}>
-                    Añadir al mapa
-                  </Boton>
-                </div>
-              </div>
-
+            <div className="gestion-asientos__mapa">
+              <CroquisUnidad
+                asientos={asientos}
+                croquis={croquis}
+                editable
+                modoEdicion={modo}
+                onClickAsiento={(asiento) => {
+                  const real = asientos.find((a) => a.id === asiento.id);
+                  if (real) void manejarClickAsiento(real);
+                }}
+                onClickCelda={(fila, columna) => { void manejarClickCelda(fila, columna); }}
+              />
             </div>
           )}
         </div>
       </PanelDeslizable>
 
-      {/* Modal Editar Asiento */}
+      {formularioNuevo && (
+        <div className="flota-modal__superposicion" onClick={() => setFormularioNuevo(false)} role="presentation">
+          <div className="flota-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="flota-modal__header">
+              <div>
+                <h3 className="flota-modal__titulo">Nuevo asiento</h3>
+                <p className="flota-modal__subtitulo">Fila { (nuevaFila ?? 0) + 1 } · Columna { (nuevaColumna ?? 0) + 1 }</p>
+              </div>
+              <button className="flota-modal__cerrar" onClick={() => setFormularioNuevo(false)} aria-label="Cerrar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div className="flota-modal__cuerpo">
+              <div className="flota-modal__campo">
+                <label className="flota-modal__label">Número de asiento</label>
+                <input
+                  className="flota-modal__input"
+                  type="text"
+                  placeholder="Ej: A-01"
+                  value={nuevoNum}
+                  maxLength={10}
+                  onChange={(e) => setNuevoNum(sanitizarNumeroAsiento(e.target.value))}
+                />
+              </div>
+              <div className="flota-modal__campo">
+                <label className="flota-modal__label">Posición</label>
+                <select
+                  className="flota-modal__input"
+                  value={nuevaPos}
+                  onChange={(e) => setNuevaPos(e.target.value as typeof nuevaPos)}
+                >
+                  <option value="ventana">Ventana</option>
+                  <option value="pasillo">Pasillo</option>
+                  <option value="medio">Medio</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+            </div>
+            <div className="flota-modal__acciones">
+              <Boton variante="secundario" tamano="sm" onClick={() => setFormularioNuevo(false)} disabled={cargando}>
+                Cancelar
+              </Boton>
+              <Boton variante="primario" tamano="sm" onClick={agregarAsiento} disabled={cargando || !nuevoNum.trim()}>
+                Añadir al mapa
+              </Boton>
+            </div>
+          </div>
+        </div>
+      )}
+
       {asientoEditando && (
         <div className="flota-modal__superposicion" onClick={cerrarModalEditar} role="presentation">
           <div className="flota-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
@@ -343,7 +445,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
                 </svg>
               </button>
             </div>
-            
+
             <div className="flota-modal__cuerpo">
               <div className="flota-modal__campo">
                 <label className="flota-modal__label">Número de asiento</label>
@@ -360,7 +462,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
                 <select
                   className="flota-modal__input"
                   value={editPos}
-                  onChange={(e) => setEditPos(e.target.value as any)}
+                  onChange={(e) => setEditPos(e.target.value as typeof editPos)}
                 >
                   <option value="ventana">Ventana</option>
                   <option value="pasillo">Pasillo</option>
