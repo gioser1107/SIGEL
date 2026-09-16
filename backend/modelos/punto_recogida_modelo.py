@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fk_usuario
 from utilidades.paginacion import offset_pagina, respuesta_paginada
 
 TIPO_DOMICILIO = "domicilio"
@@ -22,7 +22,7 @@ class PuntoRecogida(Base):
     notas_referencia = Column(String(255), nullable=True)
     tipo = Column(String(20), nullable=False, default=TIPO_DOMICILIO)
     activo = Column(Boolean, nullable=False, default=True)
-    creado_por = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, index=True)
+    creado_por = Column(BigInteger, fk_usuario(), nullable=True, index=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
     eliminado_en = Column(DateTime, nullable=True)

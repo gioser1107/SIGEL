@@ -1,0 +1,113 @@
+.respaldos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.respaldos__chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.respaldos__chip {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.respaldos__chip--ok {
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.respaldos__chip--error {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.respaldos__chip-titulo,
+.respaldos__chip-estado {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.respaldos__chip-nombre {
+  margin: 0.35rem 0;
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+
+.respaldos__alerta {
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.respaldos__alerta--error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.respaldos__alerta--ok {
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.respaldos__vacio {
+  color: var(--color-text-muted);
+}
+
+.respaldos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.respaldos__grupo {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+}
+
+.respaldos__grupo-cabecera {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+  margin-bottom: var(--spacing-sm);
+}
+
+.respaldos__grupo-cabecera h2 {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.respaldos__grupo-cabecera span,
+.respaldos__grupo li span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.respaldos__grupo ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.respaldos__grupo li,
+.respaldos__grupo-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.respaldos__grupo li > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}

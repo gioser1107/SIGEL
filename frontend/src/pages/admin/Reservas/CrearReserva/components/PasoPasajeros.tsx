@@ -11,7 +11,15 @@ import type { PasajeroDraft } from '../../../../../types/reservas';
 import type { Cliente } from '../../../../../types/cliente';
 import type { PuntoRecogida } from '../../../../../types/puntoRecogida';
 import { validarPasajerosReserva } from '../../../../../utils/validacionesFormulario';
+import {
+  tieneErroresCliente,
+  validarFormularioCliente,
+  type FormularioCliente,
+} from '../../../../../utils/validacionesCliente';
 import CampoMonto from '../../../../../components/ui/CampoMonto/CampoMonto';
+import { FORM_VACIO } from '../../../Clientes/constants';
+import { crearPasajeroVacio } from '../utils/pasajerosGrupo';
+import FichaAcompananteNueva from './FichaAcompananteNueva';
 
 // ─── SelectBuscador ──────────────────────────────────────────────
 
@@ -174,32 +182,55 @@ export default function PasoPasajeros({
   const clientesYaAgregados = new Set(pasajeros.map((p) => p.cliente_id));
 
   const opcionesClientes: Opcion[] = clientes
-    .filter((c) => !clientesYaAgregados.has(c.id))
+    .filter((c) => c.id !== titularClienteId && !clientesYaAgregados.has(c.id))
     .map((c) => ({
       valor: c.id,
       etiqueta: `${c.nombre} ${c.apellido} — ${c.tipo_documento}-${c.numero_documento}`,
     }));
 
   const agregarPasajeroVacio = () => {
-    // Solo agrega un slot vacío; el usuario luego selecciona el cliente
-    setPasajeros([
-      ...pasajeros,
-      {
-        id_temporal: Date.now(),
-        cliente_id: 0,
-        nombre: '',
-        apellido: '',
-        numero_documento: '',
-        tipo_documento: '',
-        es_menor: false,
-        ocupa_asiento: true,
-        precio_pasajero_eur: precioBase,
-        recargo_eur: 0,
-        notas_tarifa: '',
-        punto_recogida_id: undefined,
-        puntos_recogida: undefined,
-      },
-    ]);
+    setPasajeros([...pasajeros, crearPasajeroVacio(precioBase, Date.now())]);
+  };
+
+  const cambiarModo = (id_temporal: number, modo: 'existente' | 'nuevo') => {
+    setPasajeros(
+      pasajeros.map((p) =>
+        p.id_temporal === id_temporal
+          ? {
+              ...p,
+              modo,
+              cliente_id: 0,
+              nombre: '',
+              apellido: '',
+              numero_documento: '',
+              tipo_documento: '',
+              ficha: modo === 'nuevo' ? { ...FORM_VACIO } : undefined,
+              punto_recogida_id: undefined,
+              puntos_recogida: undefined,
+            }
+          : p,
+      ),
+    );
+  };
+
+  const actualizarFicha = (
+    id_temporal: number,
+    actualizador: (prev: FormularioCliente) => FormularioCliente,
+  ) => {
+    setPasajeros(
+      pasajeros.map((p) => {
+        if (p.id_temporal !== id_temporal) return p;
+        const ficha = actualizador(p.ficha ?? { ...FORM_VACIO });
+        return {
+          ...p,
+          ficha,
+          nombre: ficha.nombre,
+          apellido: ficha.apellido,
+          numero_documento: ficha.numero_documento,
+          tipo_documento: ficha.tipo_documento,
+        };
+      }),
+    );
   };
 
   const seleccionarCliente = (id_temporal: number, opcion: Opcion | null) => {
@@ -231,8 +262,9 @@ export default function PasoPasajeros({
       pasajeros.map((p) =>
         p.id_temporal === id_temporal
           ? {
-              ...p,
-              cliente_id: cliente.id,
+                ...p,
+                modo: 'existente',
+                cliente_id: cliente.id,
               nombre: cliente.nombre,
               apellido: cliente.apellido,
               numero_documento: cliente.numero_documento,
@@ -272,11 +304,18 @@ export default function PasoPasajeros({
     setPasajeros(pasajeros.filter((p) => p.id_temporal !== id_temporal));
   };
 
-  const puedeAvanzar = pasajeros.every((p) => p.cliente_id > 0);
+  const puedeAvanzar = pasajeros.every((p) =>
+    p.modo === 'nuevo' ? Boolean(p.ficha) : p.cliente_id > 0,
+  );
 
   const intentarSiguiente = () => {
     const error = validarPasajerosReserva(
-      pasajeros,
+      pasajeros.map((p) => ({
+        cliente_id: p.cliente_id,
+        precio_pasajero_eur: p.precio_pasajero_eur,
+        modo: p.modo ?? 'existente',
+        fichaCompleta: p.modo === 'nuevo' ? !tieneErroresCliente(validarFormularioCliente(p.ficha ?? FORM_VACIO)) : true,
+      })),
       titularPuntoRecogidaId,
       domiciliosTitular.length > 0,
     );
@@ -287,8 +326,15 @@ export default function PasoPasajeros({
 
     for (let i = 0; i < pasajeros.length; i += 1) {
       const p = pasajeros[i];
+      if (p.modo === 'nuevo' && p.ficha) {
+        const erroresFicha = validarFormularioCliente(p.ficha);
+        if (tieneErroresCliente(erroresFicha)) {
+          setErrorValidacion(`Revisa los datos personales del acompañante ${i + 1}.`);
+          return;
+        }
+      }
       if (!p.punto_recogida_id && !p.puntos_recogida) {
-        const domicilios = domiciliosPorCliente[p.cliente_id] ?? [];
+        const domicilios = p.cliente_id ? (domiciliosPorCliente[p.cliente_id] ?? []) : [];
         setErrorValidacion(
           domicilios.length > 0
             ? `Selecciona el domicilio del acompañante ${i + 1}.`
@@ -314,8 +360,9 @@ export default function PasoPasajeros({
           <span className="paso-seccion-label">Paso 2 de 4</span>
           <h2 className="paso-titulo">Manifiesto de pasajeros</h2>
           <p className="paso-subtitulo" style={{ marginTop: 4, fontSize: '0.85rem', color: 'var(--color-texto-secundario)' }}>
-            Todos los acompañantes deben estar registrados como clientes.
-            Si un pasajero no aparece en la lista, créalo primero en <strong>Clientes</strong>.
+            {pasajeros.length > 0
+              ? `Reserva grupal: titular + ${pasajeros.length} acompañante${pasajeros.length === 1 ? '' : 's'}. Puedes registrar a cada persona aquí, sin crear 10 reservas ni salir a Clientes.`
+              : 'Solo viaja el titular. Si es un grupo, pulsa “+ Añadir acompañante” o vuelve al paso 1 y elige Viaje grupal.'}
           </p>
         </div>
         <Boton variante="fantasma" tamano="sm" onClick={agregarPasajeroVacio}>
@@ -357,6 +404,25 @@ export default function PasoPasajeros({
             </button>
           </div>
 
+          <div className="pasajero-card__modos" role="group" aria-label="Cómo identificar al acompañante">
+            <button
+              type="button"
+              className={`pasajero-card__modo${p.modo !== 'nuevo' ? ' pasajero-card__modo--activo' : ''}`}
+              onClick={() => cambiarModo(p.id_temporal, 'existente')}
+            >
+              Ya es cliente
+            </button>
+            <button
+              type="button"
+              className={`pasajero-card__modo${p.modo === 'nuevo' ? ' pasajero-card__modo--activo' : ''}`}
+              onClick={() => cambiarModo(p.id_temporal, 'nuevo')}
+            >
+              Registrar ahora
+            </button>
+          </div>
+
+          {p.modo !== 'nuevo' && (
+          <>
           {/* Buscador de cliente */}
           <div className="campo-grupo" style={{ marginBottom: 12 }}>
             <label className="campo-label">Buscar cliente <span style={{ color: 'var(--color-error)' }}>*</span></label>
@@ -368,10 +434,24 @@ export default function PasoPasajeros({
             />
             {p.cliente_id === 0 && (
               <p className="campo-aviso" style={{ marginTop: 4, color: 'var(--color-advertencia)' }}>
-                Selecciona un cliente de la lista. Si no existe, ve a <strong>Clientes → Nuevo cliente</strong>.
+                Busca al cliente o cambia a <strong>Registrar ahora</strong> para cargarlo en esta reserva.
               </p>
             )}
           </div>
+          </>
+          )}
+
+          {p.modo === 'nuevo' && p.ficha && (
+            <div className="pasajero-card__ficha-nueva">
+              <FichaAcompananteNueva
+                idTemporal={p.id_temporal}
+                form={p.ficha}
+                errores={errorValidacion ? validarFormularioCliente(p.ficha) : {}}
+                onChange={(actualizador) => actualizarFicha(p.id_temporal, actualizador)}
+                onLimpiarError={() => undefined}
+              />
+            </div>
+          )}
 
           {/* Info del cliente seleccionado (solo lectura) */}
           {p.cliente_id > 0 && (
@@ -393,7 +473,7 @@ export default function PasoPasajeros({
 
           <div className="pasajero-card__grid">
             <div className="campo-grupo" style={{ gridColumn: '1 / -1' }}>
-              {p.cliente_id > 0 && (
+              {(p.modo === 'nuevo' || p.cliente_id > 0) && (
                 <DomicilioRecogidaAcompanante
                   idPrefix={`admin-pasajero-${p.id_temporal}`}
                   domicilios={domiciliosPorCliente[p.cliente_id] ?? []}
@@ -458,7 +538,7 @@ export default function PasoPasajeros({
 
       {pasajeros.length === 0 && (
         <div className="paso-vacio">
-          Solo viajará el cliente titular. Usa "+ Añadir acompañante" si hay más personas en el grupo.
+          Solo viajará el cliente titular. Usa “+ Añadir acompañante” o elige Viaje grupal en el paso 1.
         </div>
       )}
 

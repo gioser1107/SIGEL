@@ -55,6 +55,9 @@ endif
 |Modelo|
 :Pedir la cotización vigente;
 
+|Lente inteligente|
+:Consultar recomendación de destinos (RCI-02);
+
 |MySQL|
 :Consultar la cotización;
 

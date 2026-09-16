@@ -9,13 +9,13 @@ import type { Columna } from '../../../components/admin';
 import Boton from '../../../components/ui/Boton/Boton';
 import BtnImprimirReporte from '../../../components/ui/BtnImprimirReporte/BtnImprimirReporte';
 import { ErrorApi } from '../../../services/api';
-import { obtenerReporteViaje, obtenerViajes } from '../../../services/viajes';
+import { obtenerReporteViaje, obtenerViajesParaReporte } from '../../../services/viajes';
 import type { Viaje } from '../../../types/viaje';
 import type { PasajeroReporteViaje, ReporteViaje as ReporteViajeData } from '../../../types/viajeReporte';
 import { codigoReserva, etiquetaEstado, SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
 import { nombreCompleto } from '../../../utils/nombrePersona';
 import { formatearEuro } from '../../../utils/formatoMoneda';
-import { formatFecha } from '../Planificacion/utils/formatearViaje';
+import { formatearFecha } from '../Planificacion/utils/formatearViaje';
 import { ETIQUETA_ESTADO } from '../Planificacion/constants';
 import {
   formatearAsiento,
@@ -38,7 +38,11 @@ function etiquetaPago(p: PasajeroReporteViaje): string {
   return 'Sin pagos';
 }
 
-export default function ReporteViaje() {
+interface Props {
+  embeber?: boolean;
+}
+
+export default function ReporteViaje({ embeber = false }: Props) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viajes, setViajes] = useState<Viaje[]>([]);
   const [cargandoViajes, setCargandoViajes] = useState(true);
@@ -57,7 +61,7 @@ export default function ReporteViaje() {
 
   useEffect(() => {
     setCargandoViajes(true);
-    obtenerViajes({ filtro: 'todos', pagina: 1, limite: 100 })
+    obtenerViajesParaReporte({ pagina: 1, limite: 100 })
       .then((res) => setViajes(res.items))
       .catch(() => setViajes([]))
       .finally(() => setCargandoViajes(false));
@@ -93,7 +97,7 @@ export default function ReporteViaje() {
       const destino = (v.destino_nombre ?? '').toLowerCase();
       const placa = (v.unidad_placa ?? '').toLowerCase();
       const guia = (v.guia_nombre ?? '').toLowerCase();
-      const fecha = formatFecha(v.fecha_salida).toLowerCase();
+      const fecha = formatearFecha(v.fecha_salida).toLowerCase();
       return destino.includes(q) || placa.includes(q) || guia.includes(q) || fecha.includes(q);
     });
   }, [viajes, busquedaViaje]);
@@ -119,7 +123,7 @@ export default function ReporteViaje() {
         accessor: (v) => (
           <div className="reporte-viaje__celda-viaje">
             <strong>{textoVisible(v.destino_nombre, SIN_DATO.viaje)}</strong>
-            <span>{formatFecha(v.fecha_salida)}</span>
+            <span>{formatearFecha(v.fecha_salida)}</span>
           </div>
         ),
       },
@@ -231,11 +235,13 @@ export default function ReporteViaje() {
   return (
     <div className="reporte-viaje">
       <div className="no-imprimir">
-        <CabeceraModulo
-          migaja="Administración / Reportes"
-          titulo="Reporte operativo de viaje"
-          descripcion="Manifiesto de pasajeros, asientos y cobros de una salida. Imprime un documento, no la pantalla."
-        />
+        {!embeber && (
+          <CabeceraModulo
+            migaja="Administración / Reportes"
+            titulo="Listín de viaje"
+            descripcion="Manifiesto de pasajeros, asientos y cobros de una salida. Imprime un documento, no la pantalla."
+          />
+        )}
 
         {error && (
           <div className="modulo-admin__error" role="alert">
@@ -265,7 +271,7 @@ export default function ReporteViaje() {
               columnas={columnasViajes}
               datos={viajesFiltrados}
               cargando={cargandoViajes}
-              mensajeVacio="No hay viajes que coincidan con la búsqueda."
+              mensajeVacio="No hay viajes disponibles para tu usuario. Si eres guía, solo aparecen las salidas donde estás asignado."
               idFila={(v) => v.id}
               onFilaClick={(v) => seleccionarViaje(v.id)}
             />
@@ -283,7 +289,7 @@ export default function ReporteViaje() {
                   )}
                 </div>
                 <p className="reporte-viaje__meta-viaje">
-                  {reporte?.viaje.fecha_salida ? formatFecha(reporte.viaje.fecha_salida) : ''}
+                  {reporte?.viaje.fecha_salida ? formatearFecha(reporte.viaje.fecha_salida) : ''}
                   {reporte?.viaje.unidad_placa ? ` · ${reporte.viaje.unidad_placa}` : ''}
                   {reporte?.viaje.guia_nombre ? ` · Guía: ${reporte.viaje.guia_nombre}` : ''}
                 </p>

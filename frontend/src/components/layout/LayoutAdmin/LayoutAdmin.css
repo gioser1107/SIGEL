@@ -231,6 +231,10 @@
   flex-shrink: 0;
 }
 
+.barra-lateral__enlace-ayuda {
+  margin-bottom: 0.15rem;
+}
+
 .barra-lateral__boton-colapsar-top {
   margin-left: auto;
   display: flex;

@@ -3,12 +3,23 @@
 
 from pathlib import Path
 
+from _subrequisitos_srs import (
+    SUB_RF,
+    SUB_RNF,
+    aplicar_fichas_rf,
+    aplicar_fichas_rnf,
+    aplicar_matriz,
+)
+
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
-from xhtml2pdf import pisa
+try:
+    from xhtml2pdf import pisa
+except ImportError:
+    pisa = None
 
 RAIZ = Path(__file__).resolve().parent
 TITULO_PROYECTO = (
@@ -113,64 +124,69 @@ RF_MATRIZ = [
      "Entradas: módulo, acción, usuario, rango de fechas, texto de búsqueda.\n"
      "Criterio de éxito: sin permiso leer_bitacora la consulta retorna HTTP 403; cada evento muestra actor, módulo, acción y registro.",
      "No hay evidencia de quién modificó pagos, reservas o clientes."),
+    ("RF-20", "Registro de cuenta del visitante", "Funcional", "Alta",
+     "Descripción: El sistema debe permitir al visitante crear una cuenta de cliente con correo y documento únicos.\n"
+     "Entradas: correo, contraseña, nombres, tipo y número de documento, contacto.\n"
+     "Criterio de éxito: se crean usuario de rol Cliente y registro en clientes; duplicados retornan HTTP 409.",
+     "El visitante no podía pasar de la oferta pública a una reserva propia sin atención humana."),
 ]
 
 RNF_MATRIZ = [
-    ("RNF-01", "Autenticación e inicio de sesión", "No Funcional", "Alta",
+    ("RNF-01", "Iniciar sesión", "No Funcional", "Alta",
      "Categoría: Seguridad / acceso.\n"
      "Descripción: El sistema exigirá credenciales para funciones restringidas.\n"
      "Especificación: Token JWT (Bearer, HS256) con claims sub, exp, iat; expiración configurable ≤ 24 h; usuarios con eliminado_en no autentican.\n"
      "Criterio de éxito: 100 % de rutas administrativas, de guía y de portal cliente rechazan petición sin token válido (HTTP 401).",
      "Operación sin control centralizado de acceso; riesgo de exposición de pagos y pasajeros."),
-    ("RNF-02", "Gestión de cuentas de usuario", "No Funcional", "Alta",
+    ("RNF-02", "Gestión de usuarios", "No Funcional", "Alta",
      "Categoría: Operación / administración.\n"
      "Descripción: Altas, edición y desactivación de cuentas internas y asociadas a clientes.\n"
      "Especificación: Eliminación lógica; cuentas inactivas no autentican; cambios auditables en bitácora; propagación en la siguiente solicitud autenticada ≤ 60 s.\n"
      "Criterio de éxito: usuario desactivado recibe HTTP 401 al iniciar sesión; no aparece en listados operativos.",
      "Personal segmentado gestionado de forma manual y no estructurada."),
-    ("RNF-03", "Navegabilidad y estructura de la interfaz", "No Funcional", "Media",
+    ("RNF-03", "Navegabilidad", "No Funcional", "Media",
      "Categoría: Usabilidad / navegación.\n"
      "Descripción: Jerarquía de pantallas predecible por rol.\n"
      "Especificación: Máximo 4 clics desde el inicio del rol hasta catálogo, reserva, mapa de asientos y pagos pendientes; menú persistente.\n"
      "Criterio de éxito: rutas críticas verificadas en plan de pruebas; 0 callejones sin salida en reserva/pago.",
      "Flujo dependiente de mensajes sueltos en lugar de un portal guiado."),
-    ("RNF-04", "Portabilidad y compatibilidad cliente", "No Funcional", "Alta",
+    ("RNF-04", "Portabilidad", "No Funcional", "Alta",
      "Categoría: Portabilidad.\n"
      "Descripción: Acceso desde escritorio y móviles.\n"
      "Especificación: Interfaz adaptable; Chrome y Edge (dos últimas versiones estables); ancho mínimo 360 px sin pérdida de reserva ni check-in.\n"
      "Criterio de éxito: lista de verificación en dispositivos definidos en el plan de pruebas.",
      "Guías en campo desconectados de listas impresas."),
-    ("RNF-05", "Usabilidad en tareas críticas", "No Funcional", "Media",
+    ("RNF-05", "Usabilidad", "No Funcional", "Media",
      "Categoría: Usabilidad.\n"
      "Descripción: Reducción de errores en reserva, asiento y pago.\n"
      "Especificación: Prueba con 5 usuarios; tasa de error ≤ 10 %; reserva de prueba ≤ 10 min sin ayuda; mensajes en español.\n"
      "Criterio de éxito: SUS ≥ 70 y registro cuantitativo en informe de usabilidad.",
      "Sobreventa y errores de cobro por proceso manual."),
-    ("RNF-06", "Mantenibilidad del software", "No Funcional", "Media",
+    ("RNF-06", "Mantenibilidad", "No Funcional", "Media",
      "Categoría: Mantenibilidad.\n"
      "Descripción: Arquitectura que localiza cambios por módulo.\n"
      "Especificación: MVC (controladores, modelos, utilidades); frontend React y API FastAPI; OpenAPI en /docs; objetivo de cobertura ≥ 60 % en reservas, pagos y autenticación.\n"
      "Criterio de éxito: un endpoint CRUD nuevo en ≤ 4 h; informe de cobertura cuando se ejecute la batería de pruebas.",
      "Necesidad de incorporar analítica predictiva sin reescribir el núcleo."),
-    ("RNF-07", "Eficiencia y uso de recursos", "No Funcional", "Media",
-     "Categoría: Utilización eficiente de los recursos.\n"
-     "Descripción: Limitar CPU, memoria y ancho de banda en operación nominal.\n"
-     "Especificación: Bundle principal ≤ 500 KB comprimido; paginación en listados > 50 registros; imágenes WebP; RAM del proceso API ≤ 512 MB con 25 usuarios.\n"
-     "Criterio de éxito: medición en build y revisión de consultas paginadas.",
-     "Infraestructura limitada y alto volumen transaccional relativo."),
-    ("RNF-08", "Fiabilidad e integridad transaccional", "No Funcional", "Alta",
+    ("RNF-07", "Eficiencia", "No Funcional", "Media",
+     "Categoría: Eficiencia.\n"
+     "Descripción: Las operaciones frecuentes evitan trabajo innecesario de red y de base de datos.\n"
+     "Especificación: Paginación en listados > 50 registros; consultas con índices en claves de búsqueda; compresión HTTP.\n"
+     "Criterio de éxito: listados extensos no cargan el maestro completo; medición de consultas paginadas.",
+     "Alto volumen transaccional relativo con madurez tecnológica baja."),
+    ("RNF-08", "Fiabilidad", "No Funcional", "Alta",
      "Categoría: Fiabilidad.\n"
      "Descripción: Operaciones críticas atómicas sobre cupos, asientos y pagos.\n"
      "Especificación: Transacciones ACID MySQL InnoDB; conflicto de integridad HTTP 409; fallo de BD HTTP 503 sin traza al usuario.\n"
      "Criterio de éxito: 0 sobreventas en prueba de reservas concurrentes sobre el mismo asiento.",
      "Conflictos de concurrencia y sobreventa."),
-    ("RNF-09", "Seguridad de datos y comunicaciones", "No Funcional", "Alta",
+    ("RNF-09", "Seguridad", "No Funcional", "Alta",
      "Categoría: Seguridad.\n"
      "Descripción: Confidencialidad en tránsito y reposo.\n"
      "Especificación: TLS 1.2+ en producción; hash unidireccional de contraseñas (prototipo SHA-256; objetivo bcrypt/Argon2; no MD5); secretos fuera del repositorio; uploads con lista blanca MIME y máximo 10 MB.\n"
      "Criterio de éxito: 0 contraseñas en texto plano; recursos protegidos no accesibles de forma anónima.",
      "Comprobantes y referencias por canales no seguros."),
-    ("RNF-10", "Validación de datos de entrada", "No Funcional", "Alta",
+    ("RNF-10", "Validación de datos de entradas", "No Funcional", "Alta",
      "Categoría: Calidad de datos.\n"
      "Descripción: Rechazo de entradas inválidas en cliente y servidor.\n"
      "Especificación: Esquemas Pydantic y reglas de dominio; HTTP 422 o 400; montos ≥ 0; fechas coherentes; nombres sin dígitos.\n"
@@ -184,15 +200,15 @@ RNF_MATRIZ = [
      "Acciones de gerencia ejecutables por cualquier cuenta autenticada."),
     ("RNF-12", "Roles", "No Funcional", "Alta",
      "Categoría: Seguridad / autorización.\n"
-     "Descripción: El acceso se agrupa en roles (Administrador, Guía, Cliente y equivalentes).\n"
+     "Descripción: El acceso se agrupa en roles persistidos (Administrador, Guía, Cliente).\n"
      "Especificación: Tablas roles y roles_permisos; el token incluye rol_id verificado contra la base de datos.\n"
-     "Criterio de éxito: cambio de permisos del rol se refleja en la siguiente autenticación.",
+     "Criterio de éxito: existen al menos 3 roles; el cambio de permisos del rol se refleja en la siguiente autenticación (≤ 60 s).",
      "No existe separación de responsabilidades entre oficina, campo y cliente."),
     ("RNF-13", "Módulos", "No Funcional", "Media",
      "Categoría: Arquitectura.\n"
      "Descripción: El software se organiza en módulos de dominio acoplados por API REST.\n"
      "Especificación: Prefijo /api; routers por dominio (auth, destinos, reservas, pagos, abordaje, reportes, entre otros); OpenAPI.\n"
-     "Criterio de éxito: cada módulo aparece documentado en /docs; desactivar un router no impide arrancar el resto.",
+     "Criterio de éxito: ≥ 15 routers documentados en /docs; desactivar un router no impide arrancar el resto.",
      "Riesgo de monolito no separable para mantenimiento académico y evolución."),
     ("RNF-14", "Bitácora", "No Funcional", "Alta",
      "Categoría: Operabilidad / cumplimiento.\n"
@@ -224,6 +240,12 @@ RNF_MATRIZ = [
      "Especificación: 25 usuarios concurrentes, 70 % lectura y 30 % escritura; medición con Apache JMeter o Locust.\n"
      "Criterio de éxito: P95 dentro de RNF-15; sin errores HTTP 500 atribuibles a agotamiento de recursos en la prueba documentada.",
      "Alto volumen relativo de consultas de catálogo y reservas en periodos de venta."),
+    ("RNF-19", "Utilización eficiente de los recursos", "No Funcional", "Media",
+     "Categoría: Utilización eficiente de los recursos.\n"
+     "Descripción: Limitar CPU, memoria, almacenamiento y ancho de banda en operación nominal.\n"
+     "Especificación: Bundle principal ≤ 500 KB comprimido; imágenes WebP; RAM del proceso API ≤ 512 MB con 25 usuarios.\n"
+     "Criterio de éxito: medición en build y uso de memoria dentro de umbral en la prueba documentada.",
+     "Infraestructura limitada en la laptop de la comunidad y conectividad variable."),
 ]
 
 RF_FICHAS = [
@@ -341,64 +363,70 @@ RF_FICHAS = [
      "Filtros de módulo, acción, usuario y fechas.",
      "Listado paginado con actor, módulo, acción, registro e IP.",
      "Permiso leer_bitacora (RNF-14)."),
+    ("RF-20", "Registro de cuenta del visitante",
+     "El sistema debe registrar al visitante como usuario Cliente y como cliente.",
+     "Visitante.",
+     "Correo, contraseña, nombres, tipo y número de documento, contacto.",
+     "Cuenta autenticable; perfil de cliente; rechazo si correo o documento existen.",
+     "El correo y el documento no deben existir; el rol Cliente debe estar activo."),
 ]
 
 RNF_FICHAS = [
-    ("RNF-01", "Autenticación e inicio de sesión",
+    ("RNF-01", "Iniciar sesión",
      "El sistema deberá exigir autenticación para funciones restringidas e invalidar tokens expirados.",
      "Porcentaje de rutas protegidas que retornan HTTP 401 sin token; revisión de expiración JWT.",
      "0 accesos no autenticados a usuarios, reservas administrativas, pagos y bitácora.",
      "JWT Bearer HS256; verificación de usuario y rol activos; HTTPS en producción.",
      "Alta"),
-    ("RNF-02", "Gestión de cuentas de usuario",
+    ("RNF-02", "Gestión de usuarios",
      "El sistema deberá permitir crear, editar y desactivar cuentas sin borrar el historial legal mínimo.",
      "Cuentas inactivas no autentican; tiempo de efecto del cambio ≤ 60 s en la API.",
      "Listados operativos sin cuentas desactivadas; bitácora del cambio de estado.",
      "Eliminación lógica (eliminado_en); estados de cuenta; auditoría.",
      "Alta"),
-    ("RNF-03", "Navegabilidad y estructura de la interfaz",
+    ("RNF-03", "Navegabilidad",
      "El sistema deberá ofrecer navegación estable por rol hasta las tareas turísticas críticas.",
      "Profundidad ≤ 4 clics en catálogo, reserva, asientos y pagos pendientes.",
      "Rutas reproducibles en el plan de pruebas, sin callejón sin salida.",
      "Menú por rol; mapa de sitio portal público, portal cliente y back-office.",
      "Media"),
-    ("RNF-04", "Portabilidad y compatibilidad cliente",
+    ("RNF-04", "Portabilidad",
      "El sistema deberá operar en escritorio y móvil para consulta y check-in.",
      "Chrome y Edge (dos últimas versiones); viewport 360 px.",
      "Reserva y manifiesto utilizables en móvil sin pérdida funcional.",
      "CSS adaptable; pruebas de resolución documentadas.",
      "Alta"),
-    ("RNF-05", "Usabilidad en tareas críticas",
+    ("RNF-05", "Usabilidad",
      "El sistema deberá permitir completar reserva, asiento y pago con error acotado.",
      "5 usuarios; error ≤ 10 %; tarea ≤ 10 min; SUS ≥ 70.",
      "Informe cuantitativo de usabilidad.",
      "Mensajes en español; validación en línea coherente con RNF-10.",
      "Media"),
-    ("RNF-06", "Mantenibilidad del software",
+    ("RNF-06", "Mantenibilidad",
      "El sistema deberá localizar cambios por capa MVC y por módulo de API.",
      "Cobertura objetivo ≥ 60 % en autenticación, reservas y pagos; revisión de carpetas controladores/modelos/utilidades.",
      "OpenAPI disponible; incorporación de módulos sin reescritura del núcleo.",
      "FastAPI + React; convenciones de código.",
      "Media"),
-    ("RNF-07", "Eficiencia y uso de recursos",
-     "El sistema deberá limitar consumo de red y servidor en operación nominal.",
-     "Bundle ≤ 500 KB comprimido; paginación > 50 filas; RAM API ≤ 512 MB / 25 usuarios.",
-     "Métricas de build y consultas dentro de umbral.",
-     "Paginación, índices y compresión de imágenes WebP.",
+    ("RNF-07", "Eficiencia",
+     "El sistema deberá evitar trabajo innecesario de red y de base de datos en operaciones frecuentes.",
+     "Paginación en listados > 50 registros; consultas indexadas.",
+     "Los listados extensos no cargan el maestro completo.",
+     "Paginación, índices y compresión HTTP.",
      "Media"),
-    ("RNF-08", "Fiabilidad e integridad transaccional",
+    ("RNF-08", "Fiabilidad",
      "El sistema deberá conservar consistencia ante concurrencia y fallo de base de datos.",
      "0 sobreventas en prueba concurrente del mismo asiento; HTTP 503 genérico si cae MySQL.",
      "Inventario de asientos coherente; sin traza SQL al usuario.",
      "ACID InnoDB; HTTP 409 en conflicto de integridad.",
      "Alta"),
-    ("RNF-09", "Seguridad de datos y comunicaciones",
+    ("RNF-09", "Seguridad",
      "El sistema deberá proteger credenciales y evidencias de pago.",
      "TLS 1.2+ en producción; 0 contraseñas en texto plano; 401/403 en API sensible sin token.",
      "Hash unidireccional; comprobantes con tipo MIME restringido.",
      "HTTPS; SHA-256 en prototipo con objetivo bcrypt/Argon2; .env fuera de git.",
      "Alta"),
-    ("RNF-10", "Validación de datos de entrada",
+    ("RNF-10", "Validación de datos de entradas",
      "El sistema deberá rechazar entradas inválidas antes de persistir.",
      "100 % de POST/PUT con payload inválido → HTTP 422 o 400 sin inserción.",
      "Mensaje controlado sin datos internos de infraestructura.",
@@ -412,13 +440,13 @@ RNF_FICHAS = [
      "Alta"),
     ("RNF-12", "Roles",
      "El sistema deberá agrupar permisos en roles persistidos.",
+     "Al menos 3 roles (Administrador, Guía, Cliente); el cambio de permisos se refleja en ≤ 60 s.",
      "Rol Cliente no lista ni modifica catálogos administrativos; Guía limitado a abordaje según permiso.",
-     "roles y roles_permisos consistentes con el token.",
      "RBAC; rol_id verificado en cada solicitud.",
      "Alta"),
     ("RNF-13", "Módulos",
      "El sistema deberá exponer capacidades por módulos REST independientes.",
-     "Routers documentados en OpenAPI /docs.",
+     "≥ 15 routers documentados en OpenAPI /docs.",
      "Fallo de un módulo de negocio no impide arrancar autenticación y catálogo público.",
      "Prefijo /api; un controlador por dominio.",
      "Media"),
@@ -452,7 +480,18 @@ RNF_FICHAS = [
      "Informe de Locust o JMeter con RPS y latencia.",
      "Prueba sobre /api y /api/catalogo/destinos.",
      "Media"),
+    ("RNF-19", "Utilización eficiente de los recursos",
+     "El sistema deberá limitar CPU, memoria, almacenamiento y ancho de banda en operación nominal.",
+     "Bundle ≤ 500 KB comprimido; RAM de la API ≤ 512 MB con 25 usuarios.",
+     "Métricas de build y memoria dentro de umbral.",
+     "Imágenes WebP; paginación; un proceso acotado en la laptop de la comunidad.",
+     "Media"),
 ]
+
+RF_MATRIZ = aplicar_matriz(RF_MATRIZ, SUB_RF)
+RNF_MATRIZ = aplicar_matriz(RNF_MATRIZ, SUB_RNF)
+RF_FICHAS = aplicar_fichas_rf(RF_FICHAS, SUB_RF)
+RNF_FICHAS = aplicar_fichas_rnf(RNF_FICHAS, SUB_RNF)
 
 
 def _arial(run, size=12, bold=False, color=None):
@@ -544,7 +583,7 @@ def _portada(doc, subtitulo):
     _p(doc, TITULO_PROYECTO, 12, True, True, 8)
     _p(doc, "Especificación de Requisitos de Software (SRS)", 12, True, True, 8)
     _p(doc, subtitulo, 12, True, True, 12)
-    _p(doc, "Integrantes: María Alvarado, Luis Herice, Sergio Jiménez, Gabriel Jiménez", 12, False, True, 4)
+    _p(doc, "Integrantes: Sergio Jiménez, Gabriel Jiménez", 12, False, True, 4)
     _p(doc, "Tutor: Edecio Freitez", 12, False, True, 4)
     _p(doc, "Barquisimeto, septiembre de 2026", 12, False, True, 16)
 
@@ -634,7 +673,7 @@ def docx_a_html_simple(titulo, matriz, fichas, tipo):
     <h1>PROGRAMA NACIONAL DE FORMACIÓN EN INFORMÁTICA</h1>
     <p><b>{TITULO_PROYECTO}</b></p>
     <h2>{titulo}</h2>
-    <p>Integrantes: María Alvarado, Luis Herice, Sergio Jiménez, Gabriel Jiménez. Tutor: Edecio Freitez. Barquisimeto, septiembre de 2026.</p>
+    <p>Integrantes: Sergio Jiménez, Gabriel Jiménez. Tutor: Edecio Freitez. Barquisimeto, septiembre de 2026.</p>
     <h2>2. Matriz Única de Especificación de Requisitos (SRS)</h2>
     <table><tr>
     <th>ID</th><th>Nombre del Requisito</th><th>Tipo</th><th>Prioridad</th>
@@ -672,7 +711,4 @@ def generar_pdfs():
 
 
 if __name__ == "__main__":
-    generar_rf()
-    generar_rnf()
-    generar_pdfs()
-    print("OK")
+    print("Catálogo de datos para el SRS oficial. Regenerar con: python3 _rellenar_srs_original.py")

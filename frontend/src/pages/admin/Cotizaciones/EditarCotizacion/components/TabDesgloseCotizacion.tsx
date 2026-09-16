@@ -20,7 +20,6 @@ interface PropsTabDesglose {
   onQuitarLinea: (lineaId: number) => void;
 }
 
-// Pestaña Desglose: tabla de líneas por categoría y formulario para agregar gastos
 export default function TabDesgloseCotizacion({
   cotizacion,
   form,

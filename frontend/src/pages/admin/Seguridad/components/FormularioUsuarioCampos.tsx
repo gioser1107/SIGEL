@@ -11,6 +11,7 @@ interface FormularioUsuarioCamposProps {
   modo: 'crear' | 'editar';
   onChange: (actualizador: (prev: FormularioUsuario) => FormularioUsuario) => void;
   onLimpiarError: (campo: keyof ErroresFormularioUsuario) => void;
+  rolBloqueado?: boolean;
 }
 
 export default function FormularioUsuarioCampos({
@@ -20,6 +21,7 @@ export default function FormularioUsuarioCampos({
   modo,
   onChange,
   onLimpiarError,
+  rolBloqueado = false,
 }: FormularioUsuarioCamposProps) {
   return (
     <div className="drawer-form">
@@ -132,6 +134,7 @@ export default function FormularioUsuarioCampos({
           id="usuario-rol"
           className="drawer-form__input"
           value={form.rol_id}
+          disabled={rolBloqueado}
           onChange={(e) => {
             onChange((f) => ({ ...f, rol_id: e.target.value }));
             onLimpiarError('rol_id');
@@ -142,6 +145,9 @@ export default function FormularioUsuarioCampos({
             <option key={r.id} value={r.id}>{r.nombre}</option>
           ))}
         </select>
+        {rolBloqueado && (
+          <p className="seguridad__campo-error">El rol Administrador no se puede cambiar.</p>
+        )}
         {erroresForm.rol_id && (
           <p className="seguridad__campo-error">{erroresForm.rol_id}</p>
         )}

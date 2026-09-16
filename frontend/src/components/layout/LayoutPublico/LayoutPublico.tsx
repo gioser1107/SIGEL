@@ -19,7 +19,6 @@ export default function LayoutPublico() {
   const ubicacion = useLocation();
   const { estaAutenticado, esAdmin } = useAutenticacion();
 
-  // Detectar scroll para cambiar el estilo del navbar
   useEffect(() => {
     const manejarScroll = () => {
       if (estaMenuMovilAbierto) {

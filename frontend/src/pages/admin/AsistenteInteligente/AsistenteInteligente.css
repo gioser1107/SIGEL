@@ -1,0 +1,139 @@
+.asistente-modulo {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.asistente-modulo__grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1rem;
+}
+
+.asistente-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.1rem 1.2rem;
+}
+
+.asistente-card h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.asistente-card h3 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.88rem;
+}
+
+.asistente-card__nota {
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.asistente-card--chat .asistente-modulo__mensajes {
+  min-height: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.asistente-guias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.asistente-guias button {
+  border: 1px solid var(--color-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+
+.asistente-guias button.is-activa {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.asistente-pasos {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.asistente-pasos p {
+  margin: 0.15rem 0 0.2rem;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.asistente-faq {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.asistente-faq button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  cursor: pointer;
+}
+
+.asistente-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 0.7rem 0;
+}
+
+.asistente-kpis article {
+  background: #f8fafc;
+  border-radius: 0.7rem;
+  padding: 0.7rem;
+}
+
+.asistente-kpis span {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+}
+
+.asistente-kpis strong {
+  font-size: 1.15rem;
+}
+
+.asistente-recorrido-btn {
+  border: none;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+
+@media (max-width: 960px) {
+  .asistente-modulo__grid,
+  .asistente-kpis {
+    grid-template-columns: 1fr;
+  }
+}

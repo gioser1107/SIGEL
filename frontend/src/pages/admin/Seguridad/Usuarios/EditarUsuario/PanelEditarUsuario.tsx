@@ -17,6 +17,7 @@ import FormularioUsuarioCampos from '../../components/FormularioUsuarioCampos';
 import { FORM_USUARIO_VACIO, type FormularioUsuario } from '../../constants';
 import { usuarioAFormulario } from '../../utils/mapeoUsuario';
 import { mensajeError } from '../../utils/mensajeError';
+import { esRolAdministrador } from '../../../../../utils/permisosModulos';
 import './PanelEditarUsuario.css';
 
 interface PanelEditarUsuarioProps {
@@ -70,7 +71,11 @@ export default function PanelEditarUsuario({
         telefono: telefono ?? null,
       });
 
-      if (form.rol_id && Number(form.rol_id) !== usuario.rol_id) {
+      if (
+        form.rol_id &&
+        Number(form.rol_id) !== usuario.rol_id &&
+        !esRolAdministrador(usuario.rol)
+      ) {
         await cambiarRolUsuario(usuario.id, Number(form.rol_id));
       }
       if (form.contrasena) {
@@ -116,6 +121,7 @@ export default function PanelEditarUsuario({
         modo="editar"
         onChange={setForm}
         onLimpiarError={limpiarError}
+        rolBloqueado={esRolAdministrador(usuario?.rol)}
       />
     </PanelDeslizable>
   );

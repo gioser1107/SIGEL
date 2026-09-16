@@ -42,7 +42,6 @@ interface PropsPanelEditar {
   imprimiendo?: boolean;
 }
 
-// Panel lateral para editar una cotización existente con tabs Info y Desglose
 export default function PanelEditarCotizacion({
   abierto,
   cotizacion,

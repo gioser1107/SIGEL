@@ -64,6 +64,18 @@ export async function obtenerViajes(params?: {
   return normalizarRespuestaPaginada<Viaje>(data, params?.limite);
 }
 
+export async function obtenerViajesParaReporte(params?: {
+  pagina?: number;
+  limite?: number;
+}): Promise<RespuestaPaginada<Viaje>> {
+  const consulta = new URLSearchParams();
+  agregarPaginacionAParams(consulta, params);
+  const data = await apiRequest<unknown>(`/viajes/para-reporte?${consulta.toString()}`, {
+    requiresAuth: true,
+  });
+  return normalizarRespuestaPaginada<Viaje>(data, params?.limite);
+}
+
 export async function obtenerViajePorId(id: number): Promise<Viaje> {
   return apiRequest<Viaje>(`/viajes/${id}`, { requiresAuth: true });
 }

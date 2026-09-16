@@ -2,10 +2,9 @@ import { EtiquetaEstado, resolverVariante } from '../../../../components/admin';
 import type { Columna } from '../../../../components/admin';
 import type { Viaje } from '../../../../types/viaje';
 import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
-import { formatFecha } from '../utils/formatearViaje';
+import { formatearFecha } from '../utils/formatearViaje';
 import { etiquetaGuiasViaje } from '../utils/planificacionGuias';
 
-// Construye la definición de columnas de la tabla de viajes
 export function columnasViajes(): Columna<Viaje>[] {
   return [
     {
@@ -27,7 +26,7 @@ export function columnasViajes(): Columna<Viaje>[] {
       id: 'fecha_salida',
       encabezado: 'Fecha salida',
       ordenable: true,
-      accessor: (v) => <span className="plan-tabla__fecha">{formatFecha(v.fecha_salida)}</span>,
+      accessor: (v) => <span className="plan-tabla__fecha">{formatearFecha(v.fecha_salida)}</span>,
     },
     {
       id: 'unidad',

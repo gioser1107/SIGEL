@@ -25,7 +25,7 @@ export function agregarPaginacionAParams(
   return params;
 }
 
-/** Normaliza respuesta paginada o array legacy. */
+/** Normaliza una respuesta paginada o un listado anterior. */
 export function normalizarRespuestaPaginada<T>(
   data: unknown,
   limiteFallback = LIMITE_PAGINA_DEFAULT,

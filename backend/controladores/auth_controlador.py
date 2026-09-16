@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from controladores.cliente_controlador import DatosPuntoRecogidaInline
-from database import get_db
+from database import fijar_contexto_auditoria, get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from modelos.usuario_modelo import iniciar_sesion, registrar_cliente_portal
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
@@ -38,6 +38,7 @@ class DatosRegistroCliente(BaseModel):
 def iniciar_sesion_endpoint(datos: DatosLogin, request: Request, db: Session = Depends(get_db)):
     resultado = iniciar_sesion(db, datos.correo, datos.contrasena)
     usuario = resultado["usuario"]
+    fijar_contexto_auditoria(db, usuario["id"], obtener_ip_origen(request))
 
     registrar_evento(
         db,

@@ -56,6 +56,10 @@ endif
 |Modelo|
 :Pedir datos actuales;
 
+|Lente inteligente|
+:Consultar demanda y recomendación
+(RCI-02, RCI-03);
+
 |MySQL|
 :Consultar y bloquear\nviaje, cupo y asientos;
 

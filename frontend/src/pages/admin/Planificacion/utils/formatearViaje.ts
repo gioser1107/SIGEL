@@ -1,5 +1,4 @@
-// Convierte la fecha ISO a formato legible dd/mm/aaaa hh:mm (zona VE)
-export function formatFecha(iso: string | null | undefined): string {
+export function formatearFecha(iso: string | null | undefined): string {
   if (!iso) return '—';
   const d = new Date(iso);
   return (
@@ -9,8 +8,7 @@ export function formatFecha(iso: string | null | undefined): string {
   );
 }
 
-// Formatea hora ISO o cadena HH:mm[:ss] para la tabla de paradas
-export function formatHora(iso: string): string {
+export function formatearHora(iso: string): string {
   if (/^\d{2}:\d{2}(:\d{2})?$/.test(iso)) {
     return iso.slice(0, 5);
   }

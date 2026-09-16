@@ -2,7 +2,7 @@ import { PanelDeslizable } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
 import type { DatosDestinoNuevo, Destino, DestinoImagen, DificultadDestino } from '../../../../types/destino';
 import { NIVELES_DIFICULTAD } from '../constants';
-import { formatPrecio } from '../utils/formatearDestino';
+import { formatearPrecio } from '../utils/formatearDestino';
 import FormularioImagenesDestino from './components/FormularioImagenesDestino';
 import { sanitizarNombrePersona } from '../../../../utils/validacionesFormulario';
 import CampoMonto from '../../../../components/ui/CampoMonto/CampoMonto';
@@ -124,7 +124,7 @@ export default function PanelEditarDestino({
             onValorNumerico={(n) => actualizarCampo('precio_base_eur', n)}
           />
           {destino && (
-            <p className="drawer-form__ayuda">Actual: {formatPrecio(destino.precio_base_eur)}</p>
+            <p className="drawer-form__ayuda">Actual: {formatearPrecio(destino.precio_base_eur)}</p>
           )}
         </div>
 

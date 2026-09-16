@@ -110,7 +110,6 @@ export function useCotizaciones() {
     }
   }, [drawerAbierto, drawerModo, cargarClientes, cargarDestinos]);
 
-  // Carga el listado completo de cotizaciones desde la API
   const cargarCotizaciones = useCallback(async () => {
     setCargando(true);
     setError(null);
@@ -133,7 +132,6 @@ export function useCotizaciones() {
     cargarCotizaciones();
   }, [cargarCotizaciones]);
 
-  // Carga las líneas de desglose y actualiza el precio total si hay resumen
   const cargarLineas = async (cotizacionId: number) => {
     setCargandoLineas(true);
     try {
@@ -155,7 +153,6 @@ export function useCotizaciones() {
     }
   };
 
-  // Abre el drawer en modo creación con formulario vacío
   const abrirCrear = () => {
     setDrawerModo('crear');
     setDrawerTab('info');
@@ -166,7 +163,6 @@ export function useCotizaciones() {
     setDrawerAbierto(true);
   };
 
-  // Abre el drawer en modo edición y carga el desglose de la cotización
   const abrirEditar = (cot: Cotizacion) => {
     setDrawerModo('editar');
     setDrawerTab('info');
@@ -184,7 +180,6 @@ export function useCotizaciones() {
     cargarLineas(cot.id);
   };
 
-  // Cierra el drawer y limpia el estado del formulario y líneas
   const cerrarDrawer = () => {
     setDrawerAbierto(false);
     setCotizacionActiva(null);
@@ -193,7 +188,6 @@ export function useCotizaciones() {
     setErrorForm(null);
   };
 
-  // Valida y guarda la cotización (crear o actualizar según el modo)
   const guardar = async () => {
     const errorValidacion = validarFormularioCotizacion(form);
     if (errorValidacion) {
@@ -222,14 +216,14 @@ export function useCotizaciones() {
     }
   };
 
-  // Agrega una línea de desglose y recalcula el precio total
   const agregarLinea = async () => {
     if (!cotizacionActiva) return;
     const errorLinea = validarLineaCosto(lineaForm);
     if (errorLinea) {
-      alert(errorLinea);
+      setErrorForm(errorLinea);
       return;
     }
+    setErrorForm(null);
     try {
       const res = await crearLineaCotizacion(cotizacionActiva.id, {
         categoria: lineaForm.categoria,
@@ -244,11 +238,10 @@ export function useCotizaciones() {
       setLineaForm(LINEA_FORM_VACIO);
       await cargarCotizaciones();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al agregar línea');
+      setErrorForm(e instanceof Error ? e.message : 'Error al agregar línea');
     }
   };
 
-  // Elimina una línea de desglose y actualiza el precio total
   const quitarLinea = async (lineaId: number) => {
     if (!cotizacionActiva) return;
     try {
@@ -257,11 +250,10 @@ export function useCotizaciones() {
       setForm((f) => ({ ...f, precio_cotizado_eur: res.cotizacion.precio_cotizado_eur }));
       await cargarCotizaciones();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al eliminar línea');
+      setErrorForm(e instanceof Error ? e.message : 'Error al eliminar línea');
     }
   };
 
-  // Cambia el estado de la cotización vía API y sincroniza el drawer si está abierto
   const cambiarEstado = async (cot: Cotizacion, nuevoEstado: EstadoCotizacion) => {
     try {
       await actualizarCotizacion(cot.id, { estado: nuevoEstado });
@@ -271,18 +263,16 @@ export function useCotizaciones() {
         setForm((f) => ({ ...f, estado: nuevoEstado }));
       }
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al cambiar estado');
+      setError(e instanceof Error ? e.message : 'Error al cambiar estado');
     }
   };
 
-  // Abre el modal de confirmación para rechazar/eliminar una cotización
   const confirmarRechazar = (cot: Cotizacion) => {
     if (drawerAbierto) cerrarDrawer();
     setCotizacionARechazar(cot);
     setConfirmAbierto(true);
   };
 
-  // Ejecuta la eliminación de la cotización rechazada
   const ejecutarRechazar = async () => {
     if (!cotizacionARechazar) return;
     setRechazando(true);
@@ -293,13 +283,12 @@ export function useCotizaciones() {
       setFiltroTab('anulado');
       reiniciarPagina();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al rechazar cotización');
+      setError(e instanceof Error ? e.message : 'Error al rechazar cotización');
     } finally {
       setRechazando(false);
     }
   };
 
-  // Cierra el modal de rechazo sin ejecutar la acción
   const cancelarRechazar = () => {
     setConfirmAbierto(false);
     setCotizacionARechazar(null);
@@ -346,7 +335,6 @@ export function useCotizaciones() {
     [cotizacionActiva, cargandoLineas, lineas, form],
   );
 
-  // Aplica búsqueda local y filtro por pestaña sobre el listado
   const cotizacionesFiltradas = cotizaciones.filter((c) => {
     const texto = busqueda.toLowerCase();
     return (

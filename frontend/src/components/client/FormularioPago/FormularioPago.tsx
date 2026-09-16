@@ -78,6 +78,7 @@ export default function FormularioPago({
   const [referencia, setReferencia] = useState('');
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState(fechaHoyIso());
+  const [errorForm, setErrorForm] = useState<string | null>(null);
   const [comprobanteArchivo, setComprobanteArchivo] = useState<File | null>(null);
   const [urlVistaPrevia, setUrlVistaPrevia] = useState<string | null>(null);
   const [estaArrastrando, setEstaArrastrando] = useState(false);
@@ -152,30 +153,31 @@ export default function FormularioPago({
   const manejarEnvio = (e: React.FormEvent) => {
     e.preventDefault();
     if (sinTasa) {
-      alert('No hay tasa de cambio disponible. Intente más tarde o contacte a la agencia.');
+      setErrorForm('No hay tasa de cambio disponible. Intente más tarde o contacte a la agencia.');
       return;
     }
     if (!referencia || !monto) {
-      alert('Por favor complete los campos obligatorios.');
+      setErrorForm('Por favor complete los campos obligatorios.');
       return;
     }
     const montoNum = Number(monto);
     if (!Number.isFinite(montoNum) || montoNum <= 0) {
-      alert('Ingrese un monto válido en bolívares.');
+      setErrorForm('Ingrese un monto válido en bolívares.');
       return;
     }
     if (saldoMostrarBs != null && montoNum > saldoMostrarBs + 0.01) {
-      alert(`El monto no puede superar el saldo pendiente (${formatearBs(saldoMostrarBs)}).`);
+      setErrorForm(`El monto no puede superar el saldo pendiente (${formatearBs(saldoMostrarBs)}).`);
       return;
     }
     if (!comprobanteArchivo) {
-      alert('Por favor suba el comprobante o captura del pago.');
+      setErrorForm('Por favor suba el comprobante o captura del pago.');
       return;
     }
     if (esFechaFutura(fecha)) {
-      alert(MENSAJE_FECHA_NO_FUTURA);
+      setErrorForm(MENSAJE_FECHA_NO_FUTURA);
       return;
     }
+    setErrorForm(null);
     onSubmit({ metodo, banco, referencia, monto, fecha, comprobanteArchivo });
   };
 
@@ -205,6 +207,12 @@ export default function FormularioPago({
                   : 'Ingresa los detalles de tu transferencia o pago móvil para registrar tu viaje.')}
         </p>
       </div>
+
+      {errorForm && (
+        <p className="formulario-pago__error" role="alert">
+          {errorForm}
+        </p>
+      )}
 
       {/* Cuerpo del formulario */}
       <div className="formulario-pago__body">

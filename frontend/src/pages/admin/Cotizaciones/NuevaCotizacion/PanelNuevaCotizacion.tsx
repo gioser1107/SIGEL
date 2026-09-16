@@ -18,7 +18,6 @@ interface PropsPanelNueva {
   onFormChange: (form: DatosCotizacionNueva) => void;
 }
 
-// Panel lateral para crear una nueva cotización comercial
 export default function PanelNuevaCotizacion({
   abierto,
   form,
@@ -32,7 +31,6 @@ export default function PanelNuevaCotizacion({
   onGuardar,
   onFormChange,
 }: PropsPanelNueva) {
-  // Actualiza un campo del formulario manteniendo el resto de valores
   const actualizarCampo = <K extends keyof DatosCotizacionNueva>(
     campo: K,
     valor: DatosCotizacionNueva[K],

@@ -4,18 +4,17 @@ import type { EntradaBitacora } from '../../../../types/bitacora';
 import { ETIQUETA_ACCION, ETIQUETA_MODULO } from '../constants';
 import {
   etiquetaUsuario,
-  formatFechaHora,
+  formatearFechaHora,
   resolverVarianteAccion,
 } from '../utils/formatearBitacora';
 
-// Construye la definición de columnas de la tabla de bitácora (sin columna IP)
 export function columnasBitacora(): Columna<EntradaBitacora>[] {
   return [
     {
       id: 'creado_en',
       encabezado: 'Fecha / Hora',
       accessor: (fila) => (
-        <span className="bit-tabla__fecha">{formatFechaHora(fila.creado_en)}</span>
+        <span className="bit-tabla__fecha">{formatearFechaHora(fila.creado_en)}</span>
       ),
       ordenable: false,
       ancho: '150px',

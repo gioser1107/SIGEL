@@ -30,7 +30,6 @@ export default function ModalDetalleViaje({ viaje, fecha, fechaFormateada, onCer
     if (e.target === e.currentTarget) onCerrar();
   };
 
-  // Parsear la descripción en secciones para renderizar bonito
   const lineasDescripcion = viaje.descripcion.split('\n');
 
   return (

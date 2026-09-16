@@ -1,7 +1,7 @@
 import LogoMarca from '../../../../components/ui/LogoMarca/LogoMarca';
 import type { Cotizacion, CotizacionLinea } from '../../../../types/cotizacion';
 import { CATEGORIAS_LINEA } from '../constants';
-import { formatFecha, formatearMonedaEur } from '../utils/formatearCotizacion';
+import { formatearFecha, formatearMonedaEur } from '../utils/formatearCotizacion';
 import './DocumentoCotizacion.css';
 
 interface DocumentoCotizacionProps {
@@ -41,12 +41,12 @@ export default function DocumentoCotizacion({ cotizacion, lineas }: DocumentoCot
         <div className="doc-cotizacion__meta">
           <div>
             <span>Fecha de emisión</span>
-            <strong>{formatFecha(cotizacion.creado_en)}</strong>
+            <strong>{formatearFecha(cotizacion.creado_en)}</strong>
           </div>
           <div>
             <span>Válida hasta</span>
             <strong>
-              {cotizacion.valida_hasta ? formatFecha(cotizacion.valida_hasta) : 'Por definir'}
+              {cotizacion.valida_hasta ? formatearFecha(cotizacion.valida_hasta) : 'Por definir'}
             </strong>
           </div>
           <div>

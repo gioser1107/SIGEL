@@ -54,6 +54,9 @@ endif
 
 |Modelo|
 :Validar rango real\n(año, orden y máximo 10 años);
+
+|Lente inteligente|
+:Alimentar serie de demanda (RCI-03);
 if (¿El rango es válido?) then (sí)
   :Pedir los indicadores del período;
 else (no)

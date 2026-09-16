@@ -6,10 +6,10 @@ from pathlib import Path
 import jwt
 from dotenv import load_dotenv
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String
+from sqlalchemy import BigInteger, Column, DateTime, String
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fijar_contexto_auditoria, fk_rol, tabla_seguridad
 from modelos.cliente_modelo import (
     Cliente,
     asegurar_perfil_cliente_usuario,
@@ -21,7 +21,7 @@ from modelos.cliente_modelo import (
 )
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente
 from modelos.cliente_modelo import cliente_respuesta
-from modelos.rol_modelo import Rol
+from modelos.rol_modelo import Rol, es_nombre_rol_administrador
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
 from utilidades.validaciones import ValidadorEntrada, normalizar_datos_cliente, validar_datos_cliente_entrada
 
@@ -35,9 +35,10 @@ EXPIRACION_MINUTOS = int(os.getenv("JWT_EXPIRACION_MINUTOS", "480"))
 
 class Usuario(Base):
     __tablename__ = "usuarios"
+    __table_args__ = tabla_seguridad()
 
     id = Column(BigInteger, primary_key=True, index=True)
-    rol_id = Column(BigInteger, ForeignKey("roles.id"), nullable=False, index=True)
+    rol_id = Column(BigInteger, fk_rol(), nullable=False, index=True)
     correo = Column(String(320), unique=True, nullable=False, index=True)
     hash_contrasena = Column(String(255), nullable=False)
     nombre = Column(String(80), nullable=False)
@@ -284,6 +285,12 @@ def actualizar_usuario(
 
 def asignar_rol_a_usuario(db: Session, usuario_id: int, rol_id: int) -> dict:
     usuario = buscar_usuario_activo(db, usuario_id)
+    rol_actual = obtener_nombre_rol(db, usuario.rol_id)
+    if es_nombre_rol_administrador(rol_actual):
+        raise HTTPException(
+            status_code=400,
+            detail="El usuario Administrador es intocable: no se le puede cambiar el rol.",
+        )
 
     rol = db.query(Rol).filter(
         Rol.id == rol_id,
@@ -319,6 +326,11 @@ def eliminar_usuario(db: Session, usuario_id: int, usuario_sesion_id: int) -> No
         )
 
     usuario = buscar_usuario_activo(db, usuario_id)
+    if es_nombre_rol_administrador(obtener_nombre_rol(db, usuario.rol_id)):
+        raise HTTPException(
+            status_code=400,
+            detail="El usuario Administrador es intocable: no se puede eliminar.",
+        )
     ahora = datetime.now()
     usuario.eliminado_en = ahora
     usuario.actualizado_en = ahora
@@ -419,6 +431,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
 
     db.add(nuevo_usuario)
     db.flush()
+    fijar_contexto_auditoria(db, nuevo_usuario.id, None)
 
     ficha_vinculada = False
     if cliente_existente is None:

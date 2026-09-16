@@ -123,9 +123,10 @@ def actualizar_unidad(
 
 
 def eliminar_unidad(db: Session, unidad_id: int) -> None:
-    from modelos.viaje_modelo import Viaje
+    from modelos.viaje_modelo import Viaje, sincronizar_viajes_vencidos
 
     unidad = obtener_unidad_activa(db, unidad_id)
+    sincronizar_viajes_vencidos(db)
 
     viajes_activos = db.query(Viaje).filter(
         Viaje.unidad_id == unidad_id,

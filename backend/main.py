@@ -36,6 +36,7 @@ from controladores.punto_venta_controlador import router as router_puntos_venta
 from controladores.abordaje_controlador import router as router_abordajes
 from controladores.resena_controlador import router as router_resenas
 from controladores.reporte_estadistico_controlador import router as router_reportes
+from controladores.respaldo_controlador import router as router_respaldos
 
 logger = logging.getLogger("sigel")
 
@@ -49,6 +50,31 @@ async def lifespan(_app: FastAPI):
 
     if tasa_bcv_auto_activa():
         ejecutar_sincronizacion_bcv(solo_si_falta=True)
+
+    from database import SessionLocal, asegurar_bases
+
+    try:
+        asegurar_bases()
+    except Exception as error:
+        logger.warning("No se pudieron asegurar las bases de datos: %s", error)
+    try:
+        from utilidades.objetos_mysql import aplicar_objetos_mysql
+
+        aplicar_objetos_mysql()
+    except Exception as error:
+        logger.warning("No se pudieron instalar vistas/triggers: %s", error)
+    from modelos.viaje_modelo import sincronizar_viajes_vencidos
+
+    db_viajes = SessionLocal()
+    try:
+        cerrados = sincronizar_viajes_vencidos(db_viajes)
+        if cerrados:
+            logger.info("Viajes pasados a finalizado por fecha: %s", cerrados)
+    except Exception as error:
+        logger.warning("No se pudieron cerrar viajes vencidos: %s", error)
+    finally:
+        db_viajes.close()
+
     yield
 
 
@@ -74,6 +100,11 @@ def manejar_conflicto_integridad(request: Request, error: IntegrityError):
 
 @app.exception_handler(SQLAlchemyError)
 def manejar_error_base_de_datos(request: Request, error: SQLAlchemyError):
+    origen = getattr(error, "orig", None)
+    codigo = origen.args[0] if origen is not None and getattr(origen, "args", None) else None
+    if codigo == 1644:
+        mensaje = origen.args[1] if len(origen.args) > 1 else "Operación rechazada por la base de datos"
+        return JSONResponse(status_code=400, content=_cuerpo_error(str(mensaje)))
     logger.exception("Fallo de base de datos: %s", error)
     return JSONResponse(
         status_code=503,
@@ -146,12 +177,20 @@ app.include_router(router_puntos_venta, prefix="/api")
 app.include_router(router_abordajes, prefix="/api")
 app.include_router(router_resenas, prefix="/api")
 app.include_router(router_reportes, prefix="/api")
+app.include_router(router_respaldos, prefix="/api")
 
 @app.get("/api")
 def ruta_raiz_api():
+    from database import estado_bases, nombre_bd, nombre_bd_seguridad
+
     return {
         "mensaje": "API Travel BQTO activa",
         "documentacion": "/docs",
+        "bases": {
+            "seguridad": nombre_bd_seguridad,
+            "negocio": nombre_bd,
+            "estado": estado_bases(),
+        },
         "modulos": {
             "auth": "/api/auth",
             "catalogo": "/api/catalogo",
@@ -176,6 +215,7 @@ def ruta_raiz_api():
             "puntos_venta": "/api/puntos-venta",
             "abordajes": "/api/abordajes",
             "reportes": "/api/reportes/estadisticos",
+            "respaldos": "/api/respaldos",
         },
     }
 

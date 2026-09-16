@@ -176,7 +176,7 @@ export async function obtenerDetallePuntoRecogida(id: number): Promise<PuntoReco
   return normalizarDetallePuntoRecogida(data);
 }
 
-/** Listado público o legacy (reservas antiguas). Preferir listarPuntosRecogidaAdmin en admin. */
+/** Listado público o de reservas antiguas. Preferir listarPuntosRecogidaAdmin en admin. */
 export async function listarPuntosRecogidaCatalogo(
   filtros?: Pick<FiltrosPuntosRecogidaAdmin, 'solo_activos'>,
 ): Promise<PuntoRecogida[]> {

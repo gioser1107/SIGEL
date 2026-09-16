@@ -17,6 +17,7 @@ from modelos.permiso_modelo import (
     PERMISO_LEER_RESERVAS,
 )
 from modelos.cliente_modelo import registrar_cliente_para_reserva, requiere_sesion_cliente_portal
+from modelos.punto_recogida_modelo import asignar_puntos_a_cliente
 from modelos.reservas_modelo import (
     actualizar_pasajero,
     actualizar_reserva,
@@ -77,6 +78,7 @@ class DatosPasajeroCrear(BaseModel):
     recargo_eur: Decimal = Field(default=0.00, ge=0)
     notas_tarifa: Optional[str] = None
     punto_recogida_id: Optional[int] = None
+    puntos_recogida: Optional[List[DatosPuntoRecogidaInline]] = None
 
 
 class DatosPasajeroActualizar(BaseModel):
@@ -333,6 +335,14 @@ def agregar_pasajero_endpoint(
 ):
     cliente_id = _resolver_cliente_id_pasajero(db, datos, usuario_actual["id"])
     ocupa_asiento = datos.ocupa_asiento if datos.ocupa_asiento is not None else not datos.es_menor
+
+    if datos.puntos_recogida:
+        asignar_puntos_a_cliente(
+            db,
+            cliente_id,
+            puntos_nuevos=datos.puntos_recogida,
+            creado_por_usuario_id=usuario_actual["id"],
+        )
 
     nuevo_pasajero = agregar_pasajero(
         db, reserva_id,

@@ -55,6 +55,9 @@ endif
 |Modelo|
 :Pedir reserva, viajero y asiento;
 
+|Lente inteligente|
+:Consultar ocupación histórica (RCI-03);
+
 |MySQL|
 :Consultar y bloquear\nreserva, viajero y asiento;
 

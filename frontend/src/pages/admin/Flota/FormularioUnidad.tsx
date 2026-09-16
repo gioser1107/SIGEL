@@ -24,7 +24,6 @@ export default function FormularioUnidad({ abierto, onCerrar, unidad, onGuardado
   const [guardando, setGuardando] = useState(false);
   const [errorForm, setErrorForm] = useState<string | null>(null);
 
-  // Actualizar el estado durante el renderizado (Derived State)
   if (abierto !== prevAbierto) {
     setPrevAbierto(abierto);
     if (abierto) {

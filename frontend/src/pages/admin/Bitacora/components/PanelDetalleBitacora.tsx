@@ -3,7 +3,7 @@ import type { DetalleBitacora } from '../../../../types/bitacora';
 import { ETIQUETA_ACCION, ETIQUETA_MODULO } from '../constants';
 import {
   etiquetaUsuario,
-  formatFechaHora,
+  formatearFechaHora,
   resolverVarianteAccion,
 } from '../utils/formatearBitacora';
 
@@ -14,7 +14,6 @@ interface PropsPanelDetalle {
   onCerrar: () => void;
 }
 
-// Muestra el panel lateral con el detalle completo de un registro de bitácora
 export default function PanelDetalleBitacora({
   abierto,
   cargando,
@@ -28,7 +27,7 @@ export default function PanelDetalleBitacora({
       titulo="Detalle del registro"
       subtitulo={
         entrada
-          ? `Evento #${entrada.id} — ${formatFechaHora(entrada.creado_en)}`
+          ? `Evento #${entrada.id} — ${formatearFechaHora(entrada.creado_en)}`
           : 'Cargando...'
       }
       ancho="lg"

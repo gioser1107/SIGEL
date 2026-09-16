@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CabeceraModulo, EtiquetaEstado, TablaDatos } from '../../../components/admin';
 import type { Columna } from '../../../components/admin';
 import Boton from '../../../components/ui/Boton/Boton';
@@ -13,6 +14,7 @@ import type {
 } from '../../../types/reportesEstadisticos';
 import { useReportesEstadisticos } from './hooks/useReportesEstadisticos';
 import { fechaHoyIso } from '../../../utils/validacionesFormulario';
+import ReporteViaje from '../ReporteViaje/ReporteViaje';
 import '../Dashboard/Dashboard.css';
 import './ReportesEstadisticos.css';
 
@@ -23,17 +25,27 @@ type TipoReporte =
   | 'ingresos'
   | 'clientes'
   | 'ocupacion'
-  | 'cotizaciones';
+  | 'cotizaciones'
+  | 'listin';
 
 const TIPOS: { id: TipoReporte; etiqueta: string }[] = [
   { id: 'gerencial', etiqueta: 'Gerencial' },
   { id: 'destinos', etiqueta: 'Destinos' },
   { id: 'reservas', etiqueta: 'Reservas y pasajeros' },
-  { id: 'ingresos', etiqueta: 'Ingresos' },
+  { id: 'ingresos', etiqueta: 'Pagos' },
   { id: 'clientes', etiqueta: 'Clientes' },
   { id: 'ocupacion', etiqueta: 'Ocupación' },
   { id: 'cotizaciones', etiqueta: 'Cotizaciones' },
+  { id: 'listin', etiqueta: 'Listín de viaje' },
 ];
+
+const TIPOS_VALIDOS = new Set(TIPOS.map((t) => t.id));
+
+function tipoDesdeUrl(raw: string | null): TipoReporte {
+  if (raw === 'pagos') return 'ingresos';
+  if (raw && TIPOS_VALIDOS.has(raw as TipoReporte)) return raw as TipoReporte;
+  return 'gerencial';
+}
 
 const TITULO_TIPO: Record<TipoReporte, string> = {
   gerencial: 'Resumen gerencial',
@@ -43,6 +55,7 @@ const TITULO_TIPO: Record<TipoReporte, string> = {
   clientes: 'Clientes del periodo',
   ocupacion: 'Ocupación de viajes',
   cotizaciones: 'Cotizaciones',
+  listin: 'Listín de viaje',
 };
 
 function formatearFechaCorta(iso: string): string {
@@ -117,7 +130,16 @@ export default function ReportesEstadisticos() {
     aplicarConsulta,
     aplicarAtajo,
   } = useReportesEstadisticos();
-  const [tipo, setTipo] = useState<TipoReporte>('gerencial');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tipo = tipoDesdeUrl(searchParams.get('tipo'));
+  const esListin = tipo === 'listin';
+
+  function cambiarTipo(id: TipoReporte) {
+    const next = new URLSearchParams(searchParams);
+    next.set('tipo', id);
+    if (id !== 'listin') next.delete('viaje');
+    setSearchParams(next, { replace: true });
+  }
 
   const resumen = reporte?.resumen;
   const esUnSoloDia = desde === hasta;
@@ -184,15 +206,37 @@ export default function ReportesEstadisticos() {
     <div className="reportes-estadisticos">
       <CabeceraModulo
         migaja="Administración / Reportes"
-        titulo="Reportes estadísticos"
+        titulo="Reportes"
+        descripcion="Estadísticos, pagos y listín de viaje en un solo cuadro."
         acciones={
-          <BtnImprimirReporte
-            etiqueta="Imprimir reporte"
-            deshabilitado={cargando || !reporte}
-          />
+          !esListin ? (
+            <BtnImprimirReporte
+              etiqueta="Imprimir reporte"
+              deshabilitado={cargando || !reporte}
+            />
+          ) : undefined
         }
       />
 
+      <div className="reportes-estadisticos__tipos no-imprimir" role="tablist" aria-label="Tipo de reporte">
+        {TIPOS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={tipo === item.id}
+            className={`reportes-estadisticos__tipo ${tipo === item.id ? 'reportes-estadisticos__tipo--activo' : ''}`}
+            onClick={() => cambiarTipo(item.id)}
+          >
+            {item.etiqueta}
+          </button>
+        ))}
+      </div>
+
+      {esListin ? <ReporteViaje embeber /> : null}
+
+      {!esListin && (
+      <>
       <div className="reportes-estadisticos__filtros no-imprimir">
         <div className="reportes-estadisticos__campo">
           <label htmlFor="reporte-desde">Desde</label>
@@ -200,7 +244,7 @@ export default function ReportesEstadisticos() {
             id="reporte-desde"
             type="date"
             min="2000-01-01"
-            max={fechaHoyIso()}
+            max={hasta || fechaHoyIso()}
             value={desde}
             onChange={(e) => setDesde(e.target.value)}
           />
@@ -210,7 +254,7 @@ export default function ReportesEstadisticos() {
           <input
             id="reporte-hasta"
             type="date"
-            min="2000-01-01"
+            min={desde || '2000-01-01'}
             max={fechaHoyIso()}
             value={hasta}
             onChange={(e) => setHasta(e.target.value)}
@@ -230,21 +274,6 @@ export default function ReportesEstadisticos() {
             Este año
           </Boton>
         </div>
-      </div>
-
-      <div className="reportes-estadisticos__tipos no-imprimir" role="tablist" aria-label="Tipo de reporte">
-        {TIPOS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={tipo === item.id}
-            className={`reportes-estadisticos__tipo ${tipo === item.id ? 'reportes-estadisticos__tipo--activo' : ''}`}
-            onClick={() => setTipo(item.id)}
-          >
-            {item.etiqueta}
-          </button>
-        ))}
       </div>
 
       {reporte?.rango_disponible.desde && (
@@ -589,6 +618,8 @@ export default function ReportesEstadisticos() {
           </>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }

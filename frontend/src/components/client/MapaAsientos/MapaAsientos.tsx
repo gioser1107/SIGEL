@@ -22,14 +22,12 @@ export default function MapaAsientos({
   const [asientosSeleccionados, setAsientosSeleccionados] = useState<number[]>([]);
   const [errorConfirmacion, setErrorConfirmacion] = useState<string | null>(null);
 
-  // Usar datos reales si los recibimos, si no fallback estático (para compatibilidad del lado público)
   const usarDatosReales = asientos && asientos.length > 0;
   const totalAsientos = usarDatosReales ? asientos.length : 24;
   const idsOcupados = usarDatosReales
     ? new Set(asientos.filter(a => a.ocupado).map(a => a.id))
     : new Set([3, 4, 8, 15, 16, 21, 22]);
 
-  // Mapeo de index (1-based) a asiento_id real
   const obtenerAsientoId = (indice: number): number => {
     if (usarDatosReales) return asientos[indice - 1].id;
     return indice;

@@ -9,7 +9,6 @@ interface PropsModalRechazar {
   onCancelar: () => void;
 }
 
-// Modal de confirmación para rechazar y eliminar una cotización
 export default function ModalRechazarCotizacion({
   abierto,
   cotizacion,

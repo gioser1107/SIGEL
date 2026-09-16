@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fk_usuario
 from modelos.asiento_modelo import Asiento, asiento_a_dict
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.cliente_modelo import Cliente, buscar_ciudad, buscar_estado
@@ -12,7 +12,7 @@ from modelos.punto_recogida_modelo import PuntoRecogida, punto_recogida_a_dict
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
 from modelos.usuario_modelo import Usuario, nombre_completo_de
-from modelos.viaje_modelo import Viaje, obtener_viaje_activo, viaje_a_dict
+from modelos.viaje_modelo import Viaje, obtener_viaje_activo, sincronizar_viajes_vencidos, viaje_a_dict
 from utilidades.validaciones import ValidadorEntrada
 
 ESTADO_ABORDADO = "abordado"
@@ -28,7 +28,7 @@ class AbordajeViaje(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     reserva_cliente_id = Column(BigInteger, ForeignKey("reserva_clientes.id"), nullable=False, index=True)
     abordado_en = Column(DateTime, nullable=False)
-    registrado_por = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, index=True)
+    registrado_por = Column(BigInteger, fk_usuario(), nullable=True, index=True)
     estado = Column(
         Enum(*ESTADOS_ABORDAJE),
         nullable=False,
@@ -262,6 +262,7 @@ def listar_viajes_para_abordaje(
     estado: str | None = None,
     solo_hoy: bool = False,
 ) -> list[dict]:
+    sincronizar_viajes_vencidos(db)
     consulta = db.query(Viaje).filter(
         Viaje.eliminado_en.is_(None),
         Viaje.estado.in_(("planificado", "en_curso", "finalizado")),

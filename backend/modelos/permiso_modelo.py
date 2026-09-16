@@ -81,13 +81,14 @@ from fastapi import HTTPException
 from sqlalchemy import BigInteger, Column, DateTime, Text
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, tabla_seguridad
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
 from utilidades.validaciones import ValidadorEntrada
 
 
 class Permiso(Base):
     __tablename__ = "permisos"
+    __table_args__ = tabla_seguridad()
 
     id = Column(BigInteger, primary_key=True, index=True)
     descripcion = Column(Text, nullable=True)

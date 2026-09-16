@@ -19,7 +19,6 @@ interface PropsTabCostos {
   onEliminar: (costoId: number) => void;
 }
 
-// Pestaña Costos: resumen, barras por categoría, tabla y formulario de gastos
 export default function TabCostos({
   costos,
   totalEur,

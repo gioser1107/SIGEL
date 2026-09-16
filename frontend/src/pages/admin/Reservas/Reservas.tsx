@@ -84,7 +84,7 @@ export default function Reservas() {
   const [filtroTab, setFiltroTab] = useState<FiltroListado>('todos');
   const [busqueda, setBusqueda] = useState('');
 
-  // Detalles Side Sheet
+  // Panel de detalle
   const [panelAbierto, setPanelAbierto] = useState(false);
   const [reservaActiva, setReservaActiva] = useState<ReservaEnriquecida | null>(null);
   const [pasajerosActivos, setPasajerosActivos] = useState<ReservaCliente[]>([]);

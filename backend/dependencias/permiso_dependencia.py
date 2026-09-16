@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.auth_dependencia import obtener_permisos_del_rol, obtener_usuario_actual
+from modelos.rol_modelo import es_nombre_rol_administrador
 
 def requiere_permiso(descripcion_permiso: str):
 
@@ -10,6 +11,9 @@ def requiere_permiso(descripcion_permiso: str):
         usuario_actual: dict = Depends(obtener_usuario_actual),
         db: Session = Depends(get_db),
     ) -> dict:
+        if es_nombre_rol_administrador(usuario_actual.get("rol")):
+            return usuario_actual
+
         permisos = obtener_permisos_del_rol(db, usuario_actual["rol_id"])
 
         if descripcion_permiso not in permisos:
@@ -22,12 +26,26 @@ def requiere_permiso(descripcion_permiso: str):
 
     return validar_permiso
 
+
+def requiere_administrador(
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+) -> dict:
+    if not es_nombre_rol_administrador(usuario_actual.get("rol")):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el administrador puede gestionar los respaldos de las bases de datos",
+        )
+    return usuario_actual
+
 def requiere_alguno_de_permisos(*descripciones_permisos: str):
 
     def validar_permiso(
         usuario_actual: dict = Depends(obtener_usuario_actual),
         db: Session = Depends(get_db),
     ) -> dict:
+        if es_nombre_rol_administrador(usuario_actual.get("rol")):
+            return usuario_actual
+
         permisos = obtener_permisos_del_rol(db, usuario_actual["rol_id"])
 
         for descripcion in descripciones_permisos:

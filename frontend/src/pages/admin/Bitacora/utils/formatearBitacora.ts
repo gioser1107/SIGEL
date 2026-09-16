@@ -1,7 +1,6 @@
 import type { VarianteBadge } from '../../../../components/admin';
 import type { EntradaBitacora } from '../../../../types/bitacora';
 
-// Devuelve la variante visual del badge según el tipo de acción registrada
 export function resolverVarianteAccion(accion: string): VarianteBadge {
   const mapa: Record<string, VarianteBadge> = {
     INSERT: 'exito',
@@ -24,8 +23,7 @@ function parsearFechaBitacora(iso: string): Date {
   return new Date(tieneZona ? texto : `${texto.replace(' ', 'T')}Z`);
 }
 
-// Convierte la fecha ISO (UTC) a formato legible dd/mm/aaaa hh:mm en hora de Caracas
-export function formatFechaHora(iso: string): string {
+export function formatearFechaHora(iso: string): string {
   const fecha = parsearFechaBitacora(iso);
   if (Number.isNaN(fecha.getTime())) return iso;
   return fecha.toLocaleString('es-VE', {
@@ -38,7 +36,6 @@ export function formatFechaHora(iso: string): string {
   });
 }
 
-// Resuelve el nombre visible del usuario: nombre → correo → "Sistema"
 export function etiquetaUsuario(entrada: EntradaBitacora): string {
   if (entrada.usuario_nombre) return entrada.usuario_nombre;
   if (entrada.usuario_correo) return entrada.usuario_correo;

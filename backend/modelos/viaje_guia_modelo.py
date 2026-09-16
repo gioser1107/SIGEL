@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, String
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fk_usuario
 from modelos.rol_modelo import Rol
 from modelos.usuario_modelo import Usuario, nombre_completo_de
 
@@ -14,7 +14,7 @@ class ViajeGuia(Base):
 
     id = Column(BigInteger, primary_key=True, index=True)
     viaje_id = Column(BigInteger, ForeignKey("viajes.id"), nullable=False, index=True)
-    usuario_id = Column(BigInteger, ForeignKey("usuarios.id"), nullable=False, index=True)
+    usuario_id = Column(BigInteger, fk_usuario(), nullable=False, index=True)
     es_principal = Column(Boolean, nullable=False, default=False)
     notas = Column(String(255), nullable=True)
     creado_en = Column(DateTime, nullable=False)
@@ -90,6 +90,33 @@ def _filas_guias_activas(db: Session, viaje_id: int) -> list[tuple[ViajeGuia, Us
         .order_by(ViajeGuia.es_principal.desc(), Usuario.apellido.asc(), Usuario.nombre.asc())
         .all()
     )
+
+
+def usuario_es_guia(usuario_actual: dict) -> bool:
+    return (usuario_actual.get("rol") or "").strip().lower() == "guia"
+
+
+def ids_viajes_asignados_al_guia(db: Session, usuario_id: int) -> set[int]:
+    filas = (
+        db.query(ViajeGuia.viaje_id)
+        .filter(
+            ViajeGuia.usuario_id == usuario_id,
+            ViajeGuia.eliminado_en.is_(None),
+        )
+        .all()
+    )
+    return {int(fila[0]) for fila in filas}
+
+
+def asegurar_acceso_reporte_viaje(db: Session, usuario_actual: dict, viaje_id: int) -> None:
+    if not usuario_es_guia(usuario_actual):
+        return
+    asignados = ids_viajes_asignados_al_guia(db, int(usuario_actual["id"]))
+    if viaje_id not in asignados:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puedes ver el listín de los viajes donde estás asignado como guía.",
+        )
 
 
 def guias_en_respuesta_viaje(db: Session, viaje_id: int) -> dict:

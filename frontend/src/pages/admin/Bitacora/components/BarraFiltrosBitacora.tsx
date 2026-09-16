@@ -14,7 +14,6 @@ interface PropsBarraFiltros {
   onFechaHastaChange: (valor: string) => void;
 }
 
-// Renderiza la barra de filtros: búsqueda, módulo, acción y rango de fechas
 export default function BarraFiltrosBitacora({
   busqueda,
   filtroModulo,

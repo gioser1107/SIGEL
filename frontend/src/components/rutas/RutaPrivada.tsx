@@ -19,6 +19,8 @@ interface RutaPrivadaProps {
   accionModulo?: AccionPermiso;
   /** Exige rol Cliente con perfil vinculado (portal de pasajeros). */
   requiereCliente?: boolean;
+  /** Exige rol Administrador (respaldos y tareas de sistema). */
+  requiereAdmin?: boolean;
   redirigirA?: string;
   children?: React.ReactNode;
 }
@@ -30,6 +32,7 @@ export default function RutaPrivada({
   modulos,
   accionModulo = 'leer',
   requiereCliente = false,
+  requiereAdmin = false,
   redirigirA = '/iniciar-sesion',
   children,
 }: RutaPrivadaProps) {
@@ -39,6 +42,7 @@ export default function RutaPrivada({
     tienePermiso,
     puedeModulo,
     esCliente,
+    esAdmin,
     usuario,
   } = useAutenticacion();
   const ubicacion = useLocation();
@@ -80,6 +84,15 @@ export default function RutaPrivada({
             ? 'Tu cuenta no tiene un perfil de cliente vinculado. Regístrate en el portal o inicia sesión con una cuenta de cliente.'
             : `Tu rol actual es «${rolActual}». Cierra sesión e inicia con una cuenta de cliente para reservar viajes.`}
         </p>
+      </div>
+    );
+  }
+
+  if (requiereAdmin && !esAdmin) {
+    return (
+      <div className="ruta-privada__denegado">
+        <h2>Acceso denegado</h2>
+        <p>Solo el administrador puede gestionar las bases de datos y los respaldos.</p>
       </div>
     );
   }

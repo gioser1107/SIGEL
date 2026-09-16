@@ -4,11 +4,11 @@ import { useDashboardAdmin } from '../../../hooks/useDashboardAdmin';
 import { SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
 import './Dashboard.css';
 
-function formatFecha(iso: string) {
+function formatearFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function formatHora(iso: string) {
+function formatearHora(iso: string) {
   return new Date(iso).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' });
 }
 
@@ -137,7 +137,7 @@ export default function Dashboard() {
                     <span className="dashboard__viaje-dia">
                       {new Date(v.fecha_salida).toLocaleDateString('es-VE', { day: '2-digit', month: 'short' })}
                     </span>
-                    <span className="dashboard__viaje-hora">{formatHora(v.fecha_salida)}</span>
+                    <span className="dashboard__viaje-hora">{formatearHora(v.fecha_salida)}</span>
                   </div>
                   <div className="dashboard__viaje-info">
                     <span className="dashboard__viaje-destino">{textoVisible(v.destino_nombre, SIN_DATO.destino)}</span>
@@ -223,7 +223,7 @@ export default function Dashboard() {
                         : <span className="dashboard__cot-sin-precio">Sin cotizar</span>}
                     </td>
                     <td><EtiquetaEstado etiqueta={c.estado} variante={resolverVariante(c.estado)} /></td>
-                    <td><span className="dashboard__cot-fecha">{formatFecha(c.creado_en)}</span></td>
+                    <td><span className="dashboard__cot-fecha">{formatearFecha(c.creado_en)}</span></td>
                   </tr>
                 ))}
               </tbody>

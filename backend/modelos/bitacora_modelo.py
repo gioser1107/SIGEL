@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, Request
-from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, JSON, String, func, or_
+from sqlalchemy import BigInteger, Column, DateTime, Enum, JSON, String, func, or_
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fk_usuario, tabla_seguridad
 from modelos.permiso_modelo import PERMISO_LEER_BITACORA
 from modelos.usuario_modelo import Usuario
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
@@ -54,9 +54,10 @@ def _marcar_utc(valor: datetime | None) -> datetime | None:
 
 class Bitacora(Base):
     __tablename__ = "bitacora"
+    __table_args__ = tabla_seguridad()
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    usuario_id = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, index=True)
+    usuario_id = Column(BigInteger, fk_usuario(), nullable=True, index=True)
     modulo = Column(
         Enum(*MODULOS_BITACORA),
         nullable=False,
@@ -101,6 +102,9 @@ def registrar_evento(
         if modulo_valido not in MODULOS_BITACORA:
             modulo_valido = "sistema"
         accion_valida = accion if accion in ACCIONES_BITACORA else "OTRO"
+        # INSERT/UPDATE/DELETE los escriben los triggers de MySQL.
+        if accion_valida in {"INSERT", "UPDATE", "DELETE"}:
+            return
         registro_texto = str(registro_id) if registro_id is not None else None
         entrada = Bitacora(
             usuario_id=usuario_id,

@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from sqlalchemy import BigInteger, Column, Date, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fk_usuario
 from modelos.banco_modelo import Banco
 from modelos.destino_modelo import Destino
 from modelos.destino_imagen_modelo import PREFIJO_ARCHIVOS, procesar_y_guardar_bytes_comprobante
@@ -68,10 +68,10 @@ class Pago(Base):
     telefono_origen = Column(String(30), nullable=True)
     correo_origen = Column(String(160), nullable=True)
     comprobante_url = Column(String(500), nullable=True)
-    validado_por = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True)
+    validado_por = Column(BigInteger, fk_usuario(), nullable=True)
     validado_en = Column(DateTime, nullable=True)
     notas = Column(String(255), nullable=True)
-    creado_por = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True)
+    creado_por = Column(BigInteger, fk_usuario(), nullable=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
     eliminado_en = Column(DateTime, nullable=True)

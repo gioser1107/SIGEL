@@ -67,7 +67,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
       setNuevoNum('');
       await cargarAsientos();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al agregar asiento');
+      setError(e instanceof Error ? e.message : 'Error al agregar asiento');
       setCargando(false);
     }
   };
@@ -86,7 +86,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
     if (!asientoEditando) return;
     const errorAsiento = validarFormularioAsiento(editNum, editPos);
     if (errorAsiento) {
-      alert(errorAsiento);
+      setError(errorAsiento);
       return;
     }
     setCargando(true);
@@ -98,7 +98,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
       await cargarAsientos();
       cerrarModalEditar();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al actualizar asiento');
+      setError(e instanceof Error ? e.message : 'Error al actualizar asiento');
       setCargando(false);
     }
   };
@@ -111,7 +111,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
       await cargarAsientos();
       if (asientoEditando?.id === id) cerrarModalEditar();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al eliminar asiento');
+      setError(e instanceof Error ? e.message : 'Error al eliminar asiento');
       setCargando(false);
     }
   };
@@ -125,7 +125,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
     }
     const faltantes = unidad.capacidad - asientos.length;
     if (faltantes <= 0) {
-      alert('La unidad ya tiene todos los asientos registrados.');
+      setError('La unidad ya tiene todos los asientos registrados.');
       return;
     }
 
@@ -154,7 +154,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
       await Promise.all(promesas);
       await cargarAsientos();
     } catch (e) {
-      alert('Hubo un error al generar asientos: ' + (e instanceof Error ? e.message : ''));
+      setError('Hubo un error al generar asientos: ' + (e instanceof Error ? e.message : ''));
       await cargarAsientos();
     }
   };

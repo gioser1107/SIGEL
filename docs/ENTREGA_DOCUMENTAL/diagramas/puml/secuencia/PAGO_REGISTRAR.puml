@@ -27,6 +27,7 @@ boundary "vistaPago :\nInterfazPago" as vista
 control "ctrlPago :\nPagoControlador" as ctrl
 control "modeloPago :\nPagoModelo" as modelo
 database "bd : MySQL" as bd
+entity "lenteIA :\nLenteInteligente" as lente
 entity "bitacora :\nBitacora" as bitacora
 
 cliente -> vista : Completar método, monto,\nreferencia y comprobante
@@ -46,6 +47,11 @@ alt ¿Los datos de la interfaz son válidos?
     activate bd
     bd --> modelo : Datos actuales
     deactivate bd
+
+    modelo -> lente : consultarIndicadorRentabilidad(RCI-01)
+    activate lente
+    lente --> modelo : indicador (no bloquea el cobro)
+    deactivate lente
 
     alt ¿Los datos de pago son válidos?
       modelo -> bd : Guardar pago en_validacion

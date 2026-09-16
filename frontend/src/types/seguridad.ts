@@ -17,6 +17,7 @@ export interface Rol {
   id: number;
   nombre: string;
   descripcion: string;
+  intocable?: boolean;
 }
 
 export interface Permiso {

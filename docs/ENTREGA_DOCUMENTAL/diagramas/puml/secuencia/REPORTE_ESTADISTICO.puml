@@ -27,6 +27,7 @@ boundary "vistaReporte :\nInterfazReporte" as vista
 control "ctrlReporte :\nReporteEstadisticoControlador" as ctrl
 control "modeloReporte :\nReporteEstadisticoModelo" as modelo
 database "bd : MySQL" as bd
+entity "lenteIA :\nLenteInteligente" as lente
 
 admin -> vista : Indicar fecha desde y hasta
 activate vista
@@ -48,6 +49,11 @@ alt ¿Las fechas de la interfaz son válidas?
       activate bd
       bd --> modelo : Datos del período
       deactivate bd
+
+      modelo -> lente : alimentarSerieDemanda(RCI-03)
+      activate lente
+      lente --> modelo : serie lista para proyección a 30 días
+      deactivate lente
       modelo --> ctrl : indicadores
       deactivate modelo
       ctrl --> vista : 200 + reporte

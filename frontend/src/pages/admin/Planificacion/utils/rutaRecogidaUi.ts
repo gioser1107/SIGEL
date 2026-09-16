@@ -5,7 +5,7 @@ import type {
   ParadaRutaRecogida,
   ParadaRutaRecogidaDTO,
 } from '../../../../types/viaje';
-import { combinarHoraConFechaSalida, formatHora } from './formatearViaje';
+import { combinarHoraConFechaSalida, formatearHora } from './formatearViaje';
 
 export interface ParadaRutaLocal extends ParadaRutaRecogida {
   horaLocal: string;
@@ -31,7 +31,7 @@ export function paradaApiALocal(
 ): ParadaRutaLocal {
   return {
     ...parada,
-    horaLocal: parada.hora_programada ? formatHora(parada.hora_programada) : '',
+    horaLocal: parada.hora_programada ? formatearHora(parada.hora_programada) : '',
   };
 }
 

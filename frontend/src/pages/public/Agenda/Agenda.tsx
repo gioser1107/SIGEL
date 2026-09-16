@@ -20,7 +20,7 @@ const MESES = [
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
-function formatFecha(year: number, month: number, day: number): string {
+function claveFecha(year: number, month: number, day: number): string {
     return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
@@ -53,7 +53,7 @@ export default function Agenda() {
                 const agrupados = agruparViajesPorFecha(viajes);
                 setAgendaDatos(agrupados);
 
-                const hoyClave = formatFecha(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+                const hoyClave = claveFecha(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
                 if (
                     mesActual === hoy.getMonth() &&
                     anioActual === hoy.getFullYear() &&
@@ -115,7 +115,7 @@ export default function Agenda() {
         }
         // Días del mes
         for (let d = 1; d <= diasEnMes; d++) {
-            celdas.push({ dia: d, fecha: formatFecha(anioActual, mesActual, d) });
+            celdas.push({ dia: d, fecha: claveFecha(anioActual, mesActual, d) });
         }
         // Relleno al final para completar la última fila
         while (celdas.length % 7 !== 0) {

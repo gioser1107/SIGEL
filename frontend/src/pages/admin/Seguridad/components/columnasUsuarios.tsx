@@ -1,6 +1,7 @@
 import type { Columna } from '../../../../components/admin';
 import type { UsuarioSistema } from '../../../../types/seguridad';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
+import { esRolAdministrador, esRolClientePortal } from '../../../../utils/permisosModulos';
 import { iniciales } from '../utils/iniciales';
 import './TablaUsuarios.css';
 
@@ -33,9 +34,9 @@ export const columnasUsuarios: Columna<UsuarioSistema>[] = [
     encabezado: 'Rol',
     accessor: (u) => (
       <span
-        className={`seguridad__insignia-rol${u.rol.trim().toLowerCase() === 'cliente' ? ' seguridad__insignia-rol--cliente' : ''}`}
+        className={`seguridad__insignia-rol${esRolClientePortal(u.rol) ? ' seguridad__insignia-rol--cliente' : ''}`}
       >
-        {u.rol}
+        {esRolAdministrador(u.rol) ? `${u.rol} · intocable` : u.rol}
       </span>
     ),
   },

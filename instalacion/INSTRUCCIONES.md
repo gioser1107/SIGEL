@@ -17,7 +17,7 @@ La base que se instala es **limpia**: pueden entrar, pero destinos y viajes los 
 | Programa | Para qué | Notas para máquina floja |
 |---|---|---|
 | Python 3.10 o 3.12 | Corre la API y sirve la interfaz | Marca *Add python.exe to PATH* |
-| MariaDB 10.11 / MySQL 8 | Base de datos `travel_bqto` | No instales XAMPP completo si puedes evitarlo |
+| MariaDB 10.11 / MySQL 8 | Bases `travel_bqto_seguridad` y `travel_bqto` | No instales XAMPP completo si puedes evitarlo |
 | Navegador | Chrome o Edge | Ya suele estar |
 
 No instales Docker ni Node.
@@ -76,7 +76,7 @@ performance_schema=OFF
 
 Reinicia el servicio de MariaDB.
 
-4. Importa la base limpia (el archivo ya crea `travel_bqto`):
+4. Importa la base limpia (el archivo ya crea `travel_bqto_seguridad` y `travel_bqto`):
 
 ```bat
 mysql -u root -p < C:\SIGEL\instalacion\travel_bqto_limpia.sql

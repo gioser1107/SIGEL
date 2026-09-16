@@ -10,6 +10,7 @@ import {
 import type { EstadoPago, MetodoPago, PagoGlobal } from '../../../../../types/pagos';
 import { mensajeError } from '../../utils/mensajeError';
 import { FILTROS_BANDEJA_VACIOS, type FiltrosBandeja } from '../constants';
+import { validarRangoFechasConsulta } from '../../../../../utils/validacionesFormulario';
 
 interface UseBandejaPagosParams {
   activo: boolean;
@@ -101,6 +102,13 @@ export function useBandejaPagos({ activo, onExito, onError }: UseBandejaPagosPar
   }
 
   function aplicarFiltros() {
+    if (filtros.fecha_desde && filtros.fecha_hasta) {
+      const errorRango = validarRangoFechasConsulta(filtros.fecha_desde, filtros.fecha_hasta);
+      if (errorRango) {
+        onError(errorRango);
+        return;
+      }
+    }
     reiniciarPagina();
     setFiltrosAplicados({ ...filtros });
   }

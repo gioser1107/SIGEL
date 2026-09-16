@@ -18,6 +18,7 @@ if exist "%~dp0..\env.ejemplo.txt" (
     echo DB_HOST=localhost
     echo DB_PUERTO=3306
     echo DB_NOMBRE=travel_bqto
+    echo DB_NOMBRE_SEGURIDAD=travel_bqto_seguridad
     echo JWT_SECRETO=cambiar-este-secreto-en-la-laptop-de-la-comunidad
     echo JWT_EXPIRACION_MINUTOS=480
   ) > ".env"

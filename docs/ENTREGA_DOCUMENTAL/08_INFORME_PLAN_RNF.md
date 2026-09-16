@@ -2,12 +2,12 @@
 
 **Proyecto:** SIGEL — Travel BQTO  
 **Sistema:** API FastAPI 1.3.0 + frontend React  
-**Integrantes:** María Alvarado, Luis Herice, Sergio Jiménez, Gabriel Jiménez  
+**Integrantes:** Sergio Jiménez, Gabriel Jiménez  
 **Tutor:** Edecio Freitez  
 **Fecha:** 4 de septiembre de 2026  
 **Base:** Guía de pruebas RNF 2026 (prioridad seguridad, rendimiento, fiabilidad, usabilidad, mantenibilidad)
 
-**Documentos maestros:** `docs/SRS_REQUISITOS_FUNCIONALES.md` (RF-01 a RF-21) y `docs/SRS_REQUISITOS_NO_FUNCIONALES.md` (RNF-01 a RNF-16).
+**Documento maestro:** `docs/ENTREGA_INGENIERIA_SOFTWARE/modelo_negocio/SRS_FORMATO_ESTANDAR_TRAYECTO_III.docx`.
 
 ---
 

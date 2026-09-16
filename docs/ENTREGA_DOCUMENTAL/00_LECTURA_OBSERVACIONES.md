@@ -29,7 +29,7 @@ Este paquete sustituye la documentación que no representaba fielmente el sistem
 
 ## Inventario de entregables
 
-1. `01_SRS_ACTUALIZADO.md` — resumen RF-01 a RF-21 y RNF-01 a RNF-16 (mismos IDs que `docs/SRS_REQUISITOS_*.md`).
+1. SRS oficial: `docs/ENTREGA_INGENIERIA_SOFTWARE/modelo_negocio/SRS_FORMATO_ESTANDAR_TRAYECTO_III.docx` (RF-01 a RF-19, RNF-01 a RNF-19, RCI-01 a RCI-03).
 2. `02_ARQUITECTURA_Y_DATOS.md` — arquitectura, módulos y modelo relacional.
 3. `03_CASOS_DE_USO_Y_PRUEBAS.md` — casos de uso prioritarios y criterios de aceptación.
 4. `04_HALLAZGOS_Y_VALIDACION.md` — puntos a validar antes de la defensa.

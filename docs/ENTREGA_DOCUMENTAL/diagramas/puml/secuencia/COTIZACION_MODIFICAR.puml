@@ -27,6 +27,7 @@ boundary "vistaCotizacion :\nInterfazCotizacion" as vista
 control "ctrlCotizacion :\nCotizacionControlador" as ctrl
 control "modeloCotizacion :\nCotizacionModelo" as modelo
 database "bd : MySQL" as bd
+entity "lenteIA :\nLenteInteligente" as lente
 entity "bitacora :\nBitacora" as bitacora
 
 admin -> vista : Seleccionar cotización y editar datos
@@ -46,6 +47,11 @@ alt ¿Los datos de la interfaz son válidos?
     activate bd
     bd --> modelo : Cotización actual
     deactivate bd
+
+    modelo -> lente : consultarRecomendacionDestinos(RCI-02)
+    activate lente
+    lente --> modelo : tres destinos sugeridos (apoyo, no obliga)
+    deactivate lente
 
     alt ¿Existe y las reglas lo permiten?
       modelo -> bd : Guardar cambios de la cotización

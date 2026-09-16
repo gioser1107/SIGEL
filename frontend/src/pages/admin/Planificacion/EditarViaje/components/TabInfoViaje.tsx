@@ -3,7 +3,7 @@ import type { DatosViajeNuevo, Viaje } from '../../../../../types/viaje';
 import { formatearEuro } from '../../../../../utils/formatoMoneda';
 import CampoGuiasViaje from '../../components/CampoGuiasViaje';
 import { ESTADOS_VIAJE, ETIQUETA_ESTADO } from '../../constants';
-import { formatFecha } from '../../utils/formatearViaje';
+import { formatearFecha } from '../../utils/formatearViaje';
 import { etiquetaGuiasViaje } from '../../utils/planificacionGuias';
 
 interface PropsTabInfo {
@@ -14,7 +14,6 @@ interface PropsTabInfo {
   onFormChange: (form: DatosViajeNuevo) => void;
 }
 
-// Pestaña Info: ficha de solo lectura y campos editables de fechas y estado
 export default function TabInfoViaje({
   viaje,
   form,
@@ -22,7 +21,6 @@ export default function TabInfoViaje({
   cargandoGuias,
   onFormChange,
 }: PropsTabInfo) {
-  // Actualiza un campo del formulario manteniendo el resto de valores
   const actualizarCampo = <K extends keyof DatosViajeNuevo>(
     campo: K,
     valor: DatosViajeNuevo[K],
@@ -52,11 +50,11 @@ export default function TabInfoViaje({
         </div>
         <div className="drawer-form__ficha-item">
           <span className="drawer-form__ficha-etiqueta">Salida</span>
-          <strong>{formatFecha(viaje.fecha_salida)}</strong>
+          <strong>{formatearFecha(viaje.fecha_salida)}</strong>
         </div>
         <div className="drawer-form__ficha-item">
           <span className="drawer-form__ficha-etiqueta">Regreso</span>
-          <strong>{formatFecha(viaje.fecha_regreso)}</strong>
+          <strong>{formatearFecha(viaje.fecha_regreso)}</strong>
         </div>
         <div className="drawer-form__ficha-item">
           <span className="drawer-form__ficha-etiqueta">Guía</span>
@@ -78,6 +76,8 @@ export default function TabInfoViaje({
 
       <p className="drawer-form__intro">
         Cambia fechas, estado o guías. El destino y la unidad se asignan al crear el viaje.
+        Al vencer la fecha de regreso (o la de salida si no hay regreso), el estado pasa solo
+        a Finalizado si estaba en Planificado o En curso. Cancelado no se cambia automático.
       </p>
 
       <CampoGuiasViaje
@@ -104,12 +104,13 @@ export default function TabInfoViaje({
         </div>
         <div className="drawer-form__campo">
           <label className="drawer-form__label">Fecha regreso</label>
-          <input
-            className="drawer-form__input"
-            type="datetime-local"
-            value={form.fecha_regreso ? form.fecha_regreso.slice(0, 16) : ''}
-            onChange={(e) => actualizarCampo('fecha_regreso', e.target.value || null)}
-          />
+            <input
+              className="drawer-form__input"
+              type="datetime-local"
+              min={form.fecha_salida ? form.fecha_salida.slice(0, 16) : undefined}
+              value={form.fecha_regreso ? form.fecha_regreso.slice(0, 16) : ''}
+              onChange={(e) => actualizarCampo('fecha_regreso', e.target.value || null)}
+            />
         </div>
       </div>
 

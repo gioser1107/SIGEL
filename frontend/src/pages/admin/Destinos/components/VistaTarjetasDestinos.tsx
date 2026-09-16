@@ -1,7 +1,7 @@
 import { CuadriculaTarjetas, EtiquetaEstado, BotonAccionTabla } from '../../../../components/admin';
 import type { Destino } from '../../../../types/destino';
 import { ETIQUETA_ESTADO } from '../constants';
-import { formatFecha, formatPrecio, varianteEstadoDestino } from '../utils/formatearDestino';
+import { formatearFecha, formatearPrecio, varianteEstadoDestino } from '../utils/formatearDestino';
 
 interface PropsVistaTarjetas {
   datos: Destino[];
@@ -38,7 +38,7 @@ export default function VistaTarjetasDestinos({
             <span className="dest-card__nombre">{destino.nombre}</span>
             {destino.eliminado_en ? (
               <EtiquetaEstado
-                etiqueta={`${ETIQUETA_ESTADO.anulado} ${formatFecha(destino.eliminado_en)}`}
+                etiqueta={`${ETIQUETA_ESTADO.anulado} ${formatearFecha(destino.eliminado_en)}`}
                 variante="error"
               />
             ) : (
@@ -51,7 +51,7 @@ export default function VistaTarjetasDestinos({
           {destino.descripcion && (
             <p className="dest-card__descripcion">{destino.descripcion}</p>
           )}
-          <p className="dest-card__precio">{formatPrecio(destino.precio_base_eur)}</p>
+          <p className="dest-card__precio">{formatearPrecio(destino.precio_base_eur)}</p>
           <p className="dest-card__dificultad">{destino.dificultad ?? 'Moderado'}</p>
           {!soloLectura && (
             <div className="dest-card__acciones">

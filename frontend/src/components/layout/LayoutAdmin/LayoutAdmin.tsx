@@ -7,6 +7,8 @@ import { esRolClientePortal } from '../../../utils/permisosModulos';
 import PanelNotificaciones from './PanelNotificaciones';
 import MenuUsuario from '../MenuUsuario/MenuUsuario';
 import LogoMarca from '../../ui/LogoMarca/LogoMarca';
+import AsistenteFlotante from '../../../asistente/AsistenteFlotante';
+import { registrarPreparacionRecorrido } from '../../../ayuda/recorridoAdmin';
 import './LayoutAdmin.css';
 
 const RUTAS_POR_GRUPO: Record<string, string[]> = {
@@ -14,7 +16,7 @@ const RUTAS_POR_GRUPO: Record<string, string[]> = {
   comercial: ['/admin/cotizaciones', '/admin/clientes', '/admin/resenas'],
   catalogos: ['/admin/destinos', '/admin/flota', '/admin/puntos-recogida'],
   reportes: ['/admin/reportes', '/admin/reporte-viaje'],
-  configuracion: ['/admin/bitacora', '/admin/usuarios-roles'],
+  configuracion: ['/admin/bitacora', '/admin/usuarios-roles', '/admin/respaldos'],
 };
 
 function rutaEstaActiva(pathname: string, to: string): boolean {
@@ -71,7 +73,7 @@ export default function LayoutAdmin() {
     return grupo ? { [grupo]: true } : {};
   });
   const contenedorNotificacionesRef = useRef<HTMLDivElement>(null);
-  const { usuario, cerrarSesion, puedeLeer, puedeAccederSeguridad } = useAutenticacion();
+  const { usuario, cerrarSesion, puedeLeer, puedeAccederSeguridad, esAdmin } = useAutenticacion();
   const notificaciones = useNotificaciones();
 
   useEffect(() => {
@@ -80,6 +82,13 @@ export default function LayoutAdmin() {
     const grupo = grupoPorRuta(ubicacion.pathname);
     setMenusAbiertos(grupo ? { [grupo]: true } : {});
   }, [ubicacion.pathname]);
+
+  useEffect(() => {
+    registrarPreparacionRecorrido(() => {
+      setEstaColapsado(false);
+    });
+    return () => registrarPreparacionRecorrido(null);
+  }, []);
 
   useEffect(() => {
     if (!panelNotificacionesAbierto) return;
@@ -112,6 +121,21 @@ export default function LayoutAdmin() {
           <rect x="14" y="3" width="7" height="5" rx="1" />
           <rect x="14" y="12" width="7" height="9" rx="1" />
           <rect x="3" y="16" width="7" height="5" rx="1" />
+        </svg>
+      ),
+    },
+    {
+      to: '/admin/asistente',
+      label: 'Asistente',
+      visible: true,
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 8V4H8" />
+          <rect x="4" y="8" width="16" height="12" rx="2" />
+          <path d="M2 14h2" />
+          <path d="M20 14h2" />
+          <path d="M15 13v2" />
+          <path d="M9 13v2" />
         </svg>
       ),
     },
@@ -230,20 +254,19 @@ export default function LayoutAdmin() {
       subItems: [
         {
           to: '/admin/reportes',
-          label: 'Estadísticos',
-          visible: puedeLeer('reservas') || puedeLeer('reportes_pago') || puedeLeer('clientes'),
-        },
-        {
-          to: '/admin/reporte-viaje',
-          label: 'Operativo de viaje',
-          visible: puedeLeer('planificacion'),
+          label: 'Todos los reportes',
+          visible:
+            puedeLeer('reservas') ||
+            puedeLeer('reportes_pago') ||
+            puedeLeer('clientes') ||
+            puedeLeer('planificacion'),
         },
       ],
     },
     {
       id: 'configuracion',
       label: 'Configuración',
-      visible: puedeLeer('bitacora') || puedeAccederSeguridad(),
+      visible: puedeLeer('bitacora') || puedeAccederSeguridad() || esAdmin,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
@@ -260,6 +283,11 @@ export default function LayoutAdmin() {
           to: '/admin/usuarios-roles',
           label: 'Usuarios y roles',
           visible: puedeAccederSeguridad(),
+        },
+        {
+          to: '/admin/respaldos',
+          label: 'Respaldos',
+          visible: esAdmin,
         },
       ],
     },
@@ -304,7 +332,7 @@ export default function LayoutAdmin() {
         <div className="barra-lateral__etiqueta">Menú</div>
 
         {/* Links de Navegación */}
-        <nav className="barra-lateral__navegacion">
+        <nav className="barra-lateral__navegacion" data-recorrido="menu">
           {enlacesBarraLateral.map((enlace) => {
             if ('subItems' in enlace) {
               const itemsVisibles = enlace.subItems.filter((s) => s.visible);
@@ -320,6 +348,7 @@ export default function LayoutAdmin() {
                   <button
                     type="button"
                     title={enlace.label}
+                    data-recorrido={idGrupo}
                     aria-expanded={abierto && !estaColapsado}
                     className={`barra-lateral__enlace barra-lateral__boton-acordeon${
                       abierto && !estaColapsado ? ' barra-lateral__boton-acordeon--abierto' : ''
@@ -358,11 +387,19 @@ export default function LayoutAdmin() {
               );
             }
 
+            const marca =
+              enlace.to === '/admin/dashboard'
+                ? 'dashboard'
+                : enlace.to === '/admin/asistente'
+                  ? 'asistente'
+                  : undefined;
+
             return (
               <NavLink
                 key={enlace.to}
                 to={enlace.to}
                 title={enlace.label}
+                data-recorrido={marca}
                 className={({ isActive }) =>
                   `barra-lateral__enlace ${isActive ? 'barra-lateral__enlace--activo' : ''}`
                 }
@@ -377,6 +414,24 @@ export default function LayoutAdmin() {
 
         {/* Footer del Sidebar */}
         <div className="barra-lateral__pie">
+          <NavLink
+            to="/admin/ayuda"
+            data-recorrido="ayuda"
+            title="Ayuda"
+            className={({ isActive }) =>
+              `barra-lateral__enlace barra-lateral__enlace-ayuda ${isActive ? 'barra-lateral__enlace--activo' : ''}`
+            }
+            onClick={() => setEstaAbiertoMovil(false)}
+          >
+            <span className="barra-lateral__enlace-icono">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </span>
+            <span className="barra-lateral__enlace-texto">Ayuda</span>
+          </NavLink>
           <button className="barra-lateral__boton-cerrar-sesion" onClick={cerrarSesion}>
             <span className="barra-lateral__enlace-icono">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -419,6 +474,18 @@ export default function LayoutAdmin() {
           </div>
 
           <div className="admin-cabecera__derecha">
+            <NavLink
+              to="/admin/ayuda"
+              className="admin-cabecera__notificacion"
+              aria-label="Centro de ayuda"
+              title="Centro de ayuda"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </NavLink>
             {/* Notificaciones */}
             <div className="admin-notificaciones" ref={contenedorNotificacionesRef}>
               <button
@@ -474,6 +541,7 @@ export default function LayoutAdmin() {
           <Outlet />
         </main>
       </div>
+      <AsistenteFlotante audiencia="admin" enlaceModulo="/admin/asistente" dataRecorrido="asistente-flotante" />
     </div>
   );
 }

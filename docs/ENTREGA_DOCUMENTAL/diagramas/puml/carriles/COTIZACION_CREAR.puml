@@ -55,6 +55,9 @@ endif
 |Modelo|
 :Pedir cliente y destino;
 
+|Lente inteligente|
+:Consultar recomendación de destinos (RCI-02);
+
 |MySQL|
 :Consultar cliente y destino vigentes;
 

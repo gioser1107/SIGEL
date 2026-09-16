@@ -1,9 +1,9 @@
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from database import get_db
+from database import fijar_contexto_auditoria, get_db
 from modelos.permiso_modelo import Permiso
 from modelos.rol_modelo import Rol
 from modelos.rol_permiso_modelo import RolPermiso
@@ -34,6 +34,7 @@ def obtener_permisos_del_rol(db: Session, rol_id: int) -> list[str]:
     return resultado
 
 def obtener_usuario_actual(
+    request: Request,
     credenciales: HTTPAuthorizationCredentials = Depends(esquema_bearer),
     db: Session = Depends(get_db),
 ) -> dict:
@@ -94,6 +95,9 @@ def obtener_usuario_actual(
     permisos = obtener_permisos_del_rol(db, usuario.rol_id)
 
     cliente_id = resolver_cliente_id_portal(db, usuario.id, nombre_rol)
+
+    ip = request.client.host if request.client is not None else None
+    fijar_contexto_auditoria(db, usuario.id, ip)
 
     return {
         "id": usuario.id,

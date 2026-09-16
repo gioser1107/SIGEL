@@ -55,6 +55,9 @@ endif
 |Modelo|
 :Pedir reserva, método y tasa;
 
+|Lente inteligente|
+:Consultar indicador de rentabilidad (RCI-01);
+
 |MySQL|
 :Consultar reserva y catálogo financiero;
 

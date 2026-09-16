@@ -12,7 +12,6 @@ interface PropsTabInfo {
   onRechazar: (cot: Cotizacion) => void;
 }
 
-// Pestaña Info del drawer de edición: ficha, formulario y acciones de estado
 export default function TabInfoCotizacion({
   cotizacion,
   form,
@@ -23,7 +22,6 @@ export default function TabInfoCotizacion({
 }: PropsTabInfo) {
   const bloqueada = esBloqueada(cotizacion.estado);
 
-  // Actualiza un campo del formulario manteniendo el resto de valores
   const actualizarCampo = <K extends keyof DatosCotizacionNueva>(
     campo: K,
     valor: DatosCotizacionNueva[K],

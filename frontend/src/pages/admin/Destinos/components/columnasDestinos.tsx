@@ -2,7 +2,7 @@ import { EtiquetaEstado } from '../../../../components/admin';
 import type { Columna } from '../../../../components/admin';
 import type { Destino } from '../../../../types/destino';
 import { ETIQUETA_ESTADO } from '../constants';
-import { formatFecha, formatPrecio, varianteEstadoDestino } from '../utils/formatearDestino';
+import { formatearFecha, formatearPrecio, varianteEstadoDestino } from '../utils/formatearDestino';
 
 export function columnasDestinos(esAnulados = false): Columna<Destino>[] {
   return [
@@ -24,7 +24,7 @@ export function columnasDestinos(esAnulados = false): Columna<Destino>[] {
       encabezado: 'Precio base',
       alineacion: 'right',
       accessor: (d) => (
-        <span className="dest-tabla__precio">{formatPrecio(d.precio_base_eur)}</span>
+        <span className="dest-tabla__precio">{formatearPrecio(d.precio_base_eur)}</span>
       ),
     },
     {
@@ -40,7 +40,7 @@ export function columnasDestinos(esAnulados = false): Columna<Destino>[] {
       accessor: (d) =>
         d.eliminado_en || esAnulados ? (
           <EtiquetaEstado
-            etiqueta={formatFecha(d.eliminado_en)}
+            etiqueta={formatearFecha(d.eliminado_en)}
             variante="error"
           />
         ) : (

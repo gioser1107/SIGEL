@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import './SeccionBeneficios.css';
 
-// Definimos la interfaz
 interface Beneficio {
     id: number;
     icono: JSX.Element;
@@ -9,7 +8,6 @@ interface Beneficio {
     descripcion: string;
 }
 
-// Datos separados de la vista
 const DATOS_BENEFICIOS: Beneficio[] = [
     {
         id: 1,

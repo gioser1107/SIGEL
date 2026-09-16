@@ -1,11 +1,19 @@
 # Diccionario de datos resumido
 
-Este diccionario describe el modelo **actual** para apoyar su explicación y la revisión de normalización. Los tipos y restricciones detallados están en `backend/modelos`.
+Este diccionario describe el modelo **actual** para apoyar su explicación y la revisión de normalización. Los tipos y restricciones detallados están en `backend/modelos`. Hay **dos bases MySQL** en el mismo servidor.
+
+### `travel_bqto_seguridad`
 
 | Tabla | Propósito | Clave y relaciones |
 |---|---|---|
 | `usuarios` | Credenciales y datos del usuario del sistema. | `rol_id → roles`. |
 | `roles`, `permisos`, `roles_permisos` | Control RBAC de acceso. | Pivot rol-permiso. |
+| `bitacora` | Trazabilidad de operaciones. | Usuario, módulo, acción, tabla y registro afectados. |
+
+### `travel_bqto`
+
+| Tabla | Propósito | Clave y relaciones |
+|---|---|---|
 | `clientes` | Persona o entidad atendida; posible viajero. | `usuario_id`, `estado_id`, `ciudad_id`. |
 | `destinos`, `destino_imagenes` | Paquetes/destinos ofertados y galería. | Imagen pertenece a destino. |
 | `unidades_transporte`, `asientos` | Flota y distribución de puestos. | Asiento pertenece a unidad. |
@@ -17,9 +25,8 @@ Este diccionario describe el modelo **actual** para apoyar su explicación y la 
 | `pagos` | Reporte y validación de cobros. | Reserva, método, tasa, bancos/punto de venta. |
 | `monedas`, `tasas`, `metodos_pago`, `bancos`, `puntos_venta` | Catálogo financiero. | Método usa moneda; tasa usa moneda; punto usa banco. |
 | `puntos_recogida`, `clientes_puntos_recogida`, `viajes_ruta_recogida` | Ubicaciones del cliente y orden operativo. | Pivots cliente-punto y viaje-viajero. |
-| `abordajes_viaje` | Control de subida del pasajero. | `reserva_cliente_id`, usuario registrador. |
+| `abordajes_viaje` | Control de subida del pasajero. | `reserva_cliente_id`, usuario registrador (base de seguridad). |
 | `resenas` | Opinión de una reserva. | `reserva_id` único. |
-| `bitacora` | Trazabilidad de operaciones. | Usuario, módulo, acción, tabla y registro afectados. |
 
 ## Campos de trazabilidad comunes
 

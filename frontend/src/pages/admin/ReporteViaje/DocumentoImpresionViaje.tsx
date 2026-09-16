@@ -3,7 +3,7 @@ import type { ReporteViaje as ReporteViajeData } from '../../../types/viajeRepor
 import { codigoReserva, etiquetaEstado, SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
 import { nombreCompleto } from '../../../utils/nombrePersona';
 import { formatearEuro } from '../../../utils/formatoMoneda';
-import { formatFecha } from '../Planificacion/utils/formatearViaje';
+import { formatearFecha } from '../Planificacion/utils/formatearViaje';
 import { formatearAsiento, formatearDocumento, formatearDomicilio } from '../Abordaje/utils/formatearAbordaje';
 
 interface DocumentoImpresionViajeProps {
@@ -43,7 +43,7 @@ export default function DocumentoImpresionViaje({ reporte }: DocumentoImpresionV
       <div className="doc-viaje__meta">
         <div>
           <span>Salida</span>
-          <strong>{formatFecha(viaje.fecha_salida)}</strong>
+          <strong>{formatearFecha(viaje.fecha_salida)}</strong>
         </div>
         <div>
           <span>Unidad</span>

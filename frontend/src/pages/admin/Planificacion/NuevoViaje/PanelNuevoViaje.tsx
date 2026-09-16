@@ -20,7 +20,6 @@ interface PropsPanelNuevo {
   onFormChange: (form: DatosViajeNuevo) => void;
 }
 
-// Panel lateral para crear un nuevo viaje con datos básicos
 export default function PanelNuevoViaje({
   abierto,
   form,
@@ -36,7 +35,6 @@ export default function PanelNuevoViaje({
   onGuardar,
   onFormChange,
 }: PropsPanelNuevo) {
-  // Actualiza un campo del formulario manteniendo el resto de valores
   const actualizarCampo = <K extends keyof DatosViajeNuevo>(
     campo: K,
     valor: DatosViajeNuevo[K],
@@ -125,6 +123,7 @@ export default function PanelNuevoViaje({
             <input
               className="drawer-form__input"
               type="datetime-local"
+              min={form.fecha_salida ? form.fecha_salida.slice(0, 16) : undefined}
               value={form.fecha_regreso ? form.fecha_regreso.slice(0, 16) : ''}
               onChange={(e) => actualizarCampo('fecha_regreso', e.target.value || null)}
             />

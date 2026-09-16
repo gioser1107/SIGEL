@@ -27,6 +27,7 @@ boundary "vistaReserva :\nInterfazReserva" as vista
 control "ctrlReservas :\nReservasControlador" as ctrl
 control "modeloReservas :\nReservasModelo" as modelo
 database "bd : MySQL" as bd
+entity "lenteIA :\nLenteInteligente" as lente
 entity "bitacora :\nBitacora" as bitacora
 
 admin -> vista : Seleccionar reserva, viajero y asiento
@@ -46,6 +47,11 @@ alt ¿Los datos de la interfaz son válidos?
     activate bd
     bd --> modelo : Datos actuales
     deactivate bd
+
+    modelo -> lente : consultarOcupacionHistorica(RCI-03)
+    activate lente
+    lente --> modelo : indicador de demanda (no bloquea el asiento)
+    deactivate lente
 
     alt ¿El asiento está libre?
       modelo -> bd : Guardar asiento_reservado

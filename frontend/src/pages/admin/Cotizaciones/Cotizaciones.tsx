@@ -23,7 +23,7 @@ import type { FiltroListado } from '../../../types/paginacion';
 import { ETIQUETA_ESTADO, PESTANIAS_FILTRO } from './constants';
 import { useCotizaciones } from './hooks/useCotizaciones';
 import { SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
-import { etiquetaCliente, formatFecha } from './utils/formatearCotizacion';
+import { etiquetaCliente, formatearFecha } from './utils/formatearCotizacion';
 import './Cotizaciones.css';
 
 const COLUMNAS_REPORTE_COTIZACIONES = [
@@ -138,7 +138,7 @@ export default function Cotizaciones() {
             ? `€ ${c.precio_cotizado_eur.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`
             : 'Sin cotizar',
         estado: ETIQUETA_ESTADO[c.estado] ?? c.estado,
-        valida_hasta: c.valida_hasta ? formatFecha(c.valida_hasta) : '—',
+        valida_hasta: c.valida_hasta ? formatearFecha(c.valida_hasta) : '—',
       })),
     [cotizacionesFiltradas],
   );

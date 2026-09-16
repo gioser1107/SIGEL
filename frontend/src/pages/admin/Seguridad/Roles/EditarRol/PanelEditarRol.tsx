@@ -12,6 +12,7 @@ import FormularioRolCampos from '../../components/FormularioRolCampos';
 import { FORM_ROL_VACIO, type FormularioRol } from '../../constants';
 import { mensajeError } from '../../utils/mensajeError';
 import { validarFormularioRol } from '../../../../../utils/validacionesFormulario';
+import { esRolAdministrador } from '../../../../../utils/permisosModulos';
 import './PanelEditarRol.css';
 
 interface PanelEditarRolProps {
@@ -79,8 +80,14 @@ export default function PanelEditarRol({
     setPermisosRolIniciales(new Set(permisosRol));
   }
 
+  const intocable = Boolean(rol && (rol.intocable || esRolAdministrador(rol.nombre)));
+
   async function guardar() {
     if (!rol) return;
+    if (intocable) {
+      onError('El rol Administrador es intocable: no se puede modificar.');
+      return;
+    }
 
     const errorValidacion = validarFormularioRol(form);
     if (errorValidacion) {
@@ -106,17 +113,19 @@ export default function PanelEditarRol({
     <PanelDeslizable
       abierto={abierto}
       onCerrar={onCerrar}
-      titulo="Editar rol"
-      subtitulo="Nombre, descripción y permisos del panel"
+      titulo={intocable ? 'Rol Administrador' : 'Editar rol'}
+      subtitulo={intocable ? 'Este rol no se modifica' : 'Nombre, descripción y permisos del panel'}
       ancho="lg"
       pie={
         <>
           <Boton variante="secundario" tamano="sm" onClick={onCerrar} disabled={guardando}>
             Cancelar
           </Boton>
-          <Boton variante="primario" tamano="sm" onClick={guardar} disabled={guardando}>
-            {guardando ? 'Guardando…' : 'Guardar cambios'}
-          </Boton>
+          {!intocable && (
+            <Boton variante="primario" tamano="sm" onClick={guardar} disabled={guardando}>
+              {guardando ? 'Guardando…' : 'Guardar cambios'}
+            </Boton>
+          )}
         </>
       }
     >
@@ -127,6 +136,7 @@ export default function PanelEditarRol({
         mostrarMatriz
         onChange={setForm}
         onAlternarPermiso={alternarPermisoLocal}
+        bloqueado={intocable}
       />
     </PanelDeslizable>
   );

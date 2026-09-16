@@ -12,6 +12,8 @@ import {
 } from '../../../../services/reservas';
 import type { Cliente } from '../../../../types/cliente';
 import type { CrearPasajeroDTO, PasajeroDraft, ViajeDisponibleReserva } from '../../../../types/reservas';
+import { formularioAPayload } from '../../Clientes/utils/mapeoFormulario';
+import { sincronizarAcompanantes } from './utils/pasajerosGrupo';
 import PasoViajeCliente from './components/PasoViajeCliente';
 import PasoPasajeros from './components/PasoPasajeros';
 import PasoAsientos from './components/PasoAsientos';
@@ -36,6 +38,8 @@ export default function CrearReserva() {
   const [asientosSeleccionados, setAsientosSeleccionados] = useState<number[]>([]);
   const [reservaId, setReservaId] = useState<number | null>(null);
   const [titularPuntoRecogidaId, setTitularPuntoRecogidaId] = useState<number | undefined>();
+  const [esGrupal, setEsGrupal] = useState(false);
+  const [cantidadPersonas, setCantidadPersonas] = useState(1);
 
   async function recargarViajesDisponibles() {
     setCargandoViajes(true);
@@ -88,6 +92,33 @@ export default function CrearReserva() {
 
   const puestosOcupados = 1 + pasajeros.filter((p) => p.ocupa_asiento !== false).length;
 
+  function armarPayloadPasajero(p: PasajeroDraft): CrearPasajeroDTO {
+    const base: CrearPasajeroDTO = {
+      es_menor: p.es_menor,
+      precio_pasajero_eur: p.precio_pasajero_eur,
+      recargo_eur: p.recargo_eur,
+      notas_tarifa: p.notas_tarifa || null,
+      ocupa_asiento: p.ocupa_asiento ?? true,
+      punto_recogida_id: p.punto_recogida_id,
+    };
+    if (p.modo === 'nuevo' && p.ficha) {
+      return {
+        ...base,
+        cliente: {
+          ...formularioAPayload(p.ficha),
+          puntos_recogida: p.puntos_recogida
+            ? [{ ...p.puntos_recogida, es_predeterminado: true }]
+            : undefined,
+        },
+      };
+    }
+    return {
+      ...base,
+      cliente_id: p.cliente_id,
+      puntos_recogida: p.puntos_recogida ? [p.puntos_recogida] : undefined,
+    };
+  }
+
   async function crearReservaCompleta(asientosIds: number[]): Promise<number> {
     if (reservaId) return reservaId;
     if (!viajeSeleccionado || !clienteSeleccionado) {
@@ -120,34 +151,23 @@ export default function CrearReserva() {
           ocupa_asiento: true,
           punto_recogida_id: titularPuntoRecogidaId,
         },
-        ...pasajeros.map((p) => ({
-          cliente_id: p.cliente_id,
-          es_menor: p.es_menor,
-          precio_pasajero_eur: p.precio_pasajero_eur,
-          recargo_eur: p.recargo_eur,
-          notas_tarifa: p.notas_tarifa || null,
-          ocupa_asiento: p.ocupa_asiento ?? true,
-          punto_recogida_id: p.punto_recogida_id,
-          puntos_recogida: p.puntos_recogida ? [p.puntos_recogida] : undefined,
-        })),
+        ...pasajeros.map((p) => armarPayloadPasajero(p)),
       ];
 
+      const asientosPendientes = [...asientosIds];
       for (let i = 0; i < todosLosPasajeros.length; i++) {
         const p = todosLosPasajeros[i];
-        const resPasajero = await agregarPasajero(reservaIdCreada, {
-          cliente_id: p.cliente_id,
-          es_menor: p.es_menor,
-          precio_pasajero_eur: p.precio_pasajero_eur,
-          recargo_eur: p.recargo_eur,
-          notas_tarifa: p.notas_tarifa,
-          ocupa_asiento: p.ocupa_asiento,
-          punto_recogida_id: p.punto_recogida_id,
-          puntos_recogida: p.puntos_recogida,
-        });
+        const resPasajero = await agregarPasajero(reservaIdCreada, p);
 
-        await asignarAsiento(reservaIdCreada, resPasajero.pasajero_id, {
-          asiento_id: asientosIds[i],
-        });
+        if (p.ocupa_asiento !== false) {
+          const asientoId = asientosPendientes.shift();
+          if (!asientoId) {
+            throw new Error('Faltan asientos para los pasajeros que ocupan puesto.');
+          }
+          await asignarAsiento(reservaIdCreada, resPasajero.pasajero_id, {
+            asiento_id: asientoId,
+          });
+        }
       }
 
       setReservaId(reservaIdCreada);
@@ -192,6 +212,7 @@ export default function CrearReserva() {
       <CabeceraModulo
         migaja="Reservas / Crear"
         titulo="Registrar nueva reserva"
+        descripcion="Una sola reserva puede incluir al titular y a todo el grupo. No hace falta repetir el flujo por cada persona."
         acciones={
           <Boton variante="secundario" onClick={() => navegar('/admin/reservas')}>
             Volver
@@ -202,7 +223,7 @@ export default function CrearReserva() {
       <div className="crear-reserva-admin__stepper">
         {([
           { num: 1, label: 'Viaje y cliente' },
-          { num: 2, label: 'Pasajeros' },
+          { num: 2, label: esGrupal || pasajeros.length > 0 ? 'Grupo' : 'Pasajeros' },
           { num: 3, label: 'Asientos' },
           { num: 4, label: 'Pago' },
         ] as const).map((s, i, arr) => (
@@ -244,10 +265,28 @@ export default function CrearReserva() {
             viajeSeleccionado={viajeSeleccionado}
             clienteSeleccionado={clienteSeleccionado}
             cargandoViajes={cargandoViajes}
+            esGrupal={esGrupal}
+            cantidadPersonas={cantidadPersonas}
             setViajeSeleccionado={setViajeSeleccionado}
             setClienteSeleccionado={setClienteSeleccionado}
+            setEsGrupal={setEsGrupal}
+            setCantidadPersonas={setCantidadPersonas}
             onSiguiente={() => {
               setError(null);
+              const hayAcompanantes = pasajeros.length > 0;
+              const usarGrupal = esGrupal || hayAcompanantes;
+              if (hayAcompanantes && !esGrupal) setEsGrupal(true);
+              const cantidad = usarGrupal
+                ? Math.max(2, hayAcompanantes ? pasajeros.length + 1 : cantidadPersonas)
+                : 1;
+              if (usarGrupal) setCantidadPersonas(cantidad);
+              setPasajeros((prev) =>
+                sincronizarAcompanantes(
+                  cantidad,
+                  viajeSeleccionado?.precio_base_eur ?? 0,
+                  prev,
+                ),
+              );
               setPaso(2);
             }}
             onCancelar={() => navegar('/admin/reservas')}

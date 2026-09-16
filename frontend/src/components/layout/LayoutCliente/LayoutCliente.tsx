@@ -3,6 +3,7 @@ import LogoMarca from '../../ui/LogoMarca/LogoMarca';
 import MenuUsuario from '../MenuUsuario/MenuUsuario';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import { nombreCompleto } from '../../../utils/nombrePersona';
+import AsistenteFlotante from '../../../asistente/AsistenteFlotante';
 import './LayoutCliente.css';
 
 function iniciales(nombre: string): string {
@@ -118,6 +119,18 @@ export default function LayoutCliente() {
           <span className="tab-bar__label">Reseñas</span>
         </NavLink>
 
+        <NavLink
+          to="/client/ayuda"
+          className={({ isActive }) => `tab-bar__item ${isActive ? 'tab-bar__item--activo' : ''}`}
+        >
+          <svg className="tab-bar__icono" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <span className="tab-bar__label">Ayuda</span>
+        </NavLink>
+
         <button
           onClick={manejarCerrarSesion}
           className="tab-bar__item tab-bar__item--cerrar"
@@ -130,6 +143,7 @@ export default function LayoutCliente() {
           <span className="tab-bar__label">Salir</span>
         </button>
       </nav>
+      <AsistenteFlotante audiencia="cliente" />
     </div>
   );
 }

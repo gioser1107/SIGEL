@@ -13,6 +13,7 @@ import type { Permiso, Rol, SeccionSeguridad, UsuarioSistema } from '../../../ty
 import { columnasPermisos } from './components/columnasPermisos';
 import { columnasRoles } from './components/columnasRoles';
 import { columnasUsuarios } from './components/columnasUsuarios';
+import { esRolAdministrador } from '../../../utils/permisosModulos';
 import { ETIQUETAS_SECCION, FILTROS_TIPO_USUARIO, MODULOS_SEGURIDAD, type FiltroTipoUsuario } from './constants';
 import useDatosSeguridad from './hooks/useDatosSeguridad';
 import PanelCrearPermiso from './Permisos/CrearPermiso/PanelCrearPermiso';
@@ -352,7 +353,7 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
                         onClick={(e) => { e.stopPropagation(); abrirEditarUsuario(u); }}
                       />
                     )}
-                    {puedeEliminarUsuario && (
+                    {puedeEliminarUsuario && !esRolAdministrador(u.rol) && (
                       <BotonAccionTabla
                         accion="eliminar"
                         onClick={(e) => { e.stopPropagation(); pedirEliminarUsuario(u); }}
@@ -383,7 +384,7 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
                         onClick={(e) => { e.stopPropagation(); abrirEditarRol(r); }}
                       />
                     )}
-                    {puedeEliminarRol && (
+                    {puedeEliminarRol && !r.intocable && !esRolAdministrador(r.nombre) && (
                       <BotonAccionTabla
                         accion="eliminar"
                         onClick={(e) => { e.stopPropagation(); pedirEliminarRol(r); }}

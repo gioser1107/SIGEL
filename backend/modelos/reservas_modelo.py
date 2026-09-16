@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fk_usuario
 from modelos.asiento_modelo import Asiento
 from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.cliente_modelo import (
@@ -28,6 +28,7 @@ from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.viaje_modelo import (
     Viaje,
     calcular_disponibilidad_viaje,
+    sincronizar_viajes_vencidos,
     viaje_disponible_para_reserva,
     viaje_reserva_a_dict,
 )
@@ -53,7 +54,7 @@ class Reserva(Base):
         nullable=False,
         default="pendiente",
     )
-    creado_por = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True)
+    creado_por = Column(BigInteger, fk_usuario(), nullable=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
     eliminado_en = Column(DateTime, nullable=True)
@@ -196,6 +197,7 @@ def reserva_a_dict(reserva: Reserva) -> dict:
 
 
 def listar_viajes_disponibles(db: Session) -> list[dict]:
+    sincronizar_viajes_vencidos(db)
     viajes = (
         db.query(Viaje)
         .filter(

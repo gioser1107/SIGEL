@@ -63,7 +63,8 @@ export default function FiltrosBandejaPagos({
           <span>Desde</span>
           <input
             type="date"
-            max={fechaHoyIso()}
+            min="2000-01-01"
+            max={filtros.fecha_hasta || fechaHoyIso()}
             className="drawer-form__input"
             value={filtros.fecha_desde}
             onChange={(e) => onChange({ ...filtros, fecha_desde: e.target.value })}
@@ -73,6 +74,7 @@ export default function FiltrosBandejaPagos({
           <span>Hasta</span>
           <input
             type="date"
+            min={filtros.fecha_desde || '2000-01-01'}
             max={fechaHoyIso()}
             className="drawer-form__input"
             value={filtros.fecha_hasta}

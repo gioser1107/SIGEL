@@ -1,7 +1,7 @@
 import { CuadriculaTarjetas, EtiquetaEstado, resolverVariante, BotonAccionTabla } from '../../../../components/admin';
 import type { Viaje } from '../../../../types/viaje';
 import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
-import { formatFecha } from '../utils/formatearViaje';
+import { formatearFecha } from '../utils/formatearViaje';
 
 interface PropsVistaTarjetas {
   datos: Viaje[];
@@ -12,7 +12,6 @@ interface PropsVistaTarjetas {
   onVerReporte: (viaje: Viaje) => void;
 }
 
-// Renderiza la vista en tarjetas del listado de viajes planificados
 export default function VistaTarjetasPlanificacion({
   datos,
   cargando,
@@ -35,7 +34,7 @@ export default function VistaTarjetasPlanificacion({
             </span>
             <EtiquetaEstado etiqueta={viaje.estado} variante={resolverVariante(viaje.estado)} />
           </div>
-          <p className="plan-card__fecha">{formatFecha(viaje.fecha_salida)}</p>
+          <p className="plan-card__fecha">{formatearFecha(viaje.fecha_salida)}</p>
           <p className="plan-card__unidad">
             <svg
               width="12"

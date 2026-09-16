@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, String, Text, or_
 from sqlalchemy.orm import Session
 
-from database import Base
+from database import Base, fk_usuario
 from modelos.ciudad_modelo import Ciudad
 from modelos.estado_modelo import Estado
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente, listar_puntos_por_cliente
@@ -24,7 +24,7 @@ class Cliente(Base):
     __tablename__ = "clientes"
 
     id = Column(BigInteger, primary_key=True, index=True)
-    usuario_id = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, unique=True, index=True)
+    usuario_id = Column(BigInteger, fk_usuario(), nullable=True, unique=True, index=True)
     tipo_cliente = Column(String(20), nullable=False)
     tipo_documento = Column(String(20), nullable=False)
     numero_documento = Column(String(40), nullable=False, index=True)
@@ -37,8 +37,8 @@ class Cliente(Base):
     ciudad_id = Column(BigInteger, ForeignKey("ciudades.id"), nullable=True, index=True)
     estado_id = Column(BigInteger, ForeignKey("estados.id"), nullable=True, index=True)
     notas = Column(Text, nullable=True)
-    creado_por = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, index=True)
-    actualizado_por = Column(BigInteger, ForeignKey("usuarios.id"), nullable=True, index=True)
+    creado_por = Column(BigInteger, fk_usuario(), nullable=True, index=True)
+    actualizado_por = Column(BigInteger, fk_usuario(), nullable=True, index=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
     eliminado_en = Column(DateTime, nullable=True)

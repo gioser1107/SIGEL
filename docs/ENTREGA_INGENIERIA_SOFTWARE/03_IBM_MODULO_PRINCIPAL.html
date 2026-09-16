@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>IBM — Módulo principal SIGEL (M1 Destinos y reservas)</title>
+  <style>
+    @page { size: letter; margin: 1.5cm 1.7cm; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.32; color: #111; max-width: 840px; margin: 0 auto; }
+    h1 { font-size: 15pt; text-align: center; text-transform: uppercase; margin: 6px 0 4px; }
+    h2 { font-size: 12.5pt; margin: 0 0 8px; }
+    h3 { font-size: 11pt; margin: 10px 0 4px; }
+    .encabezado { text-align: center; font-size: 10.5pt; line-height: 1.3; }
+    table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 10.5pt; }
+    th, td { border: 1px solid #333; padding: 4px 6px; vertical-align: top; text-align: left; }
+    th { background: #f3f3f3; }
+    .uc { page-break-before: always; }
+    .uc:first-of-type { page-break-before: auto; }
+    ol, ul { margin: 4px 0 8px 20px; }
+    p { margin: 5px 0; text-align: justify; }
+    .portada { text-align: center; padding: 36px 10px 10px; page-break-after: always; }
+    .no-print { font-family: Calibri, Arial, sans-serif; background: #fff3cd; border: 1px solid #c9a227; padding: 10px 12px; margin-bottom: 14px; font-size: 10.5pt; }
+    @media print { .no-print { display: none; } body { max-width: none; } }
+  </style>
+</head>
+<body>
+
+<p class="no-print">Imprimir completo. Cada caso de uso IBM queda en su página. Este recuadro no se imprime.</p>
+
+<div class="portada">
+  <div class="encabezado">
+    <strong>REPÚBLICA BOLIVARIANA DE VENEZUELA</strong><br>
+    UNIVERSIDAD POLITÉCNICA TERRITORIAL ANDRÉS ELOY BLANCO<br>
+    PNF EN INFORMÁTICA — TRAYECTO III — INGENIERÍA DE SOFTWARE
+  </div>
+  <h1>Modelo del sistema<br>Plantillas IBM de casos de uso</h1>
+  <p><strong>Módulo principal M1 — Destinos, catálogo y reservas</strong></p>
+  <p>SIGEL — Travel BQTO<br>Parroquia Ana Soto, Barquisimeto</p>
+  <p>Integrantes: Sergio Jiménez, Gabriel Jiménez</p>
+  <p>Tutor: Edecio Freitez</p>
+  <p>Septiembre 2026</p>
+</div>
+
+<h2>1. Alcance del módulo principal</h2>
+<p>El módulo principal de SIGEL es el ciclo comercial de Travel BQTO: <strong>publicar destinos, consultar la oferta, reservar cupos y asignar asientos</strong>. En las plantillas IBM se identifica como <strong>M1</strong>. Agrupa RF-04, RF-12, RF-13 y RF-14.</p>
+<p>Los diagramas UML que acompañan este módulo son:</p>
+<ul>
+  <li>Secuencia y actividad (carriles): <em>PATRON_RESERVA_PORTAL</em>, <em>RESERVA_CREAR</em>, <em>RESERVA_ASIENTO</em>.</li>
+  <li>Consulta pública de destinos: RF-13 / M1-U2.</li>
+</ul>
+
+<h2>2. Inventario IBM — M1</h2>
+<table>
+  <tr><th>ID</th><th>Nombre</th><th>Actor principal</th><th>RF</th><th>Tipo</th></tr>
+  <tr><td>M1-U1</td><td>Crear destino</td><td>Administrador</td><td>RF-04</td><td>Primario</td></tr>
+  <tr><td>M1-U2</td><td>Consultar destinos</td><td>Visitante / Administrador</td><td>RF-04, RF-13</td><td>Primario</td></tr>
+  <tr><td>M1-U3</td><td>Modificar destino</td><td>Administrador</td><td>RF-04</td><td>Primario</td></tr>
+  <tr><td>M1-U4</td><td>Anular destino</td><td>Administrador</td><td>RF-04</td><td>Secundario</td></tr>
+  <tr><td>M1-U5</td><td>Registrar reserva</td><td>Administrador / Cliente</td><td>RF-12</td><td>Primario</td></tr>
+  <tr><td>M1-U6</td><td>Consultar reservas</td><td>Administrador / Cliente</td><td>RF-12, RF-14</td><td>Primario</td></tr>
+  <tr><td>M1-U7</td><td>Gestionar reserva en portal</td><td>Cliente</td><td>RF-14</td><td>Primario</td></tr>
+  <tr><td>M1-U8</td><td>Asignar asiento</td><td>Administrador / Cliente</td><td>RF-01, RF-12</td><td>Primario</td></tr>
+  <tr><td>M1-U9</td><td>Anular reserva</td><td>Administrador</td><td>RF-12</td><td>Secundario</td></tr>
+  <tr><td>M1-U10</td><td>Consultar disponibilidad de asientos</td><td>Administrador / Cliente</td><td>RF-01</td><td>Primario</td></tr>
+</table>
+
+<p>Los módulos M2 a M9 (pagos, viajes, abordaje, cotizaciones, seguridad, clientes, recogida y permisos) quedan fuera de este entregable. Se citan solo cuando M1 los invoca.</p>
+
+<!-- M1-U1 -->
+<div class="uc">
+<h2>M1-U1 — Crear destino</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U1</td></tr>
+  <tr><th>Nombre</th><td>Crear destino turístico</td></tr>
+  <tr><th>Actor principal</th><td>Administrador</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL, base de datos</td></tr>
+  <tr><th>Propósito</th><td>Registrar un destino de la oferta de Travel BQTO con precio, descripción e imágenes.</td></tr>
+  <tr><th>Resumen</th><td>El administrador abre el catálogo, carga los datos del destino y, si la validación es correcta, el sistema lo persiste y lo deja consultable en el panel y en el portal público.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-04; RNF-06, RNF-12; Diagrama A y C</td></tr>
+  <tr><th>Precondiciones</th><td>Sesión autenticada con permiso de crear destinos.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>Existe un destino activo. Queda registro en bitácora (módulo destinos, acción insertar).</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>No se persiste el destino. El actor ve el motivo (validación, permiso o error de almacenamiento).</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El administrador abre Destinos y elige crear.</li>
+  <li>La interfaz solicita nombre, descripción, precio base e imágenes.</li>
+  <li>El administrador completa el formulario y confirma.</li>
+  <li>La interfaz valida campos visibles (nombre, precio, formato de imagen).</li>
+  <li>El sistema verifica token y permiso.</li>
+  <li>El modelo persiste el destino y, si hay fotos, las asocia a la galería.</li>
+  <li>Se registra la bitácora.</li>
+  <li>La interfaz muestra confirmación y el destino aparece en el listado y en el catálogo público.</li>
+</ol>
+<h3>Flujos alternos</h3>
+<ul>
+  <li><strong>A1 Datos incompletos o inválidos:</strong> la interfaz o la API rechazan (400/422). No hay persistencia. Vuelve al paso 2.</li>
+  <li><strong>A2 Imagen no admitida:</strong> se informa el tipo permitido. El destino puede guardarse sin esa foto o el actor corrige el archivo.</li>
+</ul>
+<h3>Flujos de excepción</h3>
+<ul>
+  <li><strong>E1 Sin sesión o sin permiso:</strong> 401/403. No se crea el destino.</li>
+  <li><strong>E2 Fallo de persistencia:</strong> mensaje genérico. El administrador reintenta.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>El precio base es obligatorio y mayor que cero.</li>
+  <li>Las imágenes de galería se almacenan en formato web adecuado (WebP).</li>
+</ul>
+</div>
+
+<!-- M1-U2 -->
+<div class="uc">
+<h2>M1-U2 — Consultar destinos</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U2</td></tr>
+  <tr><th>Nombre</th><td>Consultar destinos</td></tr>
+  <tr><th>Actor principal</th><td>Visitante (portal) o Administrador (panel)</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL</td></tr>
+  <tr><th>Propósito</th><td>Mostrar la oferta turística publicada y el detalle de un destino.</td></tr>
+  <tr><th>Resumen</th><td>El visitante consulta el catálogo sin autenticarse. El administrador consulta el mismo maestro con datos de gestión.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-04, RF-13; RNF-14, RNF-16; Diagrama C</td></tr>
+  <tr><th>Precondiciones</th><td>Portal: ninguna. Panel: sesión con permiso de lectura de destinos.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>Se muestra el listado o el detalle. No se modifica el maestro.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>Mensaje de catálogo vacío o destino inexistente.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El actor abre el portal (inicio / catálogo) o Destinos en el panel.</li>
+  <li>El sistema solicita los destinos activos al catálogo o al maestro.</li>
+  <li>La interfaz presenta tarjetas o tabla (nombre, precio, imagen de portada).</li>
+  <li>El actor selecciona un destino.</li>
+  <li>El sistema devuelve el detalle (descripción, galería, viajes asociados si aplica).</li>
+</ol>
+<h3>Flujos alternos</h3>
+<ul>
+  <li><strong>A1 Catálogo vacío:</strong> se informa que aún no hay destinos publicados. Es el estado inicial de la base limpia.</li>
+  <li><strong>A2 Filtro o búsqueda sin resultados:</strong> listado vacío con criterio visible.</li>
+</ul>
+<h3>Flujos de excepción</h3>
+<ul>
+  <li><strong>E1 Destino inexistente o anulado:</strong> 404. El portal no muestra el detalle.</li>
+  <li><strong>E2 Servicio no disponible:</strong> mensaje de error de consulta. No se inventan datos.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>El visitante no requiere cuenta para consultar.</li>
+  <li>Solo destinos no anulados son visibles en el portal público.</li>
+</ul>
+</div>
+
+<!-- M1-U3 -->
+<div class="uc">
+<h2>M1-U3 — Modificar destino</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U3</td></tr>
+  <tr><th>Nombre</th><td>Modificar destino</td></tr>
+  <tr><th>Actor principal</th><td>Administrador</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL</td></tr>
+  <tr><th>Propósito</th><td>Actualizar datos o galería de un destino existente.</td></tr>
+  <tr><th>Resumen</th><td>El administrador abre el destino, edita campos o imágenes y confirma. El sistema valida, persiste y audita.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-04; RNF-04, RNF-06; Diagrama A</td></tr>
+  <tr><th>Precondiciones</th><td>Sesión con permiso de editar destinos. El destino existe y no está anulado.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>Los cambios son visibles en panel y portal. Bitácora con acción de actualización.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>Se conservan los datos anteriores.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El administrador selecciona el destino y abre edición.</li>
+  <li>El sistema carga los datos actuales.</li>
+  <li>El actor modifica nombre, descripción, precio o galería.</li>
+  <li>Confirma el guardado.</li>
+  <li>El sistema valida, actualiza y registra bitácora.</li>
+  <li>La interfaz confirma el cambio.</li>
+</ol>
+<h3>Flujos alternos y excepciones</h3>
+<ul>
+  <li><strong>A1 Validación fallida:</strong> no se guarda. Se muestran los campos a corregir.</li>
+  <li><strong>E1 Destino anulado o inexistente:</strong> 404. No hay edición.</li>
+  <li><strong>E2 Sin permiso:</strong> 403.</li>
+</ul>
+</div>
+
+<!-- M1-U4 -->
+<div class="uc">
+<h2>M1-U4 — Anular destino</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U4</td></tr>
+  <tr><th>Nombre</th><td>Anular destino</td></tr>
+  <tr><th>Actor principal</th><td>Administrador</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL</td></tr>
+  <tr><th>Propósito</th><td>Retirar un destino de la oferta sin borrar su historia.</td></tr>
+  <tr><th>Resumen</th><td>El administrador solicita la anulación. Si no hay viajes o reservas dependientes activos, el sistema aplica eliminación lógica.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / secundario</td></tr>
+  <tr><th>Referencias</th><td>RF-04; RNF-05; Diagrama A</td></tr>
+  <tr><th>Precondiciones</th><td>Sesión con permiso de anular destinos. El destino existe y está activo.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>El destino deja de publicarse. Queda marca de anulación y bitácora.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>El destino permanece activo. Se informa la dependencia que lo impide.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El administrador selecciona anular en el destino.</li>
+  <li>La interfaz pide confirmación.</li>
+  <li>El sistema verifica dependencias (viajes o reservas asociadas).</li>
+  <li>Si no hay bloqueo, aplica anulación lógica.</li>
+  <li>Registra bitácora y confirma.</li>
+</ol>
+<h3>Flujos alternos y excepciones</h3>
+<ul>
+  <li><strong>A1 El actor cancela la confirmación:</strong> no hay cambio.</li>
+  <li><strong>A2 Hay viajes o reservas dependientes:</strong> se rechaza la anulación. El destino sigue publicado.</li>
+  <li><strong>E1 Sin permiso:</strong> 403.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>No se elimina físicamente el registro.</li>
+  <li>Un destino con operación vigente no se retira del maestro.</li>
+</ul>
+</div>
+
+<!-- M1-U5 -->
+<div class="uc">
+<h2>M1-U5 — Registrar reserva</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U5</td></tr>
+  <tr><th>Nombre</th><td>Registrar reserva con viajeros</td></tr>
+  <tr><th>Actor principal</th><td>Administrador o Cliente</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL, bitácora</td></tr>
+  <tr><th>Propósito</th><td>Asegurar cupo en un viaje para un titular y sus acompañantes, sin sobreventa.</td></tr>
+  <tr><th>Resumen</th><td>El actor elige viaje, titular, viajeros, puntos de recogida y, si aplica, asientos. El sistema valida cupo y unicidad de asiento, persiste la reserva y audita. Diagrama de secuencia y actividad: RESERVA_CREAR / PATRON_RESERVA_PORTAL.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-12; RNF-08, RNF-15; Diagramas B y C</td></tr>
+  <tr><th>Precondiciones</th><td>Viaje publicado con cupo. Cada viajero existe como cliente. Cliente: sesión de rol Cliente y perfil. Administrador: permiso de crear reservas.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>Existe la reserva (código visible). Se debitó cupo. Viajeros en reserva_clientes. Bitácora del módulo reservas.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>No hay reserva. Cupo y asientos permanecen como estaban.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El actor abre la reserva (panel o portal) y selecciona el viaje.</li>
+  <li>Indica el titular y agrega acompañantes. Cada persona es un cliente.</li>
+  <li>Asigna punto de recogida por viajero cuando corresponda.</li>
+  <li>Consulta asientos disponibles (M1-U10) y elige asientos (M1-U8) si el viaje los usa.</li>
+  <li>La interfaz valida el formulario y envía la solicitud.</li>
+  <li>El sistema verifica sesión, rol o permiso.</li>
+  <li>El modelo consulta y bloquea viaje, cupo y asientos.</li>
+  <li>Si las reglas se cumplen, guarda reserva, viajeros y asientos.</li>
+  <li>Registra bitácora y devuelve el identificador (RES-id).</li>
+  <li>La interfaz muestra confirmación al actor.</li>
+</ol>
+<h3>Flujos alternos</h3>
+<ul>
+  <li><strong>A1 Datos de interfaz inválidos:</strong> no se envía o se rechaza 400/422. El actor corrige.</li>
+  <li><strong>A2 Acompañante no registrado:</strong> se crea primero como cliente (RF-11) y se retoma el paso 2.</li>
+  <li><strong>A3 Sin asientos en este paso:</strong> la reserva puede quedar con asiento pendiente y asignarse después (M1-U8).</li>
+</ul>
+<h3>Flujos de excepción</h3>
+<ul>
+  <li><strong>E1 Sesión inválida o rol insuficiente:</strong> 401/403.</li>
+  <li><strong>E2 Viaje o cliente inexistente:</strong> 404.</li>
+  <li><strong>E3 Cupo agotado o asiento ocupado:</strong> 409. Se informa el motivo. No hay sobreventa.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>Una reserva pertenece a un cliente titular y a un viaje.</li>
+  <li>Los viajeros no duplican nombre ni documento: se enlazan por cliente_id.</li>
+  <li>Un asiento vigente no puede repetirse en el mismo viaje.</li>
+  <li>Dos solicitudes simultáneas sobre el último cupo: una confirma y la otra recibe 409.</li>
+</ul>
+</div>
+
+<!-- M1-U6 -->
+<div class="uc">
+<h2>M1-U6 — Consultar reservas</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U6</td></tr>
+  <tr><th>Nombre</th><td>Consultar reservas</td></tr>
+  <tr><th>Actor principal</th><td>Administrador o Cliente</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL</td></tr>
+  <tr><th>Propósito</th><td>Listar y abrir el detalle de reservas según el alcance del rol.</td></tr>
+  <tr><th>Resumen</th><td>El administrador ve el maestro de reservas. El cliente ve solo las suyas en el portal (mis reservas).</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-12, RF-14; RNF-01, RNF-02; Diagramas B y C</td></tr>
+  <tr><th>Precondiciones</th><td>Sesión válida. Administrador: permiso de lectura. Cliente: perfil de cliente asociado.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>Se muestra listado y/o detalle. No se altera la reserva.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>Listado vacío o acceso denegado.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El actor abre Reservas (panel) o Mis reservas (portal).</li>
+  <li>El sistema filtra según rol: todas las vigentes para el administrador; solo las del titular para el cliente.</li>
+  <li>La interfaz muestra código, viaje, estado y saldo cuando aplica.</li>
+  <li>El actor abre una reserva y ve viajeros, asientos, recogida y pagos asociados.</li>
+</ol>
+<h3>Flujos alternos y excepciones</h3>
+<ul>
+  <li><strong>A1 Sin reservas:</strong> estado vacío con indicación de crear o esperar publicación de viajes.</li>
+  <li><strong>E1 El cliente intenta una reserva ajena:</strong> 403. No se revela el detalle.</li>
+  <li><strong>E2 Reserva inexistente:</strong> 404.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>El portal nunca lista reservas de otros clientes.</li>
+  <li>Los estados visibles son de negocio (pendiente, confirmada, abonada, cancelada), no códigos internos de base de datos.</li>
+</ul>
+</div>
+
+<!-- M1-U7 -->
+<div class="uc">
+<h2>M1-U7 — Gestionar reserva en el portal</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U7</td></tr>
+  <tr><th>Nombre</th><td>Gestionar reserva desde el portal del cliente</td></tr>
+  <tr><th>Actor principal</th><td>Cliente</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL, administrador (conciliación de pagos, M2)</td></tr>
+  <tr><th>Propósito</th><td>Permitir al pasajero continuar su reserva: consultar saldo, reportar pago, mantener recogida y, si aplica, reseñar el viaje.</td></tr>
+  <tr><th>Resumen</th><td>Con sesión de cliente, la persona opera solo sus reservas. Este caso cubre el autoservicio del RF-14 ligado a M1.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-14; RNF-01, RNF-14, RNF-15; Diagrama C</td></tr>
+  <tr><th>Precondiciones</th><td>Cliente autenticado con al menos una reserva propia, o un viaje disponible para reservar.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>Queda registrada la acción del portal (reserva, reporte de pago o actualización de recogida) en el alcance del cliente.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>No hay cambio. Mensaje comprensible en español.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El cliente inicia sesión y entra al portal.</li>
+  <li>Consulta el tablero y sus reservas (M1-U6).</li>
+  <li>Elige una acción: completar reserva, ver saldo, reportar pago o editar punto de recogida.</li>
+  <li>El sistema valida titularidad y datos.</li>
+  <li>Persiste el cambio permitido al rol Cliente.</li>
+  <li>Muestra confirmación. Si reportó pago, el estado queda en validación (módulo M2).</li>
+</ol>
+<h3>Flujos alternos y excepciones</h3>
+<ul>
+  <li><strong>A1 No hay viajes publicados:</strong> el portal lo indica. No se fuerza una reserva vacía.</li>
+  <li><strong>A2 Reserva no elegible para reseña:</strong> la opción no se habilita.</li>
+  <li><strong>E1 Token vencido:</strong> se pide nuevo inicio de sesión.</li>
+  <li><strong>E2 Intento de actuar sobre reserva ajena:</strong> 403.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>El cliente no concilia pagos: solo reporta. La aprobación es administrativa (M2).</li>
+  <li>El flujo crítico de reserva se completa en no más de cuatro clics desde el inicio del rol (RNF-16).</li>
+</ul>
+</div>
+
+<!-- M1-U8 -->
+<div class="uc">
+<h2>M1-U8 — Asignar asiento</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U8</td></tr>
+  <tr><th>Nombre</th><td>Asignar asiento a un viajero</td></tr>
+  <tr><th>Actor principal</th><td>Administrador (panel) o Cliente (durante la reserva)</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL</td></tr>
+  <tr><th>Propósito</th><td>Ocupar un asiento libre del viaje para un viajero de la reserva, sin duplicar ocupación.</td></tr>
+  <tr><th>Resumen</th><td>El actor elige reserva, viajero y asiento. El sistema bloquea el asiento del viaje y lo vincula. Diagrama: RESERVA_ASIENTO.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-01, RF-12; RNF-08; Diagramas B y C</td></tr>
+  <tr><th>Precondiciones</th><td>Reserva existente. Viajero vinculado. Unidad del viaje con mapa de asientos. Permiso de editar reservas o titularidad en portal.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>El viajero tiene asiento. El asiento queda vigente para ese viaje. Bitácora.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>El asiento no cambia de dueño.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El actor abre la reserva y selecciona el viajero.</li>
+  <li>Consulta el mapa (M1-U10) y elige un asiento libre.</li>
+  <li>Confirma la asignación.</li>
+  <li>El sistema verifica sesión y permiso o titularidad.</li>
+  <li>El modelo bloquea reserva, viajero y asiento del viaje.</li>
+  <li>Si el asiento está libre, lo asigna y audita.</li>
+  <li>La interfaz actualiza el mapa y el detalle del viajero.</li>
+</ol>
+<h3>Flujos alternos y excepciones</h3>
+<ul>
+  <li><strong>A1 El viajero ya tenía asiento:</strong> se sustituye solo si el nuevo está libre y las reglas lo permiten; el anterior se libera.</li>
+  <li><strong>E1 Asiento ocupado por otra reserva:</strong> 409. El mapa se refresca.</li>
+  <li><strong>E2 Viajero o reserva inválidos:</strong> 404.</li>
+  <li><strong>E3 Sin permiso:</strong> 403.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>Índice único de asiento vigente por viaje: no hay dos ocupaciones activas del mismo asiento.</li>
+  <li>La anulación de la reserva (M1-U9) libera los asientos.</li>
+</ul>
+</div>
+
+<!-- M1-U9 -->
+<div class="uc">
+<h2>M1-U9 — Anular reserva</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U9</td></tr>
+  <tr><th>Nombre</th><td>Anular reserva</td></tr>
+  <tr><th>Actor principal</th><td>Administrador</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL</td></tr>
+  <tr><th>Propósito</th><td>Cancelar una reserva y devolver cupo y asientos al viaje.</td></tr>
+  <tr><th>Resumen</th><td>El administrador confirma la anulación. El sistema marca la reserva como cancelada, libera asientos vigentes y registra bitácora.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / secundario</td></tr>
+  <tr><th>Referencias</th><td>RF-12; RNF-04, RNF-05; Diagrama B</td></tr>
+  <tr><th>Precondiciones</th><td>Reserva existente y no cancelada. Permiso de anular o editar reservas.</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>Estado cancelada. Asientos liberados. Cupo disponible incrementado según reglas. Bitácora.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>La reserva conserva su estado anterior.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El administrador abre la reserva y elige anular.</li>
+  <li>La interfaz pide confirmación.</li>
+  <li>El sistema valida permiso y estado actual.</li>
+  <li>Marca la reserva cancelada y libera asientos vigentes.</li>
+  <li>Registra bitácora y confirma.</li>
+</ol>
+<h3>Flujos alternos y excepciones</h3>
+<ul>
+  <li><strong>A1 El actor cancela el diálogo:</strong> no hay cambio.</li>
+  <li><strong>A2 Reserva ya cancelada:</strong> se informa. No se opera de nuevo.</li>
+  <li><strong>E1 Sin permiso:</strong> 403.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>La anulación no borra el histórico de viajeros ni de pagos ya registrados.</li>
+  <li>Los asientos vuelven a estar libres para M1-U8 y M1-U10.</li>
+</ul>
+</div>
+
+<!-- M1-U10 -->
+<div class="uc">
+<h2>M1-U10 — Consultar disponibilidad de asientos</h2>
+<table>
+  <tr><th style="width:28%">Identificador</th><td>M1-U10</td></tr>
+  <tr><th>Nombre</th><td>Consultar mapa y disponibilidad de asientos</td></tr>
+  <tr><th>Actor principal</th><td>Administrador o Cliente</td></tr>
+  <tr><th>Actores secundarios</th><td>Sistema SIGEL</td></tr>
+  <tr><th>Propósito</th><td>Mostrar qué asientos del viaje están libres u ocupados antes de asignar.</td></tr>
+  <tr><th>Resumen</th><td>El actor abre el mapa del viaje. El sistema combina la plantilla de la unidad con las ocupaciones vigentes y pinta el estado de cada asiento.</td></tr>
+  <tr><th>Tipo</th><td>Esencial / primario</td></tr>
+  <tr><th>Referencias</th><td>RF-01, RF-16 (flota como apoyo); RNF-08; Diagramas B y C</td></tr>
+  <tr><th>Precondiciones</th><td>Viaje existente con unidad y asientos configurados. Sesión según el canal (panel o portal en reserva).</td></tr>
+  <tr><th>Postcondiciones de éxito</th><td>El actor ve el mapa actualizado. Esta consulta no ocupa asientos.</td></tr>
+  <tr><th>Postcondiciones de fallo</th><td>No se muestra mapa. Se indica viaje o unidad sin asientos.</td></tr>
+</table>
+<h3>Flujo principal</h3>
+<ol>
+  <li>El actor abre la reserva o el viaje y solicita el mapa.</li>
+  <li>El sistema obtiene la plantilla de asientos de la unidad y las ocupaciones vigentes del viaje.</li>
+  <li>Devuelve cada asiento como libre u ocupado.</li>
+  <li>La interfaz pinta el mapa. El actor puede continuar con M1-U8.</li>
+</ol>
+<h3>Flujos alternos y excepciones</h3>
+<ul>
+  <li><strong>A1 El viaje no tiene unidad o asientos:</strong> se informa que hay que configurar la flota (RF-16) antes de asignar.</li>
+  <li><strong>E1 Viaje inexistente:</strong> 404.</li>
+  <li><strong>E2 Sin permiso o sin titularidad:</strong> 401/403.</li>
+</ul>
+<h3>Reglas de negocio</h3>
+<ul>
+  <li>La consulta no reserva. La ocupación efectiva ocurre en M1-U5 o M1-U8.</li>
+  <li>Un asiento ocupado no se ofrece como seleccionable.</li>
+</ul>
+</div>
+
+<div class="uc">
+<h2>3. Trazabilidad del módulo principal</h2>
+<table>
+  <tr><th>IBM</th><th>RF</th><th>Diagrama UML a imprimir</th></tr>
+  <tr><td>M1-U1 a M1-U4</td><td>RF-04</td><td>Modelo de dominio (destino). Portal: RF-13 / M1-U2</td></tr>
+  <tr><td>M1-U2</td><td>RF-13</td><td>Diagrama C — catálogo público</td></tr>
+  <tr><td>M1-U5</td><td>RF-12</td><td>Secuencia y carriles RESERVA_CREAR y PATRON_RESERVA_PORTAL</td></tr>
+  <tr><td>M1-U6, M1-U7</td><td>RF-12, RF-14</td><td>Diagrama C — portal cliente</td></tr>
+  <tr><td>M1-U8, M1-U10</td><td>RF-01, RF-12</td><td>Secuencia y carriles RESERVA_ASIENTO</td></tr>
+  <tr><td>M1-U9</td><td>RF-12</td><td>Misma pareja de reserva (camino de anulación)</td></tr>
+</table>
+<p>Este documento es el modelo IBM del <strong>módulo principal</strong>. El listado SRS completo (RF-01 a RF-20) es el modelo del negocio y se entrega aparte.</p>
+</div>
+
+</body>
+</html>

@@ -11,12 +11,14 @@ interface MatrizPermisosRolProps {
   permisos: Permiso[];
   seleccionados: Set<number>;
   onAlternar: (permisoId: number) => void;
+  soloLectura?: boolean;
 }
 
 export default function MatrizPermisosRol({
   permisos,
   seleccionados,
   onAlternar,
+  soloLectura = false,
 }: MatrizPermisosRolProps) {
   const { filas, sueltos } = useMemo(
     () => agruparPermisosPorModulo(permisos),
@@ -56,6 +58,7 @@ export default function MatrizPermisosRol({
                           <input
                             type="checkbox"
                             checked={seleccionados.has(permiso.id)}
+                            disabled={soloLectura}
                             onChange={() => onAlternar(permiso.id)}
                             aria-label={`${fila.etiqueta} — ${etiquetaAccion(accion)}`}
                           />
@@ -81,6 +84,7 @@ export default function MatrizPermisosRol({
                 <input
                   type="checkbox"
                   checked={seleccionados.has(p.id)}
+                  disabled={soloLectura}
                   onChange={() => onAlternar(p.id)}
                 />
                 <span className="seguridad__permiso-nombre">{p.descripcion}</span>

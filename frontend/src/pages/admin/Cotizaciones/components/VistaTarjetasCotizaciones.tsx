@@ -1,7 +1,7 @@
 import { CuadriculaTarjetas, EtiquetaEstado, resolverVariante, BotonAccionTabla } from '../../../../components/admin';
 import type { Cotizacion } from '../../../../types/cotizacion';
 import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
-import { esBloqueada, formatFecha } from '../utils/formatearCotizacion';
+import { esBloqueada, formatearFecha } from '../utils/formatearCotizacion';
 
 interface PropsVistaTarjetas {
   datos: Cotizacion[];
@@ -13,7 +13,6 @@ interface PropsVistaTarjetas {
   imprimiendo?: boolean;
 }
 
-// Renderiza la vista en tarjetas (kanban) del listado de cotizaciones
 export default function VistaTarjetasCotizaciones({
   datos,
   cargando,
@@ -46,7 +45,7 @@ export default function VistaTarjetasCotizaciones({
               ? `€ ${cot.precio_cotizado_eur.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`
               : 'Sin cotizar'}
           </p>
-          <p className="cot-card__fecha">{formatFecha(cot.creado_en)}</p>
+          <p className="cot-card__fecha">{formatearFecha(cot.creado_en)}</p>
           <div className="cot-card__acciones">
             <BotonAccionTabla
               accion="imprimir"

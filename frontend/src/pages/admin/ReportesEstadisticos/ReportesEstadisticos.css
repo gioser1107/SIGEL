@@ -64,7 +64,8 @@
   cursor: pointer;
 }
 
-.reportes-estadisticos__tipo--activo {
+.reportes-estadisticos__tipo--activo,
+.reportes-estadisticos__tipo--activo * {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: #fff;

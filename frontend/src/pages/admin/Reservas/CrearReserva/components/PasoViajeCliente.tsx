@@ -133,8 +133,12 @@ interface Props {
   viajeSeleccionado: ViajeDisponibleReserva | null;
   clienteSeleccionado: Cliente | null;
   cargandoViajes?: boolean;
+  esGrupal: boolean;
+  cantidadPersonas: number;
   setViajeSeleccionado: (v: ViajeDisponibleReserva | null) => void;
   setClienteSeleccionado: (c: Cliente | null) => void;
+  setEsGrupal: (valor: boolean) => void;
+  setCantidadPersonas: (valor: number) => void;
   onSiguiente: () => void;
   onCancelar: () => void;
 }
@@ -145,12 +149,24 @@ export default function PasoViajeCliente({
   viajeSeleccionado,
   clienteSeleccionado,
   cargandoViajes = false,
+  esGrupal,
+  cantidadPersonas,
   setViajeSeleccionado,
   setClienteSeleccionado,
+  setEsGrupal,
+  setCantidadPersonas,
   onSiguiente,
   onCancelar,
 }: Props) {
   const sinViajes = !cargandoViajes && viajes.length === 0;
+  const asientosLibres = viajeSeleccionado?.disponibilidad.asientos_disponibles ?? 0;
+  const maxPersonas = Math.max(1, asientosLibres);
+  const errorGrupo =
+    esGrupal && viajeSeleccionado && cantidadPersonas > asientosLibres
+      ? `Este viaje tiene ${asientosLibres} asiento(s) libre(s). Baja la cantidad del grupo.`
+      : esGrupal && cantidadPersonas < 2
+        ? 'Una reserva grupal necesita al menos 2 personas (titular + acompañantes).'
+        : null;
 
   const opcionesViaje: Opcion[] = viajes.map((v) => ({
     valor: v.id,
@@ -290,9 +306,65 @@ export default function PasoViajeCliente({
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <span>
-              Si el cliente no aparece en la lista, ve al{' '}
-              <strong>módulo de Clientes</strong> para registrarlo primero.
+              El titular sí debe existir en Clientes. Los acompañantes del grupo se pueden registrar en el paso siguiente, sin salir de esta reserva.
             </span>
+          </div>
+        )}
+      </div>
+
+      <div className="paso-seccion">
+        <span className="paso-seccion__label">Tipo de reserva</span>
+        <div className="reserva-tipo" role="group" aria-label="Tipo de reserva">
+          <button
+            type="button"
+            className={`reserva-tipo__opcion${!esGrupal ? ' reserva-tipo__opcion--activa' : ''}`}
+            onClick={() => {
+              setEsGrupal(false);
+              setCantidadPersonas(1);
+            }}
+          >
+            <strong>Individual</strong>
+            <span>Solo viaja el titular</span>
+          </button>
+          <button
+            type="button"
+            className={`reserva-tipo__opcion${esGrupal ? ' reserva-tipo__opcion--activa' : ''}`}
+            onClick={() => {
+              setEsGrupal(true);
+              setCantidadPersonas(Math.max(2, cantidadPersonas));
+            }}
+          >
+            <strong>Viaje grupal</strong>
+            <span>Varias personas en una sola reserva</span>
+          </button>
+        </div>
+
+        {esGrupal && (
+          <div className="reserva-tipo__cantidad">
+            <label className="campo-label" htmlFor="cantidad-grupo">
+              ¿Cuántas personas viajan? <span style={{ color: 'var(--color-error)' }}>*</span>
+            </label>
+            <input
+              id="cantidad-grupo"
+              className="drawer-form__input reserva-tipo__input"
+              type="number"
+              min={2}
+              max={maxPersonas || 40}
+              value={cantidadPersonas}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                setCantidadPersonas(Number.isFinite(n) ? n : 2);
+              }}
+            />
+            <p className="paso-aviso-cliente">
+              Incluye al titular. Ejemplo: 10 personas = 1 titular + 9 acompañantes, todos en esta misma reserva.
+              {viajeSeleccionado ? ` Cupo libre: ${asientosLibres}.` : ''}
+            </p>
+            {errorGrupo && (
+              <p className="crear-reserva-admin__error" role="alert" style={{ marginTop: 8 }}>
+                {errorGrupo}
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -303,7 +375,13 @@ export default function PasoViajeCliente({
         </Boton>
         <Boton
           variante="primario"
-          disabled={!viajeSeleccionado || !clienteSeleccionado || cargandoViajes || sinViajes}
+          disabled={
+            !viajeSeleccionado ||
+            !clienteSeleccionado ||
+            cargandoViajes ||
+            sinViajes ||
+            Boolean(errorGrupo)
+          }
           onClick={onSiguiente}
         >
           Siguiente

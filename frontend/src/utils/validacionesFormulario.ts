@@ -56,6 +56,15 @@ export function esFechaFutura(valor: string | null | undefined): boolean {
 }
 
 export const MENSAJE_FECHA_NO_FUTURA = 'No se admiten fechas futuras.';
+export const MENSAJE_RANGO_FECHAS =
+  'La fecha inicial no puede ser posterior a la fecha final.';
+
+export function validarRangoFechasConsulta(desde: string, hasta: string): string | null {
+  if (!desde || !hasta) return 'Indica la fecha inicial y la fecha final.';
+  if (esFechaFutura(desde) || esFechaFutura(hasta)) return MENSAJE_FECHA_NO_FUTURA;
+  if (desde > hasta) return MENSAJE_RANGO_FECHAS;
+  return null;
+}
 
 export function esNombreValido(texto: string): boolean {
   const limpio = texto.trim().replace(/\s+/g, ' ');
@@ -199,6 +208,8 @@ export function validarFormularioPermiso(form: { descripcion: string }): string 
 export interface PasajeroValidacion {
   cliente_id: number;
   precio_pasajero_eur: number;
+  modo?: 'existente' | 'nuevo';
+  fichaCompleta?: boolean;
 }
 
 export function validarPasajerosReserva(
@@ -207,8 +218,12 @@ export function validarPasajerosReserva(
   titularTieneDomicilios: boolean,
 ): string | null {
   for (let i = 0; i < pasajeros.length; i += 1) {
-    if (!pasajeros[i].cliente_id || pasajeros[i].cliente_id <= 0) {
-      return `Selecciona un cliente registrado para el acompañante ${i + 1}.`;
+    const esNuevo = pasajeros[i].modo === 'nuevo';
+    if (esNuevo && pasajeros[i].fichaCompleta === false) {
+      return `Completa los datos del acompañante ${i + 1} o búscalo en clientes.`;
+    }
+    if (!esNuevo && (!pasajeros[i].cliente_id || pasajeros[i].cliente_id <= 0)) {
+      return `Selecciona un cliente o registra en esta reserva al acompañante ${i + 1}.`;
     }
     if (pasajeros[i].precio_pasajero_eur < 0) {
       return `El precio del acompañante ${i + 1} no puede ser negativo.`;

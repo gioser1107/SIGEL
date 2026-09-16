@@ -8,11 +8,9 @@ interface PropsModalConvertir {
   onCerrar: () => void;
 }
 
-// Modal que redirige al módulo de Reservas para convertir una cotización aceptada
 export default function ModalConvertirReserva({ abierto, cotizacion, onCerrar }: PropsModalConvertir) {
   if (!abierto || !cotizacion) return null;
 
-  // Redirige al módulo de Reservas con el ID de la cotización en la URL
   const irAReservas = () => {
     window.location.href = `/admin/reservas?cotizacion_id=${cotizacion.id}`;
   };

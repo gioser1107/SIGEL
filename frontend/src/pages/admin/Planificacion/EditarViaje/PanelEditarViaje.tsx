@@ -3,7 +3,7 @@ import Boton from '../../../../components/ui/Boton/Boton';
 import type { Costo, DatosViajeNuevo, Viaje } from '../../../../types/viaje';
 import { PESTANIAS_PANEL } from '../constants';
 import { textoVisible } from '../../../../utils/etiquetasNegocio';
-import { formatFecha } from '../utils/formatearViaje';
+import { formatearFecha } from '../utils/formatearViaje';
 import TabCostos from './components/TabCostos';
 import TabInfoViaje from './components/TabInfoViaje';
 import TabRutaRecogida from './components/TabRutaRecogida';
@@ -66,7 +66,7 @@ export default function PanelEditarViaje({
       abierto={abierto}
       onCerrar={onCerrar}
       titulo={textoVisible(viaje.destino_nombre, 'Editar viaje')}
-      subtitulo={formatFecha(viaje.fecha_salida)}
+      subtitulo={formatearFecha(viaje.fecha_salida)}
       ancho={tabActiva === 'paradas' ? 'xl' : 'lg'}
       pestanias={PESTANIAS_PANEL}
       pestaniaActiva={tabActiva}
@@ -84,7 +84,7 @@ export default function PanelEditarViaje({
         ) : undefined
       }
     >
-      {errorForm && tabActiva === 'info' && (
+      {errorForm && (
         <div className="drawer-form__error" role="alert">
           {errorForm}
         </div>

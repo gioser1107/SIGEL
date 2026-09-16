@@ -10,6 +10,7 @@ interface FormularioRolCamposProps {
   mostrarMatriz: boolean;
   onChange: (actualizador: (prev: FormularioRol) => FormularioRol) => void;
   onAlternarPermiso: (permisoId: number) => void;
+  bloqueado?: boolean;
 }
 
 export default function FormularioRolCampos({
@@ -19,11 +20,14 @@ export default function FormularioRolCampos({
   mostrarMatriz,
   onChange,
   onAlternarPermiso,
+  bloqueado = false,
 }: FormularioRolCamposProps) {
   return (
     <div className="drawer-form">
       <p className="drawer-form__intro">
-        Definí el nombre del rol y qué acciones puede realizar en el panel.
+        {bloqueado
+          ? 'El rol Administrador es intocable: no se puede editar ni quitarle permisos.'
+          : 'Definí el nombre del rol y qué acciones puede realizar en el panel.'}
       </p>
       <div className="drawer-form__campo">
         <label className="drawer-form__label" htmlFor="rol-nombre">
@@ -35,6 +39,7 @@ export default function FormularioRolCampos({
           value={form.nombre}
           onChange={(e) => onChange((f) => ({ ...f, nombre: sanitizarNombrePersona(e.target.value) }))}
           required
+          disabled={bloqueado}
         />
       </div>
       <div className="drawer-form__campo">
@@ -44,6 +49,7 @@ export default function FormularioRolCampos({
           className="drawer-form__input drawer-form__textarea"
           value={form.descripcion}
           onChange={(e) => onChange((f) => ({ ...f, descripcion: e.target.value }))}
+          disabled={bloqueado}
         />
       </div>
 
@@ -54,6 +60,7 @@ export default function FormularioRolCampos({
             permisos={permisos}
             seleccionados={permisosSeleccionados}
             onAlternar={onAlternarPermiso}
+            soloLectura={bloqueado}
           />
         </div>
       )}

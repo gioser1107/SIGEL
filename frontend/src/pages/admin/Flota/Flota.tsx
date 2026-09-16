@@ -86,7 +86,7 @@ export default function Flota() {
       setConfirmAbierto(false);
       setUnidadAEliminar(null);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al eliminar unidad');
+      setError(e instanceof Error ? e.message : 'Error al eliminar unidad');
     } finally {
       setEliminando(false);
     }

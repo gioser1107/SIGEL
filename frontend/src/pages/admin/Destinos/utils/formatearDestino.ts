@@ -1,6 +1,6 @@
 import type { Destino } from '../../../../types/destino';
 
-export function formatFecha(fecha: string | null | undefined): string {
+export function formatearFecha(fecha: string | null | undefined): string {
   if (!fecha) return '—';
   return new Date(fecha).toLocaleDateString('es-VE', {
     day: '2-digit',
@@ -9,7 +9,7 @@ export function formatFecha(fecha: string | null | undefined): string {
   });
 }
 
-export function formatPrecio(eur: number | null | undefined): string {
+export function formatearPrecio(eur: number | null | undefined): string {
   if (eur === null || eur === undefined) return '—';
   return `€ ${eur.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
 }

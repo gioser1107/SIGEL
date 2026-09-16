@@ -20,7 +20,6 @@ export function useBitacora() {
   const [entradaActiva, setEntradaActiva] = useState<DetalleBitacora | null>(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
 
-  // Carga el listado paginado desde la API según los filtros activos
   const cargarBitacora = useCallback(async () => {
     setCargando(true);
     setError(null);
@@ -49,7 +48,6 @@ export function useBitacora() {
 
   const totalPaginas = Math.max(1, Math.ceil(total / LIMITE_PAGINA));
 
-  // Abre el panel lateral y carga el detalle completo del registro seleccionado
   const abrirDetalle = async (entrada: EntradaBitacora) => {
     setPanelAbierto(true);
     setCargandoDetalle(true);
@@ -65,46 +63,38 @@ export function useBitacora() {
     }
   };
 
-  // Cierra el panel lateral y limpia el registro activo
   const cerrarPanel = () => {
     setPanelAbierto(false);
     setEntradaActiva(null);
   };
 
-  // Vuelve a la primera página al cambiar cualquier filtro
   const reiniciarPagina = () => setPagina(1);
 
-  // Actualiza un filtro de texto y reinicia la paginación
   const cambiarBusqueda = (valor: string) => {
     setBusqueda(valor);
     reiniciarPagina();
   };
 
-  // Actualiza el filtro de módulo y reinicia la paginación
   const cambiarFiltroModulo = (valor: string) => {
     setFiltroModulo(valor);
     reiniciarPagina();
   };
 
-  // Actualiza el filtro de acción y reinicia la paginación
   const cambiarFiltroAccion = (valor: string) => {
     setFiltroAccion(valor);
     reiniciarPagina();
   };
 
-  // Actualiza la fecha desde y reinicia la paginación
   const cambiarFechaDesde = (valor: string) => {
     setFechaDesde(valor);
     reiniciarPagina();
   };
 
-  // Actualiza la fecha hasta y reinicia la paginación
   const cambiarFechaHasta = (valor: string) => {
     setFechaHasta(valor);
     reiniciarPagina();
   };
 
-  // Avanza o retrocede una página respetando los límites
   const irPagina = (nuevaPagina: number) => {
     setPagina(Math.max(1, Math.min(totalPaginas, nuevaPagina)));
   };

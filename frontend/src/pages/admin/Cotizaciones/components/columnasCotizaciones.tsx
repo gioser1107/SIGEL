@@ -2,9 +2,8 @@ import { EtiquetaEstado, resolverVariante } from '../../../../components/admin';
 import type { Columna } from '../../../../components/admin';
 import type { Cotizacion } from '../../../../types/cotizacion';
 import { SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
-import { formatFecha } from '../utils/formatearCotizacion';
+import { formatearFecha } from '../utils/formatearCotizacion';
 
-// Construye la definición de columnas de la tabla de cotizaciones
 export function columnasCotizaciones(): Columna<Cotizacion>[] {
   return [
     {
@@ -30,7 +29,7 @@ export function columnasCotizaciones(): Columna<Cotizacion>[] {
       id: 'fecha',
       encabezado: 'Fecha solicitud',
       ordenable: true,
-      accessor: (c) => <span className="cot-tabla__fecha">{formatFecha(c.creado_en)}</span>,
+      accessor: (c) => <span className="cot-tabla__fecha">{formatearFecha(c.creado_en)}</span>,
     },
     {
       id: 'precio',

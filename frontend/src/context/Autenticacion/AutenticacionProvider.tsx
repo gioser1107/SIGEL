@@ -10,6 +10,7 @@ import {
 import type { SesionUsuario } from '../../types/seguridad';
 import type { AccionPermiso } from '../../utils/permisosModulos';
 import {
+  esRolAdministrador,
   puedeAccederSeguridad,
   puedeBorrar,
   puedeCrear,
@@ -74,44 +75,44 @@ export function AutenticacionProvider({ children }: { children: ReactNode }) {
 
   const permisos = useMemo(() => usuario?.permisos ?? [], [usuario]);
 
+  const esAdmin = useMemo(
+    () => esRolAdministrador(usuario?.rol),
+    [usuario]
+  );
+
   const tienePermiso = useCallback(
-    (permiso: string) => tienePermisoEnLista(permisos, permiso),
-    [permisos]
+    (permiso: string) => esAdmin || tienePermisoEnLista(permisos, permiso),
+    [esAdmin, permisos]
   );
 
   const puedeModuloFn = useCallback(
-    (modulo: string, accion?: AccionPermiso) => puedeModulo(permisos, modulo, accion),
-    [permisos]
+    (modulo: string, accion?: AccionPermiso) => esAdmin || puedeModulo(permisos, modulo, accion),
+    [esAdmin, permisos]
   );
 
   const puedeLeerFn = useCallback(
-    (modulo: string) => puedeLeer(permisos, modulo),
-    [permisos]
+    (modulo: string) => esAdmin || puedeLeer(permisos, modulo),
+    [esAdmin, permisos]
   );
 
   const puedeCrearFn = useCallback(
-    (modulo: string) => puedeCrear(permisos, modulo),
-    [permisos]
+    (modulo: string) => esAdmin || puedeCrear(permisos, modulo),
+    [esAdmin, permisos]
   );
 
   const puedeEditarFn = useCallback(
-    (modulo: string) => puedeEditar(permisos, modulo),
-    [permisos]
+    (modulo: string) => esAdmin || puedeEditar(permisos, modulo),
+    [esAdmin, permisos]
   );
 
   const puedeBorrarFn = useCallback(
-    (modulo: string) => puedeBorrar(permisos, modulo),
-    [permisos]
+    (modulo: string) => esAdmin || puedeBorrar(permisos, modulo),
+    [esAdmin, permisos]
   );
 
   const puedeAccederSeguridadFn = useCallback(
-    () => puedeAccederSeguridad(permisos),
-    [permisos]
-  );
-
-  const esAdmin = useMemo(
-    () => usuario?.rol?.toLowerCase().includes('admin') ?? false,
-    [usuario]
+    () => esAdmin || puedeAccederSeguridad(permisos),
+    [esAdmin, permisos]
   );
 
   const esCliente = useMemo(

@@ -3,7 +3,7 @@ import { ErrorApi } from '../../../../services/api';
 import { obtenerReporteEstadistico } from '../../../../services/reportesEstadisticos';
 import type { ReporteEstadistico } from '../../../../types/reportesEstadisticos';
 
-import { esFechaFutura, fechaHoyIso, MENSAJE_FECHA_NO_FUTURA } from '../../../../utils/validacionesFormulario';
+import { fechaHoyIso, validarRangoFechasConsulta } from '../../../../utils/validacionesFormulario';
 
 function isoHoy(): string {
   return fechaHoyIso();
@@ -27,8 +27,9 @@ export function useReportesEstadisticos() {
   const [error, setError] = useState<string | null>(null);
 
   const consultar = useCallback(async (fechaDesde: string, fechaHasta: string) => {
-    if (esFechaFutura(fechaDesde) || esFechaFutura(fechaHasta)) {
-      setError(MENSAJE_FECHA_NO_FUTURA);
+    const errorRango = validarRangoFechasConsulta(fechaDesde, fechaHasta);
+    if (errorRango) {
+      setError(errorRango);
       setReporte(null);
       setCargando(false);
       return;

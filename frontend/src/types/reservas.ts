@@ -1,5 +1,6 @@
-import type { Cliente } from './cliente';
+import type { Cliente, DatosClienteNuevo } from './cliente';
 import type { PuntoRecogidaInline } from './puntoRecogida';
+import type { FormularioCliente } from '../utils/validacionesCliente';
 import type { Viaje } from './viaje';
 
 export interface Reserva {
@@ -56,9 +57,10 @@ export interface ActualizarReservaDTO {
   estado?: string;
 }
 
-/** Para agregar un pasajero ya registrado como cliente a una reserva */
+/** Para agregar un pasajero: cliente ya registrado o ficha nueva en la misma reserva. */
 export interface CrearPasajeroDTO {
-  cliente_id: number;
+  cliente_id?: number;
+  cliente?: DatosClienteNuevo;
   es_menor?: boolean;
   ocupa_asiento?: boolean;
   precio_pasajero_eur?: number;
@@ -82,18 +84,22 @@ export interface AsignarAsientoDTO {
   asiento_id: number;
 }
 
+export type ModoPasajeroDraft = 'existente' | 'nuevo';
+
 /**
  * Draft usado en el formulario admin al crear una reserva.
- * Contiene el cliente ya seleccionado + campos de reserva.
+ * Puede ser un cliente del catálogo o una persona nueva (viaje grupal).
  */
 export interface PasajeroDraft {
   id_temporal: number;
-  // Cliente seleccionado del catálogo
+  modo: ModoPasajeroDraft;
+  // Cliente seleccionado del catálogo (modo existente)
   cliente_id: number;
-  nombre: string;       // solo para mostrar en UI, viene del cliente
+  nombre: string;
   apellido: string;
   numero_documento: string;
   tipo_documento: string;
+  ficha?: FormularioCliente;
   // Campos propios de la reserva
   es_menor: boolean;
   ocupa_asiento: boolean;

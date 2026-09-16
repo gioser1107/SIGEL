@@ -84,7 +84,7 @@ export function payloadViajeConGuias(form: DatosViajeNuevo): {
   const { guias_ids, guia_principal_id, error } = normalizarGuiasFormulario(form);
   if (error) return { payload: form, error };
 
-  const { guia_id: _legacy, ...resto } = form;
+  const { guia_id: _guiaAnterior, ...resto } = form;
   return {
     payload: {
       ...resto,

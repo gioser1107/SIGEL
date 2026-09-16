@@ -24,7 +24,7 @@ import { ETIQUETA_ESTADO, PESTANIAS_FILTRO } from './constants';
 import { etiquetaGuiasViaje } from './utils/planificacionGuias';
 import { usePlanificacion } from './hooks/usePlanificacion';
 import { SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
-import { formatFecha } from './utils/formatearViaje';
+import { formatearFecha } from './utils/formatearViaje';
 import './Planificacion.css';
 
 const COLUMNAS_REPORTE_PLANIFICACION = [
@@ -36,13 +36,13 @@ const COLUMNAS_REPORTE_PLANIFICACION = [
 ] as const;
 
 function rutaReporteOperativo(viajeId: number): string {
-  return `/admin/reporte-viaje?viaje=${viajeId}`;
+  return `/admin/reportes?tipo=listin&viaje=${viajeId}`;
 }
 
 function filasListadoImpresion(viajes: Viaje[]) {
   return viajes.map((v) => ({
     destino: textoVisible(v.destino_nombre, SIN_DATO.destino),
-    fecha: formatFecha(v.fecha_salida),
+    fecha: formatearFecha(v.fecha_salida),
     unidad: textoVisible(v.unidad_placa, SIN_DATO.unidad),
     estado: ETIQUETA_ESTADO[v.estado] ?? v.estado,
     guia: etiquetaGuiasViaje(v),

@@ -14,7 +14,7 @@ from modelos.metodo_pago_modelo import MetodoPago
 from modelos.pago_modelo import Pago, convertir_monto_pago_a_eur
 from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
-from modelos.viaje_modelo import Viaje, calcular_disponibilidad_viaje
+from modelos.viaje_modelo import Viaje, calcular_disponibilidad_viaje, sincronizar_viajes_vencidos
 
 ANIO_MINIMO = 2000
 DIAS_MAXIMOS_RANGO = 366 * 10
@@ -134,6 +134,7 @@ def generar_reporte_estadistico(
     hasta: Optional[date],
 ) -> dict:
     desde, hasta = validar_rango_fechas(desde, hasta)
+    sincronizar_viajes_vencidos(db)
     inicio = _inicio_dia(desde)
     fin = _fin_exclusivo(hasta)
     filtros_reserva = _filtro_reservas_periodo(desde, hasta)

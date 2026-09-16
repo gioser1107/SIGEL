@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, or_
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, and_, func, or_
 from sqlalchemy.orm import Session
 
 from database import Base
@@ -12,9 +12,13 @@ from modelos.asiento_reservado_modelo import AsientoReservado
 from modelos.costo_operativo_modelo import CostoOperativo
 from modelos.destino_modelo import Destino, IMAGEN_DEFAULT, dificultad_efectiva, imagenes_destino
 from modelos.unidad_transporte_modelo import UnidadTransporte
-from modelos.viaje_guia_modelo import asignar_guias_si_provisto, guias_en_respuesta_viaje
+from modelos.viaje_guia_modelo import ViajeGuia, asignar_guias_si_provisto, guias_en_respuesta_viaje
+from utilidades.fecha_operativa import ahora_caracas
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
 from utilidades.validaciones import ValidadorEntrada
+
+
+ESTADOS_VIAJE_AUTO_FINALIZABLES = ("planificado", "en_curso")
 
 
 class Viaje(Base):
@@ -33,6 +37,52 @@ class Viaje(Base):
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
     eliminado_en = Column(DateTime, nullable=True)
+
+
+def _ahora_operativo() -> datetime:
+    return ahora_caracas().replace(tzinfo=None)
+
+
+def _naive(fecha: datetime) -> datetime:
+    if fecha.tzinfo is not None:
+        return fecha.replace(tzinfo=None)
+    return fecha
+
+
+def fecha_fin_viaje(viaje: Viaje) -> datetime:
+    """Regreso si existe; si no, la salida (misma regla que reseñas)."""
+    return _naive(viaje.fecha_regreso or viaje.fecha_salida)
+
+
+def _aplicar_cierre_por_fecha(viaje: Viaje, ahora: datetime | None = None) -> None:
+    """Solo cierra planificado/en_curso. No toca cancelado ni finalizado."""
+    if viaje.estado not in ESTADOS_VIAJE_AUTO_FINALIZABLES:
+        return
+    if fecha_fin_viaje(viaje) <= (ahora or _ahora_operativo()):
+        viaje.estado = "finalizado"
+
+
+def sincronizar_viajes_vencidos(db: Session) -> int:
+    """Pasa a finalizado los viajes operativos cuya fecha de fin ya pasó."""
+    ahora = _ahora_operativo()
+    fecha_fin = func.coalesce(Viaje.fecha_regreso, Viaje.fecha_salida)
+    viajes = (
+        db.query(Viaje)
+        .filter(
+            Viaje.eliminado_en.is_(None),
+            Viaje.estado.in_(ESTADOS_VIAJE_AUTO_FINALIZABLES),
+            fecha_fin <= ahora,
+        )
+        .all()
+    )
+    if not viajes:
+        return 0
+
+    for viaje in viajes:
+        viaje.estado = "finalizado"
+        viaje.actualizado_en = ahora
+    db.commit()
+    return len(viajes)
 
 
 def contar_asientos_activos_unidad(db: Session, unidad_id: int) -> int:
@@ -197,10 +247,10 @@ def obtener_unidad_activa(db: Session, unidad_id: int) -> UnidadTransporte:
 
 
 def validar_fechas_viaje(fecha_salida: datetime, fecha_regreso: datetime | None) -> None:
-    if fecha_regreso is not None and fecha_regreso < fecha_salida:
+    if fecha_regreso is not None and fecha_regreso <= fecha_salida:
         raise HTTPException(
             status_code=400,
-            detail="La fecha de regreso no puede ser anterior a la fecha de salida",
+            detail="La fecha de regreso debe ser posterior a la fecha de salida",
         )
 
 
@@ -211,6 +261,12 @@ def obtener_viaje_activo(db: Session, viaje_id: int) -> Viaje:
     ).first()
     if viaje is None:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
+    estado_previo = viaje.estado
+    _aplicar_cierre_por_fecha(viaje)
+    if viaje.estado != estado_previo:
+        viaje.actualizado_en = _ahora_operativo()
+        db.commit()
+        db.refresh(viaje)
     return viaje
 
 
@@ -276,9 +332,11 @@ def listar_viajes(
     destino_id: Optional[int] = None,
     fecha_desde: Optional[datetime] = None,
     fecha_hasta: Optional[datetime] = None,
+    guia_usuario_id: Optional[int] = None,
     pagina: int = 1,
     limite: int = 10,
 ) -> dict:
+    sincronizar_viajes_vencidos(db)
     filtro_efectivo = filtro or estado or "todos"
     estados_validos = {"planificado", "en_curso", "finalizado", "cancelado"}
 
@@ -300,6 +358,15 @@ def listar_viajes(
         consulta = consulta.filter(Viaje.fecha_salida >= fecha_desde)
     if fecha_hasta is not None:
         consulta = consulta.filter(Viaje.fecha_salida <= fecha_hasta)
+    if guia_usuario_id is not None:
+        consulta = consulta.join(
+            ViajeGuia,
+            and_(
+                ViajeGuia.viaje_id == Viaje.id,
+                ViajeGuia.usuario_id == guia_usuario_id,
+                ViajeGuia.eliminado_en.is_(None),
+            ),
+        )
 
     viajes, total = paginar_consulta(consulta, pagina, limite)
     items = [viaje_a_dict(db, v) for v in viajes]
@@ -332,6 +399,7 @@ def crear_viaje(
         creado_en=ahora,
         actualizado_en=ahora,
     )
+    _aplicar_cierre_por_fecha(nuevo_viaje, ahora)
 
     db.add(nuevo_viaje)
     db.commit()
@@ -381,6 +449,7 @@ def actualizar_viaje(
         viaje.estado = ValidadorEntrada.estado_viaje(estado)
 
     validar_fechas_viaje(viaje.fecha_salida, viaje.fecha_regreso)
+    _aplicar_cierre_por_fecha(viaje)
 
     viaje.actualizado_en = datetime.now()
     db.commit()
@@ -611,6 +680,7 @@ def viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
 
 
 def estadisticas_catalogo(db: Session) -> dict:
+    sincronizar_viajes_vencidos(db)
     ahora = datetime.now()
     destinos_activos = db.query(Destino).filter(
         Destino.activo.is_(True),
@@ -637,6 +707,7 @@ def listar_viajes_catalogo(
     desde: datetime | None = None,
     hasta: datetime | None = None,
 ) -> list[dict]:
+    sincronizar_viajes_vencidos(db)
     ahora = datetime.now()
     inicio_hoy = datetime.combine(ahora.date(), time.min)
     consulta = db.query(Viaje).filter(
@@ -670,6 +741,7 @@ def listar_viajes_catalogo(
 
 
 def obtener_viaje_catalogo(db: Session, viaje_id: int) -> dict:
+    sincronizar_viajes_vencidos(db)
     viaje = db.query(Viaje).filter(
         Viaje.id == viaje_id,
         Viaje.eliminado_en.is_(None),

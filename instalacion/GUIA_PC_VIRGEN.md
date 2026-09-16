@@ -83,7 +83,7 @@ Lleva también **esta guía impresa o en el USB**, abierta en el Bloc de notas d
 ### 1.4 Lo que NO hace falta llevar
 
 - Node.js
-- tu base `travel_bqto` de desarrollo
+- tus bases `travel_bqto` y `travel_bqto_seguridad` de desarrollo
 - contraseñas de tu Mac
 
 ---
@@ -205,7 +205,7 @@ mysql -u root -p < C:\SIGEL\instalacion\travel_bqto_limpia.sql
 
 Escribe la contraseña de root y Enter.
 
-Ese archivo **borra y recrea** la base `travel_bqto`. En una PC virgen eso está bien. No lo ejecutes contra una base que ya tenga datos reales.
+Ese archivo **borra y recrea** `travel_bqto_seguridad` y `travel_bqto`. En una PC virgen eso está bien. No lo ejecutes contra una base que ya tenga datos reales.
 
 Si sale `mysql no se reconoce`, no está en el PATH: usa la ruta de XAMPP de arriba, o busca `mysql.exe` en `C:\Program Files\MariaDB *\bin\`.
 
@@ -255,6 +255,7 @@ DB_CONTRASENA=
 DB_HOST=localhost
 DB_PUERTO=3306
 DB_NOMBRE=travel_bqto
+DB_NOMBRE_SEGURIDAD=travel_bqto_seguridad
 JWT_SECRETO=una-frase-larga-solo-de-esta-laptop
 JWT_EXPIRACION_MINUTOS=480
 ```

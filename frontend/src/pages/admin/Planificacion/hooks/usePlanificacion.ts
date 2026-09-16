@@ -225,10 +225,11 @@ export function usePlanificacion() {
     if (!viajeActivo) return;
     const errorCosto = validarLineaCosto(nuevoCosto);
     if (errorCosto) {
-      alert(errorCosto);
+      setErrorForm(errorCosto);
       return;
     }
     setGuardandoCosto(true);
+    setErrorForm(null);
     try {
       await crearCosto(viajeActivo.id, {
         categoria: nuevoCosto.categoria,
@@ -238,7 +239,7 @@ export function usePlanificacion() {
       await cargarDetalle(viajeActivo.id);
       setNuevoCosto(COSTO_VACIO);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al agregar costo');
+      setErrorForm(e instanceof Error ? e.message : 'Error al agregar costo');
     } finally {
       setGuardandoCosto(false);
     }
@@ -250,7 +251,7 @@ export function usePlanificacion() {
       await eliminarCosto(viajeActivo.id, costoId);
       await cargarDetalle(viajeActivo.id);
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al eliminar costo');
+      setErrorForm(e instanceof Error ? e.message : 'Error al eliminar costo');
     }
   };
 
@@ -270,7 +271,7 @@ export function usePlanificacion() {
       setFiltroEstado('anulado');
       reiniciarPagina();
     } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error al anular viaje');
+      setError(e instanceof Error ? e.message : 'Error al anular viaje');
     } finally {
       setEliminando(false);
     }

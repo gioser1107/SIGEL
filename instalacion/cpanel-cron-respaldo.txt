@@ -1,0 +1,18 @@
+Job diario de respaldo MySQL (seguridad + negocio).
+
+Retención: 7 días. Los .sql.gz quedan en backend/respaldos/.
+
+cPanel → Advanced → Cron Jobs
+Zona horaria: America/Caracas
+Minuto 15, Hora 3, resto *
+
+Comando:
+
+/home/kontrola/virtualenv/repositories/SIGEL/backend/3.10/bin/python /home/kontrola/repositories/SIGEL/backend/jobs/respaldo_diario.py >> /home/kontrola/logs/respaldo_bd.log 2>&1
+
+En la laptop local (cron o Programador de tareas):
+
+cd backend
+.venv/bin/python jobs/respaldo_diario.py
+
+El administrador también puede generar un respaldo desde Configuración > Respaldos.

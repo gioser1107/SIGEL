@@ -140,6 +140,12 @@ export function esRolClientePortal(rol: string | undefined | null): boolean {
   return (rol ?? '').trim().toLowerCase() === 'cliente';
 }
 
+/** Rol Administrador: intocable y con acceso a todo el panel. */
+export function esRolAdministrador(rol: string | undefined | null): boolean {
+  const nombre = (rol ?? '').trim().toLowerCase();
+  return nombre === 'administrador' || nombre === 'admin';
+}
+
 /** True si el usuario puede entrar al panel admin (tiene al menos un módulo operativo). */
 export function puedeAccederPanelAdmin(permisos: string[], esAdmin = false, rol?: string | null): boolean {
   if (esRolClientePortal(rol)) return false;

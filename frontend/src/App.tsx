@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 
 // Layouts
 import LayoutPublico from './components/layout/LayoutPublico/LayoutPublico';
@@ -28,8 +28,10 @@ import Pagos from './pages/admin/Pagos/Pagos';
 import Bitacora from './pages/admin/Bitacora/Bitacora';
 import ModuloResenas from './pages/admin/Resenas/Resenas';
 import Abordaje from './pages/admin/Abordaje/Abordaje';
-import ReporteViaje from './pages/admin/ReporteViaje/ReporteViaje';
 import ReportesEstadisticos from './pages/admin/ReportesEstadisticos/ReportesEstadisticos';
+import AsistenteInteligente from './pages/admin/AsistenteInteligente/AsistenteInteligente';
+import AyudaAdmin from './pages/admin/Ayuda/Ayuda';
+import Respaldos from './pages/admin/Respaldos/Respaldos';
 
 // Páginas Cliente
 import MisViajes from './pages/client/MisViajes/MisViajes';
@@ -40,6 +42,16 @@ import MisResenas from './pages/client/MisResenas/MisResenas';
 import { AutenticacionProvider } from './context/Autenticacion';
 import MisSolicitudes from './pages/client/MisSolicitudes/MisSolicitudes';
 import MisPuntosRecogida from './pages/client/MisPuntosRecogida/MisPuntosRecogida';
+import AyudaCliente from './pages/client/Ayuda/Ayuda';
+
+function RedirigirListin() {
+  const [params] = useSearchParams();
+  const viaje = params.get('viaje');
+  const destino = viaje
+    ? `/admin/reportes?tipo=listin&viaje=${encodeURIComponent(viaje)}`
+    : '/admin/reportes?tipo=listin';
+  return <Navigate to={destino} replace />;
+}
 
 /**
  * App — Componente raíz con el sistema de rutas.
@@ -72,6 +84,8 @@ export default function App() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="asistente" element={<AsistenteInteligente />} />
+            <Route path="ayuda" element={<AyudaAdmin />} />
             <Route
               path="destinos"
               element={
@@ -154,16 +168,12 @@ export default function App() {
             />
             <Route
               path="reporte-viaje"
-              element={
-                <RutaPrivada modulo="planificacion">
-                  <ReporteViaje />
-                </RutaPrivada>
-              }
+              element={<RedirigirListin />}
             />
             <Route
               path="reportes"
               element={
-                <RutaPrivada modulos={['reservas', 'reportes_pago', 'clientes']}>
+                <RutaPrivada modulos={['reservas', 'reportes_pago', 'clientes', 'planificacion']}>
                   <ReportesEstadisticos />
                 </RutaPrivada>
               }
@@ -192,6 +202,14 @@ export default function App() {
                 </RutaPrivada>
               }
             />
+            <Route
+              path="respaldos"
+              element={
+                <RutaPrivada requiereAdmin>
+                  <Respaldos />
+                </RutaPrivada>
+              }
+            />
             <Route path="usuarios" element={<Navigate to="/admin/usuarios-roles" replace />} />
             <Route path="roles" element={<Navigate to="/admin/usuarios-roles" replace />} />
             <Route path="permisos" element={<Navigate to="/admin/usuarios-roles" replace />} />
@@ -214,6 +232,7 @@ export default function App() {
             <Route path="solicitudes" element={<MisSolicitudes />} />
             <Route path="puntos-recogida" element={<MisPuntosRecogida />} />
             <Route path="resenas" element={<MisResenas />} />
+            <Route path="ayuda" element={<AyudaCliente />} />
           </Route>
         </Routes>
       </AutenticacionProvider>

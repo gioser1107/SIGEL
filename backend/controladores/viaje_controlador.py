@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
-from dependencias.permiso_dependencia import requiere_permiso
+from dependencias.permiso_dependencia import requiere_alguno_de_permisos, requiere_permiso
 from modelos.cliente_modelo import requiere_sesion_cliente_portal
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 from modelos.permiso_modelo import (
@@ -18,9 +18,11 @@ from modelos.permiso_modelo import (
     PERMISO_LEER_RESERVAS,
 )
 from modelos.viaje_guia_modelo import (
+    asegurar_acceso_reporte_viaje,
     guardar_guias_viaje,
     listar_guias_disponibles,
     listar_guias_viaje,
+    usuario_es_guia,
 )
 from modelos.viaje_ruta_recogida_modelo import (
     guardar_ruta_recogida,
@@ -52,7 +54,7 @@ class DatosViajeCrear(BaseModel):
     unidad_id: int
     guias_ids: list[int] = Field(default_factory=list)
     guia_principal_id: int | None = None
-    guia_id: int | None = None  # legacy: un solo guía
+    guia_id: int | None = None  # compatibilidad: un solo guía
     fecha_salida: datetime
     fecha_regreso: datetime | None = None
     estado: str = "planificado"
@@ -63,7 +65,7 @@ class DatosViajeActualizar(BaseModel):
     unidad_id: int | None = None
     guias_ids: list[int] | None = None
     guia_principal_id: int | None = None
-    guia_id: int | None = None  # legacy
+    guia_id: int | None = None  # compatibilidad: un solo guía
     fecha_salida: datetime | None = None
     fecha_regreso: datetime | None = None
     estado: str | None = None
@@ -121,6 +123,25 @@ def listar_viajes_endpoint(
     )
 
 
+@router.get("/para-reporte")
+def listar_viajes_para_reporte_endpoint(
+    pagina: int = Query(default=1, ge=1),
+    limite: int = Query(default=100, ge=1, le=200),
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(
+        requiere_alguno_de_permisos(PERMISO_LEER_PLANIFICACION, PERMISO_LEER_RESERVAS)
+    ),
+):
+    """Listín: quien tiene planificación o reservas. El guía solo ve sus viajes."""
+    return listar_viajes(
+        db,
+        filtro="todos",
+        guia_usuario_id=usuario_actual["id"] if usuario_es_guia(usuario_actual) else None,
+        pagina=pagina,
+        limite=limite,
+    )
+
+
 @router.get("/guias-disponibles")
 def listar_guias_disponibles_endpoint(
     db: Session = Depends(get_db),
@@ -143,8 +164,11 @@ def obtener_viaje_endpoint(
 def obtener_reporte_viaje_endpoint(
     viaje_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_PLANIFICACION)),
+    usuario_actual: dict = Depends(
+        requiere_alguno_de_permisos(PERMISO_LEER_PLANIFICACION, PERMISO_LEER_RESERVAS)
+    ),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
     return obtener_reporte_viaje(db, viaje_id)
 
 

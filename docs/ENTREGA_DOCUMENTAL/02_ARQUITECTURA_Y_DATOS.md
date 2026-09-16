@@ -10,9 +10,11 @@ FastAPI (`backend/main.py`) ─── routers por dominio
     │                               │
     │ SQLAlchemy                    ├─ autenticación / permisos
     ▼                               ├─ catálogo, clientes, viajes
-MySQL `travel_bqto`                ├─ cotizaciones, reservas, pagos
-                                    ├─ abordaje, reseñas, bitácora
-                                    └─ reportes estadísticos
+MySQL `travel_bqto_seguridad`      ├─ cotizaciones, reservas, pagos
+  usuarios, roles, permisos,       ├─ abordaje, reseñas
+  roles_permisos, bitácora         └─ reportes estadísticos
+MySQL `travel_bqto`
+  catálogo, operación, comercial
 ```
 
 El frontend contiene rutas públicas, rutas protegidas de administración y rutas protegidas de cliente. La API concentra excepciones de integridad (409), errores de base de datos (503) y errores generales (500), además de CORS para desarrollo local.
@@ -31,12 +33,12 @@ El frontend contiene rutas públicas, rutas protegidas de administración y ruta
 
 | Dominio | Tablas principales | Relación relevante |
 |---|---|---|
-| Seguridad | `usuarios`, `roles`, `permisos`, `roles_permisos` | Usuario pertenece a rol; rol tiene permisos. |
-| Clientes | `clientes`, `estados`, `ciudades`, `puntos_recogida`, `clientes_puntos_recogida` | Cliente puede guardar varios puntos de recogida. |
+| Seguridad (`travel_bqto_seguridad`) | `usuarios`, `roles`, `permisos`, `roles_permisos`, `bitacora` | Usuario pertenece a rol; rol tiene permisos; bitácora audita al usuario. |
+| Clientes | `clientes`, `estados`, `ciudades`, `puntos_recogida`, `clientes_puntos_recogida` | Cliente puede guardar varios puntos de recogida. `usuario_id` apunta a la base de seguridad. |
 | Oferta/operación | `destinos`, `destino_imagenes`, `viajes`, `unidades_transporte`, `asientos`, `viajes_guias`, `costos_operativos` | Un viaje usa un destino y una unidad. |
 | Comercial | `cotizaciones`, `cotizacion_lineas`, `reservas`, `reserva_clientes`, `asientos_reservados` | Reserva vincula titular/viajeros al viaje y sus asientos. |
 | Finanzas | `pagos`, `tasas`, `monedas`, `metodos_pago`, `bancos`, `puntos_venta` | Pago pertenece a una reserva y usa método/tasa. |
-| Operación/auditoría | `abordajes_viaje`, `resenas`, `bitacora`, `viajes_ruta_recogida` | Abordaje refiere al viajero; bitácora documenta acciones. |
+| Operación | `abordajes_viaje`, `resenas`, `viajes_ruta_recogida` | Abordaje refiere al viajero; el registrador vive en la base de seguridad. |
 
 ## Integridad y normalización
 
@@ -51,4 +53,17 @@ La revisión académica solicita que cada persona que viaje tenga registro en `c
 
 ## Bitácora
 
-La entidad `bitacora` contempla `usuario_id`, `modulo`, `accion`, `tabla_afectada`, `registro_id`, `resumen`, `detalle`, `ip_origen` y `creado_en`. En los diagramas, toda operación crítica termina con el registro de auditoría antes de devolver la confirmación.
+La entidad `bitacora` vive en `travel_bqto_seguridad`. Los **triggers** `trg_sigel_*` escriben INSERT/UPDATE/DELETE (la baja lógica se registra como DELETE). LOGIN, VALIDAR, RECHAZAR y respaldos los registra la API. Las variables de sesión `@sigel_usuario_id` y `@sigel_ip` identifican al operador.
+
+## Vistas, índices y triggers
+
+1. Vistas: `v_bitacora_listado`, `v_reserva_totales_eur`, `v_ocupacion_viaje`.
+2. Índices: PK en cada tabla; únicos de negocio (correo, documento, placa, asiento por viaje); índices en FKs y en bitácora.
+3. Triggers de integridad: rol/usuario Administrador intocable, bitácora no se borra, monto de pago > 0.
+4. Se instalan con `utilidades/objetos_mysql.py` (también al arrancar la API).
+
+## Dos bases y respaldo
+
+1. `travel_bqto_seguridad` concentra credenciales, RBAC y auditoría. `travel_bqto` concentra el negocio.
+2. Las FKs de negocio (`creado_por`, `usuario_id`, etc.) apuntan a `travel_bqto_seguridad.usuarios` en el mismo servidor MySQL.
+3. El administrador genera respaldos desde Configuración > Respaldos. El cron `backend/jobs/respaldo_diario.py` deja un `.sql.gz` por base y rota a 7 días.

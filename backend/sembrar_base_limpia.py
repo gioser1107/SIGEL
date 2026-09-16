@@ -1,10 +1,10 @@
-"""Genera e importa la base limpia de entrega: esquema + roles + usuarios + catálogos.
+"""Genera e importa las bases limpias de entrega: seguridad + negocio.
 
 No incluye destinos, viajes, reservas, pagos ni bitácora de prueba.
 Ejecutar desde backend/:  python sembrar_base_limpia.py
 Opciones:
   --sql-solo     solo escribe instalacion/travel_bqto_limpia.sql
-  --aplicar      crea/reemplaza la BD MySQL local (usa backend/.env)
+  --aplicar      crea/reemplaza las dos BD MySQL locales (usa backend/.env)
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from sqlalchemy.schema import CreateTable
 directorio_backend = Path(__file__).resolve().parent
 sys.path.insert(0, str(directorio_backend))
 
-from database import Base  # noqa: E402
+from database import Base, nombre_bd, nombre_bd_seguridad  # noqa: E402
 from modelos.permiso_modelo import (  # noqa: E402
     PERMISO_BORRAR_ABORDAJE,
     PERMISO_BORRAR_BITACORA,
@@ -189,10 +189,14 @@ def _tablas():
     return list(Base.metadata.sorted_tables)
 
 
-def _ddl_tablas() -> list[str]:
+def _tablas_de_esquema(esquema: str | None):
+    return [tabla for tabla in _tablas() if (tabla.schema or None) == esquema]
+
+
+def _ddl_de(tablas) -> list[str]:
     dialecto = mysql.dialect()
     lineas = []
-    for tabla in _tablas():
+    for tabla in tablas:
         tabla.kwargs.setdefault("mysql_engine", "InnoDB")
         tabla.kwargs.setdefault("mysql_charset", "utf8mb4")
         ddl = str(CreateTable(tabla).compile(dialect=dialecto)).strip().rstrip(";")
@@ -213,6 +217,8 @@ def _indices_3fn() -> list[str]:
 
 def _inserts() -> list[str]:
     lineas = [
+        f"USE `{nombre_bd_seguridad}`;",
+        "",
         "-- Roles",
         "INSERT INTO roles (id, nombre, descripcion, creado_en, actualizado_en) VALUES",
         f"  (1, 'Administrador', 'Acceso completo al panel', {_sql(AHORA)}, {_sql(AHORA)}),",
@@ -247,6 +253,8 @@ def _inserts() -> list[str]:
     )
     lineas.append("")
 
+    lineas.append(f"USE `{nombre_bd}`;")
+    lineas.append("")
     lineas.append("-- Estados y ciudades de Venezuela")
     filas_estado = []
     filas_ciudad = []
@@ -318,8 +326,8 @@ def _inserts() -> list[str]:
 
     lineas.append("-- Tasa EUR del día de importación (actualizar en Pagos > Tasas)")
     lineas.append(
-        "INSERT INTO tasas (id, fecha, valor, moneda_id) VALUES\n"
-        "  (1, CURDATE(), 160.0000, 1);"
+        "INSERT INTO tasas (id, fecha, valor, moneda_id, origen) VALUES\n"
+        "  (1, CURDATE(), 160.0000, 1, 'manual');"
     )
     lineas.append("")
 
@@ -332,30 +340,51 @@ def _inserts() -> list[str]:
     return lineas
 
 
+def _sql_vistas_entrega() -> list[str]:
+    from utilidades.objetos_mysql import _sql_vistas
+
+    return [sql + ";" for sql in _sql_vistas()]
+
+
 def generar_sql() -> str:
     partes = [
-        "-- SIGEL / Travel BQTO — base limpia de entrega",
-        "-- Esquema + roles + usuarios + catálogos. Sin destinos, viajes, reservas ni pagos.",
+        "-- SIGEL / Travel BQTO — bases limpias de entrega",
+        f"-- {nombre_bd_seguridad}: usuarios, roles, permisos, bitácora",
+        f"-- {nombre_bd}: operación (catálogo, reservas, pagos, ...)",
+        "-- Sin destinos, viajes, reservas ni pagos de prueba.",
         f"-- Contraseña inicial de todos los usuarios: {CONTRASENA_ENTREGA}",
         "SET NAMES utf8mb4;",
         "SET FOREIGN_KEY_CHECKS = 0;",
-        "DROP DATABASE IF EXISTS travel_bqto;",
-        "CREATE DATABASE travel_bqto CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
-        "USE travel_bqto;",
+        f"DROP DATABASE IF EXISTS `{nombre_bd}`;",
+        f"DROP DATABASE IF EXISTS `{nombre_bd_seguridad}`;",
+        f"CREATE DATABASE `{nombre_bd_seguridad}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
+        f"CREATE DATABASE `{nombre_bd}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
         "",
-        *_ddl_tablas(),
+        "-- Tablas de seguridad",
+        *_ddl_de(_tablas_de_esquema(nombre_bd_seguridad)),
+        f"USE `{nombre_bd}`;",
+        "",
+        "-- Tablas de negocio",
+        *_ddl_de(_tablas_de_esquema(None)),
         *_indices_3fn(),
         "",
         *_inserts(),
         "SET FOREIGN_KEY_CHECKS = 1;",
+        "",
+        "-- Vistas de consulta (los triggers se instalan con utilidades/objetos_mysql.py)",
+        *_sql_vistas_entrega(),
         "",
     ]
     return "\n".join(partes)
 
 
 def escribir_sql() -> Path:
+    from utilidades.objetos_mysql import sql_para_archivo
+
     RUTA_SQL.parent.mkdir(parents=True, exist_ok=True)
     RUTA_SQL.write_text(generar_sql(), encoding="utf-8")
+    ruta_triggers = RUTA_SQL.parent / "travel_bqto_triggers.sql"
+    ruta_triggers.write_text(sql_para_archivo(), encoding="utf-8")
     return RUTA_SQL
 
 
@@ -366,11 +395,16 @@ def aplicar_mysql() -> None:
     from database import contrasena_bd, host_bd, puerto_bd, usuario_bd
 
     sql = generar_sql()
-    sentencias = [
-        s.strip()
-        for s in sql.split(";")
-        if s.strip() and not s.strip().startswith("--")
-    ]
+    sentencias = []
+    for bruto in sql.split(";"):
+        lineas = [
+            linea
+            for linea in bruto.splitlines()
+            if linea.strip() and not linea.strip().startswith("--")
+        ]
+        sentencia = "\n".join(lineas).strip()
+        if sentencia:
+            sentencias.append(sentencia)
     url_sin_bd = f"mysql+pymysql://{usuario_bd}:{contrasena_bd}@{host_bd}:{puerto_bd}/"
     motor_raiz = crear(url_sin_bd, pool_pre_ping=True)
     with motor_raiz.connect() as conexion:
@@ -379,7 +413,10 @@ def aplicar_mysql() -> None:
             if sentencia.upper().startswith("SET NAMES"):
                 continue
             conexion.execute(text(sentencia))
-    print("Base travel_bqto creada e importada en MySQL local.")
+    from utilidades.objetos_mysql import aplicar_objetos_mysql
+
+    aplicar_objetos_mysql()
+    print(f"Bases {nombre_bd_seguridad} y {nombre_bd} creadas e importadas en MySQL local.")
 
 
 def main() -> None:
@@ -388,7 +425,7 @@ def main() -> None:
     parser.add_argument(
         "--aplicar",
         action="store_true",
-        help="BORRA travel_bqto local y carga la base limpia. No uses esto en tu PC de trabajo.",
+        help="BORRA las dos bases locales y carga el esquema limpio. No uses esto en tu PC de trabajo.",
     )
     args = parser.parse_args()
     ruta = escribir_sql()
@@ -398,7 +435,7 @@ def main() -> None:
     print(f"  guia@travelbqto.com    / {CONTRASENA_ENTREGA}  (Guía)")
     print(f"  cliente@travelbqto.com / {CONTRASENA_ENTREGA}  (Portal cliente)")
     if args.aplicar:
-        print("ADVERTENCIA: esto borra la base travel_bqto de este MySQL.")
+        print(f"ADVERTENCIA: esto borra {nombre_bd} y {nombre_bd_seguridad} de este MySQL.")
         aplicar_mysql()
     elif not args.sql_solo:
         print("Para regenerar el SQL: python sembrar_base_limpia.py --sql-solo")
