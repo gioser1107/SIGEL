@@ -26,6 +26,10 @@ import pymysql
 directorio_backend = Path(__file__).resolve().parent
 load_dotenv(directorio_backend / ".env")
 
+BD_SEGURIDAD = (os.getenv("DB_NOMBRE_SEGURIDAD") or "travel_bqto_seguridad").strip()
+if not re.fullmatch(r"[A-Za-z0-9_]+", BD_SEGURIDAD):
+    raise SystemExit(f"DB_NOMBRE_SEGURIDAD no válido: {BD_SEGURIDAD}")
+
 EXCEL_DEFECTO = (
     directorio_backend.parent / "instalacion" / "datos_agencia" / "AGOSTO_TRAVELBQTO.xlsx"
 )
@@ -613,16 +617,17 @@ def asegurar_destino(cur, cfg, ahora: datetime) -> int:
 
 def asegurar_guia(cur, nombre: str, apellido: str, ahora: datetime) -> int:
     correo = correo_guia(nombre, apellido)
+    tabla_usuarios = f"`{BD_SEGURIDAD}`.usuarios"
     fila = fetchone(
         cur,
-        "SELECT id FROM travel_bqto_seguridad.usuarios WHERE correo=%s AND eliminado_en IS NULL",
+        f"SELECT id FROM {tabla_usuarios} WHERE correo=%s AND eliminado_en IS NULL",
         (correo,),
     )
     if fila:
         return fila["id"]
     return insertar(
         cur,
-        "INSERT INTO travel_bqto_seguridad.usuarios "
+        f"INSERT INTO {tabla_usuarios} "
         "(rol_id, correo, hash_contrasena, nombre, apellido, creado_en, actualizado_en) "
         "VALUES (%s,%s,%s,%s,%s,%s,%s)",
         (ROL_GUIA, correo, HASH_CLAVE, nombre[:80], apellido[:80], ahora, ahora),
