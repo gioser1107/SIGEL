@@ -32,39 +32,3 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
 }
-
-.resenas-admin__modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal, 1000);
-  padding: 1rem;
-}
-
-.resenas-admin__modal {
-  width: min(100%, 420px);
-  background: #fff;
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-lg);
-}
-
-.resenas-admin__modal h3 {
-  margin: 0 0 0.75rem;
-  font-family: var(--font-heading);
-}
-
-.resenas-admin__modal p {
-  margin: 0 0 1.25rem;
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-}
-
-.resenas-admin__modal-acciones {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}

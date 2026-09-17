@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CabeceraModulo, EtiquetaEstado, TablaDatos, BotonAccionTabla } from '../../../components/admin';
+import { CabeceraModulo, EtiquetaEstado, TablaDatos, BotonAccionTabla, ModalConfirmacion } from '../../../components/admin';
 import type { Columna } from '../../../components/admin';
-import Boton from '../../../components/ui/Boton/Boton';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import {
   alternarVisibilidadResena,
@@ -181,30 +180,19 @@ export default function ModuloResenas() {
         }
       />
 
-      {resenaAEliminar && (
-        <div className="resenas-admin__modal-overlay" role="dialog" aria-modal="true">
-          <div className="resenas-admin__modal">
-            <h3>¿Eliminar reseña?</h3>
-            <p>
-              Se eliminará la reseña de <strong>{resenaAEliminar.nombre_cliente}</strong> sobre{' '}
-              <strong>{resenaAEliminar.destino_titulo}</strong>. Esta acción no se puede deshacer.
-            </p>
-            <div className="resenas-admin__modal-acciones">
-              <Boton
-                variante="secundario"
-                tamano="sm"
-                onClick={() => setResenaAEliminar(null)}
-                disabled={eliminando}
-              >
-                Cancelar
-              </Boton>
-              <Boton variante="primario" tamano="sm" onClick={confirmarEliminar} disabled={eliminando}>
-                {eliminando ? 'Eliminando...' : 'Eliminar'}
-              </Boton>
-            </div>
-          </div>
-        </div>
-      )}
+      <ModalConfirmacion
+        abierto={Boolean(resenaAEliminar)}
+        titulo="¿Eliminar reseña?"
+        mensaje={
+          resenaAEliminar
+            ? `Se eliminará la reseña de ${resenaAEliminar.nombre_cliente} sobre ${resenaAEliminar.destino_titulo}. Esta acción no se puede deshacer.`
+            : ''
+        }
+        textoConfirmar="Eliminar"
+        cargando={eliminando}
+        onConfirmar={() => void confirmarEliminar()}
+        onCancelar={() => setResenaAEliminar(null)}
+      />
     </div>
   );
 }

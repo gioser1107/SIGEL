@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Boton from '../../ui/Boton/Boton';
 import './ModalConfirmacion.css';
 
@@ -37,7 +38,7 @@ export default function ModalConfirmacion({
 
   if (!abierto) return null;
 
-  return (
+  return createPortal(
     <div className="modal-confirmacion__superposicion" onClick={onCancelar} role="presentation">
       <div
         className="modal-confirmacion"
@@ -82,6 +83,7 @@ export default function ModalConfirmacion({
           </Boton>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

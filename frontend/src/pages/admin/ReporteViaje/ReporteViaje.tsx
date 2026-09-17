@@ -217,15 +217,28 @@ export default function ReporteViaje({ embeber = false }: Props) {
     [],
   );
 
+  function actualizarParamsListin(mutar: (params: URLSearchParams) => void) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('tipo', 'listin');
+      mutar(next);
+      return next;
+    }, { replace: true });
+  }
+
   function seleccionarViaje(id: number) {
-    setSearchParams({ viaje: String(id) }, { replace: true });
+    actualizarParamsListin((params) => {
+      params.set('viaje', String(id));
+    });
   }
 
   function volverSelector() {
     setReporte(null);
     setError(null);
     setBusquedaPasajero('');
-    setSearchParams({}, { replace: true });
+    actualizarParamsListin((params) => {
+      params.delete('viaje');
+    });
   }
 
   const ocupacionPct = reporte && reporte.ocupacion.total_asientos > 0
