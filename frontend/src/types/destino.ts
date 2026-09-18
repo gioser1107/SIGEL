@@ -16,6 +16,8 @@ export interface Destino {
   nombre: string;
   descripcion: string | null;
   precio_base_eur: number;
+  recargo_menor_eur?: number;
+  extra_hospedaje_particular_eur?: number;
   dificultad: DificultadDestino;
   activo: boolean;
   imagen?: string;
@@ -29,6 +31,8 @@ export interface DatosDestinoNuevo {
   nombre: string;
   descripcion?: string | null;
   precio_base_eur: number;
+  recargo_menor_eur?: number;
+  extra_hospedaje_particular_eur?: number;
   dificultad: DificultadDestino;
   activo?: boolean;
 }

@@ -25,11 +25,13 @@ function EstrellasLectura({ calificacion }: { calificacion: number }) {
 
 interface FormularioResenaProps {
   reservaId: number;
+  guiaNombre?: string | null;
   onEnviada: (reservaId: number, resena: ReservaElegibleResena['resena']) => void;
 }
 
-function FormularioResena({ reservaId, onEnviada }: FormularioResenaProps) {
+function FormularioResena({ reservaId, guiaNombre, onEnviada }: FormularioResenaProps) {
   const [calificacion, setCalificacion] = useState(5);
+  const [calificacionGuia, setCalificacionGuia] = useState(5);
   const [comentario, setComentario] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +52,7 @@ function FormularioResena({ reservaId, onEnviada }: FormularioResenaProps) {
       const respuesta = await crearResena({
         reserva_id: reservaId,
         calificacion,
+        calificacion_guia: calificacionGuia,
         comentario: comentario.trim() || undefined,
       });
       onEnviada(reservaId, respuesta.resena);
@@ -79,6 +82,28 @@ function FormularioResena({ reservaId, onEnviada }: FormularioResenaProps) {
           );
         })}
       </div>
+
+      {guiaNombre && (
+        <>
+          <p className="mis-resenas__formulario-etiqueta">Calificación del guía ({guiaNombre})</p>
+          <div className="mis-resenas__selector-estrellas">
+            {Array.from({ length: 5 }).map((_, i) => {
+              const valor = i + 1;
+              return (
+                <button
+                  key={valor}
+                  type="button"
+                  className={`mis-resenas__estrella-btn ${valor <= calificacionGuia ? 'mis-resenas__estrella-btn--activa' : ''}`}
+                  onClick={() => setCalificacionGuia(valor)}
+                  aria-label={`${valor} estrellas al guía`}
+                >
+                  ★
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <label className="mis-resenas__campo">
         <span>Comentario (opcional)</span>
@@ -161,7 +186,14 @@ export default function MisResenas() {
 
               {item.resena ? (
                 <div className="mis-resenas__lectura">
+                  <p className="mis-resenas__formulario-etiqueta">Viaje</p>
                   <EstrellasLectura calificacion={item.resena.calificacion} />
+                  {item.resena.calificacion_guia != null && (
+                    <>
+                      <p className="mis-resenas__formulario-etiqueta">Guía {item.guia_nombre ? `(${item.guia_nombre})` : ''}</p>
+                      <EstrellasLectura calificacion={item.resena.calificacion_guia} />
+                    </>
+                  )}
                   {item.resena.comentario ? (
                     <p className="mis-resenas__comentario">"{item.resena.comentario}"</p>
                   ) : (
@@ -173,6 +205,7 @@ export default function MisResenas() {
               ) : (
                 <FormularioResena
                   reservaId={item.reserva_id}
+                  guiaNombre={item.guia_nombre}
                   onEnviada={manejarResenaEnviada}
                 />
               )}

@@ -129,6 +129,35 @@ export default function PanelEditarDestino({
         </div>
 
         <div className="drawer-form__campo">
+          <label className="drawer-form__label" htmlFor="destino-editar-recargo">
+            Recargo menor 1–5 años (EUR)
+          </label>
+          <CampoMonto
+            id="destino-editar-recargo"
+            className="drawer-form__input"
+            placeholder="Ej: 7"
+            value={form.recargo_menor_eur ?? 0}
+            onValorNumerico={(n) => actualizarCampo('recargo_menor_eur', n)}
+          />
+        </div>
+
+        <div className="drawer-form__campo">
+          <label className="drawer-form__label" htmlFor="destino-editar-hospedaje">
+            Extra hospedaje particular (EUR)
+          </label>
+          <CampoMonto
+            id="destino-editar-hospedaje"
+            className="drawer-form__input"
+            placeholder="Ej: 15"
+            value={form.extra_hospedaje_particular_eur ?? 0}
+            onValorNumerico={(n) => actualizarCampo('extra_hospedaje_particular_eur', n)}
+          />
+          <p className="drawer-form__ayuda">
+            Hospedaje compartido por defecto. El extra aplica solo si el cliente elige particular.
+          </p>
+        </div>
+
+        <div className="drawer-form__campo">
           <label className="drawer-form__label" htmlFor="destino-editar-dificultad">
             Dificultad
           </label>

@@ -7,7 +7,8 @@ import {
 } from '../../../components/admin';
 import type { Columna } from '../../../components/admin';
 import Boton from '../../../components/ui/Boton/Boton';
-import BtnImprimirReporte from '../../../components/ui/BtnImprimirReporte/BtnImprimirReporte';
+import AccionesExportarReporte from '../../../components/ui/AccionesExportarReporte/AccionesExportarReporte';
+import { exportarListinExcel } from '../../../utils/exportarReportes';
 import { ErrorApi } from '../../../services/api';
 import { obtenerReporteViaje, obtenerViajesParaReporte } from '../../../services/viajes';
 import type { Viaje } from '../../../types/viaje';
@@ -252,7 +253,7 @@ export default function ReporteViaje({ embeber = false }: Props) {
           <CabeceraModulo
             migaja="Administración / Reportes"
             titulo="Listín de viaje"
-            descripcion="Manifiesto de pasajeros, asientos y cobros de una salida. Imprime un documento, no la pantalla."
+            descripcion="Manifiesto de pasajeros, asientos y cobros de una salida. Exporta PDF o Excel."
           />
         )}
 
@@ -312,9 +313,9 @@ export default function ReporteViaje({ embeber = false }: Props) {
                   Cambiar viaje
                 </Boton>
                 {reporte && (
-                  <BtnImprimirReporte
-                    etiqueta="Imprimir reporte"
+                  <AccionesExportarReporte
                     deshabilitado={cargandoReporte || reporte.pasajeros.length === 0}
+                    alExportarExcel={() => exportarListinExcel(reporte)}
                   />
                 )}
               </div>
@@ -357,6 +358,28 @@ export default function ReporteViaje({ embeber = false }: Props) {
                       {reporte.resumen.reservas_pagadas_completas}/{reporte.resumen.total_reservas}
                     </span>
                     <span className="reporte-viaje__tarjeta-etiqueta">Reservas pagadas</span>
+                  </div>
+                  <div className="reporte-viaje__tarjeta">
+                    <span className="reporte-viaje__tarjeta-valor">
+                      {formatearEuro(reporte.resumen.costos_totales_eur ?? 0)}
+                    </span>
+                    <span className="reporte-viaje__tarjeta-etiqueta">Costos del viaje</span>
+                  </div>
+                  <div className={`reporte-viaje__tarjeta ${(reporte.resumen.margen_eur ?? 0) >= 0 ? 'reporte-viaje__tarjeta--ok' : 'reporte-viaje__tarjeta--aviso'}`}>
+                    <span className="reporte-viaje__tarjeta-valor">
+                      {formatearEuro(reporte.resumen.margen_eur ?? 0)}
+                    </span>
+                    <span className="reporte-viaje__tarjeta-etiqueta">Margen (cobrado − costos)</span>
+                  </div>
+                  <div className={`reporte-viaje__tarjeta ${reporte.resumen.cubre_punto_equilibrio ? 'reporte-viaje__tarjeta--ok' : 'reporte-viaje__tarjeta--aviso'}`}>
+                    <span className="reporte-viaje__tarjeta-valor">
+                      {reporte.resumen.punto_equilibrio_puestos ?? '—'}
+                    </span>
+                    <span className="reporte-viaje__tarjeta-etiqueta">
+                      {reporte.resumen.cubre_punto_equilibrio
+                        ? 'Puestos para equilibrio (cubierto)'
+                        : 'Puestos para equilibrio'}
+                    </span>
                   </div>
                 </div>
 

@@ -26,6 +26,8 @@ export function clienteAFormulario(cliente: Cliente): FormularioCliente {
     estado_id: cliente.estado_id ? String(cliente.estado_id) : '',
     ciudad_id: cliente.ciudad_id ? String(cliente.ciudad_id) : '',
     notas: cliente.notas ?? '',
+    contacto_emergencia_nombre: cliente.contacto_emergencia_nombre ?? '',
+    contacto_emergencia_telefono: cliente.contacto_emergencia_telefono ?? '',
   };
 }
 
@@ -51,5 +53,7 @@ export function formularioAPayload(form: FormularioCliente) {
     estado_id: Number(form.estado_id),
     ciudad_id: Number(form.ciudad_id),
     notas: form.notas.trim() || undefined,
+    contacto_emergencia_nombre: form.contacto_emergencia_nombre.trim() || undefined,
+    contacto_emergencia_telefono: form.contacto_emergencia_telefono.trim() || undefined,
   };
 }

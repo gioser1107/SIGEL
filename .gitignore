@@ -2,6 +2,13 @@
 frontend/node_modules/
 *.local
 
+# Documentación local y entregables académicos (el repo solo versiona código)
+ENTREGABLES/
+docs/
+tmp/
+output/
+~$*
+
 # Variables de entorno
 .env
 .env.*

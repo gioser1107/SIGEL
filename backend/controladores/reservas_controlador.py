@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -17,6 +17,7 @@ from modelos.permiso_modelo import (
     PERMISO_LEER_RESERVAS,
 )
 from modelos.cliente_modelo import registrar_cliente_para_reserva, requiere_sesion_cliente_portal
+from modelos.destino_imagen_modelo import procesar_y_guardar_partida_nacimiento
 from modelos.punto_recogida_modelo import asignar_puntos_a_cliente
 from modelos.reservas_modelo import (
     actualizar_pasajero,
@@ -42,6 +43,15 @@ from modelos.reservas_modelo import (
 router = APIRouter(prefix="/reservas", tags=["Reservas y Viajeros"])
 
 
+@router.post("/portal/partida/upload")
+async def subir_partida_nacimiento(
+    archivo: UploadFile = File(...),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    url = await procesar_y_guardar_partida_nacimiento(archivo)
+    return {"partida_nacimiento_url": url}
+
+
 class DatosViajeroRegistro(BaseModel):
     tipo_cliente: str = "natural"
     tipo_documento: str
@@ -51,6 +61,8 @@ class DatosViajeroRegistro(BaseModel):
     razon_social: Optional[str] = None
     telefono: Optional[str] = None
     telefono_secundario: Optional[str] = None
+    contacto_emergencia_nombre: Optional[str] = None
+    contacto_emergencia_telefono: Optional[str] = None
     direccion: Optional[str] = None
     estado_id: Optional[int] = None
     ciudad_id: Optional[int] = None
@@ -63,16 +75,22 @@ class DatosReservaCrear(BaseModel):
     cliente_id: int
     viaje_id: int
     estado: str = "pendiente"
+    modalidad: Optional[str] = None
+    tipo_hospedaje: Optional[str] = None
 
 
 class DatosReservaActualizar(BaseModel):
     estado: Optional[str] = None
+    modalidad: Optional[str] = None
+    tipo_hospedaje: Optional[str] = None
 
 
 class DatosPasajeroCrear(BaseModel):
     cliente_id: Optional[int] = None
     cliente: Optional[DatosViajeroRegistro] = None
     es_menor: bool = False
+    fecha_nacimiento: Optional[str] = None
+    partida_nacimiento_url: Optional[str] = None
     ocupa_asiento: Optional[bool] = None
     precio_pasajero_eur: Decimal = Field(default=0.00, ge=0)
     recargo_eur: Decimal = Field(default=0.00, ge=0)
@@ -83,6 +101,8 @@ class DatosPasajeroCrear(BaseModel):
 
 class DatosPasajeroActualizar(BaseModel):
     es_menor: Optional[bool] = None
+    fecha_nacimiento: Optional[str] = None
+    partida_nacimiento_url: Optional[str] = None
     ocupa_asiento: Optional[bool] = None
     precio_pasajero_eur: Optional[Decimal] = Field(default=None, ge=0)
     recargo_eur: Optional[Decimal] = Field(default=None, ge=0)
@@ -100,6 +120,8 @@ class DatosAsientosPortalCrear(BaseModel):
 
 class DatosPasajeroExtraPublico(DatosViajeroRegistro):
     es_menor: bool = False
+    fecha_nacimiento: Optional[str] = None
+    partida_nacimiento_url: Optional[str] = None
     ocupa_asiento: Optional[bool] = None
     punto_recogida_id: Optional[int] = None
 
@@ -111,6 +133,8 @@ class DatosReservaClientePublico(BaseModel):
     acompanantes: List[DatosPasajeroExtraPublico] = []
     pasajeros_extra: List[DatosPasajeroExtraPublico] = []
     asientos_ids: Optional[List[int]] = None
+    modalidad: Optional[str] = None
+    tipo_hospedaje: Optional[str] = None
 
 
 def _acompanantes_de_reserva(datos: DatosReservaClientePublico) -> List[DatosPasajeroExtraPublico]:
@@ -197,6 +221,8 @@ def crear_reserva_desde_landing_endpoint(
         titular_puntos_recogida=datos.titular_puntos_recogida,
         pasajeros_extra=_acompanantes_de_reserva(datos),
         asientos_ids=datos.asientos_ids,
+        modalidad=datos.modalidad,
+        tipo_hospedaje=datos.tipo_hospedaje,
     )
 
     registrar_evento(
@@ -247,6 +273,8 @@ def crear_reserva_endpoint(
         viaje_id=datos.viaje_id,
         estado=datos.estado,
         usuario_id=usuario_actual["id"],
+        modalidad=datos.modalidad,
+        tipo_hospedaje=datos.tipo_hospedaje,
     )
 
     registrar_evento(
@@ -285,7 +313,13 @@ def actualizar_reserva_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_RESERVAS)),
 ):
-    actualizar_reserva(db, reserva_id, datos.estado)
+    actualizar_reserva(
+        db,
+        reserva_id,
+        datos.estado,
+        modalidad=datos.modalidad,
+        tipo_hospedaje=datos.tipo_hospedaje,
+    )
 
     registrar_evento(
         db, modulo="reservas", accion="UPDATE",
@@ -335,14 +369,18 @@ def agregar_pasajero_endpoint(
 ):
     cliente_id = _resolver_cliente_id_pasajero(db, datos, usuario_actual["id"])
     ocupa_asiento = datos.ocupa_asiento if datos.ocupa_asiento is not None else not datos.es_menor
+    punto_recogida_id = datos.punto_recogida_id
 
     if datos.puntos_recogida:
-        asignar_puntos_a_cliente(
+        puntos = asignar_puntos_a_cliente(
             db,
             cliente_id,
             puntos_nuevos=datos.puntos_recogida,
             creado_por_usuario_id=usuario_actual["id"],
         )
+        if punto_recogida_id is None and puntos:
+            pred = next((p for p in puntos if p.get("es_predeterminado")), puntos[0])
+            punto_recogida_id = pred.get("id")
 
     nuevo_pasajero = agregar_pasajero(
         db, reserva_id,
@@ -352,7 +390,9 @@ def agregar_pasajero_endpoint(
         precio_pasajero_eur=datos.precio_pasajero_eur,
         recargo_eur=datos.recargo_eur,
         notas_tarifa=datos.notas_tarifa,
-        punto_recogida_id=datos.punto_recogida_id,
+        punto_recogida_id=punto_recogida_id,
+        fecha_nacimiento=datos.fecha_nacimiento,
+        partida_nacimiento_url=datos.partida_nacimiento_url,
     )
 
     registrar_evento(
@@ -383,6 +423,8 @@ def actualizar_pasajero_endpoint(
         notas_tarifa=datos.notas_tarifa,
         punto_recogida_id=datos.punto_recogida_id,
         actualizar_punto="punto_recogida_id" in datos.model_fields_set,
+        fecha_nacimiento=datos.fecha_nacimiento,
+        partida_nacimiento_url=datos.partida_nacimiento_url,
     )
 
     registrar_evento(

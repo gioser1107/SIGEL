@@ -72,9 +72,10 @@ function mensajeError(err: unknown): string {
 
 export default function Reservas() {
   const navegar = useNavigate();
-  const { puedeCrear, puedeBorrar } = useAutenticacion();
+  const { puedeCrear, puedeBorrar, puedeEditar } = useAutenticacion();
   const puedeCrearReserva = puedeCrear(MODULO);
   const puedeBorrarReserva = puedeBorrar(MODULO);
+  const puedeEditarReserva = puedeEditar(MODULO);
 
   const [reservas, setReservas] = useState<ReservaEnriquecida[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -380,6 +381,11 @@ export default function Reservas() {
         reservaActiva={reservaActiva}
         pasajerosActivos={pasajerosActivos}
         cargandoDetalles={cargandoDetalles}
+        puedeGestionar={puedeEditarReserva}
+        onReservaActualizada={() => {
+          void cargarDatos();
+          if (reservaActiva) void abrirDetalles(reservaActiva);
+        }}
       />
 
       <ModalEliminarReserva

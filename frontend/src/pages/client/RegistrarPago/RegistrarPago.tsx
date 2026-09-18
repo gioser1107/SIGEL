@@ -53,7 +53,7 @@ function archivoABase64(archivo: File): Promise<string> {
 
 function contarPuestosOcupados(datos: EstadoFormularioPasajeros | null): number {
   if (!datos) return 1;
-  const acompanantesConAsiento = datos.pasajeros.filter((p) => !p.es_menor).length;
+  const acompanantesConAsiento = datos.pasajeros.filter((p) => p.ocupa_asiento !== false).length;
   return 1 + acompanantesConAsiento;
 }
 
@@ -195,9 +195,15 @@ export default function RegistrarPago() {
           ? [datosPasajeros.titularDomicilioNuevo]
           : undefined,
         pasajeros_extra: datosPasajeros.pasajeros.map((p) =>
-          acompananteFormularioAPayload(p.ficha, p.es_menor, p.domicilio),
+          acompananteFormularioAPayload(p.ficha, p.es_menor, p.domicilio, {
+            fecha_nacimiento: p.fecha_nacimiento || undefined,
+            partida_nacimiento_url: p.partida_nacimiento_url,
+            ocupa_asiento: p.ocupa_asiento,
+          }),
         ),
         asientos_ids: asientos.length > 0 ? asientos : undefined,
+        modalidad: datosPasajeros.modalidad,
+        tipo_hospedaje: datosPasajeros.tipo_hospedaje,
       });
       setReservaId(respuesta.reserva_id);
       if (asientos.length > 0) {
@@ -243,8 +249,12 @@ export default function RegistrarPago() {
 
   const cantidadPuestos = contarPuestosOcupados(datosPasajeros);
   const adultos = cantidadPuestos;
-  const menores = datosPasajeros?.pasajeros.filter((p) => p.es_menor).length ?? 0;
-  const totalEstimado = adultos * viaje.precio + menores * (viaje.recargo_menor_eur ?? 0);
+  const menores = datosPasajeros?.pasajeros.filter((p) => p.es_menor && !p.ocupa_asiento).length ?? 0;
+  const extraHospedaje =
+    datosPasajeros?.tipo_hospedaje === 'particular'
+      ? (viaje.extra_hospedaje_particular_eur ?? 0) * Math.max(cantidadPuestos, 1)
+      : 0;
+  const totalEstimado = adultos * viaje.precio + menores * (viaje.recargo_menor_eur ?? 0) + extraHospedaje;
 
   const manejarEnvioPasajeros = (datos: EstadoFormularioPasajeros) => {
     setDatosPasajeros(datos);
@@ -421,6 +431,7 @@ export default function RegistrarPago() {
           <FormularioPasajeros
             viajeId={viaje.id}
             recargo_menor_eur={viaje.recargo_menor_eur ?? 0}
+            extra_hospedaje_particular_eur={viaje.extra_hospedaje_particular_eur ?? 0}
             estadoInicial={datosPasajeros}
             onSubmit={manejarEnvioPasajeros}
             onBack={manejarCancelar}

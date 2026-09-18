@@ -20,6 +20,8 @@ export interface Cliente {
   razon_social: string | null;
   telefono: string | null;
   telefono_secundario: string | null;
+  contacto_emergencia_nombre: string | null;
+  contacto_emergencia_telefono: string | null;
   direccion: string | null;
   estado_id: number | null;
   estado: string | null;
@@ -51,6 +53,8 @@ export interface DatosClienteNuevo {
   razon_social?: string | null;
   telefono?: string;
   telefono_secundario?: string;
+  contacto_emergencia_nombre?: string | null;
+  contacto_emergencia_telefono?: string | null;
   direccion?: string;
   estado_id: number;
   ciudad_id: number;

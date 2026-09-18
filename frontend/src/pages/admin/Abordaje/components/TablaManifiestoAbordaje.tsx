@@ -65,6 +65,21 @@ export default function TablaManifiestoAbordaje({
         accessor: (p) => formatearDomicilio(p.domicilio),
       },
       {
+        id: 'emergencia',
+        encabezado: 'Emergencia',
+        accessor: (p) => {
+          const nombre = p.cliente.contacto_emergencia_nombre || p.contacto_emergencia_nombre;
+          const tel = p.cliente.contacto_emergencia_telefono || p.contacto_emergencia_telefono;
+          if (!nombre && !tel) return '—';
+          return (
+            <div className="abordaje-tabla__pasajero">
+              {nombre ? <strong>{nombre}</strong> : null}
+              {tel ? <span>{tel}</span> : null}
+            </div>
+          );
+        },
+      },
+      {
         id: 'asiento',
         encabezado: 'Asiento',
         accessor: (p) => formatearAsiento(p.asiento?.numero, p.asiento?.posicion),

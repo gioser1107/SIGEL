@@ -164,3 +164,43 @@ async def procesar_y_guardar_comprobante_pago(archivo: UploadFile) -> str:
             detail="Formato no permitido. Usa JPG, PNG o WebP.",
         )
     return procesar_y_guardar_bytes_comprobante(contenido)
+
+
+async def procesar_y_guardar_partida_nacimiento(archivo: UploadFile) -> str:
+    contenido = await archivo.read()
+    if not contenido:
+        raise HTTPException(status_code=400, detail="El archivo está vacío")
+    if len(contenido) > MAX_BYTES:
+        raise HTTPException(status_code=400, detail="La partida no puede superar 10 MB")
+
+    nombre_orig = (archivo.filename or "").lower()
+    tipo = (archivo.content_type or "").lower()
+    carpeta = UPLOAD_ROOT / "partidas"
+    carpeta.mkdir(parents=True, exist_ok=True)
+
+    if tipo == "application/pdf" or nombre_orig.endswith(".pdf"):
+        nombre = f"{uuid4().hex}.pdf"
+        (carpeta / nombre).write_bytes(contenido)
+        return f"{PREFIJO_ARCHIVOS}/partidas/{nombre}"
+
+    if tipo_archivo_no_es_imagen(archivo.content_type):
+        raise HTTPException(
+            status_code=400,
+            detail="Adjunta la partida en JPG, PNG, WebP o PDF.",
+        )
+    try:
+        imagen = Image.open(io.BytesIO(contenido))
+        imagen = ImageOps.exif_transpose(imagen)
+        if imagen.mode == "RGBA":
+            fondo = Image.new("RGB", imagen.size, (255, 255, 255))
+            fondo.paste(imagen, mask=imagen.split()[3])
+            imagen = fondo
+        elif imagen.mode != "RGB":
+            imagen = imagen.convert("RGB")
+        imagen.thumbnail((MAX_LADO_PX, MAX_LADO_PX))
+    except UnidentifiedImageError as exc:
+        raise HTTPException(status_code=400, detail="El archivo no es una imagen válida") from exc
+
+    nombre = f"{uuid4().hex}.webp"
+    imagen.save(carpeta / nombre, "WEBP", quality=CALIDAD_WEBP, method=6)
+    return f"{PREFIJO_ARCHIVOS}/partidas/{nombre}"

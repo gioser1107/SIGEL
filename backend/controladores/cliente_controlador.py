@@ -59,6 +59,8 @@ class DatosClienteNuevo(BaseModel):
     razon_social: str | None = None
     telefono: str | None = None
     telefono_secundario: str | None = None
+    contacto_emergencia_nombre: str | None = None
+    contacto_emergencia_telefono: str | None = None
     direccion: str | None = None
     estado_id: int | None = None
     ciudad_id: int | None = None
@@ -76,6 +78,8 @@ class DatosClienteActualizar(BaseModel):
     razon_social: str | None = None
     telefono: str | None = None
     telefono_secundario: str | None = None
+    contacto_emergencia_nombre: str | None = None
+    contacto_emergencia_telefono: str | None = None
     direccion: str | None = None
     estado_id: int | None = None
     ciudad_id: int | None = None

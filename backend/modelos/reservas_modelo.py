@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Session
 
 from database import Base, fk_usuario
@@ -40,6 +40,11 @@ from utilidades.persistencia import (
     _revertir_transaccion,
 )
 from utilidades.validaciones import ValidadorEntrada
+from utilidades.politicas_agencia import (
+    normalizar_hospedaje,
+    normalizar_modalidad,
+    resolver_politica_menor,
+)
 
 
 class Reserva(Base):
@@ -54,6 +59,8 @@ class Reserva(Base):
         nullable=False,
         default="pendiente",
     )
+    modalidad = Column(String(20), nullable=False, default="individual")
+    tipo_hospedaje = Column(String(20), nullable=False, default="compartido")
     creado_por = Column(BigInteger, fk_usuario(), nullable=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
@@ -171,6 +178,8 @@ def pasajero_a_dict(
         "ciudad_id": cliente.ciudad_id,
         "ciudad": ciudad.nombre if ciudad else None,
         "es_menor": p.es_menor,
+        "fecha_nacimiento": p.fecha_nacimiento.isoformat() if getattr(p, "fecha_nacimiento", None) else None,
+        "partida_nacimiento_url": getattr(p, "partida_nacimiento_url", None),
         "ocupa_asiento": p.ocupa_asiento,
         "precio_pasajero_eur": float(p.precio_pasajero_eur),
         "recargo_eur": float(p.recargo_eur),
@@ -188,6 +197,8 @@ def reserva_a_dict(reserva: Reserva) -> dict:
         "viaje_id": reserva.viaje_id,
         "fecha_reserva": reserva.fecha_reserva,
         "estado": reserva.estado,
+        "modalidad": getattr(reserva, "modalidad", None) or "individual",
+        "tipo_hospedaje": getattr(reserva, "tipo_hospedaje", None) or "compartido",
         "creado_en": reserva.creado_en,
         "actualizado_en": reserva.actualizado_en,
     }
@@ -301,6 +312,13 @@ def _asignar_asientos_a_reserva(
         _preparar_asiento_reserva(db, reserva, pasajero.id, asiento_id)
 
 
+def _recargo_menor_destino(db: Session, viaje: Viaje) -> float:
+    destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
+    if destino is None or destino.recargo_menor_eur is None:
+        return 0.0
+    return float(destino.recargo_menor_eur)
+
+
 def crear_reserva_desde_landing(
     db: Session,
     viaje_id: int,
@@ -310,6 +328,8 @@ def crear_reserva_desde_landing(
     pasajeros_extra: list,
     asientos_ids: Optional[list[int]] = None,
     titular_puntos_recogida: Optional[list] = None,
+    modalidad: Optional[str] = None,
+    tipo_hospedaje: Optional[str] = None,
 ) -> Reserva:
     cliente = db.query(Cliente).filter(
         Cliente.id == cliente_id,
@@ -331,17 +351,22 @@ def crear_reserva_desde_landing(
         )
 
     asientos_necesarios = 1
+    recargo_menor = _recargo_menor_destino(db, viaje)
+    extras_resueltos = []
     for extra in pasajeros_extra:
         es_menor_extra = getattr(extra, "es_menor", False)
-        ocupa_extra = getattr(extra, "ocupa_asiento", None)
-        if ocupa_extra is None:
-            ocupa_extra = not es_menor_extra
+        es_menor, ocupa_extra, recargo_extra, fecha_nac, _edad = resolver_politica_menor(
+            es_menor_extra,
+            getattr(extra, "fecha_nacimiento", None),
+            getattr(extra, "ocupa_asiento", None),
+            recargo_menor,
+            getattr(extra, "partida_nacimiento_url", None),
+            exigir_partida=bool(es_menor_extra),
+        )
+        extras_resueltos.append((extra, es_menor, ocupa_extra, recargo_extra, fecha_nac))
         if ocupa_extra:
             asientos_necesarios += 1
     _exigir_cupo_disponible(db, viaje, asientos_necesarios)
-
-    destino = db.query(Destino).filter(Destino.id == viaje.destino_id).first()
-    recargo_menor = float(destino.recargo_menor_eur) if destino and destino.recargo_menor_eur else 0.0
 
     if titular_puntos_recogida:
         asignar_puntos_a_cliente(
@@ -368,6 +393,8 @@ def crear_reserva_desde_landing(
         viaje_id=viaje_id,
         fecha_reserva=ahora,
         estado="pendiente",
+        modalidad=normalizar_modalidad(modalidad, "grupo" if extras_resueltos else "individual"),
+        tipo_hospedaje=normalizar_hospedaje(tipo_hospedaje),
         creado_por=usuario_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -388,8 +415,8 @@ def crear_reserva_desde_landing(
         actualizado_en=ahora,
     ))
 
-    for p in pasajeros_extra:
-        acomp = registrar_cliente_para_reserva(db, p, creado_por_usuario_id=usuario_id)
+    for extra, es_menor, ocupa_asiento, recargo_extra, fecha_nac in extras_resueltos:
+        acomp = registrar_cliente_para_reserva(db, extra, creado_por_usuario_id=usuario_id)
 
         if acomp.id == cliente_id:
             raise HTTPException(
@@ -405,12 +432,7 @@ def crear_reserva_desde_landing(
         if ya_existe:
             continue
 
-        es_menor = getattr(p, "es_menor", False)
-        ocupa_asiento = getattr(p, "ocupa_asiento", None)
-        if ocupa_asiento is None:
-            ocupa_asiento = not es_menor
-
-        punto_id = getattr(p, "punto_recogida_id", None)
+        punto_id = getattr(extra, "punto_recogida_id", None)
         if punto_id is None:
             punto_id = obtener_punto_predeterminado_cliente(db, acomp.id)
         if punto_id is None:
@@ -431,9 +453,11 @@ def crear_reserva_desde_landing(
             cliente_id=acomp.id,
             es_titular=False,
             es_menor=es_menor,
+            fecha_nacimiento=fecha_nac,
+            partida_nacimiento_url=getattr(extra, "partida_nacimiento_url", None) or None,
             ocupa_asiento=ocupa_asiento,
             precio_pasajero_eur=0,
-            recargo_eur=recargo_menor if es_menor else 0,
+            recargo_eur=recargo_extra,
             punto_recogida_id=punto_id,
             creado_en=ahora,
             actualizado_en=ahora,
@@ -630,6 +654,8 @@ def crear_reserva(
     viaje_id: int,
     estado: str,
     usuario_id: int,
+    modalidad: Optional[str] = None,
+    tipo_hospedaje: Optional[str] = None,
 ) -> Reserva:
     viaje = validar_viaje_para_reserva(db, viaje_id, bloquear=True)
 
@@ -652,6 +678,8 @@ def crear_reserva(
         viaje_id=viaje_id,
         fecha_reserva=ahora,
         estado=estado_limpio,
+        modalidad=normalizar_modalidad(modalidad),
+        tipo_hospedaje=normalizar_hospedaje(tipo_hospedaje),
         creado_por=usuario_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -659,14 +687,66 @@ def crear_reserva(
     return _persistir(db, nueva_reserva)
 
 
-def actualizar_reserva(db: Session, reserva_id: int, estado: Optional[str]) -> Reserva:
+def actualizar_reserva(
+    db: Session,
+    reserva_id: int,
+    estado: Optional[str],
+    modalidad: Optional[str] = None,
+    tipo_hospedaje: Optional[str] = None,
+) -> Reserva:
     reserva = obtener_reserva_activa(db, reserva_id)
     if estado:
         reserva.estado = ValidadorEntrada.estado_reserva(estado)
+    if modalidad is not None:
+        reserva.modalidad = normalizar_modalidad(modalidad)
+    if tipo_hospedaje is not None:
+        reserva.tipo_hospedaje = normalizar_hospedaje(tipo_hospedaje)
     reserva.actualizado_en = datetime.now()
     _confirmar_transaccion(db)
     db.refresh(reserva)
     return reserva
+
+
+def cancelar_reserva_sin_reembolso(
+    db: Session,
+    reserva_id: int,
+    usuario_id: int | None,
+    notas: Optional[str] = None,
+) -> dict:
+    from modelos.credito_modelo import credito_a_dict, registrar_credito_cancelacion
+    from modelos.pago_modelo import calcular_resumen_pagos_reserva
+
+    reserva = obtener_reserva_activa(db, reserva_id)
+    if reserva.estado == "cancelada":
+        raise HTTPException(status_code=400, detail="La reserva ya está cancelada")
+
+    resumen = calcular_resumen_pagos_reserva(db, reserva)
+    pagado = float(resumen.get("total_pagado_aprobado_eur") or 0)
+    reserva.estado = "cancelada"
+    reserva.actualizado_en = datetime.now()
+    credito = registrar_credito_cancelacion(
+        db,
+        cliente_id=reserva.cliente_id,
+        reserva_origen_id=reserva.id,
+        monto_eur=pagado,
+        usuario_id=usuario_id,
+        notas=notas,
+    )
+    _confirmar_transaccion(db)
+    mensaje = (
+        "Reserva cancelada. No hay reembolso en efectivo."
+        if pagado > 0.01
+        else "Reserva cancelada. No había pagos aprobados."
+    )
+    if credito is not None:
+        mensaje += f" Se registraron {float(credito.monto_eur):.2f} EUR a favor para reubicar al cliente en un viaje futuro."
+    return {
+        "mensaje": mensaje,
+        "reserva_id": reserva.id,
+        "estado": reserva.estado,
+        "credito": credito_a_dict(credito) if credito is not None else None,
+        "politica": "La agencia no reembolsa dinero. El saldo aprobado queda a favor del cliente.",
+    }
 
 
 def eliminar_reserva(db: Session, reserva_id: int) -> None:
@@ -721,6 +801,8 @@ def agregar_pasajero(
     recargo_eur: Decimal,
     notas_tarifa: Optional[str],
     punto_recogida_id: Optional[int],
+    fecha_nacimiento=None,
+    partida_nacimiento_url: Optional[str] = None,
 ) -> ReservaCliente:
     reserva = obtener_reserva_activa(db, reserva_id)
     viaje = _bloquear_viaje_para_reserva(db, reserva.viaje_id)
@@ -739,6 +821,17 @@ def agregar_pasajero(
     ).first()
     if duplicado:
         raise HTTPException(status_code=400, detail="Este cliente ya está registrado en esta reserva")
+
+    recargo_destino = _recargo_menor_destino(db, viaje)
+    es_menor, ocupa_asiento, recargo_auto, fecha_nac, _edad = resolver_politica_menor(
+        es_menor,
+        fecha_nacimiento,
+        ocupa_asiento,
+        recargo_destino,
+        partida_nacimiento_url,
+        exigir_partida=False,
+    )
+    recargo_final = recargo_auto if es_menor else float(recargo_eur or 0)
 
     if ocupa_asiento:
         _exigir_cupo_disponible(db, viaje, 1)
@@ -759,13 +852,15 @@ def agregar_pasajero(
         cliente_id=cliente_id,
         es_titular=es_el_titular,
         es_menor=es_menor,
+        fecha_nacimiento=fecha_nac,
+        partida_nacimiento_url=partida_nacimiento_url or None,
         ocupa_asiento=ocupa_asiento,
         precio_pasajero_eur=ValidadorEntrada.monto(
             precio_pasajero_eur,
             "precio_pasajero_eur",
             permitir_cero=True,
         ),
-        recargo_eur=ValidadorEntrada.monto(recargo_eur, "recargo_eur", permitir_cero=True),
+        recargo_eur=ValidadorEntrada.monto(recargo_final, "recargo_eur", permitir_cero=True),
         notas_tarifa=ValidadorEntrada.texto_libre(notas_tarifa, "notas_tarifa", maximo=255) or None,
         punto_recogida_id=punto_recogida_id,
         creado_en=ahora,
@@ -785,22 +880,45 @@ def actualizar_pasajero(
     notas_tarifa: Optional[str],
     punto_recogida_id: Optional[int],
     actualizar_punto: bool,
+    fecha_nacimiento=None,
+    partida_nacimiento_url: Optional[str] = None,
 ) -> ReservaCliente:
     pasajero = obtener_pasajero_activo(db, reserva_id, pasajero_id)
     reserva = obtener_reserva_activa(db, reserva_id)
+    viaje = db.query(Viaje).filter(Viaje.id == reserva.viaje_id).first()
 
-    if es_menor is not None:
-        pasajero.es_menor = es_menor
-    if ocupa_asiento is not None:
-        pasajero.ocupa_asiento = ocupa_asiento
+    menor_final = pasajero.es_menor if es_menor is None else es_menor
+    ocupa_final = pasajero.ocupa_asiento if ocupa_asiento is None else ocupa_asiento
+    fecha_final = fecha_nacimiento if fecha_nacimiento is not None else pasajero.fecha_nacimiento
+    partida_final = (
+        partida_nacimiento_url
+        if partida_nacimiento_url is not None
+        else pasajero.partida_nacimiento_url
+    )
+    recargo_destino = _recargo_menor_destino(db, viaje) if viaje is not None else 0.0
+    menor_final, ocupa_final, recargo_auto, fecha_nac, _edad = resolver_politica_menor(
+        menor_final,
+        fecha_final,
+        ocupa_final,
+        recargo_destino,
+        partida_final,
+        exigir_partida=False,
+    )
+    pasajero.es_menor = menor_final
+    pasajero.ocupa_asiento = ocupa_final
+    pasajero.fecha_nacimiento = fecha_nac
+    if partida_nacimiento_url is not None:
+        pasajero.partida_nacimiento_url = partida_nacimiento_url or None
+    if recargo_eur is not None:
+        pasajero.recargo_eur = ValidadorEntrada.monto(recargo_eur, "recargo_eur", permitir_cero=True)
+    elif menor_final:
+        pasajero.recargo_eur = recargo_auto
     if precio_pasajero_eur is not None:
         pasajero.precio_pasajero_eur = ValidadorEntrada.monto(
             precio_pasajero_eur,
             "precio_pasajero_eur",
             permitir_cero=True,
         )
-    if recargo_eur is not None:
-        pasajero.recargo_eur = ValidadorEntrada.monto(recargo_eur, "recargo_eur", permitir_cero=True)
     if notas_tarifa is not None:
         pasajero.notas_tarifa = ValidadorEntrada.texto_libre(notas_tarifa, "notas_tarifa", maximo=255) or None
     if actualizar_punto:

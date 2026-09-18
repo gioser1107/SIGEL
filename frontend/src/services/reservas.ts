@@ -35,6 +35,9 @@ export interface PasajeroExtraPublicoDTO {
   es_menor: boolean;
   punto_recogida_id?: number | null;
   puntos_recogida?: PuntoRecogidaInline[];
+  fecha_nacimiento?: string;
+  partida_nacimiento_url?: string | null;
+  ocupa_asiento?: boolean;
 }
 
 export interface CrearReservaClienteDTO {
@@ -43,6 +46,8 @@ export interface CrearReservaClienteDTO {
   titular_puntos_recogida?: PuntoRecogidaInline[];
   pasajeros_extra?: PasajeroExtraPublicoDTO[];
   asientos_ids?: number[];
+  modalidad?: string;
+  tipo_hospedaje?: string;
 }
 
 export async function crearReservaCliente(

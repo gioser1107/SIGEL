@@ -6,6 +6,9 @@ export interface ClienteManifiesto {
   tipo_documento: string;
   numero_documento: string;
   telefono?: string | null;
+  telefono_secundario?: string | null;
+  contacto_emergencia_nombre?: string | null;
+  contacto_emergencia_telefono?: string | null;
 }
 
 export interface DomicilioManifiesto {
@@ -33,6 +36,9 @@ export interface PasajeroManifiesto {
   reserva_estado: string;
   es_titular: boolean;
   es_menor: boolean;
+  ocupa_asiento?: boolean;
+  contacto_emergencia_nombre?: string | null;
+  contacto_emergencia_telefono?: string | null;
   cliente: ClienteManifiesto;
   domicilio?: DomicilioManifiesto | null;
   asiento?: AsientoManifiesto | null;

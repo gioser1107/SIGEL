@@ -110,6 +110,38 @@ export default function PanelNuevoDestino({
         </div>
 
         <div className="drawer-form__campo">
+          <label className="drawer-form__label" htmlFor="destino-recargo-menor">
+            Recargo menor 1–5 años (EUR)
+          </label>
+          <CampoMonto
+            id="destino-recargo-menor"
+            className="drawer-form__input"
+            placeholder="Ej: 7"
+            value={form.recargo_menor_eur ?? 0}
+            onValorNumerico={(n) => actualizarCampo('recargo_menor_eur', n)}
+          />
+          <p className="drawer-form__ayuda">
+            Niños de 1 a 5 años que viajan en las piernas (sin asiento). La entrevista indica 5 a 10 euros.
+          </p>
+        </div>
+
+        <div className="drawer-form__campo">
+          <label className="drawer-form__label" htmlFor="destino-hospedaje">
+            Extra hospedaje particular (EUR)
+          </label>
+          <CampoMonto
+            id="destino-hospedaje"
+            className="drawer-form__input"
+            placeholder="Ej: 15"
+            value={form.extra_hospedaje_particular_eur ?? 0}
+            onValorNumerico={(n) => actualizarCampo('extra_hospedaje_particular_eur', n)}
+          />
+          <p className="drawer-form__ayuda">
+            Por defecto el hospedaje es compartido. Este extra se suma si el cliente pide particular.
+          </p>
+        </div>
+
+        <div className="drawer-form__campo">
           <label className="drawer-form__label" htmlFor="destino-dificultad">
             Dificultad
           </label>

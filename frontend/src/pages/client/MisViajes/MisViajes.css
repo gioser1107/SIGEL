@@ -258,6 +258,29 @@
   opacity: 0.9;
 }
 
+button.mis-viajes__btn-abonar {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mis-viajes__credito {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: var(--spacing-lg);
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.mis-viajes__credito span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
 .mis-viajes__ticket-ref {
   font-size: var(--font-size-xs);
   font-weight: 600;

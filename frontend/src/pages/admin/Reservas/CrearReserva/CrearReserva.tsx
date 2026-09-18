@@ -11,6 +11,7 @@ import {
   obtenerViajesDisponiblesReserva,
 } from '../../../../services/reservas';
 import type { Cliente } from '../../../../types/cliente';
+import type { PuntoRecogidaInline } from '../../../../types/puntoRecogida';
 import type { CrearPasajeroDTO, PasajeroDraft, ViajeDisponibleReserva } from '../../../../types/reservas';
 import { formularioAPayload } from '../../Clientes/utils/mapeoFormulario';
 import { sincronizarAcompanantes } from './utils/pasajerosGrupo';
@@ -38,8 +39,11 @@ export default function CrearReserva() {
   const [asientosSeleccionados, setAsientosSeleccionados] = useState<number[]>([]);
   const [reservaId, setReservaId] = useState<number | null>(null);
   const [titularPuntoRecogidaId, setTitularPuntoRecogidaId] = useState<number | undefined>();
-  const [esGrupal, setEsGrupal] = useState(false);
+  const [titularDomicilioNuevo, setTitularDomicilioNuevo] = useState<PuntoRecogidaInline | undefined>();
+  const [modalidad, setModalidad] = useState<'individual' | 'grupo' | 'propio'>('individual');
+  const [tipoHospedaje, setTipoHospedaje] = useState<'compartido' | 'particular'>('compartido');
   const [cantidadPersonas, setCantidadPersonas] = useState(1);
+  const esGrupal = modalidad === 'grupo';
 
   async function recargarViajesDisponibles() {
     setCargandoViajes(true);
@@ -95,6 +99,8 @@ export default function CrearReserva() {
   function armarPayloadPasajero(p: PasajeroDraft): CrearPasajeroDTO {
     const base: CrearPasajeroDTO = {
       es_menor: p.es_menor,
+      fecha_nacimiento: p.fecha_nacimiento || null,
+      partida_nacimiento_url: p.partida_nacimiento_url || null,
       precio_pasajero_eur: p.precio_pasajero_eur,
       recargo_eur: p.recargo_eur,
       notas_tarifa: p.notas_tarifa || null,
@@ -138,6 +144,8 @@ export default function CrearReserva() {
         cliente_id: clienteSeleccionado.cliente_id,
         viaje_id: viajeSeleccionado.id,
         estado: 'pendiente',
+        modalidad,
+        tipo_hospedaje: tipoHospedaje,
       });
       reservaIdCreada = res.reserva.id;
 
@@ -149,7 +157,10 @@ export default function CrearReserva() {
           recargo_eur: 0,
           notas_tarifa: null,
           ocupa_asiento: true,
-          punto_recogida_id: titularPuntoRecogidaId,
+          punto_recogida_id: titularDomicilioNuevo ? undefined : titularPuntoRecogidaId,
+          puntos_recogida: titularDomicilioNuevo
+            ? [{ ...titularDomicilioNuevo, es_predeterminado: true }]
+            : undefined,
         },
         ...pasajeros.map((p) => armarPayloadPasajero(p)),
       ];
@@ -265,21 +276,30 @@ export default function CrearReserva() {
             viajeSeleccionado={viajeSeleccionado}
             clienteSeleccionado={clienteSeleccionado}
             cargandoViajes={cargandoViajes}
-            esGrupal={esGrupal}
+            modalidad={modalidad}
+            tipoHospedaje={tipoHospedaje}
+            extraHospedajeParticularEur={viajeSeleccionado?.extra_hospedaje_particular_eur ?? 0}
             cantidadPersonas={cantidadPersonas}
             setViajeSeleccionado={setViajeSeleccionado}
-            setClienteSeleccionado={setClienteSeleccionado}
-            setEsGrupal={setEsGrupal}
+            setClienteSeleccionado={(c) => {
+              setClienteSeleccionado(c);
+              setTitularPuntoRecogidaId(undefined);
+              setTitularDomicilioNuevo(undefined);
+            }}
+            setModalidad={setModalidad}
+            setTipoHospedaje={setTipoHospedaje}
             setCantidadPersonas={setCantidadPersonas}
             onSiguiente={() => {
               setError(null);
               const hayAcompanantes = pasajeros.length > 0;
-              const usarGrupal = esGrupal || hayAcompanantes;
-              if (hayAcompanantes && !esGrupal) setEsGrupal(true);
+              const usarGrupal = modalidad === 'grupo' || hayAcompanantes;
+              if (hayAcompanantes && modalidad === 'individual') setModalidad('grupo');
               const cantidad = usarGrupal
                 ? Math.max(2, hayAcompanantes ? pasajeros.length + 1 : cantidadPersonas)
-                : 1;
-              if (usarGrupal) setCantidadPersonas(cantidad);
+                : modalidad === 'propio'
+                  ? Math.max(1, hayAcompanantes ? pasajeros.length + 1 : cantidadPersonas)
+                  : 1;
+              if (usarGrupal || modalidad === 'propio') setCantidadPersonas(cantidad);
               setPasajeros((prev) =>
                 sincronizarAcompanantes(
                   cantidad,
@@ -298,9 +318,12 @@ export default function CrearReserva() {
             pasajeros={pasajeros}
             setPasajeros={setPasajeros}
             precioBase={viajeSeleccionado?.precio_base_eur ?? 0}
+            recargoMenorEur={viajeSeleccionado?.recargo_menor_eur ?? 0}
             titularClienteId={clienteSeleccionado.id}
             titularPuntoRecogidaId={titularPuntoRecogidaId}
             setTitularPuntoRecogidaId={setTitularPuntoRecogidaId}
+            titularDomicilioNuevo={titularDomicilioNuevo}
+            setTitularDomicilioNuevo={setTitularDomicilioNuevo}
             onSiguiente={() => setPaso(3)}
             onAtras={() => setPaso(1)}
           />

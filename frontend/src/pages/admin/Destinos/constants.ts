@@ -19,6 +19,8 @@ export const FORM_VACIO: DatosDestinoNuevo = {
   nombre: '',
   descripcion: '',
   precio_base_eur: 0,
+  recargo_menor_eur: 7,
+  extra_hospedaje_particular_eur: 0,
   dificultad: 'Moderado',
   activo: true,
 };

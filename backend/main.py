@@ -37,6 +37,7 @@ from controladores.abordaje_controlador import router as router_abordajes
 from controladores.resena_controlador import router as router_resenas
 from controladores.reporte_estadistico_controlador import router as router_reportes
 from controladores.respaldo_controlador import router as router_respaldos
+from controladores.credito_controlador import router as router_creditos
 
 logger = logging.getLogger("sigel")
 
@@ -63,6 +64,12 @@ async def lifespan(_app: FastAPI):
         aplicar_objetos_mysql()
     except Exception as error:
         logger.warning("No se pudieron instalar vistas/triggers: %s", error)
+    try:
+        from utilidades.migrar_historia_hablada import aplicar_historia_hablada
+
+        aplicar_historia_hablada()
+    except Exception as error:
+        logger.warning("No se pudo aplicar la migración de historia hablada: %s", error)
     from modelos.viaje_modelo import sincronizar_viajes_vencidos
 
     db_viajes = SessionLocal()
@@ -178,6 +185,7 @@ app.include_router(router_abordajes, prefix="/api")
 app.include_router(router_resenas, prefix="/api")
 app.include_router(router_reportes, prefix="/api")
 app.include_router(router_respaldos, prefix="/api")
+app.include_router(router_creditos, prefix="/api")
 
 @app.get("/api")
 def ruta_raiz_api():

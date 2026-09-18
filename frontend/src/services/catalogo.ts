@@ -19,6 +19,8 @@ export interface DestinoCatalogo {
   nombre: string;
   descripcion: string | null;
   precio_base_eur: number | null;
+  recargo_menor_eur?: number;
+  extra_hospedaje_particular_eur?: number;
   dificultad?: DificultadDestino;
   imagen: string;
   activo: boolean;
@@ -101,7 +103,8 @@ export function destinoComoViaje(destino: DestinoCatalogo): ViajeAgenda {
     titulo: destino.nombre,
     ubicacion: destino.descripcion?.slice(0, 80) ?? 'Venezuela',
     precio: destino.precio_base_eur ?? 0,
-    recargo_menor_eur: 0,
+    recargo_menor_eur: destino.recargo_menor_eur ?? 0,
+    extra_hospedaje_particular_eur: destino.extra_hospedaje_particular_eur ?? 0,
     imagen: destino.imagen,
     hora: 'Consultar',
     cupos: 0,

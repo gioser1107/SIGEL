@@ -100,13 +100,26 @@ export default function ModuloResenas() {
       },
       {
         id: 'calificacion',
-        encabezado: 'Calificación',
+        encabezado: 'Viaje',
         accessor: (r) => (
           <span className="resenas-admin__calificacion">
             {'★'.repeat(r.calificacion)}{'☆'.repeat(5 - r.calificacion)}
             <span className="resenas-admin__nota">{r.calificacion}/5</span>
           </span>
         ),
+      },
+      {
+        id: 'guia',
+        encabezado: 'Guía',
+        accessor: (r) =>
+          r.calificacion_guia != null ? (
+            <span className="resenas-admin__calificacion">
+              {'★'.repeat(r.calificacion_guia)}{'☆'.repeat(5 - r.calificacion_guia)}
+              <span className="resenas-admin__nota">{r.calificacion_guia}/5</span>
+            </span>
+          ) : (
+            '—'
+          ),
       },
       {
         id: 'comentario',

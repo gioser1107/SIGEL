@@ -1,10 +1,18 @@
+import { useState } from 'react';
 import { PanelDeslizable, EtiquetaEstado } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
 import type { ReservaEnriquecida, ReservaCliente } from '../../../../types/reservas';
 import { etiquetaEstado, SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../../utils/formatoMoneda';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
+import { resolverUrlArchivo } from '../../../../utils/resolverUrlArchivo';
 import PagosReserva from '../Pagos/PagosReserva';
+import {
+  aplicarCreditoAdmin,
+  cancelarReservaSinReembolso,
+  obtenerCreditosAdmin,
+  saldoCreditos,
+} from '../../../../services/creditos';
 
 interface Props {
   abierto: boolean;
@@ -12,6 +20,8 @@ interface Props {
   reservaActiva: ReservaEnriquecida | null;
   pasajerosActivos: ReservaCliente[];
   cargandoDetalles: boolean;
+  puedeGestionar?: boolean;
+  onReservaActualizada?: () => void;
 }
 
 const ESTADO_VARIANTE: Record<string, 'neutro' | 'info' | 'exito' | 'error' | 'advertencia'> = {
@@ -87,7 +97,12 @@ export default function PanelDetalleReserva({
   reservaActiva,
   pasajerosActivos,
   cargandoDetalles,
+  puedeGestionar = false,
+  onReservaActualizada,
 }: Props) {
+  const [accionando, setAccionando] = useState(false);
+  const [mensajeAccion, setMensajeAccion] = useState<string | null>(null);
+  const [confirmarCancelar, setConfirmarCancelar] = useState(false);
   const total = pasajerosActivos.reduce(
     (sum, p) => sum + (p.precio_pasajero_eur ?? 0) + (p.recargo_eur ?? 0),
     0,
@@ -109,6 +124,62 @@ export default function PanelDetalleReserva({
         year: 'numeric',
       })
     : '—';
+
+  const etiquetaModalidad: Record<string, string> = {
+    individual: 'Individual',
+    grupo: 'Grupo',
+    propio: 'Propio',
+  };
+  const etiquetaHospedaje: Record<string, string> = {
+    compartido: 'Compartido',
+    particular: 'Particular',
+  };
+
+  const cancelable = Boolean(
+    puedeGestionar && reservaActiva && reservaActiva.estado !== 'cancelada',
+  );
+
+  const manejarCancelar = async () => {
+    if (!reservaActiva) return;
+    setAccionando(true);
+    setMensajeAccion(null);
+    try {
+      const respuesta = await cancelarReservaSinReembolso(reservaActiva.id);
+      setConfirmarCancelar(false);
+      setMensajeAccion(
+        respuesta.mensaje ||
+          'Reserva cancelada. No hay reembolso en efectivo; el saldo queda a favor para reubicar.',
+      );
+      onReservaActualizada?.();
+    } catch (err) {
+      setMensajeAccion(err instanceof Error ? err.message : 'No se pudo cancelar la reserva.');
+    } finally {
+      setAccionando(false);
+    }
+  };
+
+  const manejarAplicarCredito = async () => {
+    if (!reservaActiva) return;
+    setAccionando(true);
+    setMensajeAccion(null);
+    try {
+      const creditos = await obtenerCreditosAdmin(reservaActiva.cliente_id);
+      if (saldoCreditos(creditos.items) <= 0.01) {
+        setMensajeAccion('Este cliente no tiene saldo a favor disponible.');
+        return;
+      }
+      const respuesta = await aplicarCreditoAdmin(reservaActiva.id);
+      setMensajeAccion(
+        respuesta.mensaje ||
+          `Se aplicaron ${formatearEuro(respuesta.aplicado_eur)} de saldo a favor.`,
+      );
+      onReservaActualizada?.();
+    } catch (err) {
+      setMensajeAccion(err instanceof Error ? err.message : 'No se pudo aplicar el saldo a favor.');
+    } finally {
+      setAccionando(false);
+    }
+  };
 
   return (
     <PanelDeslizable
@@ -174,6 +245,14 @@ export default function PanelDetalleReserva({
                   <strong>{formatearEuro(reservaActiva.viajeObj.precio_base)}</strong>
                 </div>
               )}
+              <div className="drawer-form__ficha-item">
+                <span className="drawer-form__ficha-etiqueta">Modalidad</span>
+                <strong>{etiquetaModalidad[reservaActiva.modalidad ?? ''] ?? reservaActiva.modalidad ?? '—'}</strong>
+              </div>
+              <div className="drawer-form__ficha-item">
+                <span className="drawer-form__ficha-etiqueta">Hospedaje</span>
+                <strong>{etiquetaHospedaje[reservaActiva.tipo_hospedaje ?? ''] ?? reservaActiva.tipo_hospedaje ?? '—'}</strong>
+              </div>
               <div className="drawer-form__ficha-item">
                 <span className="drawer-form__ficha-etiqueta">Estado del viaje</span>
                 <span className={`detalle-rsv__viaje-estado detalle-rsv__viaje-estado--${reservaActiva.viajeObj?.estado ?? 'sin_estado'}`}>
@@ -248,6 +327,15 @@ export default function PanelDetalleReserva({
                         {p.notas_tarifa && (
                           <span className="detalle-rsv__pasajero-nota">{p.notas_tarifa}</span>
                         )}
+                        {p.es_menor && p.partida_nacimiento_url && (
+                          <a
+                            href={resolverUrlArchivo(p.partida_nacimiento_url)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Partida de nacimiento
+                          </a>
+                        )}
                       </div>
                     </div>
                   );
@@ -269,6 +357,60 @@ export default function PanelDetalleReserva({
             <SectionTitle icon={<IconPago />}>Pagos</SectionTitle>
             <PagosReserva reservaId={reservaActiva.id} activo={abierto} />
           </div>
+
+          {puedeGestionar && (
+            <div className="detalle-rsv__seccion">
+              <SectionTitle icon={<IconPago />}>Saldo a favor</SectionTitle>
+              <p className="paso-aviso-cliente" style={{ marginBottom: 12 }}>
+                No hay reembolso en efectivo. Si el cliente no viaja, el monto pagado queda como saldo a favor para reubicarlo en otro viaje.
+              </p>
+              {mensajeAccion && (
+                <div className="detalle-rsv__vacio" role="status" style={{ marginBottom: 12 }}>
+                  {mensajeAccion}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  disabled={accionando || reservaActiva.estado === 'cancelada'}
+                  onClick={() => void manejarAplicarCredito()}
+                >
+                  Aplicar saldo a favor
+                </Boton>
+                {cancelable && !confirmarCancelar && (
+                  <Boton
+                    variante="peligro"
+                    tamano="sm"
+                    disabled={accionando}
+                    onClick={() => setConfirmarCancelar(true)}
+                  >
+                    Cancelar sin reembolso
+                  </Boton>
+                )}
+              </div>
+              {confirmarCancelar && (
+                <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <Boton
+                    variante="peligro"
+                    tamano="sm"
+                    disabled={accionando}
+                    onClick={() => void manejarCancelar()}
+                  >
+                    Confirmar cancelación
+                  </Boton>
+                  <Boton
+                    variante="secundario"
+                    tamano="sm"
+                    disabled={accionando}
+                    onClick={() => setConfirmarCancelar(false)}
+                  >
+                    Volver
+                  </Boton>
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       )}

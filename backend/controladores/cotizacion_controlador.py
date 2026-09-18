@@ -42,6 +42,7 @@ class DatosCotizacionCrear(BaseModel):
     precio_cotizado_eur: Decimal | None = None
     valida_hasta: datetime | None = None
     estado: str = "solicitada"
+    modalidad: str | None = None
 
 
 class DatosCotizacionActualizar(BaseModel):
@@ -49,6 +50,7 @@ class DatosCotizacionActualizar(BaseModel):
     precio_cotizado_eur: Decimal | None = Field(default=None, ge=0)
     valida_hasta: datetime | None = None
     estado: str | None = None
+    modalidad: str | None = None
 
 
 class DatosLineaCrear(BaseModel):
@@ -112,6 +114,7 @@ def crear_cotizacion_endpoint(
         precio_cotizado_eur=datos.precio_cotizado_eur,
         valida_hasta=datos.valida_hasta,
         estado=datos.estado,
+        modalidad=datos.modalidad,
     )
 
     registrar_evento(
@@ -152,6 +155,7 @@ def actualizar_cotizacion_endpoint(
         precio_cotizado_eur=datos.precio_cotizado_eur,
         valida_hasta=datos.valida_hasta,
         estado=datos.estado,
+        modalidad=datos.modalidad,
     )
 
     registrar_evento(

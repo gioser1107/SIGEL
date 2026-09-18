@@ -2,6 +2,7 @@ export interface Resena {
   id: number;
   reserva_id: number;
   calificacion: number;
+  calificacion_guia?: number | null;
   comentario: string | null;
   publico: boolean;
   nombre_cliente: string;
@@ -15,11 +16,13 @@ export interface ReservaElegibleResena {
   destino_titulo: string;
   fecha_viaje: string;
   estado_reserva: string;
+  guia_nombre?: string | null;
   resena: Resena | null;
 }
 
 export interface DatosCrearResena {
   reserva_id: number;
   calificacion: number;
+  calificacion_guia?: number;
   comentario?: string;
 }

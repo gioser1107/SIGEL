@@ -9,6 +9,8 @@ export interface Reserva {
   viaje_id: number;
   fecha_reserva: string;
   estado: "pendiente" | "confirmada" | "abonada" | "cancelada";
+  modalidad?: "individual" | "grupo" | "propio";
+  tipo_hospedaje?: "compartido" | "particular";
   creado_en: string;
   actualizado_en: string;
   destino_nombre?: string | null;
@@ -33,6 +35,8 @@ export interface ReservaCliente {
   numero_documento: string;
   // Datos propios de la reserva
   es_menor: boolean;
+  fecha_nacimiento?: string | null;
+  partida_nacimiento_url?: string | null;
   ocupa_asiento: boolean;
   precio_pasajero_eur: number;
   recargo_eur: number;
@@ -51,10 +55,14 @@ export interface CrearReservaDTO {
   cliente_id: number;
   viaje_id: number;
   estado?: string;
+  modalidad?: string;
+  tipo_hospedaje?: string;
 }
 
 export interface ActualizarReservaDTO {
   estado?: string;
+  modalidad?: string;
+  tipo_hospedaje?: string;
 }
 
 /** Para agregar un pasajero: cliente ya registrado o ficha nueva en la misma reserva. */
@@ -62,6 +70,8 @@ export interface CrearPasajeroDTO {
   cliente_id?: number;
   cliente?: DatosClienteNuevo;
   es_menor?: boolean;
+  fecha_nacimiento?: string | null;
+  partida_nacimiento_url?: string | null;
   ocupa_asiento?: boolean;
   precio_pasajero_eur?: number;
   recargo_eur?: number;
@@ -73,6 +83,8 @@ export interface CrearPasajeroDTO {
 /** Para editar solo los campos de reserva de un pasajero (no datos personales) */
 export interface ActualizarPasajeroDTO {
   es_menor?: boolean;
+  fecha_nacimiento?: string | null;
+  partida_nacimiento_url?: string | null;
   ocupa_asiento?: boolean;
   precio_pasajero_eur?: number;
   recargo_eur?: number;
@@ -102,6 +114,8 @@ export interface PasajeroDraft {
   ficha?: FormularioCliente;
   // Campos propios de la reserva
   es_menor: boolean;
+  fecha_nacimiento?: string;
+  partida_nacimiento_url?: string | null;
   ocupa_asiento: boolean;
   precio_pasajero_eur: number;
   recargo_eur: number;
@@ -130,6 +144,8 @@ export interface ViajeDisponibleReserva {
   destino_id: number;
   destino_nombre: string;
   precio_base_eur: number;
+  recargo_menor_eur?: number;
+  extra_hospedaje_particular_eur?: number;
   fecha_salida: string;
   fecha_regreso: string;
   estado: string;

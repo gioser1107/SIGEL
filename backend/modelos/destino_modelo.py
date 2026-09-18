@@ -43,6 +43,7 @@ class Destino(Base):
     descripcion = Column(Text, nullable=True)
     precio_base_eur = Column(Numeric(12, 2), nullable=False, default=0)
     recargo_menor_eur = Column(Numeric(12, 2), nullable=False, default=0)
+    extra_hospedaje_particular_eur = Column(Numeric(12, 2), nullable=False, default=0)
     dificultad = Column(String(20), nullable=False, default=DIFICULTAD_POR_DEFECTO)
     activo = Column(Boolean, nullable=False, default=True)
     creado_en = Column(DateTime, nullable=False)
@@ -94,6 +95,8 @@ def destino_a_dict(
         "descripcion": destino.descripcion,
         "precio_base_eur": float(precio) if precio is not None else 0.0,
         "recargo_menor_eur": float(destino.recargo_menor_eur) if destino.recargo_menor_eur is not None else 0.0,
+        "extra_hospedaje_particular_eur": float(destino.extra_hospedaje_particular_eur) if destino.extra_hospedaje_particular_eur is not None else 0.0,
+        "hospedaje_por_defecto": "compartido",
         "dificultad": dificultad_efectiva(destino.dificultad),
         "imagen": portada,
         "activo": destino.activo,
@@ -258,6 +261,7 @@ def crear_destino(
     descripcion: str | None,
     precio_base_eur: Decimal,
     recargo_menor_eur: Decimal = Decimal("0.00"),
+    extra_hospedaje_particular_eur: Decimal = Decimal("0.00"),
     dificultad: str = DIFICULTAD_POR_DEFECTO,
     activo: bool = True,
     url_portada: str | None = None,
@@ -279,6 +283,11 @@ def crear_destino(
         "recargo_menor_eur",
         permitir_cero=True,
     )
+    extra_hospedaje_limpio = ValidadorEntrada.monto(
+        extra_hospedaje_particular_eur,
+        "extra_hospedaje_particular_eur",
+        permitir_cero=True,
+    )
 
     ahora = datetime.now()
     nuevo_destino = Destino(
@@ -286,6 +295,7 @@ def crear_destino(
         descripcion=descripcion_limpia,
         precio_base_eur=precio_limpio,
         recargo_menor_eur=recargo_limpio,
+        extra_hospedaje_particular_eur=extra_hospedaje_limpio,
         dificultad=dificultad_limpia,
         activo=activo,
         creado_en=ahora,
@@ -309,6 +319,7 @@ def actualizar_destino(
     descripcion: str | None,
     precio_base_eur: Decimal | None,
     recargo_menor_eur: Decimal | None = None,
+    extra_hospedaje_particular_eur: Decimal | None = None,
     dificultad: str | None = None,
     activo: bool | None = None,
     url_portada: str | None = None,
@@ -337,6 +348,13 @@ def actualizar_destino(
         destino.recargo_menor_eur = ValidadorEntrada.monto(
             recargo_menor_eur,
             "recargo_menor_eur",
+            permitir_cero=True,
+        )
+
+    if extra_hospedaje_particular_eur is not None:
+        destino.extra_hospedaje_particular_eur = ValidadorEntrada.monto(
+            extra_hospedaje_particular_eur,
+            "extra_hospedaje_particular_eur",
             permitir_cero=True,
         )
 

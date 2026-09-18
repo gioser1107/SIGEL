@@ -108,6 +108,8 @@ export function useDestinos() {
       nombre: destino.nombre,
       descripcion: destino.descripcion ?? '',
       precio_base_eur: destino.precio_base_eur,
+      recargo_menor_eur: destino.recargo_menor_eur ?? 0,
+      extra_hospedaje_particular_eur: destino.extra_hospedaje_particular_eur ?? 0,
       dificultad: destino.dificultad ?? 'Moderado',
       activo: destino.activo,
     });
@@ -144,6 +146,8 @@ export function useDestinos() {
         nombre: form.nombre.trim(),
         descripcion: form.descripcion?.trim() || null,
         precio_base_eur: form.precio_base_eur,
+        recargo_menor_eur: form.recargo_menor_eur ?? 0,
+        extra_hospedaje_particular_eur: form.extra_hospedaje_particular_eur ?? 0,
         dificultad: form.dificultad,
         activo: form.activo,
       };

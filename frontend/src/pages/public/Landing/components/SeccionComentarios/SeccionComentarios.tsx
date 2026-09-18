@@ -11,14 +11,12 @@ interface Comentario {
   calificacion: number;
 }
 
-function resenaAComentario(resena: Resena): Comentario | null {
-  const texto = resena.comentario?.trim();
-  if (!texto) return null;
+function resenaAComentario(resena: Resena): Comentario {
   return {
     id: resena.id,
     nombre: resena.nombre_cliente,
     rol: resena.destino_titulo || 'Viajero',
-    texto,
+    texto: resena.comentario?.trim() || 'Calificó su experiencia en el viaje.',
     calificacion: resena.calificacion,
   };
 }
@@ -34,11 +32,7 @@ export default function SeccionComentarios() {
       try {
         const resenas = await obtenerResenasPublicas();
         if (!activo) return;
-        setComentarios(
-          resenas
-            .map(resenaAComentario)
-            .filter((comentario): comentario is Comentario => comentario !== null),
-        );
+        setComentarios(resenas.map(resenaAComentario));
       } catch {
         if (activo) setComentarios([]);
       } finally {

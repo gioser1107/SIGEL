@@ -40,6 +40,11 @@ export interface ResumenReporteViaje {
   saldo_pendiente_eur: number;
   reservas_pagadas_completas: number;
   reservas_con_saldo: number;
+  costos_totales_eur?: number;
+  margen_eur?: number;
+  punto_equilibrio_puestos?: number;
+  cubre_punto_equilibrio?: boolean;
+  precio_puesto_eur?: number;
 }
 
 export interface ReporteViaje {

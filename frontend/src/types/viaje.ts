@@ -163,6 +163,8 @@ export interface ViajeAgenda {
   ubicacion: string;
   precio: number;
   recargo_menor_eur: number;
+  extra_hospedaje_particular_eur?: number;
+  hospedaje_por_defecto?: string;
   imagen: string;
   hora: string;
   cupos: number;

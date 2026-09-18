@@ -50,20 +50,28 @@ export default function DomicilioRecogidaAcompanante({
   error,
 }: DomicilioRecogidaAcompananteProps) {
   const [vista, setVista] = useState<VistaDomicilio>(
-    domicilios.length === 0 ? 'formulario' : 'selector',
+    value.puntos_recogida || domicilios.length === 0 ? 'formulario' : 'selector',
   );
   const [form, setForm] = useState<ValoresFormularioPuntoRecogida>(FORM_VACIO);
   const ubicacion = useEstadosCiudadesSelect();
   const onChangeRef = useRef(onChange);
+  const cantidadDomiciliosRef = useRef(domicilios.length);
   onChangeRef.current = onChange;
 
   useEffect(() => {
+    const cantidadAnterior = cantidadDomiciliosRef.current;
+    cantidadDomiciliosRef.current = domicilios.length;
+
+    if (value.puntos_recogida) {
+      setVista('formulario');
+      return;
+    }
     if (domicilios.length === 0) {
       setVista('formulario');
       return;
     }
-    if (value.puntos_recogida) {
-      setVista('formulario');
+    if (cantidadAnterior === 0) {
+      setVista('selector');
     }
   }, [domicilios.length, value.puntos_recogida]);
 

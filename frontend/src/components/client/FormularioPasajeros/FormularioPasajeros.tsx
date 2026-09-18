@@ -21,11 +21,14 @@ export interface EstadoFormularioPasajeros {
   titularDomicilioNuevo?: PuntoRecogidaInline | null;
   pasajeros: PasajeroPublico[];
   proximoId: number;
+  modalidad?: 'individual' | 'grupo' | 'propio';
+  tipo_hospedaje?: 'compartido' | 'particular';
 }
 
 interface FormularioPasajerosProps {
   viajeId: number;
   recargo_menor_eur: number;
+  extra_hospedaje_particular_eur?: number;
   estadoInicial?: EstadoFormularioPasajeros | null;
   onSubmit: (datos: EstadoFormularioPasajeros) => void;
   onBack: () => void;
@@ -33,6 +36,7 @@ interface FormularioPasajerosProps {
 
 export default function FormularioPasajeros({
   recargo_menor_eur,
+  extra_hospedaje_particular_eur = 0,
   estadoInicial,
   onSubmit,
   onBack,
@@ -49,6 +53,12 @@ export default function FormularioPasajeros({
   );
   const [proximoId, setProximoId] = useState(() => estadoInicial?.proximoId ?? 0);
   const [errorFormulario, setErrorFormulario] = useState<string | null>(null);
+  const [modalidad, setModalidad] = useState<'individual' | 'grupo' | 'propio'>(
+    () => estadoInicial?.modalidad ?? 'individual',
+  );
+  const [tipoHospedaje, setTipoHospedaje] = useState<'compartido' | 'particular'>(
+    () => estadoInicial?.tipo_hospedaje ?? 'compartido',
+  );
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modoModal, setModoModal] = useState<'crear' | 'editar'>('crear');
   const [pasajeroModal, setPasajeroModal] = useState<PasajeroPublico | null>(null);
@@ -61,6 +71,8 @@ export default function FormularioPasajeros({
     });
     setPasajeros(estadoInicial.pasajeros.map(clonarPasajero));
     setProximoId(estadoInicial.proximoId);
+    setModalidad(estadoInicial.modalidad ?? 'individual');
+    setTipoHospedaje(estadoInicial.tipo_hospedaje ?? 'compartido');
   }, [estadoInicial]);
 
   useEffect(() => {
@@ -168,10 +180,15 @@ export default function FormularioPasajeros({
       titularDomicilioNuevo: titularNuevo,
       pasajeros: pasajerosNormalizados,
       proximoId,
+      modalidad: pasajerosNormalizados.length > 0 && modalidad === 'individual' ? 'grupo' : modalidad,
+      tipo_hospedaje: tipoHospedaje,
     });
   };
 
-  const totalRecargo = pasajeros.filter((p) => p.es_menor).length * recargo_menor_eur;
+  const totalRecargo = pasajeros.filter((p) => p.es_menor && !p.ocupa_asiento).length * recargo_menor_eur;
+  const ocupantes = 1 + pasajeros.filter((p) => p.ocupa_asiento !== false).length;
+  const extraHospedaje =
+    tipoHospedaje === 'particular' ? extra_hospedaje_particular_eur * Math.max(ocupantes, 1) : 0;
 
   return (
     <>
@@ -185,6 +202,48 @@ export default function FormularioPasajeros({
         </div>
 
         <div className="formulario-pago__body">
+          <div className="fp-card">
+            <h4 className="fp-card__titulo">Modalidad y hospedaje</h4>
+            <p className="fp-card__subtitulo">
+              Elige cómo viajas. El hospedaje particular suma un extra por ocupante.
+            </p>
+            <div className="fp-opciones" role="group" aria-label="Modalidad">
+              {([
+                ['individual', 'Individual', 'Viajas tú'],
+                ['grupo', 'Grupo', 'Varias personas'],
+                ['propio', 'Propio', 'Salida privada'],
+              ] as const).map(([valor, titulo, desc]) => (
+                <button
+                  key={valor}
+                  type="button"
+                  className={`fp-opciones__btn${modalidad === valor ? ' fp-opciones__btn--activa' : ''}`}
+                  onClick={() => setModalidad(valor)}
+                >
+                  <strong>{titulo}</strong>
+                  <span>{desc}</span>
+                </button>
+              ))}
+            </div>
+            <div className="fp-opciones" role="group" aria-label="Hospedaje">
+              {([
+                ['compartido', 'Compartido', 'Habitación con el grupo'],
+                ['particular', 'Particular', extra_hospedaje_particular_eur > 0
+                  ? `+€${extra_hospedaje_particular_eur.toFixed(2)} por ocupante`
+                  : 'Habitación privada'],
+              ] as const).map(([valor, titulo, desc]) => (
+                <button
+                  key={valor}
+                  type="button"
+                  className={`fp-opciones__btn${tipoHospedaje === valor ? ' fp-opciones__btn--activa' : ''}`}
+                  onClick={() => setTipoHospedaje(valor)}
+                >
+                  <strong>{titulo}</strong>
+                  <span>{desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="fp-card">
             <h4 className="fp-card__titulo">Datos del Titular</h4>
             <p className="fp-card__subtitulo">
@@ -222,12 +281,17 @@ export default function FormularioPasajeros({
 
           {totalRecargo > 0 && (
             <div className="fp-card__recargo-total">
-              <strong>Recargo por menores:</strong> €{totalRecargo.toFixed(2)}
+              <strong>Recargo por menores en piernas:</strong> €{totalRecargo.toFixed(2)}
               <span>
-                ({pasajeros.filter((x) => x.es_menor).length} menor
-                {pasajeros.filter((x) => x.es_menor).length > 1 ? 'es' : ''} × €
+                ({pasajeros.filter((x) => x.es_menor && !x.ocupa_asiento).length} menor
+                {pasajeros.filter((x) => x.es_menor && !x.ocupa_asiento).length > 1 ? 'es' : ''} × €
                 {recargo_menor_eur.toFixed(2)})
               </span>
+            </div>
+          )}
+          {extraHospedaje > 0 && (
+            <div className="fp-card__recargo-total">
+              <strong>Extra hospedaje particular:</strong> €{extraHospedaje.toFixed(2)}
             </div>
           )}
         </div>

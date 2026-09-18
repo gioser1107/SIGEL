@@ -13,6 +13,9 @@ export interface PasajeroPublico {
   ficha: FormularioCliente;
   errores: ErroresFormularioCliente;
   es_menor: boolean;
+  fecha_nacimiento: string;
+  partida_nacimiento_url: string | null;
+  ocupa_asiento: boolean;
   domicilios: PuntoRecogida[];
   buscandoDocumento: boolean;
   domicilio: ValorDomicilioAcompanante;
@@ -24,6 +27,9 @@ export function pasajeroVacio(id: number): PasajeroPublico {
     ficha: { ...FORM_VACIO },
     errores: {},
     es_menor: false,
+    fecha_nacimiento: '',
+    partida_nacimiento_url: null,
+    ocupa_asiento: true,
     domicilios: [],
     buscandoDocumento: false,
     domicilio: { ...DOMICILIO_VACIO },

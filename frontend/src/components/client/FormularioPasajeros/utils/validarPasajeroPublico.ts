@@ -4,6 +4,7 @@ import {
   type ErroresFormularioCliente,
   type FormularioCliente,
 } from '../../../../utils/validacionesCliente';
+import { errorPoliticaMenor } from '../../../../utils/politicaMenor';
 import type { PasajeroPublico } from '../pasajeroPublico';
 
 export function validarFichaPasajeroPublico(ficha: FormularioCliente): {
@@ -32,9 +33,11 @@ export function validarPasajeroPublico(p: PasajeroPublico): {
         : 'Completa el domicilio de recogida.';
   }
 
+  const errorMenor = errorPoliticaMenor(p.es_menor, p.fecha_nacimiento, p.partida_nacimiento_url);
+
   return {
     errores,
-    errorDomicilio,
-    valido: !tieneErroresCliente(errores) && !errorDomicilio,
+    errorDomicilio: errorDomicilio ?? errorMenor,
+    valido: !tieneErroresCliente(errores) && !errorDomicilio && !errorMenor,
   };
 }

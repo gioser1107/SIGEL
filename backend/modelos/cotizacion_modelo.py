@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Numeric, Text
+from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Session
 
 from database import Base
@@ -22,6 +22,7 @@ class Cotizacion(Base):
     cliente_id = Column(BigInteger, ForeignKey("clientes.id"), nullable=False, index=True)
     destino_id = Column(BigInteger, ForeignKey("destinos.id"), nullable=False, index=True)
     requisitos = Column(Text, nullable=True)
+    modalidad = Column(String(20), nullable=False, default="propio")
     precio_cotizado_eur = Column(Numeric(12, 2), nullable=True)
     valida_hasta = Column(DateTime, nullable=True)
     estado = Column(
@@ -81,6 +82,7 @@ def cotizacion_a_dict(db: Session, cotizacion: Cotizacion, incluir_lineas: bool 
         "destino_id": cotizacion.destino_id,
         "destino_nombre": destino.nombre if destino is not None else None,
         "requisitos": cotizacion.requisitos,
+        "modalidad": getattr(cotizacion, "modalidad", None) or "propio",
         "precio_cotizado_eur": precio_float,
         "valida_hasta": cotizacion.valida_hasta,
         "estado": cotizacion.estado,
@@ -184,6 +186,7 @@ def crear_cotizacion(
     precio_cotizado_eur: Optional[Decimal],
     valida_hasta: Optional[datetime],
     estado: str,
+    modalidad: Optional[str] = None,
 ) -> Cotizacion:
     obtener_destino_activo(db, destino_id)
 
@@ -219,11 +222,14 @@ def crear_cotizacion(
             maximo=1000,
         ) or None
 
+    from utilidades.politicas_agencia import normalizar_modalidad
+
     ahora = datetime.now()
     nueva_cotizacion = Cotizacion(
         cliente_id=cliente_id_final,
         destino_id=destino_id,
         requisitos=requisitos_limpios,
+        modalidad=normalizar_modalidad(modalidad, "propio"),
         precio_cotizado_eur=precio,
         valida_hasta=valida_hasta,
         estado=estado_final,
@@ -245,6 +251,7 @@ def actualizar_cotizacion(
     precio_cotizado_eur: Optional[Decimal],
     valida_hasta: Optional[datetime],
     estado: Optional[str],
+    modalidad: Optional[str] = None,
 ) -> tuple[Cotizacion, str]:
     cotizacion = obtener_cotizacion_activa(db, cotizacion_id)
     validar_acceso_cotizacion(usuario_actual, cotizacion, db)
@@ -286,6 +293,9 @@ def actualizar_cotizacion(
         ) or None
     if estado is not None:
         cotizacion.estado = ValidadorEntrada.estado_cotizacion(estado)
+    if modalidad is not None:
+        from utilidades.politicas_agencia import normalizar_modalidad
+        cotizacion.modalidad = normalizar_modalidad(modalidad, "propio")
 
     cotizacion.actualizado_en = datetime.now()
     db.commit()

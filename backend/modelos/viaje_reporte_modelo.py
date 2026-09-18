@@ -128,6 +128,18 @@ def obtener_reporte_viaje(db: Session, viaje_id: int) -> dict:
         1 for r in resumenes_por_reserva.values() if (r.get("saldo_pendiente_eur") or 0) > 0.01
     )
 
+    from math import ceil
+
+    from modelos.viaje_modelo import resumen_costos
+
+    costos = resumen_costos(db, viaje_id)
+    costos_totales = float(costos.get("total_eur") or 0)
+    precio_puesto = float((viaje_a_dict(db, viaje) or {}).get("precio_base") or 0)
+    puestos_equilibrio = int(ceil(costos_totales / precio_puesto)) if precio_puesto > 0.01 else 0
+    puestos_ocupados = ocupacion["total_ocupados"]
+    margen_eur = round(total_cobrado_eur - costos_totales, 2)
+    cubre_equilibrio = puestos_ocupados >= puestos_equilibrio if puestos_equilibrio else costos_totales <= 0.01
+
     reservas_por_estado = Counter(reserva.estado for reserva in reservas_vistas.values())
 
     reservas_resumen = []
@@ -174,6 +186,11 @@ def obtener_reporte_viaje(db: Session, viaje_id: int) -> dict:
             "saldo_pendiente_eur": saldo_pendiente_eur,
             "reservas_pagadas_completas": reservas_pagadas,
             "reservas_con_saldo": reservas_con_saldo,
+            "costos_totales_eur": round(costos_totales, 2),
+            "margen_eur": margen_eur,
+            "punto_equilibrio_puestos": puestos_equilibrio,
+            "cubre_punto_equilibrio": cubre_equilibrio,
+            "precio_puesto_eur": precio_puesto,
         },
         "reservas": reservas_resumen,
         "pasajeros": pasajeros,

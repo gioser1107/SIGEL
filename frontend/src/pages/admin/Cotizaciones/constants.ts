@@ -35,6 +35,7 @@ export const FORM_VACIO: DatosCotizacionNueva = {
   precio_cotizado_eur: null,
   valida_hasta: null,
   estado: 'solicitada',
+  modalidad: 'individual',
 };
 
 export const LINEA_FORM_VACIO = { categoria: 'otro', monto_eur: '', descripcion: '' };

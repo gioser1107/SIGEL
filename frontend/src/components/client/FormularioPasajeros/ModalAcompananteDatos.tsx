@@ -1,6 +1,7 @@
 import Boton from '../../ui/Boton/Boton';
 import FormularioClienteCampos from '../../../pages/admin/Clientes/components/FormularioClienteCampos';
 import type { CiudadUbicacion, EstadoUbicacion } from '../../../types/cliente';
+import CamposPoliticaMenor from './CamposPoliticaMenor';
 import type { PasajeroPublico } from './pasajeroPublico';
 
 interface PropsModalAcompananteDatos {
@@ -12,12 +13,16 @@ interface PropsModalAcompananteDatos {
   cargandoEstados: boolean;
   cargandoCiudades: boolean;
   recargoMenorEur: number;
+  errorContinuar?: string | null;
   onCerrar: () => void;
   onContinuar: () => void;
   onBlurDocumento: () => void;
   onChange: (actualizador: (prev: PasajeroPublico['ficha']) => PasajeroPublico['ficha']) => void;
   onLimpiarError: (campo: keyof PasajeroPublico['errores']) => void;
   onToggleMenor: (esMenor: boolean) => void;
+  onFechaNacimiento: (fecha: string) => void;
+  onOcupaAsiento: (ocupa: boolean) => void;
+  onPartidaUrl: (url: string | null) => void;
 }
 
 export default function ModalAcompananteDatos({
@@ -29,12 +34,16 @@ export default function ModalAcompananteDatos({
   cargandoEstados,
   cargandoCiudades,
   recargoMenorEur,
+  errorContinuar,
   onCerrar,
   onContinuar,
   onBlurDocumento,
   onChange,
   onLimpiarError,
   onToggleMenor,
+  onFechaNacimiento,
+  onOcupaAsiento,
+  onPartidaUrl,
 }: PropsModalAcompananteDatos) {
   if (!abierto) return null;
 
@@ -71,23 +80,18 @@ export default function ModalAcompananteDatos({
         </div>
 
         <div className="pr-modal-domicilio__cuerpo">
-          <div className="fp-menor-prioridad">
-            <label className="fp-menor-prioridad__label">
-              <input
-                type="checkbox"
-                className="fp-menor-prioridad__check"
-                checked={borrador.es_menor}
-                onChange={(e) => onToggleMenor(e.target.checked)}
-              />
-              <span className="fp-menor-prioridad__texto">
-                <strong>¿Es menor de edad?</strong>
-                <span>Indícalo primero; puede aplicar un recargo en la tarifa del viaje.</span>
-              </span>
-            </label>
-            {borrador.es_menor && recargoMenorEur > 0 && (
-              <span className="fp-menor-prioridad__recargo">+€{recargoMenorEur.toFixed(2)} de recargo</span>
-            )}
-          </div>
+          <CamposPoliticaMenor
+            idPrefijo={`modal-acompanante-${borrador.id}`}
+            esMenor={borrador.es_menor}
+            fechaNacimiento={borrador.fecha_nacimiento}
+            ocupaAsiento={borrador.ocupa_asiento}
+            partidaUrl={borrador.partida_nacimiento_url}
+            recargoMenorEur={recargoMenorEur}
+            onToggleMenor={onToggleMenor}
+            onFechaNacimiento={onFechaNacimiento}
+            onOcupaAsiento={onOcupaAsiento}
+            onPartidaUrl={onPartidaUrl}
+          />
 
           <FormularioClienteCampos
             idPrefijo={`modal-acompanante-${borrador.id}`}
@@ -103,6 +107,12 @@ export default function ModalAcompananteDatos({
             onChange={onChange}
             onLimpiarError={onLimpiarError}
           />
+
+          {errorContinuar && (
+            <div className="fp-card__error" role="alert">
+              {errorContinuar}
+            </div>
+          )}
 
           {borrador.buscandoDocumento && (
             <p className="pr-selector-reserva__aviso">Buscando cliente registrado…</p>

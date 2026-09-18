@@ -134,6 +134,19 @@ export default function PanelNuevaCotizacion({
         </div>
 
         <div className="drawer-form__campo">
+          <label className="drawer-form__label">Modalidad</label>
+          <select
+            className="drawer-form__input"
+            value={form.modalidad ?? 'individual'}
+            onChange={(e) => actualizarCampo('modalidad', e.target.value)}
+          >
+            <option value="individual">Individual</option>
+            <option value="grupo">Grupo</option>
+            <option value="propio">Propio</option>
+          </select>
+        </div>
+
+        <div className="drawer-form__campo">
           <label className="drawer-form__label">Estado</label>
           <select
             className="drawer-form__input"

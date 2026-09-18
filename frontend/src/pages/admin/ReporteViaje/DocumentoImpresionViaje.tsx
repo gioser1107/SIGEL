@@ -84,6 +84,21 @@ export default function DocumentoImpresionViaje({ reporte }: DocumentoImpresionV
           <span>Reservas pagadas</span>
           <strong>{resumen.reservas_pagadas_completas}/{resumen.total_reservas}</strong>
         </div>
+        <div>
+          <span>Costos</span>
+          <strong>{formatearEuro(resumen.costos_totales_eur ?? 0)}</strong>
+        </div>
+        <div>
+          <span>Margen</span>
+          <strong>{formatearEuro(resumen.margen_eur ?? 0)}</strong>
+        </div>
+        <div>
+          <span>Equilibrio</span>
+          <strong>
+            {resumen.punto_equilibrio_puestos ?? '—'}
+            {resumen.cubre_punto_equilibrio ? ' (cubierto)' : ''}
+          </strong>
+        </div>
       </div>
 
       <section className="doc-viaje__bloque">

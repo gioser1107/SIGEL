@@ -414,6 +414,14 @@ def calcular_total_reserva_eur(db: Session, reserva: Reserva) -> dict:
             precio_linea = precio_unitario_eur
         total_reserva_eur += precio_linea + float(pasajero.recargo_eur or 0)
 
+    extra_hospedaje = 0.0
+    tipo_hospedaje = getattr(reserva, "tipo_hospedaje", None) or "compartido"
+    if tipo_hospedaje == "particular":
+        extra_unitario = float(getattr(destino, "extra_hospedaje_particular_eur", 0) or 0)
+        ocupantes = sum(1 for p in pasajeros if p.ocupa_asiento)
+        extra_hospedaje = extra_unitario * max(ocupantes, 1)
+        total_reserva_eur += extra_hospedaje
+
     if cantidad_pasajeros == 0:
         origen_total = "destino"
     elif pasajeros_con_tarifa_custom == cantidad_pasajeros:
@@ -430,6 +438,8 @@ def calcular_total_reserva_eur(db: Session, reserva: Reserva) -> dict:
         "precio_unitario_eur": _redondear_eur(precio_unitario_eur),
         "cantidad_pasajeros": cantidad_pasajeros,
         "recargos_eur": _redondear_eur(recargos_eur),
+        "extra_hospedaje_eur": _redondear_eur(extra_hospedaje),
+        "tipo_hospedaje": tipo_hospedaje,
         "total_reserva_eur": _redondear_eur(total_reserva_eur),
         "origen_total": origen_total,
     }
@@ -518,7 +528,12 @@ def calcular_resumen_pagos_reserva(db: Session, reserva: Reserva) -> dict:
             cantidad_rechazados += 1
 
     total_reserva_eur = info_reserva["total_reserva_eur"]
-    saldo_pendiente_eur = _redondear_eur(max(total_reserva_eur - total_aprobado_eur, 0))
+    from modelos.credito_modelo import total_credito_aplicado_reserva
+
+    credito_aplicado_eur = total_credito_aplicado_reserva(db, reserva.id)
+    saldo_pendiente_eur = _redondear_eur(
+        max(total_reserva_eur - total_aprobado_eur - credito_aplicado_eur, 0)
+    )
     pagado_completo = saldo_pendiente_eur <= 0 and total_reserva_eur > 0
     deposito_minimo_eur = float(DEPOSITO_MINIMO_EUR)
     deposito_minimo_cumplido = (
@@ -541,7 +556,10 @@ def calcular_resumen_pagos_reserva(db: Session, reserva: Reserva) -> dict:
         },
         "cantidad_pasajeros": info_reserva["cantidad_pasajeros"],
         "recargos_eur": info_reserva["recargos_eur"],
+        "extra_hospedaje_eur": info_reserva.get("extra_hospedaje_eur", 0),
+        "tipo_hospedaje": info_reserva.get("tipo_hospedaje", "compartido"),
         "total_reserva_eur": total_reserva_eur,
+        "credito_aplicado_eur": _redondear_eur(credito_aplicado_eur),
         "origen_total": info_reserva["origen_total"],
         "total_pagado_aprobado_eur": _redondear_eur(total_aprobado_eur),
         "total_pendiente_validacion_eur": _redondear_eur(total_en_validacion_eur),

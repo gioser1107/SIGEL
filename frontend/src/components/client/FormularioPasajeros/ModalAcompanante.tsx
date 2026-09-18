@@ -9,6 +9,7 @@ import ModalAcompananteDatos from './ModalAcompananteDatos';
 import ModalAcompananteRecogida from './ModalAcompananteRecogida';
 import { clonarPasajero, type PasajeroPublico } from './pasajeroPublico';
 import { validarFichaPasajeroPublico } from './utils/validarPasajeroPublico';
+import { errorPoliticaMenor, resolverPoliticaMenor } from '../../../utils/politicaMenor';
 
 const DOMICILIO_VACIO: ValorDomicilioAcompanante = {
   punto_recogida_id: null,
@@ -223,11 +224,43 @@ export default function ModalAcompanante({
     }
   }, [aplicarClienteEncontrado]);
 
+  const aplicarPolitica = (
+    parcial: Partial<Pick<PasajeroPublico, 'es_menor' | 'fecha_nacimiento' | 'ocupa_asiento' | 'partida_nacimiento_url'>>,
+  ) => {
+    setBorrador((prev) => {
+      if (!prev) return prev;
+      const esMenor = parcial.es_menor ?? prev.es_menor;
+      const fecha = parcial.fecha_nacimiento ?? prev.fecha_nacimiento;
+      const politica = resolverPoliticaMenor(
+        esMenor,
+        fecha,
+        parcial.ocupa_asiento ?? prev.ocupa_asiento,
+      );
+      return {
+        ...prev,
+        es_menor: esMenor,
+        fecha_nacimiento: esMenor ? fecha : '',
+        ocupa_asiento: politica.ocupa_asiento,
+        partida_nacimiento_url: esMenor
+          ? (parcial.partida_nacimiento_url !== undefined
+            ? parcial.partida_nacimiento_url
+            : prev.partida_nacimiento_url)
+          : null,
+      };
+    });
+  };
+
   const manejarContinuar = () => {
     if (!borrador) return;
     const { errores, valido } = validarFichaPasajeroPublico(borrador.ficha);
-    if (!valido) {
+    const errorMenor = errorPoliticaMenor(
+      borrador.es_menor,
+      borrador.fecha_nacimiento,
+      borrador.partida_nacimiento_url,
+    );
+    if (!valido || errorMenor) {
       setBorrador((prev) => (prev ? { ...prev, errores } : prev));
+      if (errorMenor) setErrorDomicilio(errorMenor);
       return;
     }
     setBorrador((prev) => (prev ? { ...prev, errores: {} } : prev));
@@ -257,12 +290,16 @@ export default function ModalAcompanante({
         cargandoEstados={cargandoEstados}
         cargandoCiudades={cargandoCiudades}
         recargoMenorEur={recargoMenorEur}
+        errorContinuar={paso === 'datos' ? errorDomicilio : null}
         onCerrar={onCerrar}
         onContinuar={manejarContinuar}
         onBlurDocumento={() => void buscarPorDocumento()}
         onChange={manejarChangeFicha}
         onLimpiarError={manejarLimpiarError}
-        onToggleMenor={(esMenor) => actualizarBorrador({ es_menor: esMenor })}
+        onToggleMenor={(esMenor) => aplicarPolitica({ es_menor: esMenor })}
+        onFechaNacimiento={(fecha) => aplicarPolitica({ fecha_nacimiento: fecha })}
+        onOcupaAsiento={(ocupa) => aplicarPolitica({ ocupa_asiento: ocupa })}
+        onPartidaUrl={(url) => aplicarPolitica({ partida_nacimiento_url: url })}
       />
 
       <ModalAcompananteRecogida

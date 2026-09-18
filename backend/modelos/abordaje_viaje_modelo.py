@@ -60,6 +60,8 @@ def _cliente_resumen(db: Session, cliente: Cliente) -> dict:
         "numero_documento": cliente.numero_documento,
         "telefono": cliente.telefono,
         "telefono_secundario": cliente.telefono_secundario,
+        "contacto_emergencia_nombre": getattr(cliente, "contacto_emergencia_nombre", None),
+        "contacto_emergencia_telefono": getattr(cliente, "contacto_emergencia_telefono", None),
         "estado": estado.nombre if estado else None,
         "ciudad": ciudad.nombre if ciudad else None,
     }
@@ -216,6 +218,8 @@ def _item_manifiesto(
         "es_titular": pasajero.es_titular,
         "es_menor": pasajero.es_menor,
         "ocupa_asiento": pasajero.ocupa_asiento,
+        "contacto_emergencia_nombre": getattr(cliente, "contacto_emergencia_nombre", None),
+        "contacto_emergencia_telefono": getattr(cliente, "contacto_emergencia_telefono", None),
         "cliente": _cliente_resumen(db, cliente),
         "domicilio": _domicilio_dict(db, pasajero.punto_recogida_id),
         "asiento": asiento,

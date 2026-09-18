@@ -87,6 +87,8 @@ export interface FormularioCliente {
   estado_id: string;
   ciudad_id: string;
   notas: string;
+  contacto_emergencia_nombre: string;
+  contacto_emergencia_telefono: string;
 }
 
 export interface ErroresFormularioCliente {
@@ -102,6 +104,8 @@ export interface ErroresFormularioCliente {
   estado_id?: string;
   ciudad_id?: string;
   notas?: string;
+  contacto_emergencia_nombre?: string;
+  contacto_emergencia_telefono?: string;
 }
 
 export function validarFormularioCliente(datos: FormularioCliente): ErroresFormularioCliente {

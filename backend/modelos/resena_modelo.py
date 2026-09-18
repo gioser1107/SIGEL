@@ -19,6 +19,7 @@ class Resena(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     reserva_id = Column(BigInteger, ForeignKey("reservas.id"), nullable=False, unique=True, index=True)
     calificacion = Column(SmallInteger, nullable=False)
+    calificacion_guia = Column(SmallInteger, nullable=True)
     comentario = Column(Text, nullable=True)
     publico = Column(Boolean, nullable=False, default=True)
     creado_en = Column(DateTime, nullable=False)
@@ -53,6 +54,7 @@ def resena_a_dict(
         "id": resena.id,
         "reserva_id": reserva_id or resena.reserva_id,
         "calificacion": int(resena.calificacion),
+        "calificacion_guia": int(resena.calificacion_guia) if resena.calificacion_guia is not None else None,
         "comentario": resena.comentario,
         "publico": bool(resena.publico),
         "nombre_cliente": nombre_cliente,
@@ -156,8 +158,15 @@ def listar_reservas_elegibles_cliente(db: Session, cliente_id: int) -> list[dict
             "destino_titulo": destino.nombre,
             "fecha_viaje": viaje.fecha_salida.isoformat(),
             "estado_reserva": reserva.estado,
+            "guia_nombre": None,
             "resena": None,
         }
+        try:
+            from modelos.viaje_guia_modelo import guias_en_respuesta_viaje
+
+            item["guia_nombre"] = guias_en_respuesta_viaje(db, viaje.id).get("guia_principal_nombre")
+        except Exception:
+            pass
         if resena is not None:
             item["resena"] = resena_a_dict(
                 resena,
@@ -202,9 +211,12 @@ def crear_resena(
     cliente_id: int,
     calificacion: int,
     comentario: Optional[str],
+    calificacion_guia: Optional[int] = None,
 ) -> dict:
     if calificacion < 1 or calificacion > 5:
         raise HTTPException(status_code=400, detail="La calificación debe estar entre 1 y 5")
+    if calificacion_guia is not None and (calificacion_guia < 1 or calificacion_guia > 5):
+        raise HTTPException(status_code=400, detail="La calificación del guía debe estar entre 1 y 5")
 
     reserva = obtener_reserva_activa(db, reserva_id)
     if reserva.cliente_id != cliente_id:
@@ -237,6 +249,7 @@ def crear_resena(
     nueva = Resena(
         reserva_id=reserva_id,
         calificacion=calificacion,
+        calificacion_guia=calificacion_guia,
         comentario=comentario_limpio,
         publico=True,
         creado_en=ahora,

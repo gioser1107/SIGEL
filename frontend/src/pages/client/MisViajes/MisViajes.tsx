@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import PaginacionTabla from '../../../components/admin/PaginacionTabla/PaginacionTabla';
 import ModalDetallePagoPortal from '../../../components/client/DetallePagoPortal/ModalDetallePagoPortal';
 import { useMisViajesPortal } from '../../../hooks/useMisViajesPortal';
@@ -9,6 +9,7 @@ import {
   formatearMontoPortalPago,
   ultimoPagoReserva,
 } from '../../../services/pagosPortal';
+import { aplicarCreditoPortal, obtenerMisCreditos, type ResumenCreditos } from '../../../services/creditos';
 import { formatearEuro } from '../../../utils/formatoMoneda';
 import './MisViajes.css';
 
@@ -50,10 +51,40 @@ export default function MisViajes() {
     totalPaginas,
     limite,
     irPagina,
+    recargar,
   } = useMisViajesPortal();
   const [detallePago, setDetallePago] = useState<{ reservaId: number; pagoId: number } | null>(
     null,
   );
+  const [creditos, setCreditos] = useState<ResumenCreditos | null>(null);
+  const [aplicandoCredito, setAplicandoCredito] = useState<number | null>(null);
+  const [mensajeCredito, setMensajeCredito] = useState<string | null>(null);
+
+  const cargarCreditos = async () => {
+    try {
+      setCreditos(await obtenerMisCreditos());
+    } catch {
+      setCreditos(null);
+    }
+  };
+
+  useEffect(() => {
+    void cargarCreditos();
+  }, []);
+
+  const manejarAplicarCredito = async (reservaId: number) => {
+    setAplicandoCredito(reservaId);
+    setMensajeCredito(null);
+    try {
+      const respuesta = await aplicarCreditoPortal(reservaId);
+      setMensajeCredito(respuesta.mensaje || `Se aplicaron ${formatearEuro(respuesta.aplicado_eur)} a tu reserva.`);
+      await Promise.all([recargar(), cargarCreditos()]);
+    } catch (err) {
+      setMensajeCredito(err instanceof Error ? err.message : 'No se pudo aplicar el saldo a favor.');
+    } finally {
+      setAplicandoCredito(null);
+    }
+  };
 
   return (
     <div className="mis-viajes">
@@ -71,6 +102,18 @@ export default function MisViajes() {
           Explorar agenda
         </Link>
       </div>
+
+      {creditos && creditos.saldo_disponible_eur > 0.01 && (
+        <div className="mis-viajes__credito" role="status">
+          <strong>Saldo a favor: {formatearEuro(creditos.saldo_disponible_eur)}</strong>
+          <span>{creditos.politica}</span>
+        </div>
+      )}
+      {mensajeCredito && (
+        <div className="mis-viajes__error" role="status">
+          {mensajeCredito}
+        </div>
+      )}
 
       {error && (
         <div className="mis-viajes__error" role="alert">
@@ -201,6 +244,19 @@ export default function MisViajes() {
                         >
                           Abonar saldo
                         </Link>
+                      )}
+                      {mostrarAbonar && (creditos?.saldo_disponible_eur ?? 0) > 0.01 && reserva.estado !== 'cancelada' && (
+                        <button
+                          type="button"
+                          className="mis-viajes__btn-abonar"
+                          disabled={aplicandoCredito === reserva.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void manejarAplicarCredito(reserva.id);
+                          }}
+                        >
+                          {aplicandoCredito === reserva.id ? 'Aplicando…' : 'Usar saldo a favor'}
+                        </button>
                       )}
                     </div>
                   </div>

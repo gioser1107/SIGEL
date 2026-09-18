@@ -93,6 +93,7 @@ import modelos.bitacora_modelo  # noqa: E402,F401
 import modelos.ciudad_modelo  # noqa: E402,F401
 import modelos.cliente_modelo  # noqa: E402,F401
 import modelos.costo_operativo_modelo  # noqa: E402,F401
+import modelos.credito_modelo  # noqa: E402,F401
 import modelos.cotizacion_linea_modelo  # noqa: E402,F401
 import modelos.cotizacion_modelo  # noqa: E402,F401
 import modelos.destino_imagen_modelo  # noqa: E402,F401
@@ -139,6 +140,19 @@ TODOS_LOS_PERMISOS = [
     PERMISO_CREAR_CLIENTES, PERMISO_LEER_CLIENTES, PERMISO_EDITAR_CLIENTES, PERMISO_BORRAR_CLIENTES,
     PERMISO_CREAR_PUNTOS_RECOGIDA, PERMISO_LEER_PUNTOS_RECOGIDA, PERMISO_EDITAR_PUNTOS_RECOGIDA, PERMISO_BORRAR_PUNTOS_RECOGIDA,
     PERMISO_CREAR_RESENAS, PERMISO_LEER_RESENAS, PERMISO_EDITAR_RESENAS, PERMISO_BORRAR_RESENAS,
+]
+
+PERMISOS_ATC = [
+    PERMISO_CREAR_CLIENTES, PERMISO_LEER_CLIENTES, PERMISO_EDITAR_CLIENTES, PERMISO_BORRAR_CLIENTES,
+    PERMISO_CREAR_RESERVAS, PERMISO_LEER_RESERVAS, PERMISO_EDITAR_RESERVAS, PERMISO_BORRAR_RESERVAS,
+    PERMISO_CREAR_COTIZACIONES, PERMISO_LEER_COTIZACIONES, PERMISO_EDITAR_COTIZACIONES, PERMISO_BORRAR_COTIZACIONES,
+    PERMISO_CREAR_REPORTES_PAGO, PERMISO_LEER_REPORTES_PAGO, PERMISO_EDITAR_REPORTES_PAGO,
+    PERMISO_LEER_CONCILIACION, PERMISO_EDITAR_CONCILIACION,
+    PERMISO_LEER_DESTINOS,
+    PERMISO_LEER_PLANIFICACION,
+    PERMISO_LEER_ABORDAJE, PERMISO_CREAR_ABORDAJE, PERMISO_EDITAR_ABORDAJE,
+    PERMISO_LEER_RESENAS,
+    PERMISO_LEER_PUNTOS_RECOGIDA, PERMISO_CREAR_PUNTOS_RECOGIDA, PERMISO_EDITAR_PUNTOS_RECOGIDA,
 ]
 
 PERMISOS_GUIA = [
@@ -224,7 +238,8 @@ def _inserts() -> list[str]:
         "INSERT INTO roles (id, nombre, descripcion, creado_en, actualizado_en) VALUES",
         f"  (1, 'Administrador', 'Acceso completo al panel', {_sql(AHORA)}, {_sql(AHORA)}),",
         f"  (2, 'Guia', 'Guía de viaje: planificación y abordaje', {_sql(AHORA)}, {_sql(AHORA)}),",
-        f"  (3, 'Cliente', 'Portal de pasajeros', {_sql(AHORA)}, {_sql(AHORA)});",
+        f"  (3, 'Cliente', 'Portal de pasajeros', {_sql(AHORA)}, {_sql(AHORA)}),",
+        f"  (4, 'Atencion al Cliente', 'Ventas, reservas y pagos. Sin WhatsApp.', {_sql(AHORA)}, {_sql(AHORA)});",
         "",
         "-- Permisos",
         "INSERT INTO permisos (id, descripcion, creado_en, actualizado_en) VALUES",
@@ -238,8 +253,9 @@ def _inserts() -> list[str]:
     mapa_permiso = {codigo: i for i, codigo in enumerate(TODOS_LOS_PERMISOS, start=1)}
     asignaciones = [(1, mapa_permiso[c]) for c in TODOS_LOS_PERMISOS]
     asignaciones += [(2, mapa_permiso[c]) for c in PERMISOS_GUIA]
+    asignaciones += [(4, mapa_permiso[c]) for c in PERMISOS_ATC]
 
-    lineas.append("-- Permisos por rol (Administrador = todos, Guía = operación de viaje)")
+    lineas.append("-- Permisos por rol (Administrador = todos, Guía = operación, ATC = comercial)")
     lineas.append("INSERT INTO roles_permisos (rol_id, permiso_id, creado_en, actualizado_en) VALUES")
     filas_rp = [f"  ({rol}, {perm}, {_sql(AHORA)}, {_sql(AHORA)})" for rol, perm in asignaciones]
     lineas.append(",\n".join(filas_rp) + ";")
@@ -250,7 +266,8 @@ def _inserts() -> list[str]:
         "INSERT INTO usuarios (id, rol_id, correo, hash_contrasena, nombre, apellido, telefono, creado_en, actualizado_en) VALUES\n"
         f"  (1, 1, 'admin@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Admin', 'Travel', '02510000000', {_sql(AHORA)}, {_sql(AHORA)}),\n"
         f"  (2, 2, 'guia@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Guia', 'Operativo', '04120000000', {_sql(AHORA)}, {_sql(AHORA)}),\n"
-        f"  (3, 3, 'cliente@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Cliente', 'Demo', '04240000000', {_sql(AHORA)}, {_sql(AHORA)});"
+        f"  (3, 3, 'cliente@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Cliente', 'Demo', '04240000000', {_sql(AHORA)}, {_sql(AHORA)}),\n"
+        f"  (4, 4, 'atc@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Atencion', 'Cliente', '04160000000', {_sql(AHORA)}, {_sql(AHORA)});"
     )
     lineas.append("")
 
@@ -435,6 +452,7 @@ def main() -> None:
     print(f"  admin@travelbqto.com   / {CONTRASENA_ENTREGA}  (Administrador)")
     print(f"  guia@travelbqto.com    / {CONTRASENA_ENTREGA}  (Guía)")
     print(f"  cliente@travelbqto.com / {CONTRASENA_ENTREGA}  (Portal cliente)")
+    print(f"  atc@travelbqto.com     / {CONTRASENA_ENTREGA}  (Atención al cliente)")
     if args.aplicar:
         print(f"ADVERTENCIA: esto borra {nombre_bd} y {nombre_bd_seguridad} de este MySQL.")
         aplicar_mysql()

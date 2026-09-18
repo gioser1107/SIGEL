@@ -36,6 +36,8 @@ export const FORM_VACIO: FormularioCliente = {
   telefono_sec_fijo: '',
   direccion: '',
   estado_id: '',
-  ciudad_id: '',
-  notas: '',
+    ciudad_id: '',
+    notas: '',
+    contacto_emergencia_nombre: '',
+    contacto_emergencia_telefono: '',
 };

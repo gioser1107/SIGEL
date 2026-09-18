@@ -33,6 +33,8 @@ class Cliente(Base):
     razon_social = Column(String(160), nullable=True)
     telefono = Column(String(30), nullable=True)
     telefono_secundario = Column(String(30), nullable=True)
+    contacto_emergencia_nombre = Column(String(120), nullable=True)
+    contacto_emergencia_telefono = Column(String(30), nullable=True)
     direccion = Column(String(255), nullable=True)
     ciudad_id = Column(BigInteger, ForeignKey("ciudades.id"), nullable=True, index=True)
     estado_id = Column(BigInteger, ForeignKey("estados.id"), nullable=True, index=True)
@@ -208,6 +210,8 @@ def cliente_a_dict(
         "razon_social": cliente.razon_social,
         "telefono": cliente.telefono,
         "telefono_secundario": cliente.telefono_secundario,
+        "contacto_emergencia_nombre": cliente.contacto_emergencia_nombre,
+        "contacto_emergencia_telefono": cliente.contacto_emergencia_telefono,
         "direccion": cliente.direccion,
         "estado_id": cliente.estado_id,
         "estado": nombre_estado,
@@ -353,6 +357,15 @@ def registrar_cliente_para_reserva(
             getattr(datos, "telefono_secundario", None),
             "telefono_secundario",
         ) or None,
+        contacto_emergencia_nombre=ValidadorEntrada.texto_libre(
+            getattr(datos, "contacto_emergencia_nombre", None),
+            "contacto_emergencia_nombre",
+            maximo=120,
+        ) or None,
+        contacto_emergencia_telefono=ValidadorEntrada.telefono(
+            getattr(datos, "contacto_emergencia_telefono", None),
+            "contacto_emergencia_telefono",
+        ) or None,
         direccion=ValidadorEntrada.texto_libre(
             getattr(datos, "direccion", None),
             "direccion",
@@ -472,6 +485,15 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
         razon_social=campos["razon_social"] or datos.razon_social,
         telefono=ValidadorEntrada.telefono(datos.telefono, "telefono") or None,
         telefono_secundario=ValidadorEntrada.telefono(datos.telefono_secundario, "telefono_secundario") or None,
+        contacto_emergencia_nombre=ValidadorEntrada.texto_libre(
+            getattr(datos, "contacto_emergencia_nombre", None),
+            "contacto_emergencia_nombre",
+            maximo=120,
+        ) or None,
+        contacto_emergencia_telefono=ValidadorEntrada.telefono(
+            getattr(datos, "contacto_emergencia_telefono", None),
+            "contacto_emergencia_telefono",
+        ) or None,
         direccion=ValidadorEntrada.texto_libre(datos.direccion, "direccion", maximo=255) or None,
         estado_id=datos.estado_id,
         ciudad_id=datos.ciudad_id,
@@ -567,6 +589,19 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
             datos.telefono_secundario,
             "telefono_secundario",
         )
+
+    if getattr(datos, "contacto_emergencia_nombre", None) is not None:
+        cliente.contacto_emergencia_nombre = ValidadorEntrada.texto_libre(
+            datos.contacto_emergencia_nombre,
+            "contacto_emergencia_nombre",
+            maximo=120,
+        ) or None
+
+    if getattr(datos, "contacto_emergencia_telefono", None) is not None:
+        cliente.contacto_emergencia_telefono = ValidadorEntrada.telefono(
+            datos.contacto_emergencia_telefono,
+            "contacto_emergencia_telefono",
+        ) or None
 
     if datos.direccion is not None:
         cliente.direccion = ValidadorEntrada.texto_libre(datos.direccion, "direccion", maximo=255) or None

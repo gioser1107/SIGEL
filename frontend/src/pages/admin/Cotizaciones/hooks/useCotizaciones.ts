@@ -174,6 +174,7 @@ export function useCotizaciones() {
       precio_cotizado_eur: cot.precio_cotizado_eur,
       valida_hasta: cot.valida_hasta,
       estado: cot.estado,
+      modalidad: cot.modalidad ?? 'individual',
     });
     setErrorForm(null);
     setDrawerAbierto(true);
@@ -205,6 +206,7 @@ export function useCotizaciones() {
           precio_cotizado_eur: form.precio_cotizado_eur,
           valida_hasta: form.valida_hasta,
           estado: form.estado,
+          modalidad: form.modalidad,
         });
       }
       await cargarCotizaciones();

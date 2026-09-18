@@ -166,6 +166,7 @@ export default function MisSolicitudes() {
 
   const [destinoId, setDestinoId] = useState<number | ''>('');
   const [requisitos, setRequisitos] = useState('');
+  const [modalidad, setModalidad] = useState<'individual' | 'grupo' | 'propio'>('individual');
   const [resumenes, setResumenes] = useState<Record<number, ResumenLineasCotizacion>>({});
 
   const cargarDatos = useCallback(async () => {
@@ -221,6 +222,7 @@ export default function MisSolicitudes() {
     setModalAbierto(false);
     setDestinoId('');
     setRequisitos('');
+    setModalidad('individual');
   };
 
   const enviarSolicitud = async () => {
@@ -232,6 +234,7 @@ export default function MisSolicitudes() {
         destino_id: Number(destinoId),
         requisitos: requisitos.trim(),
         estado: 'solicitada',
+        modalidad,
       });
       await cargarDatos();
       cerrarModal();
@@ -352,6 +355,20 @@ export default function MisSolicitudes() {
                   {destinos.map((d) => (
                     <option key={d.id} value={d.id}>{d.nombre}</option>
                   ))}
+                </select>
+              </div>
+
+              <div className="modal-cotizacion__field">
+                <label className="modal-cotizacion__label" htmlFor="cot-modalidad">Modalidad</label>
+                <select
+                  id="cot-modalidad"
+                  className="modal-cotizacion__select"
+                  value={modalidad}
+                  onChange={(e) => setModalidad(e.target.value as 'individual' | 'grupo' | 'propio')}
+                >
+                  <option value="individual">Individual</option>
+                  <option value="grupo">Grupo</option>
+                  <option value="propio">Propio</option>
                 </select>
               </div>
 

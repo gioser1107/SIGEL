@@ -133,11 +133,14 @@ interface Props {
   viajeSeleccionado: ViajeDisponibleReserva | null;
   clienteSeleccionado: Cliente | null;
   cargandoViajes?: boolean;
-  esGrupal: boolean;
+  modalidad: 'individual' | 'grupo' | 'propio';
+  tipoHospedaje: 'compartido' | 'particular';
+  extraHospedajeParticularEur: number;
   cantidadPersonas: number;
   setViajeSeleccionado: (v: ViajeDisponibleReserva | null) => void;
   setClienteSeleccionado: (c: Cliente | null) => void;
-  setEsGrupal: (valor: boolean) => void;
+  setModalidad: (valor: 'individual' | 'grupo' | 'propio') => void;
+  setTipoHospedaje: (valor: 'compartido' | 'particular') => void;
   setCantidadPersonas: (valor: number) => void;
   onSiguiente: () => void;
   onCancelar: () => void;
@@ -149,15 +152,19 @@ export default function PasoViajeCliente({
   viajeSeleccionado,
   clienteSeleccionado,
   cargandoViajes = false,
-  esGrupal,
+  modalidad,
+  tipoHospedaje,
+  extraHospedajeParticularEur,
   cantidadPersonas,
   setViajeSeleccionado,
   setClienteSeleccionado,
-  setEsGrupal,
+  setModalidad,
+  setTipoHospedaje,
   setCantidadPersonas,
   onSiguiente,
   onCancelar,
 }: Props) {
+  const esGrupal = modalidad === 'grupo';
   const sinViajes = !cargandoViajes && viajes.length === 0;
   const asientosLibres = viajeSeleccionado?.disponibilidad.asientos_disponibles ?? 0;
   const maxPersonas = Math.max(1, asientosLibres);
@@ -317,9 +324,9 @@ export default function PasoViajeCliente({
         <div className="reserva-tipo" role="group" aria-label="Tipo de reserva">
           <button
             type="button"
-            className={`reserva-tipo__opcion${!esGrupal ? ' reserva-tipo__opcion--activa' : ''}`}
+            className={`reserva-tipo__opcion${modalidad === 'individual' ? ' reserva-tipo__opcion--activa' : ''}`}
             onClick={() => {
-              setEsGrupal(false);
+              setModalidad('individual');
               setCantidadPersonas(1);
             }}
           >
@@ -328,14 +335,25 @@ export default function PasoViajeCliente({
           </button>
           <button
             type="button"
-            className={`reserva-tipo__opcion${esGrupal ? ' reserva-tipo__opcion--activa' : ''}`}
+            className={`reserva-tipo__opcion${modalidad === 'grupo' ? ' reserva-tipo__opcion--activa' : ''}`}
             onClick={() => {
-              setEsGrupal(true);
+              setModalidad('grupo');
               setCantidadPersonas(Math.max(2, cantidadPersonas));
             }}
           >
-            <strong>Viaje grupal</strong>
+            <strong>Grupo</strong>
             <span>Varias personas en una sola reserva</span>
+          </button>
+          <button
+            type="button"
+            className={`reserva-tipo__opcion${modalidad === 'propio' ? ' reserva-tipo__opcion--activa' : ''}`}
+            onClick={() => {
+              setModalidad('propio');
+              setCantidadPersonas(Math.max(1, cantidadPersonas));
+            }}
+          >
+            <strong>Propio</strong>
+            <span>Salida privada para el cliente</span>
           </button>
         </div>
 
@@ -367,6 +385,32 @@ export default function PasoViajeCliente({
             )}
           </div>
         )}
+      </div>
+
+      <div className="paso-seccion">
+        <span className="paso-seccion__label">Hospedaje</span>
+        <div className="reserva-tipo" role="group" aria-label="Tipo de hospedaje">
+          <button
+            type="button"
+            className={`reserva-tipo__opcion${tipoHospedaje === 'compartido' ? ' reserva-tipo__opcion--activa' : ''}`}
+            onClick={() => setTipoHospedaje('compartido')}
+          >
+            <strong>Compartido</strong>
+            <span>Habitación con el grupo</span>
+          </button>
+          <button
+            type="button"
+            className={`reserva-tipo__opcion${tipoHospedaje === 'particular' ? ' reserva-tipo__opcion--activa' : ''}`}
+            onClick={() => setTipoHospedaje('particular')}
+          >
+            <strong>Particular</strong>
+            <span>
+              {extraHospedajeParticularEur > 0
+                ? `+€${extraHospedajeParticularEur.toFixed(2)} por ocupante`
+                : 'Habitación privada'}
+            </span>
+          </button>
+        </div>
       </div>
 
       <div className="crear-reserva-admin__actions">

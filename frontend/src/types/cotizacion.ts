@@ -34,6 +34,7 @@ export interface Cotizacion {
   precio_cotizado_eur: number | null;
   valida_hasta: string | null;
   estado: EstadoCotizacion;
+  modalidad?: string | null;
   creado_en: string;
   actualizado_en: string;
   lineas?: CotizacionLinea[];
@@ -63,6 +64,7 @@ export interface DatosCotizacionNueva {
   precio_cotizado_eur?: number | null;
   valida_hasta?: string | null;
   estado?: EstadoCotizacion;
+  modalidad?: string;
 }
 
 export interface DatosLineaCotizacionNueva {

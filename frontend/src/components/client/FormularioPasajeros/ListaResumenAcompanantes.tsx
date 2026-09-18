@@ -22,7 +22,7 @@ export default function ListaResumenAcompanantes({
         <div>
           <h4 className="fp-card__titulo">Acompañantes</h4>
           <p className="fp-card__subtitulo">
-            Agrega las personas que viajan contigo. Los adultos necesitan asiento propio; los menores no ocupan puesto.
+            Agrega las personas que viajan contigo. Los niños de 1 a 5 años van en las piernas; de 6 a 17 ocupan asiento.
           </p>
         </div>
         <Boton type="button" variante="secundario" tamano="sm" onClick={onAgregar}>
@@ -47,9 +47,9 @@ export default function ListaResumenAcompanantes({
                     <strong className="fp-acompanantes__nombre">{etiquetaPasajero(p)}</strong>
                     <p className="fp-acompanantes__meta">
                       {doc ? `${p.ficha.tipo_documento}-${doc}` : 'Documento pendiente'}
-                      {p.es_menor && recargoMenorEur > 0 && (
+                      {p.es_menor && (
                         <span className="fp-acompanantes__menor">
-                          · Menor (+€{recargoMenorEur.toFixed(2)})
+                          · {p.ocupa_asiento ? 'Menor con asiento' : `Menor en piernas${recargoMenorEur > 0 ? ` (+€${recargoMenorEur.toFixed(2)})` : ''}`}
                         </span>
                       )}
                     </p>

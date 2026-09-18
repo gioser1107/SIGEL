@@ -3,8 +3,9 @@ import { useSearchParams } from 'react-router-dom';
 import { CabeceraModulo, EtiquetaEstado, TablaDatos } from '../../../components/admin';
 import type { Columna } from '../../../components/admin';
 import Boton from '../../../components/ui/Boton/Boton';
-import BtnImprimirReporte from '../../../components/ui/BtnImprimirReporte/BtnImprimirReporte';
+import AccionesExportarReporte from '../../../components/ui/AccionesExportarReporte/AccionesExportarReporte';
 import CabeceraReporteImpresion from '../../../components/ui/CabeceraReporteImpresion/CabeceraReporteImpresion';
+import { exportarEstadisticoExcel } from '../../../utils/exportarReportes';
 import { etiquetaEstado } from '../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../utils/formatoMoneda';
 import type {
@@ -207,12 +208,14 @@ export default function ReportesEstadisticos() {
       <CabeceraModulo
         migaja="Administración / Reportes"
         titulo="Reportes"
-        descripcion="Estadísticos, pagos y listín de viaje en un solo cuadro."
+        descripcion="Estadísticos, pagos y listín de viaje. Exporta PDF o Excel."
         acciones={
           !esListin ? (
-            <BtnImprimirReporte
-              etiqueta="Imprimir reporte"
+            <AccionesExportarReporte
               deshabilitado={cargando || !reporte}
+              alExportarExcel={() => {
+                if (reporte) exportarEstadisticoExcel(reporte, tipo);
+              }}
             />
           ) : undefined
         }
@@ -330,7 +333,11 @@ export default function ReportesEstadisticos() {
               <Kpi
                 etiqueta="Ingresos cobrados"
                 valor={cargando ? '…' : formatearEuro(resumen?.ingresos_aprobados_eur ?? 0)}
-                subtitulo={`${resumen?.pagos_aprobados ?? 0} pagos aprobados`}
+                subtitulo={
+                  resumen?.ingresos_sql
+                    ? `${resumen.pagos_aprobados ?? 0} pagos · SQL ${resumen.ingresos_sql.origen}`
+                    : `${resumen?.pagos_aprobados ?? 0} pagos aprobados`
+                }
                 colorAcento="success"
               />
             </div>

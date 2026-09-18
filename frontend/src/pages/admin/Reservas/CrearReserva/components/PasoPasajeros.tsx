@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import Boton from '../../../../../components/ui/Boton/Boton';
 import '../../../../../components/ui/Entrada/Entrada.css';
-import SelectorPuntoRecogidaReserva from '../../../../../components/puntos-recogida/SelectorPuntoRecogidaReserva';
 import DomicilioRecogidaAcompanante, {
   type ValorDomicilioAcompanante,
 } from '../../../../../components/puntos-recogida/DomicilioRecogidaAcompanante';
 import '../../../../../components/puntos-recogida/puntos-recogida.css';
+import '../../../../../components/client/FormularioPasajeros/FormularioPasajeros.css';
 import { listarClientesParaSelect, listarPuntosRecogidaCliente } from '../../../../../services/clientes';
 import type { PasajeroDraft } from '../../../../../types/reservas';
 import type { Cliente } from '../../../../../types/cliente';
-import type { PuntoRecogida } from '../../../../../types/puntoRecogida';
+import type { PuntoRecogida, PuntoRecogidaInline } from '../../../../../types/puntoRecogida';
 import { validarPasajerosReserva } from '../../../../../utils/validacionesFormulario';
 import {
   tieneErroresCliente,
@@ -20,6 +20,8 @@ import CampoMonto from '../../../../../components/ui/CampoMonto/CampoMonto';
 import { FORM_VACIO } from '../../../Clientes/constants';
 import { crearPasajeroVacio } from '../utils/pasajerosGrupo';
 import FichaAcompananteNueva from './FichaAcompananteNueva';
+import CamposPoliticaMenor from '../../../../../components/client/FormularioPasajeros/CamposPoliticaMenor';
+import { errorPoliticaMenor, recargoMenorEstimado, resolverPoliticaMenor } from '../../../../../utils/politicaMenor';
 
 // ─── SelectBuscador ──────────────────────────────────────────────
 
@@ -128,9 +130,12 @@ interface Props {
   pasajeros: PasajeroDraft[];
   setPasajeros: (p: PasajeroDraft[]) => void;
   precioBase: number;
+  recargoMenorEur: number;
   titularClienteId: number;
   titularPuntoRecogidaId: number | undefined;
   setTitularPuntoRecogidaId: (id: number | undefined) => void;
+  titularDomicilioNuevo: PuntoRecogidaInline | undefined;
+  setTitularDomicilioNuevo: (domicilio: PuntoRecogidaInline | undefined) => void;
   onSiguiente: () => void;
   onAtras: () => void;
 }
@@ -139,9 +144,12 @@ export default function PasoPasajeros({
   pasajeros,
   setPasajeros,
   precioBase,
+  recargoMenorEur,
   titularClienteId,
   titularPuntoRecogidaId,
   setTitularPuntoRecogidaId,
+  titularDomicilioNuevo,
+  setTitularDomicilioNuevo,
   onSiguiente,
   onAtras,
 }: Props) {
@@ -158,14 +166,10 @@ export default function PasoPasajeros({
   useEffect(() => {
     setCargandoDomiciliosTitular(true);
     listarPuntosRecogidaCliente(titularClienteId)
-      .then((lista) => {
-        setDomiciliosTitular(lista);
-        const pred = lista.find((d) => d.es_predeterminado)?.id;
-        if (pred) setTitularPuntoRecogidaId(pred);
-      })
+      .then(setDomiciliosTitular)
       .catch(() => setDomiciliosTitular([]))
       .finally(() => setCargandoDomiciliosTitular(false));
-  }, [titularClienteId, setTitularPuntoRecogidaId]);
+  }, [titularClienteId]);
 
   const cargarDomiciliosCliente = (clienteId: number, domiciliosIniciales?: PuntoRecogida[]) => {
     if (domiciliosIniciales?.length) {
@@ -300,6 +304,30 @@ export default function PasoPasajeros({
     setPasajeros(pasajeros.map((p) => (p.id_temporal === id_temporal ? { ...p, [campo]: valor } : p)));
   };
 
+  const aplicarPoliticaMenor = (
+    id_temporal: number,
+    parcial: Partial<Pick<PasajeroDraft, 'es_menor' | 'fecha_nacimiento' | 'ocupa_asiento' | 'partida_nacimiento_url'>>,
+  ) => {
+    setPasajeros(
+      pasajeros.map((p) => {
+        if (p.id_temporal !== id_temporal) return p;
+        const esMenor = parcial.es_menor ?? p.es_menor;
+        const fecha = parcial.fecha_nacimiento ?? p.fecha_nacimiento ?? '';
+        const politica = resolverPoliticaMenor(esMenor, fecha, parcial.ocupa_asiento ?? p.ocupa_asiento);
+        return {
+          ...p,
+          es_menor: esMenor,
+          fecha_nacimiento: esMenor ? fecha : '',
+          ocupa_asiento: politica.ocupa_asiento,
+          partida_nacimiento_url: esMenor
+            ? (parcial.partida_nacimiento_url !== undefined ? parcial.partida_nacimiento_url : p.partida_nacimiento_url)
+            : null,
+          recargo_eur: recargoMenorEstimado(esMenor, fecha, recargoMenorEur, politica.ocupa_asiento),
+        };
+      }),
+    );
+  };
+
   const eliminarPasajero = (id_temporal: number) => {
     setPasajeros(pasajeros.filter((p) => p.id_temporal !== id_temporal));
   };
@@ -318,6 +346,7 @@ export default function PasoPasajeros({
       })),
       titularPuntoRecogidaId,
       domiciliosTitular.length > 0,
+      Boolean(titularDomicilioNuevo),
     );
     if (error) {
       setErrorValidacion(error);
@@ -340,6 +369,15 @@ export default function PasoPasajeros({
             ? `Selecciona el domicilio del acompañante ${i + 1}.`
             : `Registra el domicilio de recogida del acompañante ${i + 1}.`,
         );
+        return;
+      }
+      const errorMenor = errorPoliticaMenor(
+        p.es_menor,
+        p.fecha_nacimiento ?? '',
+        p.partida_nacimiento_url ?? null,
+      );
+      if (errorMenor) {
+        setErrorValidacion(`Acompañante ${i + 1}: ${errorMenor}`);
         return;
       }
     }
@@ -374,18 +412,28 @@ export default function PasoPasajeros({
       <div className="pasajero-card pasajero-card--titular">
         <div className="pasajero-card__cabecera">
           <span className="pasajero-card__badge pasajero-card__badge--titular">Titular</span>
-          <span className="pasajero-card__subtitle">Domicilio de recogida del cliente principal</span>
+          <span className="pasajero-card__subtitle">
+            Elige un domicilio registrado o créalo aquí, sin salir de la reserva
+          </span>
         </div>
         <div className="campo-grupo">
-          <SelectorPuntoRecogidaReserva
-            domicilios={domiciliosTitular}
-            cargando={cargandoDomiciliosTitular}
-            value={titularPuntoRecogidaId ?? null}
-            onChange={(id) => setTitularPuntoRecogidaId(id ?? undefined)}
-            label="Domicilio de recogida"
-            requerido={domiciliosTitular.some((d) => !d.es_predeterminado) || domiciliosTitular.length > 1}
-            sinDomiciliosMensaje="El cliente no tiene domicilios registrados. Agrégalos en Clientes antes de continuar."
-          />
+          {cargandoDomiciliosTitular ? (
+            <p className="pr-selector-reserva__aviso">Cargando domicilios registrados…</p>
+          ) : (
+            <DomicilioRecogidaAcompanante
+              idPrefix="admin-titular"
+              domicilios={domiciliosTitular}
+              value={{
+                punto_recogida_id: titularPuntoRecogidaId ?? null,
+                puntos_recogida: titularDomicilioNuevo ?? null,
+              }}
+              onChange={(valor) => {
+                setErrorValidacion(null);
+                setTitularPuntoRecogidaId(valor.punto_recogida_id ?? undefined);
+                setTitularDomicilioNuevo(valor.puntos_recogida ?? undefined);
+              }}
+            />
+          )}
         </div>
       </div>
 
@@ -515,24 +563,18 @@ export default function PasoPasajeros({
           </div>
 
           {/* Menor / ocupa asiento */}
-          <div style={{ display: 'flex', gap: 20, marginTop: 8 }}>
-            <label className="campo-checkbox">
-              <input
-                type="checkbox"
-                checked={p.es_menor}
-                onChange={(e) => actualizarCampo(p.id_temporal, 'es_menor', e.target.checked)}
-              />
-              Es menor de edad (niño en brazos / no elige asiento)
-            </label>
-            <label className="campo-checkbox">
-              <input
-                type="checkbox"
-                checked={p.ocupa_asiento !== false}
-                onChange={(e) => actualizarCampo(p.id_temporal, 'ocupa_asiento', e.target.checked)}
-              />
-              Ocupa asiento
-            </label>
-          </div>
+          <CamposPoliticaMenor
+            idPrefijo={`admin-pasajero-${p.id_temporal}`}
+            esMenor={p.es_menor}
+            fechaNacimiento={p.fecha_nacimiento ?? ''}
+            ocupaAsiento={p.ocupa_asiento !== false}
+            partidaUrl={p.partida_nacimiento_url ?? null}
+            recargoMenorEur={recargoMenorEur}
+            onToggleMenor={(esMenor) => aplicarPoliticaMenor(p.id_temporal, { es_menor: esMenor })}
+            onFechaNacimiento={(fecha) => aplicarPoliticaMenor(p.id_temporal, { fecha_nacimiento: fecha })}
+            onOcupaAsiento={(ocupa) => aplicarPoliticaMenor(p.id_temporal, { ocupa_asiento: ocupa })}
+            onPartidaUrl={(url) => aplicarPoliticaMenor(p.id_temporal, { partida_nacimiento_url: url })}
+          />
         </div>
       ))}
 

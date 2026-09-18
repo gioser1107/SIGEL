@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, Column, Date, DateTime, ForeignKey, Numeric, String, UniqueConstraint
 
 from database import Base
 
@@ -27,6 +27,8 @@ class ReservaCliente(Base):
     es_titular = Column(Boolean, nullable=False, default=False)
 
     es_menor = Column(Boolean, nullable=False, default=False)
+    fecha_nacimiento = Column(Date, nullable=True)
+    partida_nacimiento_url = Column(String(512), nullable=True)
     ocupa_asiento = Column(Boolean, nullable=False, default=True)
     precio_pasajero_eur = Column(Numeric(12, 2), nullable=False, default=0.00)
     recargo_eur = Column(Numeric(12, 2), nullable=False, default=0.00)

@@ -239,6 +239,39 @@ export default function FormularioClienteCampos({
         )}
       </section>
 
+      <section className="fp-form-seccion">
+        <h3 className="fp-form-seccion__titulo">Contacto de emergencia</h3>
+        <p className="drawer-form__ubicacion-hint">
+          Lo ve el guía en el manifiesto el día del viaje.
+        </p>
+        <div className="drawer-form__campo">
+          <label className="drawer-form__label" htmlFor={id('emergencia-nombre')}>
+            Nombre del contacto
+          </label>
+          <input
+            id={id('emergencia-nombre')}
+            className="drawer-form__input"
+            maxLength={120}
+            value={form.contacto_emergencia_nombre}
+            onChange={(e) => onChange((f) => ({ ...f, contacto_emergencia_nombre: e.target.value }))}
+            placeholder="Familiar o persona de confianza"
+          />
+        </div>
+        <div className="drawer-form__campo">
+          <label className="drawer-form__label" htmlFor={id('emergencia-tel')}>
+            Teléfono de emergencia
+          </label>
+          <input
+            id={id('emergencia-tel')}
+            className="drawer-form__input"
+            maxLength={30}
+            value={form.contacto_emergencia_telefono}
+            onChange={(e) => onChange((f) => ({ ...f, contacto_emergencia_telefono: e.target.value }))}
+            placeholder="0412…"
+          />
+        </div>
+      </section>
+
       <div className="drawer-form__campo">
         <label className="drawer-form__label" htmlFor={id('direccion')}>Dirección</label>
         <input

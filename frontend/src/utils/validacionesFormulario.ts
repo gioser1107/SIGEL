@@ -216,6 +216,7 @@ export function validarPasajerosReserva(
   pasajeros: PasajeroValidacion[],
   titularPuntoRecogidaId: number | undefined,
   titularTieneDomicilios: boolean,
+  titularDomicilioNuevo = false,
 ): string | null {
   for (let i = 0; i < pasajeros.length; i += 1) {
     const esNuevo = pasajeros[i].modo === 'nuevo';
@@ -230,8 +231,10 @@ export function validarPasajerosReserva(
     }
   }
 
-  if (titularTieneDomicilios && !titularPuntoRecogidaId) {
-    return 'Selecciona el domicilio de recogida del titular.';
+  if (!titularPuntoRecogidaId && !titularDomicilioNuevo) {
+    return titularTieneDomicilios
+      ? 'Selecciona el domicilio de recogida del titular.'
+      : 'Registra el domicilio de recogida del titular para continuar.';
   }
 
   return null;

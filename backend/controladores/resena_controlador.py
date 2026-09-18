@@ -29,6 +29,7 @@ router = APIRouter(prefix="/resenas", tags=["Reseñas"])
 class DatosResenaNueva(BaseModel):
     reserva_id: int
     calificacion: int = Field(ge=1, le=5)
+    calificacion_guia: Optional[int] = Field(default=None, ge=1, le=5)
     comentario: Optional[str] = None
 
 
@@ -77,6 +78,7 @@ def crear_resena_endpoint(
         cliente_id=cliente_id,
         calificacion=datos.calificacion,
         comentario=datos.comentario,
+        calificacion_guia=datos.calificacion_guia,
     )
 
     registrar_evento(
