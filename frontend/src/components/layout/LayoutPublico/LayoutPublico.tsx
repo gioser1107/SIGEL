@@ -155,8 +155,8 @@ export default function LayoutPublico() {
               <LogoMarca compacto />
             </div>
             <p className="footer__brand-desc">
-              Descubre destinos turísticos en todo el país.
-              Vive experiencias únicas con los mejores precios.
+              Salidas en autobús desde Barquisimeto a destinos de Venezuela.
+              Reserva tu asiento con Travel Bqto.
             </p>
           </div>
 

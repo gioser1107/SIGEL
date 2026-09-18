@@ -60,7 +60,7 @@ export default function ModuloPagos() {
       <CabeceraModulo
         migaja="TravelBqto / Admin"
         titulo="Pagos"
-        descripcion="Validación de pagos y configuración de catálogos financieros."
+        descripcion="Bandeja de comprobantes, bancos, tasas y métodos de pago."
       />
 
       {error && <div className="cotizaciones__error" role="alert">{error}</div>}

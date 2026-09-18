@@ -245,3 +245,31 @@ export async function obtenerAsientosDisponibles(
     { requiresAuth: true },
   );
 }
+
+export async function listarIncidenciasViaje(viajeId: number) {
+  return apiRequest<{ items: import('../types/abordaje').IncidenciaViaje[] }>(
+    `/viajes/${viajeId}/incidencias`,
+    { requiresAuth: true },
+  );
+}
+
+export async function crearIncidenciaViaje(
+  viajeId: number,
+  datos: { tipo: string; descripcion: string; ocurrio_en?: string | null },
+) {
+  return apiRequest<{ incidencia: import('../types/abordaje').IncidenciaViaje }>(
+    `/viajes/${viajeId}/incidencias`,
+    {
+      method: 'POST',
+      requiresAuth: true,
+      body: JSON.stringify(datos),
+    },
+  );
+}
+
+export async function anularIncidenciaViaje(viajeId: number, incidenciaId: number) {
+  return apiRequest<{ mensaje: string }>(`/viajes/${viajeId}/incidencias/${incidenciaId}`, {
+    method: 'DELETE',
+    requiresAuth: true,
+  });
+}

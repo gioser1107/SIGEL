@@ -63,10 +63,22 @@ export interface ViajeManifiesto {
   estado?: string | null;
 }
 
+export interface IncidenciaViaje {
+  id: number;
+  viaje_id: number;
+  tipo: 'retraso' | 'eventualidad' | 'incidencia' | string;
+  descripcion: string;
+  ocurrio_en: string | null;
+  registrado_por?: number | null;
+  registrado_por_nombre?: string | null;
+  creado_en?: string | null;
+}
+
 export interface ManifiestoAbordaje {
   viaje: ViajeManifiesto;
   resumen: ResumenAbordaje;
   pasajeros: PasajeroManifiesto[];
+  incidencias?: IncidenciaViaje[];
 }
 
 export interface ViajeSelectorAbordaje {

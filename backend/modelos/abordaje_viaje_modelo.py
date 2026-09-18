@@ -265,6 +265,7 @@ def listar_viajes_para_abordaje(
     db: Session,
     estado: str | None = None,
     solo_hoy: bool = False,
+    guia_usuario_id: int | None = None,
 ) -> list[dict]:
     sincronizar_viajes_vencidos(db)
     consulta = db.query(Viaje).filter(
@@ -281,8 +282,17 @@ def listar_viajes_para_abordaje(
             Viaje.fecha_salida >= inicio,
             Viaje.fecha_salida < fin,
         )
+    if guia_usuario_id is not None:
+        from modelos.viaje_guia_modelo import ViajeGuia
 
-    viajes = consulta.order_by(Viaje.fecha_salida.asc()).all()
+        consulta = consulta.join(
+            ViajeGuia,
+            (ViajeGuia.viaje_id == Viaje.id)
+            & (ViajeGuia.usuario_id == guia_usuario_id)
+            & (ViajeGuia.eliminado_en.is_(None)),
+        )
+
+    viajes = consulta.distinct().order_by(Viaje.fecha_salida.asc()).all()
     resultado = []
     for viaje in viajes:
         filas = _pasajeros_manifiesto(db, viaje.id)
@@ -309,11 +319,13 @@ def obtener_manifiesto_viaje(db: Session, viaje_id: int) -> dict:
     ]
     pasajeros = _ordenar_manifiesto(pasajeros)
     resumen = _resumen_desde_items(pasajeros)
+    from modelos.incidencia_viaje_modelo import listar_incidencias_viaje
 
     return {
         "viaje": viaje_a_dict(db, viaje),
         "resumen": resumen,
         "pasajeros": pasajeros,
+        "incidencias": listar_incidencias_viaje(db, viaje_id),
     }
 
 
@@ -455,6 +467,24 @@ def eliminar_abordaje(db: Session, abordaje_id: int) -> dict:
         "abordaje_id": abordaje_id,
         "reserva_cliente_id": abordaje.reserva_cliente_id,
     }
+
+
+def viaje_id_de_abordaje(db: Session, abordaje_id: int) -> int:
+    abordaje = db.query(AbordajeViaje).filter(
+        AbordajeViaje.id == abordaje_id,
+        AbordajeViaje.eliminado_en.is_(None),
+    ).first()
+    if abordaje is None:
+        raise HTTPException(status_code=404, detail="Registro de abordaje no encontrado")
+    fila = (
+        db.query(Reserva.viaje_id)
+        .join(ReservaCliente, ReservaCliente.reserva_id == Reserva.id)
+        .filter(ReservaCliente.id == abordaje.reserva_cliente_id)
+        .first()
+    )
+    if fila is None:
+        raise HTTPException(status_code=404, detail="Viaje del abordaje no encontrado")
+    return int(fila[0])
 
 
 def obtener_abordaje(db: Session, abordaje_id: int) -> dict:

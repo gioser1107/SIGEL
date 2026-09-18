@@ -260,7 +260,7 @@ export default function MisSolicitudes() {
         <div>
           <h1 className="mis-solicitudes__titulo">Mis solicitudes</h1>
           <p className="mis-solicitudes__subtitulo">
-            Solicita cotizaciones personalizadas para tu próximo viaje.
+            Pide un presupuesto si el viaje que quieres no está en la agenda.
           </p>
         </div>
         <button onClick={abrirModal} className="mis-solicitudes__btn-nueva">
@@ -276,10 +276,10 @@ export default function MisSolicitudes() {
         <div className="mis-solicitudes__vacio">
           <h3 className="mis-solicitudes__vacio-titulo">Sin solicitudes aún</h3>
           <p className="mis-solicitudes__vacio-desc">
-            ¿Tienes un viaje en mente? Solicita una cotización personalizada y nuestro equipo te responderá pronto.
+            Si no ves el destino o la fecha en el calendario, pide un presupuesto. ATC te responde aquí.
           </p>
           <button onClick={abrirModal} className="mis-solicitudes__vacio-btn">
-            Crear mi primera solicitud
+            Pedir presupuesto
           </button>
         </div>
       ) : cargando ? (
@@ -378,13 +378,13 @@ export default function MisSolicitudes() {
                 <textarea
                   id="cot-requisitos"
                   className="modal-cotizacion__textarea"
-                  placeholder="Describe qué tipo de experiencia buscas, cuántos viajeros serían, preferencias especiales…"
+                  placeholder="Destino, fechas aproximadas, cuántas personas y si necesitan silla o cama."
                   value={requisitos}
                   onChange={(e) => setRequisitos(e.target.value)}
                   maxLength={1000}
                 />
                 <span className="modal-cotizacion__hint">
-                  Incluye toda la información relevante: fechas tentativas, cantidad de personas, necesidades especiales, etc.
+                  Incluye fechas tentativas, cantidad de personas y si alguien necesita silla o cama.
                 </span>
               </div>
             </div>

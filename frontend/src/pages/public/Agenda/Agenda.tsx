@@ -134,7 +134,7 @@ export default function Agenda() {
                 <header className="agenda__cabecera-portal">
                     <h1 className="agenda__cabecera-portal-titulo">Agenda</h1>
                     <p className="agenda__cabecera-portal-desc">
-                        Selecciona un día para ver los planes disponibles. Los días marcados tienen experiencias esperándote.
+                        Elige un día para ver las salidas. Los días marcados tienen viajes publicados.
                     </p>
                 </header>
             ) : (
@@ -147,10 +147,10 @@ export default function Agenda() {
                             Inicio
                         </Link>
                         <div className="agenda__hero-titulo">
-                            <span className="agenda__hero-eyebrow">Agenda de Experiencias</span>
+                            <span className="agenda__hero-eyebrow">Agenda de viajes</span>
                             <h1 className="agenda__hero-h1">Calendario de Viajes</h1>
                             <p className="agenda__hero-desc">
-                                Selecciona un día para ver los planes disponibles. Los días marcados tienen experiencias esperándote.
+                                Elige un día para ver las salidas. Los días marcados tienen viajes publicados.
                             </p>
                         </div>
                     </div>
@@ -226,7 +226,7 @@ export default function Agenda() {
                                     if (!tieneEvento) return;
                                     setDiaSeleccionado(seleccionado ? null : celda.fecha);
                                 }}
-                                aria-label={`${celda.dia} de ${MESES[mesActual]}${tieneEvento ? `, ${numEventos} experiencia${numEventos > 1 ? 's' : ''}` : ''}`}
+                                aria-label={`${celda.dia} de ${MESES[mesActual]}${tieneEvento ? `, ${numEventos} salida${numEventos > 1 ? 's' : ''}` : ''}`}
                                 disabled={!tieneEvento}
                             >
                                 <span className="agenda__celda-numero">{celda.dia}</span>
@@ -347,7 +347,7 @@ export default function Agenda() {
                 <div className="agenda__leyenda">
                     <span className="agenda__leyenda-item">
                         <span className="agenda__leyenda-punto agenda__leyenda-punto--evento" />
-                        Días con experiencias
+                        Días con salidas
                     </span>
                     <span className="agenda__leyenda-item">
                         <span className="agenda__leyenda-punto agenda__leyenda-punto--hoy" />

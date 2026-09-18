@@ -432,6 +432,13 @@ class ValidadorEntrada:
             )
         return limpio
 
+    @classmethod
+    def codigo_banco(cls, valor: str | None, campo: str = "codigo") -> str:
+        limpio = cls._texto_obligatorio(valor, campo)
+        if not limpio.isdigit() or len(limpio) != 4:
+            cls._error(campo, "debe ser de 4 dígitos (ejemplo: 0102)")
+        return limpio
+
 
 def validar_datos_cliente_entrada(datos: Any, *, parcial: bool = False) -> None:
     """Valida campos de cliente antes de persistir (creación o actualización parcial)."""
@@ -471,8 +478,18 @@ def validar_datos_cliente_entrada(datos: Any, *, parcial: bool = False) -> None:
             )
 
     direccion = getattr(datos, "direccion", None)
-    if direccion is not None:
-        ValidadorEntrada.texto_libre(direccion, "direccion", maximo=255)
+    if not parcial or direccion is not None:
+        ValidadorEntrada.texto_libre(
+            direccion,
+            "direccion",
+            obligatorio=True,
+            minimo=5,
+            maximo=255,
+        )
+
+    telefono = getattr(datos, "telefono", None)
+    if not parcial or telefono is not None:
+        ValidadorEntrada.telefono(telefono, "telefono", obligatorio=True)
 
     notas = getattr(datos, "notas", None)
     if notas is not None:

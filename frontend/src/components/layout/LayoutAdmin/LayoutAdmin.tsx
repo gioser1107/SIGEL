@@ -94,16 +94,22 @@ export default function LayoutAdmin() {
     if (!panelNotificacionesAbierto) return;
 
     function cerrarAlClickExterno(evento: MouseEvent) {
-      if (
-        contenedorNotificacionesRef.current &&
-        !contenedorNotificacionesRef.current.contains(evento.target as Node)
-      ) {
-        setPanelNotificacionesAbierto(false);
-      }
+      const destino = evento.target as Node | null;
+      if (contenedorNotificacionesRef.current?.contains(destino)) return;
+      if (destino instanceof Element && destino.closest('.admin-notificaciones__panel')) return;
+      setPanelNotificacionesAbierto(false);
+    }
+
+    function cerrarConEscape(evento: KeyboardEvent) {
+      if (evento.key === 'Escape') setPanelNotificacionesAbierto(false);
     }
 
     document.addEventListener('mousedown', cerrarAlClickExterno);
-    return () => document.removeEventListener('mousedown', cerrarAlClickExterno);
+    document.addEventListener('keydown', cerrarConEscape);
+    return () => {
+      document.removeEventListener('mousedown', cerrarAlClickExterno);
+      document.removeEventListener('keydown', cerrarConEscape);
+    };
   }, [panelNotificacionesAbierto]);
 
   if (esRolClientePortal(usuario?.rol)) {
@@ -462,21 +468,12 @@ export default function LayoutAdmin() {
                 <line x1="3" y1="18" x2="21" y2="18" />
               </svg>
             </button>
-            <div className="admin-cabecera__buscador">
-              <span className="admin-cabecera__buscador-icono">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-              </span>
-              <input type="text" placeholder="Buscar reservas, destinos..." aria-label="Buscador global" />
-            </div>
           </div>
 
           <div className="admin-cabecera__derecha">
             <NavLink
               to="/admin/ayuda"
-              className="admin-cabecera__notificacion"
+              className="admin-cabecera__notificacion admin-cabecera__ayuda"
               aria-label="Centro de ayuda"
               title="Centro de ayuda"
             >
@@ -511,14 +508,6 @@ export default function LayoutAdmin() {
                   </span>
                 )}
               </button>
-              {panelNotificacionesAbierto && (
-                <PanelNotificaciones
-                  datos={notificaciones}
-                  onCerrar={() => setPanelNotificacionesAbierto(false)}
-                  puedeVerCotizaciones={puedeLeer('cotizaciones')}
-                  puedeVerReservas={puedeLeer('reservas')}
-                />
-              )}
             </div>
 
             {/* Avatar & Perfil Info */}
@@ -535,6 +524,23 @@ export default function LayoutAdmin() {
             </MenuUsuario>
           </div>
         </header>
+
+        {panelNotificacionesAbierto && (
+          <>
+            <button
+              type="button"
+              className="admin-notificaciones__fondo"
+              aria-label="Cerrar notificaciones"
+              onClick={() => setPanelNotificacionesAbierto(false)}
+            />
+            <PanelNotificaciones
+              datos={notificaciones}
+              onCerrar={() => setPanelNotificacionesAbierto(false)}
+              puedeVerCotizaciones={puedeLeer('cotizaciones')}
+              puedeVerReservas={puedeLeer('reservas')}
+            />
+          </>
+        )}
 
         {/* Contenido de la página */}
         <main className="admin-contenido">

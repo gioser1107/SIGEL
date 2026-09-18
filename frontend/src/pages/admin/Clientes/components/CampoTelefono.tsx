@@ -6,6 +6,7 @@ interface CampoTelefonoProps {
   idNumero: string;
   idFijo: string;
   etiqueta: string;
+  obligatorio?: boolean;
   prefijo: string;
   numero: string;
   fijo: string;
@@ -21,6 +22,7 @@ export default function CampoTelefono({
   idNumero,
   idFijo,
   etiqueta,
+  obligatorio = false,
   prefijo,
   numero,
   fijo,
@@ -34,7 +36,10 @@ export default function CampoTelefono({
 
   return (
     <div className="drawer-form__campo">
-      <label className="drawer-form__label" htmlFor={idPrefijo}>{etiqueta}</label>
+      <label className="drawer-form__label" htmlFor={idPrefijo}>
+        {etiqueta}
+        {obligatorio && <span className="drawer-form__req"> *</span>}
+      </label>
       <div className="clientes__telefono-fila">
         <select
           id={idPrefijo}

@@ -61,6 +61,7 @@ class Reserva(Base):
     )
     modalidad = Column(String(20), nullable=False, default="individual")
     tipo_hospedaje = Column(String(20), nullable=False, default="compartido")
+    plazo_correccion_hasta = Column(DateTime, nullable=True)
     creado_por = Column(BigInteger, fk_usuario(), nullable=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
@@ -199,11 +200,16 @@ def reserva_a_dict(reserva: Reserva) -> dict:
         "estado": reserva.estado,
         "modalidad": getattr(reserva, "modalidad", None) or "individual",
         "tipo_hospedaje": getattr(reserva, "tipo_hospedaje", None) or "compartido",
+        "plazo_correccion": None,
+        "boleto": None,
         "creado_en": reserva.creado_en,
         "actualizado_en": reserva.actualizado_en,
     }
     if reserva.eliminado_en is not None:
         resultado["eliminado_en"] = reserva.eliminado_en
+    from utilidades.plazo_pago import plazo_correccion_a_dict
+
+    resultado["plazo_correccion"] = plazo_correccion_a_dict(reserva)
     return resultado
 
 
@@ -612,6 +618,9 @@ def _reserva_a_item_portal(db: Session, reserva: Reserva) -> dict:
         item["resumen_pagos"] = None
 
     item["pagos"] = listar_pagos_reserva_portal(db, reserva.id, pagina=1, limite=100)["items"]
+    from modelos.boleto_modelo import boleto_a_dict, obtener_boleto_emitido
+
+    item["boleto"] = boleto_a_dict(obtener_boleto_emitido(db, reserva.id))
     return item
 
 
@@ -629,6 +638,12 @@ def listar_mis_reservas_portal(
     limite: int = 10,
 ) -> dict:
     from utilidades.paginacion import normalizar_paginacion, paginar_consulta, respuesta_paginada
+    from utilidades.plazo_pago import liberar_cupos_plazo_vencido
+
+    try:
+        liberar_cupos_plazo_vencido(db)
+    except Exception:
+        db.rollback()
 
     pagina, limite = normalizar_paginacion(pagina, limite, limite_max=50)
 
@@ -713,39 +728,70 @@ def cancelar_reserva_sin_reembolso(
     usuario_id: int | None,
     notas: Optional[str] = None,
 ) -> dict:
+    from modelos.boleto_modelo import anular_boleto_reserva
     from modelos.credito_modelo import credito_a_dict, registrar_credito_cancelacion
     from modelos.pago_modelo import calcular_resumen_pagos_reserva
+    from modelos.viaje_modelo import Viaje
+    from utilidades.politicas_agencia import (
+        HORAS_ANTICIPACION_CANCELACION,
+        cumple_aviso_anticipacion,
+        fecha_limite_aviso_cancelacion,
+    )
 
     reserva = obtener_reserva_activa(db, reserva_id)
     if reserva.estado == "cancelada":
         raise HTTPException(status_code=400, detail="La reserva ya está cancelada")
 
+    viaje = db.query(Viaje).filter(Viaje.id == reserva.viaje_id).first()
+    fecha_salida = viaje.fecha_salida if viaje else None
+    aviso_ok = cumple_aviso_anticipacion(fecha_salida)
+
     resumen = calcular_resumen_pagos_reserva(db, reserva)
     pagado = float(resumen.get("total_pagado_aprobado_eur") or 0)
     reserva.estado = "cancelada"
+    reserva.plazo_correccion_hasta = None
     reserva.actualizado_en = datetime.now()
-    credito = registrar_credito_cancelacion(
-        db,
-        cliente_id=reserva.cliente_id,
-        reserva_origen_id=reserva.id,
-        monto_eur=pagado,
-        usuario_id=usuario_id,
-        notas=notas,
-    )
+    anular_boleto_reserva(db, reserva.id)
+
+    credito = None
+    if aviso_ok:
+        credito = registrar_credito_cancelacion(
+            db,
+            cliente_id=reserva.cliente_id,
+            reserva_origen_id=reserva.id,
+            monto_eur=pagado,
+            usuario_id=usuario_id,
+            notas=notas,
+        )
     _confirmar_transaccion(db)
-    mensaje = (
-        "Reserva cancelada. No hay reembolso en efectivo."
-        if pagado > 0.01
-        else "Reserva cancelada. No había pagos aprobados."
-    )
+
+    limite = fecha_limite_aviso_cancelacion(fecha_salida)
+    if not aviso_ok:
+        mensaje = (
+            f"Reserva cancelada. El aviso llegó con menos de {HORAS_ANTICIPACION_CANCELACION} horas "
+            "de anticipación: no hay reembolso ni saldo a favor. Los cupos quedan libres."
+        )
+    elif pagado > 0.01:
+        mensaje = "Reserva cancelada. No hay reembolso en efectivo."
+    else:
+        mensaje = "Reserva cancelada. No había pagos aprobados."
     if credito is not None:
-        mensaje += f" Se registraron {float(credito.monto_eur):.2f} EUR a favor para reubicar al cliente en un viaje futuro."
+        mensaje += (
+            f" Se registraron {float(credito.monto_eur):.2f} EUR a favor "
+            "para reubicar al cliente en un viaje futuro."
+        )
     return {
         "mensaje": mensaje,
         "reserva_id": reserva.id,
         "estado": reserva.estado,
+        "aviso_anticipacion": aviso_ok,
+        "horas_anticipacion": HORAS_ANTICIPACION_CANCELACION,
+        "fecha_limite_aviso": limite.isoformat() if limite else None,
         "credito": credito_a_dict(credito) if credito is not None else None,
-        "politica": "La agencia no reembolsa dinero. El saldo aprobado queda a favor del cliente.",
+        "politica": (
+            f"Hay que avisar con al menos {HORAS_ANTICIPACION_CANCELACION} horas de anticipación "
+            "para conservar el saldo a favor. La agencia no reembolsa dinero."
+        ),
     }
 
 

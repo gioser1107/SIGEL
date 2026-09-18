@@ -15,4 +15,4 @@ En la laptop local (cron o Programador de tareas):
 cd backend
 .venv/bin/python jobs/respaldo_diario.py
 
-El administrador también puede generar un respaldo desde Configuración > Respaldos.
+El API también genera la copia sola al arrancar (si falta la de hoy) y a las 03:15. El cron queda como refuerzo.

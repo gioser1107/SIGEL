@@ -18,7 +18,7 @@ Los usuarios que ya existen siguen entrando: el login acepta el hash viejo (SHA-
 
 ## Respaldos
 
-En la defensa: **Generar** y **Descargar**. **Restaurar** solo si el docente lo pide y el archivo es el que acabas de generar. Restaurar un respaldo viejo sí pisa data.
+La copia se genera sola cada día. En Configuración → Respaldos se puede **descargar**. **Restaurar** pisa los datos actuales de esa base: úsalo solo si hace falta recuperar.
 
 ## Comprobación rápida
 

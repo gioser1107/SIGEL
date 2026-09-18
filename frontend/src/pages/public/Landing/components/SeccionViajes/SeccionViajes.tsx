@@ -15,7 +15,7 @@ export default function SeccionViajes() {
 
     return (
         <section className="seccion-viajes" id="destinos">
-            <h2 className="seccion-viajes__titulo">Nuestros destinos</h2>
+            <h2 className="seccion-viajes__titulo">Destinos</h2>
 
             <div className="seccion-viajes__cuadricula">
                 {destinos.map((destino) => (

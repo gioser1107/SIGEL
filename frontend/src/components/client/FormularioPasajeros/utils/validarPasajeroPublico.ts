@@ -11,7 +11,7 @@ export function validarFichaPasajeroPublico(ficha: FormularioCliente): {
   errores: ErroresFormularioCliente;
   valido: boolean;
 } {
-  const errores = validarFormularioCliente(ficha);
+  const errores = validarFormularioCliente(ficha, { exigirEmergencia: false });
   return {
     errores,
     valido: !tieneErroresCliente(errores),
@@ -23,7 +23,7 @@ export function validarPasajeroPublico(p: PasajeroPublico): {
   errorDomicilio: string | null;
   valido: boolean;
 } {
-  const errores = validarFormularioCliente(p.ficha);
+  const errores = validarFormularioCliente(p.ficha, { exigirEmergencia: false });
   let errorDomicilio: string | null = null;
 
   if (p.domicilio.punto_recogida_id == null && !p.domicilio.puntos_recogida) {

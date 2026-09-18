@@ -115,7 +115,7 @@ def asegurar_acceso_reporte_viaje(db: Session, usuario_actual: dict, viaje_id: i
     if viaje_id not in asignados:
         raise HTTPException(
             status_code=403,
-            detail="Solo puedes ver el listín de los viajes donde estás asignado como guía.",
+            detail="Solo puedes consultar los viajes donde estás asignado como guía.",
         )
 
 

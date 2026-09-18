@@ -1,6 +1,6 @@
 import { useEffect, useState, type JSX } from 'react';
 import { Link } from 'react-router-dom';
-import { obtenerEstadisticasCatalogo } from '../../../../../services/catalogo';
+import { obtenerDestinosCatalogo, obtenerEstadisticasCatalogo } from '../../../../../services/catalogo';
 import './SeccionNosotros.css';
 
 interface Estadistica {
@@ -25,7 +25,7 @@ const ESTADISTICAS_BASE: Estadistica[] = [
         dinamico: true,
     },
     {
-        id: 'viajeros',
+        id: 'origen',
         icono: (
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -34,8 +34,8 @@ const ESTADISTICAS_BASE: Estadistica[] = [
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
             </svg>
         ),
-        numero: '3,500',
-        etiqueta: 'Viajeros felices',
+        numero: 'Bqto',
+        etiqueta: 'Salidas desde Lara',
     },
     {
         id: 'destinos',
@@ -67,6 +67,7 @@ const ESTADISTICAS_BASE: Estadistica[] = [
 
 export default function SeccionNosotros() {
     const [estadisticas, setEstadisticas] = useState(ESTADISTICAS_BASE);
+    const [imagenAgencia, setImagenAgencia] = useState('');
 
     useEffect(() => {
         obtenerEstadisticasCatalogo()
@@ -84,6 +85,12 @@ export default function SeccionNosotros() {
                 );
             })
             .catch(() => {});
+        obtenerDestinosCatalogo()
+            .then((lista) => {
+                const conFoto = lista.find((d) => d.imagen);
+                if (conFoto?.imagen) setImagenAgencia(conFoto.imagen);
+            })
+            .catch(() => {});
     }, []);
 
     return (
@@ -92,13 +99,13 @@ export default function SeccionNosotros() {
                 <div className="seccion-nosotros__izquierda">
                     <span className="seccion-nosotros__eyebrow">Sobre nosotros</span>
                     <h2 className="seccion-nosotros__titulo">
-                        Nuestro compromiso con cada aventura
+                        Agencia de viajes en Barquisimeto
                     </h2>
                     <p className="seccion-nosotros__descripcion">
-                        En TravelBqto nos dedicamos a crear experiencias únicas
-                        en destinos de todo el país. Cada viaje está diseñado con
-                        pasión, seguridad y el mejor servicio para que vivas
-                        momentos que recordarás por siempre.
+                        En Travel Bqto organizamos salidas en autobús a destinos
+                        de Venezuela: reserva de asiento, traslado y guía de la
+                        agencia. Trabajamos con fechas publicadas, cupos reales
+                        y el mismo trato de siempre, de Barquisimeto para el país.
                     </p>
 
                     <div className="seccion-nosotros__estadisticas">
@@ -116,14 +123,18 @@ export default function SeccionNosotros() {
 
                 <div className="seccion-nosotros__derecha">
                     <div className="seccion-nosotros__imagen-wrapper">
-                        <img
-                            src="https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=800&auto=format&fit=crop"
-                            alt="Viajeros contemplando el paisaje"
-                            className="seccion-nosotros__imagen"
-                        />
+                        {imagenAgencia ? (
+                            <img
+                                src={imagenAgencia}
+                                alt="Destino de Travel Bqto"
+                                className="seccion-nosotros__imagen"
+                            />
+                        ) : (
+                            <div className="seccion-nosotros__imagen seccion-nosotros__imagen--vacia" aria-hidden="true" />
+                        )}
                         <Link to="/agenda" className="seccion-nosotros__badge">
                             <span className="seccion-nosotros__badge-text">
-                                Viaja con<br />nosotros
+                                Ver<br />agenda
                             </span>
                         </Link>
                     </div>

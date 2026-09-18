@@ -90,6 +90,7 @@ import modelos.asiento_modelo  # noqa: E402,F401
 import modelos.asiento_reservado_modelo  # noqa: E402,F401
 import modelos.banco_modelo  # noqa: E402,F401
 import modelos.bitacora_modelo  # noqa: E402,F401
+import modelos.boleto_modelo  # noqa: E402,F401
 import modelos.ciudad_modelo  # noqa: E402,F401
 import modelos.cliente_modelo  # noqa: E402,F401
 import modelos.costo_operativo_modelo  # noqa: E402,F401
@@ -99,6 +100,7 @@ import modelos.cotizacion_modelo  # noqa: E402,F401
 import modelos.destino_imagen_modelo  # noqa: E402,F401
 import modelos.destino_modelo  # noqa: E402,F401
 import modelos.estado_modelo  # noqa: E402,F401
+import modelos.incidencia_viaje_modelo  # noqa: E402,F401
 import modelos.metodo_pago_modelo  # noqa: E402,F401
 import modelos.moneda_modelo  # noqa: E402,F401
 import modelos.pago_modelo  # noqa: E402,F401
@@ -163,6 +165,21 @@ PERMISOS_GUIA = [
     PERMISO_CREAR_ABORDAJE,
     PERMISO_EDITAR_ABORDAJE,
     PERMISO_LEER_PUNTOS_RECOGIDA,
+]
+
+PERMISOS_OPERACIONES = [
+    PERMISO_CREAR_PLANIFICACION, PERMISO_LEER_PLANIFICACION, PERMISO_EDITAR_PLANIFICACION, PERMISO_BORRAR_PLANIFICACION,
+    PERMISO_CREAR_TRANSPORTE_FLOTA, PERMISO_LEER_TRANSPORTE_FLOTA, PERMISO_EDITAR_TRANSPORTE_FLOTA, PERMISO_BORRAR_TRANSPORTE_FLOTA,
+    PERMISO_CREAR_DESTINOS, PERMISO_LEER_DESTINOS, PERMISO_EDITAR_DESTINOS, PERMISO_BORRAR_DESTINOS,
+    PERMISO_CREAR_ABORDAJE, PERMISO_LEER_ABORDAJE, PERMISO_EDITAR_ABORDAJE, PERMISO_BORRAR_ABORDAJE,
+    PERMISO_LEER_RESERVAS, PERMISO_LEER_CLIENTES,
+    PERMISO_LEER_PUNTOS_RECOGIDA, PERMISO_CREAR_PUNTOS_RECOGIDA, PERMISO_EDITAR_PUNTOS_RECOGIDA,
+]
+
+PERMISOS_GERENCIA = [
+    PERMISO_LEER_CLIENTES, PERMISO_LEER_RESERVAS, PERMISO_LEER_COTIZACIONES, PERMISO_LEER_PLANIFICACION,
+    PERMISO_LEER_DESTINOS, PERMISO_LEER_TRANSPORTE_FLOTA, PERMISO_LEER_ABORDAJE, PERMISO_LEER_PUNTOS_RECOGIDA,
+    PERMISO_LEER_RESENAS, PERMISO_LEER_REPORTES_PAGO, PERMISO_LEER_CONCILIACION, PERMISO_LEER_BITACORA,
 ]
 
 ESTADOS_CIUDADES = [
@@ -239,7 +256,9 @@ def _inserts() -> list[str]:
         f"  (1, 'Administrador', 'Acceso completo al panel', {_sql(AHORA)}, {_sql(AHORA)}),",
         f"  (2, 'Guia', 'Guía de viaje: planificación y abordaje', {_sql(AHORA)}, {_sql(AHORA)}),",
         f"  (3, 'Cliente', 'Portal de pasajeros', {_sql(AHORA)}, {_sql(AHORA)}),",
-        f"  (4, 'Atencion al Cliente', 'Ventas, reservas y pagos. Sin WhatsApp.', {_sql(AHORA)}, {_sql(AHORA)});",
+        f"  (4, 'Atencion al Cliente', 'Ventas, reservas y pagos. Sin WhatsApp.', {_sql(AHORA)}, {_sql(AHORA)}),",
+        f"  (5, 'Operaciones', 'Logística: planificación, flota, destinos y abordaje.', {_sql(AHORA)}, {_sql(AHORA)}),",
+        f"  (6, 'Gerencia', 'Consulta gerencial: reportes, bitácora y conciliación.', {_sql(AHORA)}, {_sql(AHORA)});",
         "",
         "-- Permisos",
         "INSERT INTO permisos (id, descripcion, creado_en, actualizado_en) VALUES",
@@ -254,8 +273,10 @@ def _inserts() -> list[str]:
     asignaciones = [(1, mapa_permiso[c]) for c in TODOS_LOS_PERMISOS]
     asignaciones += [(2, mapa_permiso[c]) for c in PERMISOS_GUIA]
     asignaciones += [(4, mapa_permiso[c]) for c in PERMISOS_ATC]
+    asignaciones += [(5, mapa_permiso[c]) for c in PERMISOS_OPERACIONES]
+    asignaciones += [(6, mapa_permiso[c]) for c in PERMISOS_GERENCIA]
 
-    lineas.append("-- Permisos por rol (Administrador = todos, Guía = operación, ATC = comercial)")
+    lineas.append("-- Permisos por rol (Admin = todos; Guía, ATC, Operaciones, Gerencia = recortes)")
     lineas.append("INSERT INTO roles_permisos (rol_id, permiso_id, creado_en, actualizado_en) VALUES")
     filas_rp = [f"  ({rol}, {perm}, {_sql(AHORA)}, {_sql(AHORA)})" for rol, perm in asignaciones]
     lineas.append(",\n".join(filas_rp) + ";")
@@ -267,7 +288,9 @@ def _inserts() -> list[str]:
         f"  (1, 1, 'admin@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Admin', 'Travel', '02510000000', {_sql(AHORA)}, {_sql(AHORA)}),\n"
         f"  (2, 2, 'guia@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Guia', 'Operativo', '04120000000', {_sql(AHORA)}, {_sql(AHORA)}),\n"
         f"  (3, 3, 'cliente@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Cliente', 'Demo', '04240000000', {_sql(AHORA)}, {_sql(AHORA)}),\n"
-        f"  (4, 4, 'atc@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Atencion', 'Cliente', '04160000000', {_sql(AHORA)}, {_sql(AHORA)});"
+        f"  (4, 4, 'atc@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Atencion', 'Cliente', '04160000000', {_sql(AHORA)}, {_sql(AHORA)}),\n"
+        f"  (5, 5, 'operaciones@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Operaciones', 'Travel', '02510000001', {_sql(AHORA)}, {_sql(AHORA)}),\n"
+        f"  (6, 6, 'gerencia@travelbqto.com', {_sql(HASH_CONTRASENA)}, 'Gerencia', 'Travel', '02510000002', {_sql(AHORA)}, {_sql(AHORA)});"
     )
     lineas.append("")
 

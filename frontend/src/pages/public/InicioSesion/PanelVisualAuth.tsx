@@ -123,11 +123,11 @@ export default function PanelVisualAuth({
   }, [slides.length]);
 
   const actual = slides[indice];
-  const titulo = tituloFijo ?? actual?.titulo ?? 'Descubre destinos inolvidables';
+  const titulo = tituloFijo ?? actual?.titulo ?? 'Salidas con Travel Bqto';
   const descripcion =
     descripcionFija
     ?? actual?.descripcion
-    ?? 'Viaja con total seguridad, reserva tus asientos cómodamente y explora con los mejores tours guiados.';
+    ?? 'Reserva tu asiento, reporta el pago y viaja en las salidas de la agencia.';
 
   return (
     <div className="inicio-sesion__bloque-visual">

@@ -266,7 +266,16 @@ def buscar_ciudad(db: Session, ciudad_id: int | None) -> Ciudad | None:
     return consulta.first()
 
 
-def validar_ubicacion(db: Session, estado_id: int | None, ciudad_id: int | None) -> None:
+def validar_ubicacion(
+    db: Session,
+    estado_id: int | None,
+    ciudad_id: int | None,
+    *,
+    obligatorio: bool = False,
+) -> None:
+    if obligatorio and (estado_id is None or ciudad_id is None):
+        raise HTTPException(status_code=400, detail="Selecciona estado y ciudad")
+
     estado = buscar_estado(db, estado_id)
     ciudad = buscar_ciudad(db, ciudad_id)
 
@@ -327,7 +336,7 @@ def registrar_cliente_para_reserva(
     if not numero_documento:
         raise HTTPException(status_code=422, detail="numero_documento: es obligatorio")
 
-    validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
+    validar_ubicacion(db, datos.estado_id, datos.ciudad_id, obligatorio=True)
 
     cliente_existente = buscar_cliente_por_documento(db, tipo_documento, numero_documento)
     if cliente_existente is not None:
@@ -352,7 +361,7 @@ def registrar_cliente_para_reserva(
         nombre=campos["nombre"],
         apellido=campos["apellido"],
         razon_social=campos["razon_social"] or getattr(datos, "razon_social", None),
-        telefono=ValidadorEntrada.telefono(getattr(datos, "telefono", None), "telefono") or None,
+        telefono=ValidadorEntrada.telefono(getattr(datos, "telefono", None), "telefono", obligatorio=True),
         telefono_secundario=ValidadorEntrada.telefono(
             getattr(datos, "telefono_secundario", None),
             "telefono_secundario",
@@ -369,8 +378,10 @@ def registrar_cliente_para_reserva(
         direccion=ValidadorEntrada.texto_libre(
             getattr(datos, "direccion", None),
             "direccion",
+            obligatorio=True,
+            minimo=5,
             maximo=255,
-        ) or None,
+        ),
         estado_id=getattr(datos, "estado_id", None),
         ciudad_id=getattr(datos, "ciudad_id", None),
         notas=ValidadorEntrada.texto_libre(getattr(datos, "notas", None), "notas", maximo=1000) or None,
@@ -471,7 +482,7 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
         campos["tipo_documento"],
         campos["numero_documento"],
     )
-    validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
+    validar_ubicacion(db, datos.estado_id, datos.ciudad_id, obligatorio=True)
 
     ahora = datetime.now()
 
@@ -483,18 +494,27 @@ def crear_cliente(db: Session, datos, usuario_actual_id: int) -> dict:
         nombre=campos["nombre"],
         apellido=campos["apellido"],
         razon_social=campos["razon_social"] or datos.razon_social,
-        telefono=ValidadorEntrada.telefono(datos.telefono, "telefono") or None,
+        telefono=ValidadorEntrada.telefono(datos.telefono, "telefono", obligatorio=True),
         telefono_secundario=ValidadorEntrada.telefono(datos.telefono_secundario, "telefono_secundario") or None,
         contacto_emergencia_nombre=ValidadorEntrada.texto_libre(
             getattr(datos, "contacto_emergencia_nombre", None),
             "contacto_emergencia_nombre",
+            obligatorio=True,
+            minimo=3,
             maximo=120,
-        ) or None,
+        ),
         contacto_emergencia_telefono=ValidadorEntrada.telefono(
             getattr(datos, "contacto_emergencia_telefono", None),
             "contacto_emergencia_telefono",
-        ) or None,
-        direccion=ValidadorEntrada.texto_libre(datos.direccion, "direccion", maximo=255) or None,
+            obligatorio=True,
+        ),
+        direccion=ValidadorEntrada.texto_libre(
+            datos.direccion,
+            "direccion",
+            obligatorio=True,
+            minimo=5,
+            maximo=255,
+        ),
         estado_id=datos.estado_id,
         ciudad_id=datos.ciudad_id,
         notas=ValidadorEntrada.texto_libre(datos.notas, "notas", maximo=1000) or None,
@@ -580,7 +600,7 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
         )
 
     if datos.telefono is not None:
-        cliente.telefono = ValidadorEntrada.telefono(datos.telefono, "telefono")
+        cliente.telefono = ValidadorEntrada.telefono(datos.telefono, "telefono", obligatorio=True)
         if usuario is not None:
             usuario.telefono = cliente.telefono
 
@@ -594,24 +614,35 @@ def actualizar_cliente(db: Session, cliente_id: int, datos, usuario_actual_id: i
         cliente.contacto_emergencia_nombre = ValidadorEntrada.texto_libre(
             datos.contacto_emergencia_nombre,
             "contacto_emergencia_nombre",
+            obligatorio=True,
+            minimo=3,
             maximo=120,
-        ) or None
+        )
 
     if getattr(datos, "contacto_emergencia_telefono", None) is not None:
         cliente.contacto_emergencia_telefono = ValidadorEntrada.telefono(
             datos.contacto_emergencia_telefono,
             "contacto_emergencia_telefono",
-        ) or None
+            obligatorio=True,
+        )
 
     if datos.direccion is not None:
-        cliente.direccion = ValidadorEntrada.texto_libre(datos.direccion, "direccion", maximo=255) or None
+        cliente.direccion = ValidadorEntrada.texto_libre(
+            datos.direccion,
+            "direccion",
+            obligatorio=True,
+            minimo=5,
+            maximo=255,
+        )
 
     estado_id_final = datos.estado_id if datos.estado_id is not None else cliente.estado_id
     ciudad_id_final = datos.ciudad_id if datos.ciudad_id is not None else cliente.ciudad_id
     if estado_id_final != cliente.estado_id or ciudad_id_final != cliente.ciudad_id:
-        validar_ubicacion(db, estado_id_final, ciudad_id_final)
+        validar_ubicacion(db, estado_id_final, ciudad_id_final, obligatorio=True)
         cliente.estado_id = estado_id_final
         cliente.ciudad_id = ciudad_id_final
+    elif cliente.estado_id is None or cliente.ciudad_id is None:
+        validar_ubicacion(db, cliente.estado_id, cliente.ciudad_id, obligatorio=True)
 
     if datos.notas is not None:
         cliente.notas = ValidadorEntrada.texto_libre(datos.notas, "notas", maximo=1000) or None

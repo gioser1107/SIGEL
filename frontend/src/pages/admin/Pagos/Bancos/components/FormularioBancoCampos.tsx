@@ -9,14 +9,19 @@ export default function FormularioBancoCampos({ form, onChange }: FormularioBanc
   return (
     <div className="drawer-form">
       <div className="drawer-form__campo">
-        <label className="drawer-form__label" htmlFor="banco-codigo">Código</label>
+        <label className="drawer-form__label" htmlFor="banco-codigo">
+          Código <span className="drawer-form__req">*</span>
+        </label>
         <input
           id="banco-codigo"
           className="drawer-form__input"
           value={form.codigo}
-          onChange={(e) => onChange({ ...form, codigo: e.target.value })}
+          inputMode="numeric"
+          maxLength={4}
+          onChange={(e) => onChange({ ...form, codigo: e.target.value.replace(/\D/g, '').slice(0, 4) })}
           placeholder="0102"
         />
+        <p className="drawer-form__ayuda">Solo 4 dígitos, sin letras.</p>
       </div>
       <div className="drawer-form__campo">
         <label className="drawer-form__label" htmlFor="banco-nombre">Nombre</label>

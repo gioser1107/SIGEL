@@ -147,7 +147,7 @@ export default function Flota() {
         migaja="TravelBqto / Admin"
         titulo="Flota y transporte"
         contador={total}
-        descripcion="Gestión de unidades de transporte (autobuses) y distribución de asientos."
+        descripcion="Autobuses, plazas y mapa de asientos de cada unidad."
         acciones={
           <Boton variante="primario" tamano="sm" onClick={abrirCrear}>
             + Nueva Unidad

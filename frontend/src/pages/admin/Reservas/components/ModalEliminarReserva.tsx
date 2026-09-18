@@ -39,7 +39,7 @@ export default function ModalEliminarReserva({
       titulo="Eliminar Reserva"
       mensaje={
         reserva
-          ? `¿Estás seguro de eliminar la reserva RES-${reserva.id}? Esta acción marcará la reserva y sus pasajeros como eliminados en el sistema.`
+          ? `¿Eliminar la reserva RES-${reserva.id}? Quedará anulada junto con sus pasajeros.`
           : ''
       }
       textoConfirmar="Eliminar"

@@ -66,9 +66,8 @@ export default function ModalConvertirReserva({ abierto, cotizacion, onCerrar }:
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <p>
-              Para completar la conversión debes seleccionar un viaje en el módulo de{' '}
-              <strong>Reservas</strong> (módulo de María). Cuando esté listo, este botón te redirigirá
-              automáticamente.
+              Para completar la conversión, elige un viaje y asientos en{' '}
+              <strong>Reservas</strong>. Este botón te lleva allá con la cotización.
             </p>
           </div>
         </div>

@@ -126,6 +126,10 @@
     box-shadow: var(--shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.08));
 }
 
+.seccion-nosotros__imagen--vacia {
+    background: #123040;
+}
+
 /* ── Badge circular ── */
 .seccion-nosotros__badge {
     position: absolute;

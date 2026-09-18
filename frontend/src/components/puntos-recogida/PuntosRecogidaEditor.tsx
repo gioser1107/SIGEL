@@ -151,7 +151,9 @@ const PuntosRecogidaEditor = forwardRef<PuntosRecogidaEditorHandle, PuntosRecogi
   }
 
   async function guardarFormulario() {
-    const errorValidacion = validarDomicilioRecogida(form, ubicacion.estadoId, ubicacion.ciudadId);
+    const errorValidacion = validarDomicilioRecogida(form, ubicacion.estadoId, ubicacion.ciudadId, {
+      referenciaOpcional: true,
+    });
     if (errorValidacion) {
       setErrorForm(errorValidacion);
       return;

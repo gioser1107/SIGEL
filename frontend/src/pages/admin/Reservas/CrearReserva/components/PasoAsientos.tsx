@@ -91,7 +91,7 @@ export default function PasoAsientos({
 
       {bloqueado && (
         <p style={{ marginBottom: '1rem', color: 'var(--color-text-muted)' }}>
-          Creando reserva, por favor espera…
+          Creando la reserva…
         </p>
       )}
 

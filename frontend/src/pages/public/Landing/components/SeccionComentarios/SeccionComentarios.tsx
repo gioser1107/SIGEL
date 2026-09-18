@@ -16,7 +16,7 @@ function resenaAComentario(resena: Resena): Comentario {
     id: resena.id,
     nombre: resena.nombre_cliente,
     rol: resena.destino_titulo || 'Viajero',
-    texto: resena.comentario?.trim() || 'Calificó su experiencia en el viaje.',
+    texto: resena.comentario?.trim() || 'Calificó el viaje.',
     calificacion: resena.calificacion,
   };
 }
@@ -54,9 +54,9 @@ export default function SeccionComentarios() {
     <section className="seccion-comentarios">
       <div className="seccion-comentarios__header">
         <span className="seccion-comentarios__eyebrow">Reseñas</span>
-        <h2 className="seccion-comentarios__titulo">Lo que dicen nuestros viajeros</h2>
+        <h2 className="seccion-comentarios__titulo">Opiniones de clientes</h2>
         <p className="seccion-comentarios__descripcion">
-          Comentarios de clientes que ya viajaron con Travel Bqto
+          Reseñas de quienes ya salieron con Travel Bqto
         </p>
       </div>
 

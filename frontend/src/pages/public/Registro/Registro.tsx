@@ -183,15 +183,15 @@ export default function Registro() {
     if (tipoDocumento === 'J' && !/^[A-Za-z0-9]{4,15}$/.test(numeroDocumento.trim())) {
       return 'Revisa el número de documento.';
     }
-    if (numeroTelefono.trim() && !/^\d{7}$/.test(numeroTelefono.trim())) {
+    if (!numeroTelefono.trim()) return 'El teléfono es obligatorio.';
+    if (!/^\d{7}$/.test(numeroTelefono.trim())) {
       return 'El teléfono debe tener exactamente 7 dígitos.';
     }
     return null;
   }
 
   function validarPaso2(): string | null {
-    const hayUbicacion = direccion.trim() || estadoId || ciudadId;
-    if (!hayUbicacion) return null;
+    if (!direccion.trim()) return 'La dirección es obligatoria.';
     if (direccion.trim().length < 5) return 'La dirección debe tener al menos 5 caracteres.';
     if (direccion.trim().length > 255) return 'La dirección no puede superar 255 caracteres.';
     if (!estadoId) return 'Selecciona un estado.';
@@ -426,7 +426,7 @@ export default function Registro() {
 
                   <div className="grupo-entrada inicio-sesion__input-group">
                     <label htmlFor="registro-telefono" className="grupo-entrada__etiqueta">
-                      Teléfono (opcional)
+                      Teléfono *
                     </label>
                     <div className="inicio-sesion__fila-telefono">
                       <select
@@ -464,10 +464,11 @@ export default function Registro() {
               {paso === 2 && (
                 <div className="registro-page__ubicacion">
                   <p className="registro-page__nota">
-                    Indica tu dirección y luego el estado y la ciudad. Puedes completar esto más tarde.
+                    Indica tu dirección y luego el estado y la ciudad.
                   </p>
                   <Entrada
-                    etiqueta="Dirección"
+                    etiqueta="Dirección *"
+                    required
                     type="text"
                     placeholder="Calle, número, urbanización, edificio, piso, apto."
                     value={direccion}
@@ -479,7 +480,7 @@ export default function Registro() {
                   <div className="registro-page__fila">
                     <div className="grupo-entrada inicio-sesion__input-group">
                       <label htmlFor="registro-estado" className="grupo-entrada__etiqueta">
-                        Estado
+                        Estado *
                       </label>
                       <select
                         id="registro-estado"
@@ -501,7 +502,7 @@ export default function Registro() {
                     </div>
                     <div className="grupo-entrada inicio-sesion__input-group">
                       <label htmlFor="registro-ciudad" className="grupo-entrada__etiqueta">
-                        Ciudad
+                        Ciudad *
                       </label>
                       <select
                         id="registro-ciudad"
@@ -583,8 +584,8 @@ export default function Registro() {
 
         <PanelVisualAuth
           badge="Portal de clientes"
-          tituloFijo="Tu próxima aventura empieza aquí"
-          descripcionFija="Crea tu cuenta, reserva asientos y viaja con la agencia de confianza de Barquisimeto."
+          tituloFijo="Regístrate para reservar"
+          descripcionFija="Crea tu cuenta con cédula o pasaporte, elige asiento y viaja con Travel Bqto."
         >
           <div className="inicio-sesion__indicadores" aria-hidden="true">
             <span className={`inicio-sesion__indicador${paso === 1 ? ' activo' : ''}`} />

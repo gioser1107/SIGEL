@@ -11,6 +11,7 @@
 .layout-admin {
   display: flex;
   min-height: 100vh;
+  min-width: 0;
   /* El color del footer de la landing page (gradiente slate) para el fondo del panel */
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   color: var(--color-text-primary);
@@ -317,6 +318,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
   transition: margin-left var(--transition-spring);
 }
 
@@ -445,24 +447,63 @@
 /* Contenedor y panel de notificaciones */
 .admin-notificaciones {
   position: relative;
+  flex-shrink: 0;
+}
+
+.admin-notificaciones__fondo {
+  display: none;
 }
 
 .admin-notificaciones__panel {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  width: min(320px, calc(100vw - 2rem));
+  position: fixed;
+  top: calc(var(--admin-cabecera-height) + 0.5rem);
+  right: var(--spacing-2xl);
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(28rem, calc(100dvh - var(--admin-cabecera-height) - 1.5rem));
   background: #ffffff;
   border: 1px solid rgba(18, 40, 75, 0.08);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 32px rgba(18, 40, 75, 0.12);
-  z-index: 200;
+  z-index: calc(var(--z-sticky) + 4);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .admin-notificaciones__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid rgba(18, 40, 75, 0.06);
+  flex-shrink: 0;
+}
+
+.admin-notificaciones__cerrar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-notificaciones__cerrar svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-notificaciones__cerrar:hover {
+    background: rgba(18, 40, 75, 0.06);
+    color: var(--color-text-primary);
+  }
 }
 
 .admin-notificaciones__titulo {
@@ -474,6 +515,8 @@
 
 .admin-notificaciones__cuerpo {
   padding: var(--spacing-sm);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .admin-notificaciones__vacio {
@@ -501,8 +544,10 @@
   transition: background var(--transition-fast);
 }
 
-.admin-notificaciones__item:hover {
-  background: rgba(18, 40, 75, 0.04);
+@media (hover: hover) and (pointer: fine) {
+  .admin-notificaciones__item:hover {
+    background: rgba(18, 40, 75, 0.04);
+  }
 }
 
 .admin-notificaciones__item-icono {
@@ -524,8 +569,10 @@
 
 .admin-notificaciones__item-texto {
   flex: 1;
+  min-width: 0;
   font-size: 0.875rem;
   line-height: 1.35;
+  overflow-wrap: break-word;
 }
 
 .admin-notificaciones__item-badge {
@@ -667,7 +714,41 @@
 
   .admin-cabecera {
     height: calc(var(--admin-cabecera-height) + env(safe-area-inset-top, 0px));
-    padding-top: env(safe-area-inset-top, 0px);
+    padding: env(safe-area-inset-top, 0px) 0.75rem 0;
+    gap: 0.5rem;
+  }
+
+  .admin-cabecera__izquierda {
+    flex: 0 0 auto;
+    gap: 0.5rem;
+    min-width: 0;
+  }
+
+  .admin-cabecera__derecha {
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  .admin-cabecera__ayuda {
+    display: none;
+  }
+
+  .admin-cabecera__notificacion,
+  .admin-cabecera__alternador-movil {
+    width: 38px;
+    height: 38px;
+  }
+
+  .admin-cabecera__avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .admin-notificaciones__panel {
+    top: calc(var(--admin-cabecera-height) + env(safe-area-inset-top, 0px) + 0.5rem);
+    right: 0.75rem;
+    width: min(22rem, calc(100vw - 1.5rem));
+    max-height: min(70dvh, calc(100dvh - var(--admin-cabecera-height) - env(safe-area-inset-top, 0px) - 1.25rem));
   }
 
   .admin-cabecera__alternador-movil {
@@ -688,5 +769,43 @@
   .admin-cabecera__perfil-info {
     display: none;
     /* Mostrar solo el avatar en pantallas pequeñas */
+  }
+
+  .admin-cabecera__perfil {
+    padding: 0.2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-notificaciones__fondo {
+    display: block;
+    position: fixed;
+    top: calc(var(--admin-cabecera-height) + env(safe-area-inset-top, 0px));
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: calc(var(--z-sticky) + 3);
+    background: rgba(10, 14, 23, 0.32);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .admin-notificaciones__panel {
+    left: 0.75rem;
+    right: 0.75rem;
+    width: auto;
+    max-height: min(72dvh, calc(100dvh - var(--admin-cabecera-height) - env(safe-area-inset-top, 0px) - 1.25rem));
+    border-radius: var(--radius-xl);
+  }
+
+  .admin-notificaciones__item {
+    min-height: 3rem;
+    padding: 0.7rem 0.75rem;
+  }
+
+  .admin-contenido {
+    padding: 0.75rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
   }
 }

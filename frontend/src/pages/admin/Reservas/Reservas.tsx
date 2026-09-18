@@ -67,7 +67,7 @@ function mensajeError(err: unknown): string {
   }
   if (err instanceof ErrorApi) return err.message;
   if (err instanceof Error) return err.message;
-  return 'Ocurrió un error inesperado.';
+  return 'No se pudo completar. Intenta de nuevo.';
 }
 
 export default function Reservas() {
@@ -293,7 +293,7 @@ export default function Reservas() {
       <div className="zona-imprimible">
         <CabeceraReporteImpresion
           titulo="Reporte de reservas"
-          subtitulo="Reservas confirmadas, pendientes y canceladas para seguimiento comercial."
+          subtitulo="Reservas confirmadas, pendientes y canceladas."
           filtroActivo={etiquetaFiltroActivo}
           resumen={resumenReporte}
         >

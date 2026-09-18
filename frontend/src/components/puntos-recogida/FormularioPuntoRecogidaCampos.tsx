@@ -33,7 +33,7 @@ export default function FormularioPuntoRecogidaCampos({
   ciudades,
   cargandoEstados = false,
   cargandoCiudades,
-  referenciaOpcional = false,
+  referenciaOpcional = true,
   compacto = false,
   error,
   onChange,

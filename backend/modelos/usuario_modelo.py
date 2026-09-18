@@ -435,7 +435,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
             detail="Ese cliente ya tiene una cuenta registrada",
         )
 
-    validar_ubicacion(db, datos.estado_id, datos.ciudad_id)
+    validar_ubicacion(db, datos.estado_id, datos.ciudad_id, obligatorio=True)
 
     telefono_limpio = ValidadorEntrada.telefono(getattr(datos, "telefono", None), "telefono") or None
     telefono_sec_limpio = ValidadorEntrada.telefono(
@@ -473,7 +473,13 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
             razon_social=campos["razon_social"] or datos.razon_social,
             telefono=telefono_limpio,
             telefono_secundario=telefono_sec_limpio,
-            direccion=datos.direccion,
+            direccion=ValidadorEntrada.texto_libre(
+                datos.direccion,
+                "direccion",
+                obligatorio=True,
+                minimo=5,
+                maximo=255,
+            ),
             estado_id=datos.estado_id,
             ciudad_id=datos.ciudad_id,
             creado_por=nuevo_usuario.id,

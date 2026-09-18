@@ -211,6 +211,7 @@ export default function FormularioClienteCampos({
           idNumero={id('tel-numero')}
           idFijo={id('tel-fijo')}
           etiqueta="Teléfono principal"
+          obligatorio
           prefijo={form.telefono_prefijo}
           numero={form.telefono_numero}
           fijo={form.telefono_fijo}
@@ -246,41 +247,59 @@ export default function FormularioClienteCampos({
         </p>
         <div className="drawer-form__campo">
           <label className="drawer-form__label" htmlFor={id('emergencia-nombre')}>
-            Nombre del contacto
+            Nombre del contacto{!esAcompanante && <span className="drawer-form__req"> *</span>}
           </label>
           <input
             id={id('emergencia-nombre')}
             className="drawer-form__input"
             maxLength={120}
             value={form.contacto_emergencia_nombre}
-            onChange={(e) => onChange((f) => ({ ...f, contacto_emergencia_nombre: e.target.value }))}
+            onChange={(e) => {
+              onChange((f) => ({ ...f, contacto_emergencia_nombre: e.target.value }));
+              onLimpiarError('contacto_emergencia_nombre');
+            }}
             placeholder="Familiar o persona de confianza"
           />
+          {erroresForm.contacto_emergencia_nombre && (
+            <p className="clientes__campo-error">{erroresForm.contacto_emergencia_nombre}</p>
+          )}
         </div>
         <div className="drawer-form__campo">
           <label className="drawer-form__label" htmlFor={id('emergencia-tel')}>
-            Teléfono de emergencia
+            Teléfono de emergencia{!esAcompanante && <span className="drawer-form__req"> *</span>}
           </label>
           <input
             id={id('emergencia-tel')}
             className="drawer-form__input"
             maxLength={30}
             value={form.contacto_emergencia_telefono}
-            onChange={(e) => onChange((f) => ({ ...f, contacto_emergencia_telefono: e.target.value }))}
+            onChange={(e) => {
+              onChange((f) => ({ ...f, contacto_emergencia_telefono: e.target.value }));
+              onLimpiarError('contacto_emergencia_telefono');
+            }}
             placeholder="0412…"
           />
+          {erroresForm.contacto_emergencia_telefono && (
+            <p className="clientes__campo-error">{erroresForm.contacto_emergencia_telefono}</p>
+          )}
         </div>
       </section>
 
       <div className="drawer-form__campo">
-        <label className="drawer-form__label" htmlFor={id('direccion')}>Dirección</label>
+        <label className="drawer-form__label" htmlFor={id('direccion')}>
+          Dirección <span className="drawer-form__req">*</span>
+        </label>
         <input
           id={id('direccion')}
           className="drawer-form__input"
           value={form.direccion}
-          onChange={(e) => onChange((f) => ({ ...f, direccion: e.target.value }))}
+          onChange={(e) => {
+            onChange((f) => ({ ...f, direccion: e.target.value }));
+            onLimpiarError('direccion');
+          }}
           placeholder="Calle, número, urbanización, edificio, piso, apto."
         />
+        {erroresForm.direccion && <p className="clientes__campo-error">{erroresForm.direccion}</p>}
       </div>
 
       <section className="fp-form-seccion">
@@ -354,7 +373,7 @@ export default function FormularioClienteCampos({
             value={form.notas}
             onChange={(e) => onChange((f) => ({ ...f, notas: e.target.value.slice(0, 1000) }))}
             maxLength={1000}
-            placeholder="Ej: Cliente interesado en Morrocoy, captado por WhatsApp…"
+            placeholder="Ej: Cliente interesado en Morrocoy, llamado por ATC…"
           />
         </div>
       )}

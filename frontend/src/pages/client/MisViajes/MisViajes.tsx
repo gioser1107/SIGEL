@@ -37,9 +37,6 @@ function formatearFecha(fechaISO: string): string {
   return `${d.getDate()} de ${meses[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-const IMAGEN_VIAJE_FALLBACK =
-  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80';
-
 export default function MisViajes() {
   const {
     reservas,
@@ -92,7 +89,7 @@ export default function MisViajes() {
         <div>
           <h1 className="mis-viajes__titulo">Mis viajes</h1>
           <p className="mis-viajes__subtitulo">
-            Gestiona tus reservas y revisa el estado de tus pagos.
+            Tus reservas, pagos y boleto de cada salida.
           </p>
         </div>
         <Link to="/client/agenda" className="mis-viajes__btn-explorar">
@@ -127,7 +124,7 @@ export default function MisViajes() {
         <div className="mis-viajes__vacio">
           <h3 className="mis-viajes__vacio-titulo">Aún no tienes viajes</h3>
           <p className="mis-viajes__vacio-desc">
-            Explora la agenda de experiencias y reserva tu próxima aventura.
+            Abre el calendario y reserva un asiento para tu próximo viaje.
           </p>
           <Link to="/client/agenda" className="mis-viajes__vacio-btn">
             Ver calendario de viajes
@@ -175,9 +172,11 @@ export default function MisViajes() {
               >
                 <div
                   className="mis-viajes__ticket-img"
-                  style={{
-                    backgroundImage: `url(${reserva.destino_imagen || IMAGEN_VIAJE_FALLBACK})`,
-                  }}
+                  style={
+                    reserva.destino_imagen
+                      ? { backgroundImage: `url(${reserva.destino_imagen})` }
+                      : undefined
+                  }
                 />
 
                 <div className="mis-viajes__ticket-body">
@@ -187,6 +186,14 @@ export default function MisViajes() {
                     </h3>
                     <span className={`mis-viajes__badge ${badge.clase}`}>{badge.label}</span>
                   </div>
+                  {reserva.plazo_correccion && !reserva.plazo_correccion.vencido && pago?.estado === 'rechazado' && (
+                    <p className="mis-viajes__ticket-ubicacion">
+                      Tienes {reserva.plazo_correccion.minutos_restantes >= 60
+                        ? `${Math.floor(reserva.plazo_correccion.minutos_restantes / 60)} h`
+                        : `${reserva.plazo_correccion.minutos_restantes} min`}{' '}
+                      para corregir el pago. Si no, se liberan los cupos.
+                    </p>
+                  )}
 
                   {reserva.ubicacion && (
                     <p className="mis-viajes__ticket-ubicacion">
@@ -233,7 +240,9 @@ export default function MisViajes() {
 
                   <div className="mis-viajes__ticket-footer">
                     <span className="mis-viajes__ticket-ref">
-                      Ref: {pago?.referencia ?? '—'}
+                      {reserva.boleto?.codigo
+                        ? `Boleto ${reserva.boleto.codigo}`
+                        : `Ref: ${pago?.referencia ?? '—'}`}
                     </span>
                     <div className="mis-viajes__ticket-footer-actions">
                       {mostrarAbonar && (

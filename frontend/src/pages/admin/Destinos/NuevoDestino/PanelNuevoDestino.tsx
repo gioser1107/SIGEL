@@ -76,7 +76,7 @@ export default function PanelNuevoDestino({
 
         <div className="drawer-form__campo">
           <label className="drawer-form__label" htmlFor="destino-descripcion">
-            Descripción
+            Descripción <span className="drawer-form__req">*</span>
           </label>
           <textarea
             id="destino-descripcion"

@@ -491,3 +491,25 @@
   color: var(--color-primary-dark, var(--color-primary));
   font-family: var(--font-heading);
 }
+
+@media (max-width: 640px) {
+  .reservas__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .reservas__titulo {
+    font-size: var(--font-size-xl);
+  }
+
+  .reservas__tabla-wrapper {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .detalle-rsv__total {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

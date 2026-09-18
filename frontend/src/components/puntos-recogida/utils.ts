@@ -27,7 +27,7 @@ export function validarDomicilioRecogida(
   if (valores.direccion.trim().length > 255) return 'La dirección no puede superar 255 caracteres.';
   if (!estadoId) return 'Selecciona el estado.';
   if (!ciudadId) return 'Selecciona la ciudad.';
-  if (!opciones?.referenciaOpcional && !valores.notas.trim()) {
+  if (opciones?.referenciaOpcional === false && !valores.notas.trim()) {
     return 'Ingresa una referencia (portón, timbre, punto de referencia).';
   }
   if (valores.notas.trim() && valores.notas.trim().length < 2) {

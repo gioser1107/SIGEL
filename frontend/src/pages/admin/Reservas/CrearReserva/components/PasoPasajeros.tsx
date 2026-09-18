@@ -342,7 +342,7 @@ export default function PasoPasajeros({
         cliente_id: p.cliente_id,
         precio_pasajero_eur: p.precio_pasajero_eur,
         modo: p.modo ?? 'existente',
-        fichaCompleta: p.modo === 'nuevo' ? !tieneErroresCliente(validarFormularioCliente(p.ficha ?? FORM_VACIO)) : true,
+        fichaCompleta: p.modo === 'nuevo' ? !tieneErroresCliente(validarFormularioCliente(p.ficha ?? FORM_VACIO, { exigirEmergencia: false })) : true,
       })),
       titularPuntoRecogidaId,
       domiciliosTitular.length > 0,
@@ -356,7 +356,7 @@ export default function PasoPasajeros({
     for (let i = 0; i < pasajeros.length; i += 1) {
       const p = pasajeros[i];
       if (p.modo === 'nuevo' && p.ficha) {
-        const erroresFicha = validarFormularioCliente(p.ficha);
+        const erroresFicha = validarFormularioCliente(p.ficha, { exigirEmergencia: false });
         if (tieneErroresCliente(erroresFicha)) {
           setErrorValidacion(`Revisa los datos personales del acompañante ${i + 1}.`);
           return;
@@ -494,7 +494,7 @@ export default function PasoPasajeros({
               <FichaAcompananteNueva
                 idTemporal={p.id_temporal}
                 form={p.ficha}
-                errores={errorValidacion ? validarFormularioCliente(p.ficha) : {}}
+                errores={errorValidacion ? validarFormularioCliente(p.ficha, { exigirEmergencia: false }) : {}}
                 onChange={(actualizador) => actualizarFicha(p.id_temporal, actualizador)}
                 onLimpiarError={() => undefined}
               />

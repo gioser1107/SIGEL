@@ -357,7 +357,7 @@ def cargar_datos_pago(
     if pago.punto_venta_id:
         punto_venta = db.query(PuntoVenta).filter(PuntoVenta.id == pago.punto_venta_id).first()
 
-    return pago_a_dict(
+    detalle = pago_a_dict(
         pago,
         metodo,
         moneda,
@@ -367,6 +367,10 @@ def cargar_datos_pago(
         banco_destino,
         punto_venta,
     )
+    from modelos.boleto_modelo import boleto_a_dict, obtener_boleto_emitido
+
+    detalle["boleto"] = boleto_a_dict(obtener_boleto_emitido(db, pago.reserva_id))
+    return detalle
 
 
 def _redondear_eur(valor: float) -> float:
@@ -930,6 +934,11 @@ def registrar_pago_reserva(
     db.flush()
     actualizar_estado_reserva_por_pagos(db, reserva)
     reserva.actualizado_en = ahora
+    from modelos.boleto_modelo import emitir_boleto_si_corresponde
+    from utilidades.plazo_pago import actualizar_plazo_tras_pago
+
+    actualizar_plazo_tras_pago(db, reserva)
+    emitir_boleto_si_corresponde(db, reserva)
     db.commit()
     db.refresh(nuevo_pago)
     return nuevo_pago
@@ -1017,6 +1026,11 @@ def actualizar_pago_reserva(
     pago.actualizado_en = datetime.now()
     actualizar_estado_reserva_por_pagos(db, reserva)
     reserva.actualizado_en = datetime.now()
+    from modelos.boleto_modelo import emitir_boleto_si_corresponde
+    from utilidades.plazo_pago import actualizar_plazo_tras_pago
+
+    actualizar_plazo_tras_pago(db, reserva)
+    emitir_boleto_si_corresponde(db, reserva)
     db.commit()
     db.refresh(pago)
     return pago

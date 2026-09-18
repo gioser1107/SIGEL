@@ -30,7 +30,7 @@ interface ModalDomicilioRecogidaProps {
 export default function ModalDomicilioRecogida({
   abierto,
   titulo,
-  subtitulo = 'Indica la dirección exacta y referencias para que la agencia te encuentre.',
+  subtitulo = 'Indica la dirección exacta. La referencia (portón, timbre) es opcional.',
   procesando = false,
   idPrefix = 'pr-modal',
   valores,

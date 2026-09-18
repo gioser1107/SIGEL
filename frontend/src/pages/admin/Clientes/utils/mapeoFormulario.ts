@@ -49,7 +49,7 @@ export function formularioAPayload(form: FormularioCliente) {
       numero: form.telefono_sec_numero,
       fijo: form.telefono_sec_fijo,
     }),
-    direccion: form.direccion.trim() || undefined,
+    direccion: form.direccion.trim(),
     estado_id: Number(form.estado_id),
     ciudad_id: Number(form.ciudad_id),
     notas: form.notas.trim() || undefined,

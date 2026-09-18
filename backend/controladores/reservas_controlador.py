@@ -184,6 +184,20 @@ def obtener_mi_reserva_portal_endpoint(
     return {"reserva": obtener_mi_reserva_portal(db, cliente_id, reserva_id)}
 
 
+@router.get("/portal/mis-reservas/{reserva_id}/boleto")
+def obtener_mi_boleto_portal(
+    reserva_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(obtener_usuario_actual),
+):
+    from modelos.boleto_modelo import obtener_boleto_reserva_o_error
+    from modelos.pago_modelo import obtener_reserva_del_cliente
+
+    cliente_id = _requiere_cliente_sesion_reserva(usuario_actual)
+    obtener_reserva_del_cliente(db, reserva_id, cliente_id)
+    return obtener_boleto_reserva_o_error(db, reserva_id)
+
+
 @router.get("/viajes-disponibles")
 def listar_viajes_disponibles_para_reserva(
     db: Session = Depends(get_db),

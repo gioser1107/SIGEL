@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from fastapi import HTTPException
@@ -14,6 +14,39 @@ EDAD_MAX_MENOR = 17
 EDAD_MAX_PIERNAS = 5
 RECARGO_MENOR_POR_DEFECTO = 7.00
 MOTIVO_CREDITO_CANCELACION = "cancelacion_sin_reembolso"
+HORAS_PLAZO_CORRECCION_PAGO = 24
+HORAS_ANTICIPACION_CANCELACION = 24
+TIPOS_INCIDENCIA = ("retraso", "eventualidad", "incidencia")
+
+
+def cumple_aviso_anticipacion(fecha_salida, ahora: Optional[datetime] = None) -> bool:
+    """La cancelación con saldo a favor exige aviso 24 h antes de la salida."""
+    if fecha_salida is None:
+        return True
+    momento = ahora or datetime.now()
+    if isinstance(fecha_salida, date) and not isinstance(fecha_salida, datetime):
+        fecha_salida = datetime.combine(fecha_salida, datetime.min.time())
+    return momento <= fecha_salida - timedelta(hours=HORAS_ANTICIPACION_CANCELACION)
+
+
+def fecha_limite_aviso_cancelacion(fecha_salida) -> Optional[datetime]:
+    if fecha_salida is None:
+        return None
+    if isinstance(fecha_salida, date) and not isinstance(fecha_salida, datetime):
+        fecha_salida = datetime.combine(fecha_salida, datetime.min.time())
+    return fecha_salida - timedelta(hours=HORAS_ANTICIPACION_CANCELACION)
+
+
+def normalizar_tipo_incidencia(valor: Optional[str]) -> str:
+    if valor is None or not str(valor).strip():
+        raise HTTPException(status_code=400, detail="Indica el tipo de incidencia")
+    limpio = str(valor).strip().lower()
+    if limpio not in TIPOS_INCIDENCIA:
+        raise HTTPException(
+            status_code=400,
+            detail="El tipo debe ser retraso, eventualidad o incidencia",
+        )
+    return limpio
 
 
 def normalizar_modalidad(valor: Optional[str], por_defecto: str = "individual") -> str:

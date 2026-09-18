@@ -346,8 +346,12 @@ export default function RegistrarPago() {
       <div className="ticket">
         <div className="ticket__header">
           <span className="ticket__tag">Viaje próximo</span>
-          <div className={`ticket__badge ${paso === 4 ? 'ticket__badge--confirmed' : 'ticket__badge--pending'}`}>
-            {paso === 4 ? 'Confirmado' : 'Pago pendiente'}
+          <div className={`ticket__badge ${paso === 4 && pagoReportado?.estado === 'aprobado' ? 'ticket__badge--confirmed' : 'ticket__badge--pending'}`}>
+            {paso === 4
+              ? pagoReportado?.estado === 'aprobado'
+                ? 'Boleto emitido'
+                : 'Pago en validación'
+              : 'Pago pendiente'}
           </div>
         </div>
 
@@ -490,9 +494,15 @@ export default function RegistrarPago() {
         {paso === 4 && datosPago && (
           <div className="receipt-ticket">
             <div className="receipt-ticket__celebration">
-              <h2 className="receipt-ticket__title">Registro completado</h2>
+              <h2 className="receipt-ticket__title">
+                {pagoReportado?.estado === 'aprobado' ? 'Boleto digital' : 'Pago reportado'}
+              </h2>
               <p className="receipt-ticket__subtitle">
-                Tu boleto ha sido emitido exitosamente
+                {pagoReportado?.boleto?.codigo
+                  ? `Boleto ${pagoReportado.boleto.codigo} emitido`
+                  : pagoReportado?.estado === 'en_validacion'
+                    ? 'Tu pago quedó en validación. El boleto digital se emite cuando el personal apruebe el comprobante.'
+                    : 'Registro completado. El boleto se emite al aprobar el pago.'}
               </p>
             </div>
 
@@ -587,7 +597,9 @@ export default function RegistrarPago() {
                   ></span>
                 ))}
               </div>
-              <span className="receipt-ticket__barcode-number">TBQ-2026-{datosPago.referencia}</span>
+              <span className="receipt-ticket__barcode-number">
+                {pagoReportado?.boleto?.codigo ?? 'BOLETO-PENDIENTE-DE-APROBACION'}
+              </span>
             </div>
 
             <div className="receipt-ticket__actions">

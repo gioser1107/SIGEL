@@ -12,8 +12,11 @@ from modelos.cliente_modelo import requiere_sesion_cliente_portal
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 from modelos.permiso_modelo import (
     PERMISO_BORRAR_PLANIFICACION,
+    PERMISO_CREAR_ABORDAJE,
     PERMISO_CREAR_PLANIFICACION,
+    PERMISO_EDITAR_ABORDAJE,
     PERMISO_EDITAR_PLANIFICACION,
+    PERMISO_LEER_ABORDAJE,
     PERMISO_LEER_PLANIFICACION,
     PERMISO_LEER_RESERVAS,
 )
@@ -170,6 +173,87 @@ def obtener_reporte_viaje_endpoint(
 ):
     asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
     return obtener_reporte_viaje(db, viaje_id)
+
+
+class DatosIncidenciaCrear(BaseModel):
+    tipo: str
+    descripcion: str
+    ocurrio_en: datetime | None = None
+
+
+@router.get("/{viaje_id}/incidencias")
+def listar_incidencias_endpoint(
+    viaje_id: int,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(
+        requiere_alguno_de_permisos(PERMISO_LEER_ABORDAJE, PERMISO_LEER_PLANIFICACION)
+    ),
+):
+    from modelos.incidencia_viaje_modelo import listar_incidencias_viaje
+
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
+    return {"items": listar_incidencias_viaje(db, viaje_id)}
+
+
+@router.post("/{viaje_id}/incidencias")
+def crear_incidencia_endpoint(
+    viaje_id: int,
+    datos: DatosIncidenciaCrear,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(
+        requiere_alguno_de_permisos(PERMISO_CREAR_ABORDAJE, PERMISO_EDITAR_PLANIFICACION)
+    ),
+):
+    from modelos.incidencia_viaje_modelo import crear_incidencia_viaje
+
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
+    resultado = crear_incidencia_viaje(
+        db,
+        viaje_id,
+        tipo=datos.tipo,
+        descripcion=datos.descripcion,
+        ocurrio_en=datos.ocurrio_en,
+        usuario_id=usuario_actual["id"],
+    )
+    registrar_evento(
+        db,
+        modulo="abordaje",
+        accion="INSERT",
+        resumen=f"Incidencia {datos.tipo} en viaje {viaje_id}",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viaje_incidencias",
+        registro_id=resultado["incidencia"]["id"],
+        ip_origen=obtener_ip_origen(request),
+    )
+    return resultado
+
+
+@router.delete("/{viaje_id}/incidencias/{incidencia_id}")
+def eliminar_incidencia_endpoint(
+    viaje_id: int,
+    incidencia_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(
+        requiere_alguno_de_permisos(PERMISO_EDITAR_ABORDAJE, PERMISO_EDITAR_PLANIFICACION)
+    ),
+):
+    from modelos.incidencia_viaje_modelo import eliminar_incidencia_viaje
+
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
+    resultado = eliminar_incidencia_viaje(db, viaje_id, incidencia_id)
+    registrar_evento(
+        db,
+        modulo="abordaje",
+        accion="DELETE",
+        resumen=f"Incidencia {incidencia_id} anulada en viaje {viaje_id}",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="viaje_incidencias",
+        registro_id=incidencia_id,
+        ip_origen=obtener_ip_origen(request),
+    )
+    return resultado
 
 
 @router.post("")

@@ -15,11 +15,8 @@ import type {
 } from '../../../../types/abordaje';
 
 function mensajeError(err: unknown): string {
-  if (err instanceof ErrorApi && err.status === 403) {
-    return 'No tienes permiso para registrar abordaje.';
-  }
   if (err instanceof ErrorApi || err instanceof Error) return err.message;
-  return 'Ocurrió un error inesperado.';
+  return 'No se pudo completar. Intenta de nuevo.';
 }
 
 export function useManifiestoAbordaje(viajeId: number | null) {

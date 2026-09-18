@@ -94,6 +94,18 @@ export interface ReservaPortalMis {
   asientos?: string[];
   estado?: string | null;
   resumen_pagos?: ResumenPagoPortalReserva | null;
+  boleto?: {
+    id: number;
+    codigo: string;
+    estado: string;
+    emitido_en: string | null;
+  } | null;
+  plazo_correccion?: {
+    hasta: string;
+    horas: number;
+    vencido: boolean;
+    minutos_restantes: number;
+  } | null;
 }
 
 /** Pago listado del portal (GET /pagos/portal/mis-pagos). */

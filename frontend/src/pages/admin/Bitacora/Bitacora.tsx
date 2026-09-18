@@ -39,9 +39,9 @@ export default function Bitacora() {
     <div className="bitacora">
       <CabeceraModulo
         migaja="Administración"
-        titulo="Bitácora del Sistema"
+        titulo="Bitácora"
         contador={total}
-        descripcion="Registro de auditoría de todas las operaciones del sistema."
+        descripcion="Quién hizo qué: altas, cambios y bajas en el panel."
       />
 
       <BarraFiltrosBitacora

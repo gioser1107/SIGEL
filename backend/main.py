@@ -82,6 +82,22 @@ async def lifespan(_app: FastAPI):
     finally:
         db_viajes.close()
 
+    db_plazos = SessionLocal()
+    try:
+        from utilidades.plazo_pago import liberar_cupos_plazo_vencido
+
+        liberadas = liberar_cupos_plazo_vencido(db_plazos)
+        if liberadas:
+            logger.info("Reservas canceladas por plazo de corrección vencido: %s", liberadas)
+    except Exception as error:
+        logger.warning("No se pudieron liberar cupos por plazo vencido: %s", error)
+    finally:
+        db_plazos.close()
+
+    from utilidades.respaldo_programado import arrancar_respaldo_automatico
+
+    arrancar_respaldo_automatico()
+
     yield
 
 

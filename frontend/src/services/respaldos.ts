@@ -17,15 +17,11 @@ export interface ListadoRespaldos {
   bases: { seguridad: string; negocio: string };
   retencion_dias: number;
   total: number;
+  copia_automatica?: boolean;
+  hora_programada?: string;
+  zona?: string;
+  copia_del_dia?: boolean;
   respaldos: GrupoRespaldo[];
-}
-
-export interface ResultadoRespaldo {
-  marca: string;
-  metodo: string;
-  retencion_dias: number;
-  archivos: ArchivoRespaldo[];
-  eliminados_por_retencion: string[];
 }
 
 export interface EstadoBase {
@@ -43,13 +39,6 @@ export function consultarEstadoBases() {
 
 export function listarRespaldos() {
   return apiRequest<ListadoRespaldos>('/respaldos', { requiresAuth: true });
-}
-
-export function crearRespaldo() {
-  return apiRequest<ResultadoRespaldo>('/respaldos', {
-    method: 'POST',
-    requiresAuth: true,
-  });
 }
 
 export function restaurarRespaldo(archivo: string) {

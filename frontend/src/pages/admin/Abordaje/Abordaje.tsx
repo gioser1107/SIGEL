@@ -13,6 +13,7 @@ import PanelEditarAbordaje from './components/PanelEditarAbordaje';
 import SelectorViajesAbordaje from './components/SelectorViajesAbordaje';
 import TablaManifiestoAbordaje from './components/TablaManifiestoAbordaje';
 import TarjetasResumenAbordaje from './components/TarjetasResumenAbordaje';
+import PanelIncidenciasViaje from './components/PanelIncidenciasViaje';
 import {
   ESTADOS_VIAJE_SELECTOR,
   MODULO,
@@ -236,6 +237,15 @@ export default function Abordaje() {
         onEditar={setPasajeroEditar}
         onAnular={setPasajeroAnular}
       />
+
+      {viajeId && manifiesto.manifiesto && (
+        <PanelIncidenciasViaje
+          viajeId={viajeId}
+          incidencias={manifiesto.manifiesto.incidencias ?? []}
+          puedeRegistrar={puedeRegistrar}
+          onCambio={() => manifiesto.recargar()}
+        />
+      )}
 
       <ModalNotasAbordaje
         abierto={accionNotas !== null}

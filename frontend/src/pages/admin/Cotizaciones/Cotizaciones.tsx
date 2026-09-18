@@ -164,7 +164,7 @@ export default function Cotizaciones() {
       <div className="zona-imprimible">
         <CabeceraReporteImpresion
           titulo="Reporte de cotizaciones comerciales"
-          subtitulo="Ingresos potenciales, estados de presupuesto y clientes activos."
+          subtitulo="Presupuestos enviados, montos y clientes."
           filtroActivo={etiquetaFiltroActivo}
           resumen={resumenReporte}
         >

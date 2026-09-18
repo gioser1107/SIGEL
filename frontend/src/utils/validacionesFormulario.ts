@@ -97,7 +97,8 @@ export function validarFormularioDestino(form: {
   if (!esNombreValido(nombre)) return MENSAJE_NOMBRE_PERSONA;
 
   const desc = (form.descripcion ?? '').trim();
-  if (desc && desc.length < 10) return 'La descripción debe tener al menos 10 caracteres.';
+  if (!desc) return 'La descripción es obligatoria.';
+  if (desc.length < 10) return 'La descripción debe tener al menos 10 caracteres.';
   if (desc.length > 2000) return 'La descripción no puede superar 2000 caracteres.';
 
   if (form.precio_base_eur < 0) return 'El precio base no puede ser negativo.';
@@ -142,15 +143,14 @@ export function validarFormularioViaje(form: {
   if (!form.destino_id) return 'Selecciona un destino.';
   if (!form.unidad_id) return 'Selecciona una unidad de transporte.';
   if (!form.fecha_salida) return 'La fecha de salida es obligatoria.';
+  if (!form.fecha_regreso) return 'La fecha de regreso es obligatoria.';
 
   const salida = new Date(form.fecha_salida);
   if (Number.isNaN(salida.getTime())) return 'Fecha de salida no válida.';
 
-  if (form.fecha_regreso) {
-    const regreso = new Date(form.fecha_regreso);
-    if (Number.isNaN(regreso.getTime())) return 'Fecha de regreso no válida.';
-    if (regreso <= salida) return 'La fecha de regreso debe ser posterior a la salida.';
-  }
+  const regreso = new Date(form.fecha_regreso);
+  if (Number.isNaN(regreso.getTime())) return 'Fecha de regreso no válida.';
+  if (regreso <= salida) return 'La fecha de regreso debe ser posterior a la salida.';
 
   return null;
 }
@@ -164,6 +164,9 @@ export function validarFormularioCotizacion(form: {
 }): string | null {
   if (!form.cliente_id) return 'Selecciona un cliente.';
   if (!form.destino_id) return 'Selecciona un destino.';
+  if (!form.valida_hasta) return 'Indica hasta cuándo es válida la cotización.';
+  const requisitos = (form.requisitos ?? '').trim();
+  if (!requisitos) return 'Los requisitos de la cotización son obligatorios.';
 
   if (form.precio_cotizado_eur != null && form.precio_cotizado_eur !== 0) {
     if (!esMontoEurValido(form.precio_cotizado_eur)) {
@@ -179,11 +182,8 @@ export function validarFormularioCotizacion(form: {
     if (hasta < hoy) return 'La fecha de vigencia no puede ser anterior a hoy.';
   }
 
-  const requisitos = (form.requisitos ?? '').trim();
-  if (requisitos) {
-    if (requisitos.length < 10) return 'Los requisitos deben tener al menos 10 caracteres.';
-    if (requisitos.length > 1000) return 'Los requisitos no pueden superar 1000 caracteres.';
-  }
+  if (requisitos.length < 10) return 'Los requisitos deben tener al menos 10 caracteres.';
+  if (requisitos.length > 1000) return 'Los requisitos no pueden superar 1000 caracteres.';
 
   return null;
 }

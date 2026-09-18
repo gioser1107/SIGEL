@@ -65,7 +65,7 @@ export default function CrearReserva() {
         ]);
         setClientes(clientesData);
       } catch (err) {
-        setError('Error al cargar datos del sistema.' + err);
+        setError('No se pudieron cargar viajes o clientes. Intenta de nuevo.');
       }
     }
     cargarInicial();
@@ -91,7 +91,7 @@ export default function CrearReserva() {
     if (detalle.includes('ya está reservado')) {
       return 'Uno de los asientos ya fue tomado. Elige otros disponibles.';
     }
-    return detalle ? `Error: ${detalle}` : 'Ocurrió un error inesperado al procesar la reserva.';
+    return detalle ? `Error: ${detalle}` : 'No se pudo crear la reserva. Intenta de nuevo.';
   }
 
   const puestosOcupados = 1 + pasajeros.filter((p) => p.ocupa_asiento !== false).length;

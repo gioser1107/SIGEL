@@ -80,3 +80,31 @@
   gap: var(--spacing-sm);
   justify-content: flex-end;
 }
+
+@media (max-width: 640px) {
+  .modal-confirmacion__superposicion {
+    align-items: flex-end;
+    padding: 0.75rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .modal-confirmacion {
+    max-width: none;
+    padding: 1.25rem;
+    border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg) var(--radius-lg);
+  }
+
+  .modal-confirmacion__mensaje {
+    overflow-wrap: anywhere;
+  }
+
+  .modal-confirmacion__acciones {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .modal-confirmacion__acciones > * {
+    width: 100%;
+    justify-content: center;
+  }
+}

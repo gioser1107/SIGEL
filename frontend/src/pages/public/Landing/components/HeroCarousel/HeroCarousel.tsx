@@ -48,7 +48,7 @@ export default function HeroCarousel() {
                         <span className="hero-carousel__tag">Travel Bqto</span>
                         <h1 className="hero-carousel__title">Nuestros destinos</h1>
                         <p className="hero-carousel__desc">
-                            Explora nuestra agenda de viajes y reserva el destino que más te guste.
+                            Mira las fechas publicadas y reserva el destino que te convenga.
                         </p>
                         <div className="hero-carousel__acciones">
                             <a

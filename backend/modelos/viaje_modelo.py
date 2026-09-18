@@ -388,6 +388,8 @@ def crear_viaje(
 ) -> Viaje:
     obtener_destino_activo(db, destino_id)
     obtener_unidad_activa(db, unidad_id)
+    if fecha_regreso is None:
+        raise HTTPException(status_code=400, detail="La fecha de regreso es obligatoria")
     validar_fechas_viaje(fecha_salida, fecha_regreso)
     estado_limpio = ValidadorEntrada.estado_viaje(estado)
 

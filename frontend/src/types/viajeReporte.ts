@@ -64,4 +64,5 @@ export interface ReporteViaje {
   resumen: ResumenReporteViaje;
   reservas: ReservaReporteViaje[];
   pasajeros: PasajeroReporteViaje[];
+  incidencias?: import('./abordaje').IncidenciaViaje[];
 }

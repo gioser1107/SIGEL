@@ -84,8 +84,8 @@ def validar_datos_domicilio_cliente(
     referencia_limpia = ValidadorEntrada.texto_libre(
         notas_referencia,
         "notas_referencia",
-        obligatorio=True,
-        minimo=2,
+        obligatorio=False,
+        minimo=2 if _texto_normalizado(notas_referencia) else 0,
         maximo=255,
     )
 
@@ -513,10 +513,10 @@ def validar_punto_recogida_del_cliente(db: Session, cliente_id: int, punto_id: i
     if punto is None:
         raise HTTPException(status_code=400, detail="Domicilio de recogida no valido")
 
-    if not _texto_normalizado(punto.direccion) or not _texto_normalizado(punto.notas_referencia):
+    if not _texto_normalizado(punto.direccion):
         raise HTTPException(
             status_code=400,
-            detail="El domicilio debe tener direccion exacta y referencia completas",
+            detail="El domicilio debe tener una dirección exacta",
         )
 
 

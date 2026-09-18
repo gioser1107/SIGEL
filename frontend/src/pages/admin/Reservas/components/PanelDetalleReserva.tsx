@@ -139,6 +139,13 @@ export default function PanelDetalleReserva({
     puedeGestionar && reservaActiva && reservaActiva.estado !== 'cancelada',
   );
 
+  const fechaSalidaDate = reservaActiva?.viajeObj?.fecha_salida
+    ? new Date(reservaActiva.viajeObj.fecha_salida)
+    : null;
+  const cumpleAvisoAnticipacion = fechaSalidaDate
+    ? Date.now() <= fechaSalidaDate.getTime() - 24 * 60 * 60 * 1000
+    : true;
+
   const manejarCancelar = async () => {
     if (!reservaActiva) return;
     setAccionando(true);
@@ -362,8 +369,15 @@ export default function PanelDetalleReserva({
             <div className="detalle-rsv__seccion">
               <SectionTitle icon={<IconPago />}>Saldo a favor</SectionTitle>
               <p className="paso-aviso-cliente" style={{ marginBottom: 12 }}>
-                No hay reembolso en efectivo. Si el cliente no viaja, el monto pagado queda como saldo a favor para reubicarlo en otro viaje.
+                Hay que avisar con al menos 24 horas de anticipación. Si se cumple, el monto
+                aprobado queda como saldo a favor (no hay reembolso en efectivo). Si el aviso
+                llega tarde, se cancelan los cupos sin saldo a favor.
               </p>
+              {cancelable && !cumpleAvisoAnticipacion && (
+                <p className="paso-aviso-cliente" style={{ marginBottom: 12 }} role="status">
+                  Faltan menos de 24 horas para la salida: cancelar ahora no genera saldo a favor.
+                </p>
+              )}
               {mensajeAccion && (
                 <div className="detalle-rsv__vacio" role="status" style={{ marginBottom: 12 }}>
                   {mensajeAccion}
@@ -397,7 +411,9 @@ export default function PanelDetalleReserva({
                     disabled={accionando}
                     onClick={() => void manejarCancelar()}
                   >
-                    Confirmar cancelación
+                    {cumpleAvisoAnticipacion
+                      ? 'Confirmar (saldo a favor)'
+                      : 'Confirmar (sin saldo a favor)'}
                   </Boton>
                   <Boton
                     variante="secundario"

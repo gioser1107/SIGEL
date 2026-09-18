@@ -43,13 +43,15 @@ export default function TabInfoCotizacion({
       </div>
 
       <div className="drawer-form__campo">
-        <label className="drawer-form__label">Requisitos del cliente</label>
+        <label className="drawer-form__label">
+          Requisitos del cliente <span className="drawer-form__req">*</span>
+        </label>
         <textarea
           className="drawer-form__input drawer-form__textarea"
           value={form.requisitos ?? ''}
           onChange={(e) => actualizarCampo('requisitos', e.target.value.slice(0, 1000))}
           maxLength={1000}
-          placeholder="Ej: Empresa ACME, 2 buses, 80 empleados, salida flexible mayo..."
+          placeholder="Ej: Grupo de 40 de Barquisimeto, salida a Canaima en octubre…"
           rows={3}
           disabled={bloqueada}
         />
@@ -78,7 +80,9 @@ export default function TabInfoCotizacion({
           />
         </div>
         <div className="drawer-form__campo">
-          <label className="drawer-form__label">Válida hasta</label>
+          <label className="drawer-form__label">
+            Válida hasta <span className="drawer-form__req">*</span>
+          </label>
           <input
             className="drawer-form__input"
             type="date"

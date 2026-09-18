@@ -120,12 +120,9 @@ function extraerMensajeError(error: unknown): string {
   if (error instanceof ErrorApi || error instanceof Error) {
     return error.message;
   }
-  return 'Ocurrió un error inesperado. Intenta de nuevo.';
+  return 'No se pudo entrar. Revisa los datos e intenta de nuevo.';
 }
 
-/**
- * InicioSesion — Formulario de acceso único para administradores y clientes.
- */
 export default function InicioSesion() {
   const [esRegistro, setEsRegistro] = useState(false);
   const [nombre, setNombre] = useState('');
@@ -287,12 +284,12 @@ export default function InicioSesion() {
               <LogoMarca compacto />
             </Link>
             <h1 className="inicio-sesion__title">
-              {esRegistro ? 'Crear cuenta' : '¡Bienvenido!'}
+              {esRegistro ? 'Crear cuenta' : 'Iniciar sesión'}
             </h1>
             <p className="inicio-sesion__subtitle">
               {esRegistro
-                ? 'Regístrate para planificar tus próximos viajes.'
-                : 'Ingresa tus credenciales para acceder a la plataforma.'}
+                ? 'Regístrate con tu documento para reservar asientos.'
+                : 'Ingresa tu correo y contraseña.'}
             </p>
           </div>
 

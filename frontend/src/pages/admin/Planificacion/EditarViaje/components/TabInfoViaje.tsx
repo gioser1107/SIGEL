@@ -103,7 +103,9 @@ export default function TabInfoViaje({
           />
         </div>
         <div className="drawer-form__campo">
-          <label className="drawer-form__label">Fecha regreso</label>
+          <label className="drawer-form__label">
+            Fecha regreso <span className="drawer-form__req">*</span>
+          </label>
             <input
               className="drawer-form__input"
               type="datetime-local"

@@ -108,7 +108,10 @@ export interface ErroresFormularioCliente {
   contacto_emergencia_telefono?: string;
 }
 
-export function validarFormularioCliente(datos: FormularioCliente): ErroresFormularioCliente {
+export function validarFormularioCliente(
+  datos: FormularioCliente,
+  opciones: { exigirEmergencia?: boolean } = {},
+): ErroresFormularioCliente {
   const errores: ErroresFormularioCliente = {};
 
   if (!datos.tipo_cliente) {
@@ -174,10 +177,24 @@ export function validarFormularioCliente(datos: FormularioCliente): ErroresFormu
   }
 
   const direccion = datos.direccion.trim();
-  if (direccion && direccion.length < 5) {
+  if (!direccion) {
+    errores.direccion = 'La dirección es obligatoria.';
+  } else if (direccion.length < 5) {
     errores.direccion = 'La dirección debe tener al menos 5 caracteres.';
   } else if (direccion.length > 255) {
     errores.direccion = 'La dirección no puede superar 255 caracteres.';
+  }
+
+  const nombreEmergencia = datos.contacto_emergencia_nombre.trim();
+  const telefonoEmergencia = datos.contacto_emergencia_telefono.replace(/\D/g, '');
+  const exigirEmergencia = opciones.exigirEmergencia !== false;
+  if (exigirEmergencia || nombreEmergencia || telefonoEmergencia) {
+    if (!nombreEmergencia) {
+      errores.contacto_emergencia_nombre = 'El contacto de emergencia es obligatorio.';
+    }
+    if (telefonoEmergencia.length < 10) {
+      errores.contacto_emergencia_telefono = 'El teléfono de emergencia es obligatorio.';
+    }
   }
 
   const notas = datos.notas.trim();

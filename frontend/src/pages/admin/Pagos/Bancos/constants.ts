@@ -18,8 +18,8 @@ export function validarFormularioBanco(form: FormularioBanco): string | null {
   const codigo = form.codigo.trim();
   const nombre = form.nombre.trim();
   if (!codigo || !nombre) return 'Completa código y nombre.';
-  if (!/^[A-Za-z0-9_\-]{1,10}$/.test(codigo)) {
-    return 'Código: máx. 10 caracteres (letras, números, guión).';
+  if (!/^\d{4}$/.test(codigo)) {
+    return 'El código del banco debe ser de 4 dígitos (ejemplo: 0102).';
   }
   if (nombre.length < 2) return 'El nombre debe tener al menos 2 caracteres.';
   return null;

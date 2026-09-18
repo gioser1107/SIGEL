@@ -50,7 +50,7 @@ def listar_bancos(db: Session, pagina: int = 1, limite: int = 10) -> dict:
 
 
 def crear_banco(db: Session, codigo: str, nombre: str, activo: bool) -> Banco:
-    codigo_limpio = ValidadorEntrada.etiqueta_texto(codigo, "codigo").upper()[:10]
+    codigo_limpio = ValidadorEntrada.codigo_banco(codigo)
     existe = db.query(Banco).filter(Banco.codigo == codigo_limpio, Banco.eliminado_en.is_(None)).first()
     if existe:
         raise HTTPException(status_code=400, detail="Ya existe un banco con ese codigo")
@@ -84,7 +84,7 @@ def actualizar_banco(
         ).first()
         if repetido:
             raise HTTPException(status_code=400, detail="Ya existe otro banco con ese codigo")
-        banco.codigo = ValidadorEntrada.etiqueta_texto(codigo, "codigo").upper()[:10]
+        banco.codigo = ValidadorEntrada.codigo_banco(codigo)
 
     if nombre is not None:
         banco.nombre = ValidadorEntrada.nombre_entidad(nombre, "nombre")

@@ -170,6 +170,8 @@ def obtener_reporte_viaje(db: Session, viaje_id: int) -> dict:
             "resumen_pagos": resumen,
         })
 
+    from modelos.incidencia_viaje_modelo import listar_incidencias_viaje
+
     return {
         "viaje": viaje_a_dict(db, viaje),
         "ocupacion": {
@@ -194,4 +196,5 @@ def obtener_reporte_viaje(db: Session, viaje_id: int) -> dict:
         },
         "reservas": reservas_resumen,
         "pasajeros": pasajeros,
+        "incidencias": listar_incidencias_viaje(db, viaje_id),
     }

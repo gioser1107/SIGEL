@@ -244,7 +244,7 @@ export default function ModuloSeguridad({ seccionInicial }: ModuloSeguridadProps
       <CabeceraModulo
         migaja="Administración / Seguridad"
         titulo="Usuarios y roles"
-        descripcion="Administrá cuentas del panel y define qué puede hacer cada rol."
+        descripcion="Administra las cuentas del panel y qué puede hacer cada rol."
         acciones={
           <>
             {seccion === 'usuarios' && puedeCrearUsuario && (

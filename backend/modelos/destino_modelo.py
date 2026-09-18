@@ -274,9 +274,10 @@ def crear_destino(
     descripcion_limpia = ValidadorEntrada.texto_libre(
         descripcion,
         "descripcion",
+        obligatorio=True,
         minimo=10,
         maximo=2000,
-    ) or None
+    )
     precio_limpio = ValidadorEntrada.monto(precio_base_eur, "precio_base_eur")
     recargo_limpio = ValidadorEntrada.monto(
         recargo_menor_eur,
@@ -337,9 +338,10 @@ def actualizar_destino(
         destino.descripcion = ValidadorEntrada.texto_libre(
             descripcion,
             "descripcion",
+            obligatorio=True,
             minimo=10,
             maximo=2000,
-        ) or None
+        )
 
     if precio_base_eur is not None:
         destino.precio_base_eur = ValidadorEntrada.monto(precio_base_eur, "precio_base_eur")

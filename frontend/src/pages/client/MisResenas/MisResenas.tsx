@@ -111,7 +111,7 @@ function FormularioResena({ reservaId, guiaNombre, onEnviada }: FormularioResena
           value={comentario}
           onChange={(e) => setComentario(e.target.value)}
           rows={4}
-          placeholder="Cuéntanos cómo fue tu experiencia..."
+          placeholder="¿Cómo te fue? El bus, el guía, el destino…"
           maxLength={1000}
         />
       </label>
@@ -158,7 +158,7 @@ export default function MisResenas() {
       <div className="mis-resenas__header">
         <h1 className="mis-resenas__titulo">Mis reseñas</h1>
         <p className="mis-resenas__subtitulo">
-          Comparte tu experiencia en los viajes que ya realizaste.
+          Deja tu opinión sobre los viajes que ya hiciste.
         </p>
       </div>
 

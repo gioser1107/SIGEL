@@ -4,6 +4,20 @@
    ============================================ */
 
 @media (max-width: 640px) {
+  .admin-contenido > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .cabecera-modulo__titulo,
+  .cabecera-modulo__descripcion {
+    overflow-wrap: break-word;
+  }
+
+  .tabla-datos__contenedor,
+  .reservas__tabla-wrapper {
+    max-width: 100%;
+  }
   .cabecera-modulo__acciones {
     width: 100%;
     flex-direction: column;

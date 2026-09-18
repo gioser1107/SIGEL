@@ -17,7 +17,9 @@ from modelos.abordaje_viaje_modelo import (
     registrar_abordaje_pasajero,
     registrar_abordajes_lote,
     resumen_abordaje_viaje,
+    viaje_id_de_abordaje,
 )
+from modelos.viaje_guia_modelo import asegurar_acceso_reporte_viaje, usuario_es_guia
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 from modelos.permiso_modelo import (
     PERMISO_BORRAR_ABORDAJE,
@@ -59,7 +61,13 @@ def listar_viajes_abordaje_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ABORDAJE)),
 ):
-    return listar_viajes_para_abordaje(db, estado=estado, solo_hoy=solo_hoy)
+    guia_id = usuario_actual["id"] if usuario_es_guia(usuario_actual) else None
+    return listar_viajes_para_abordaje(
+        db,
+        estado=estado,
+        solo_hoy=solo_hoy,
+        guia_usuario_id=guia_id,
+    )
 
 
 @router.get("/viajes/{viaje_id}/manifiesto")
@@ -68,6 +76,7 @@ def obtener_manifiesto_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ABORDAJE)),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
     return obtener_manifiesto_viaje(db, viaje_id)
 
 
@@ -77,6 +86,7 @@ def resumen_abordaje_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ABORDAJE)),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
     return resumen_abordaje_viaje(db, viaje_id)
 
 
@@ -89,6 +99,7 @@ def registrar_abordaje_pasajero_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_ABORDAJE)),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
     resultado = registrar_abordaje_pasajero(
         db,
         viaje_id,
@@ -129,6 +140,7 @@ def registrar_abordaje_lote_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_ABORDAJE)),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
     resultado = registrar_abordajes_lote(
         db,
         viaje_id,
@@ -157,6 +169,7 @@ def obtener_abordaje_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_ABORDAJE)),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id_de_abordaje(db, abordaje_id))
     return obtener_abordaje(db, abordaje_id)
 
 
@@ -168,6 +181,7 @@ def actualizar_abordaje_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_ABORDAJE)),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id_de_abordaje(db, abordaje_id))
     resultado = actualizar_abordaje(
         db,
         abordaje_id,
@@ -199,6 +213,7 @@ def eliminar_abordaje_endpoint(
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_BORRAR_ABORDAJE)),
 ):
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id_de_abordaje(db, abordaje_id))
     resultado = eliminar_abordaje(db, abordaje_id)
 
     registrar_evento(

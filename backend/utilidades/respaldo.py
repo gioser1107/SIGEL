@@ -7,8 +7,10 @@ import os
 import re
 import shutil
 import subprocess
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import create_engine, text
 
@@ -22,18 +24,28 @@ from database import (
 )
 
 DIAS_RETENCION = 7
+ZONA_LOCAL = ZoneInfo("America/Caracas")
+HORA_PROGRAMADA = 3
+MINUTO_PROGRAMADO = 15
 DIRECTORIO_RESPALDOS = Path(__file__).resolve().parent.parent / "respaldos"
 PATRON_ARCHIVO = re.compile(
     r"^respaldo_(seguridad|negocio)_(\d{8}_\d{6})\.sql(?:\.gz)?$"
 )
+CANDADO = DIRECTORIO_RESPALDOS / ".candado"
 
 
-def _ahora() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+def _ahora_local() -> datetime:
+    return datetime.now(ZONA_LOCAL)
+
+
+def respaldo_auto_activo() -> bool:
+    valor = os.getenv("RESPALDO_AUTO", "1").strip().lower()
+    return valor not in {"0", "false", "no"}
 
 
 def _marca(ahora: datetime | None = None) -> str:
-    return (ahora or _ahora()).strftime("%Y%m%d_%H%M%S")
+    instante = ahora or _ahora_local().replace(tzinfo=None)
+    return instante.strftime("%Y%m%d_%H%M%S")
 
 
 def _contrasena_plana() -> str:
@@ -162,16 +174,69 @@ def _info_archivo(ruta: Path) -> dict:
 
 def rotar_respaldos(dias: int = DIAS_RETENCION) -> list[str]:
     DIRECTORIO_RESPALDOS.mkdir(parents=True, exist_ok=True)
-    limite = _ahora() - timedelta(days=dias)
+    limite = datetime.now(timezone.utc) - timedelta(days=dias)
     borrados = []
     for ruta in DIRECTORIO_RESPALDOS.iterdir():
         if not ruta.is_file() or not PATRON_ARCHIVO.match(ruta.name):
             continue
-        creado = datetime.fromtimestamp(ruta.stat().st_mtime)
+        creado = datetime.fromtimestamp(ruta.stat().st_mtime, timezone.utc)
         if creado < limite:
             ruta.unlink()
             borrados.append(ruta.name)
     return borrados
+
+
+@contextmanager
+def _candado_respaldo():
+    DIRECTORIO_RESPALDOS.mkdir(parents=True, exist_ok=True)
+    with CANDADO.open("a+") as archivo:
+        flock = None
+        try:
+            import fcntl
+
+            flock = fcntl
+            fcntl.flock(archivo.fileno(), fcntl.LOCK_EX)
+        except ImportError:
+            pass
+        try:
+            yield
+        finally:
+            if flock is not None:
+                try:
+                    flock.flock(archivo.fileno(), flock.LOCK_UN)
+                except OSError:
+                    pass
+
+
+def hay_respaldo_completo_del_dia(ahora: datetime | None = None) -> bool:
+    instante = ahora or _ahora_local()
+    hoy = instante.date()
+    DIRECTORIO_RESPALDOS.mkdir(parents=True, exist_ok=True)
+    por_marca: dict[str, set[str]] = {}
+    for ruta in DIRECTORIO_RESPALDOS.iterdir():
+        coincidencia = PATRON_ARCHIVO.match(ruta.name) if ruta.is_file() else None
+        if not coincidencia:
+            continue
+        creado = datetime.fromtimestamp(ruta.stat().st_mtime, ZONA_LOCAL).date()
+        if creado != hoy:
+            continue
+        por_marca.setdefault(coincidencia.group(2), set()).add(coincidencia.group(1))
+    return any({"seguridad", "negocio"} <= tipos for tipos in por_marca.values())
+
+
+def generar_respaldo_si_hace_falta() -> dict:
+    """Genera la copia del día si todavía no existe. Pensado para el arranque y el cron."""
+    with _candado_respaldo():
+        if hay_respaldo_completo_del_dia():
+            return {
+                "omitido": True,
+                "motivo": "ya existe copia de hoy",
+                "marca": None,
+                "archivos": [],
+            }
+        resultado = generar_respaldo()
+        resultado["omitido"] = False
+        return resultado
 
 
 def generar_respaldo() -> dict:
@@ -220,6 +285,10 @@ def listar_respaldos() -> dict:
             "negocio": nombre_bd,
         },
         "retencion_dias": DIAS_RETENCION,
+        "copia_automatica": respaldo_auto_activo(),
+        "hora_programada": f"{HORA_PROGRAMADA:02d}:{MINUTO_PROGRAMADO:02d}",
+        "zona": "America/Caracas",
+        "copia_del_dia": hay_respaldo_completo_del_dia(),
         "total": len(items),
         "respaldos": [
             {"marca": marca, "archivos": archivos}

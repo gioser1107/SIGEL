@@ -215,12 +215,15 @@ def crear_cotizacion(
             else None
         )
         estado_final = ValidadorEntrada.estado_cotizacion(estado)
+        if valida_hasta is None:
+            raise HTTPException(status_code=400, detail="Indica hasta cuándo es válida la cotización")
         requisitos_limpios = ValidadorEntrada.texto_libre(
             requisitos,
             "requisitos",
+            obligatorio=True,
             minimo=10,
             maximo=1000,
-        ) or None
+        )
 
     from utilidades.politicas_agencia import normalizar_modalidad
 
@@ -282,15 +285,17 @@ def actualizar_cotizacion(
             )
         if valida_hasta is not None:
             cotizacion.valida_hasta = valida_hasta
+        if cotizacion.valida_hasta is None:
+            raise HTTPException(status_code=400, detail="Indica hasta cuándo es válida la cotización")
 
     if requisitos is not None:
         cotizacion.requisitos = ValidadorEntrada.texto_libre(
             requisitos,
             "requisitos",
-            obligatorio=es_cliente,
+            obligatorio=True,
             minimo=10,
             maximo=1000,
-        ) or None
+        )
     if estado is not None:
         cotizacion.estado = ValidadorEntrada.estado_cotizacion(estado)
     if modalidad is not None:

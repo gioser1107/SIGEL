@@ -27,7 +27,7 @@ export default function FormularioRolCampos({
       <p className="drawer-form__intro">
         {bloqueado
           ? 'El rol Administrador es intocable: no se puede editar ni quitarle permisos.'
-          : 'Definí el nombre del rol y qué acciones puede realizar en el panel.'}
+          : 'Define el nombre del rol y qué acciones puede hacer en el panel.'}
       </p>
       <div className="drawer-form__campo">
         <label className="drawer-form__label" htmlFor="rol-nombre">

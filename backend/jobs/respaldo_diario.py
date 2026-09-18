@@ -8,11 +8,14 @@ from pathlib import Path
 directorio_backend = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(directorio_backend))
 
-from utilidades.respaldo import generar_respaldo  # noqa: E402
+from utilidades.respaldo import generar_respaldo_si_hace_falta  # noqa: E402
 
 
 def main() -> None:
-    resultado = generar_respaldo()
+    resultado = generar_respaldo_si_hace_falta()
+    if resultado.get("omitido"):
+        print("Respaldo omitido:", resultado.get("motivo"))
+        return
     print("Respaldo", resultado["marca"], "método", resultado["metodo"])
     for archivo in resultado["archivos"]:
         print(" ", archivo["archivo"], archivo["bytes"], "bytes")
