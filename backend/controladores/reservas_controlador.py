@@ -37,7 +37,7 @@ from modelos.reservas_modelo import (
     obtener_mi_reserva_portal,
     obtener_reserva_activa,
     quitar_asiento_pasajero,
-    reserva_a_dict,
+    reserva_con_cliente_a_dict,
 )
 
 router = APIRouter(prefix="/reservas", tags=["Reservas y Viajeros"])
@@ -316,7 +316,7 @@ def obtener_reserva(
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_RESERVAS)),
 ):
     reserva = obtener_reserva_activa(db, reserva_id)
-    return reserva_a_dict(reserva)
+    return reserva_con_cliente_a_dict(db, reserva)
 
 
 @router.put("/{reserva_id}")

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import Boton from '../../../../../components/ui/Boton/Boton';
-import { nombreCompleto } from '../../../../../utils/nombrePersona';
+import { nombreVisiblePersona } from '../../../../../utils/nombrePersona';
 import type { Cliente } from '../../../../../types/cliente';
 import type { ViajeDisponibleReserva } from '../../../../../types/reservas';
 import {
@@ -166,16 +166,20 @@ export default function PasoViajeCliente({
   onCancelar,
 }: Props) {
   const esGrupal = modalidad === 'grupo';
+  const esPropio = modalidad === 'propio';
+  const pideCantidad = esGrupal || esPropio;
   const sinViajes = !cargandoViajes && viajes.length === 0;
   const asientosLibres = viajeSeleccionado?.disponibilidad.asientos_disponibles ?? 0;
   const maxPersonas = Math.max(1, asientosLibres);
   const incluyeHospedaje = reservaOfreceHospedaje(viajeSeleccionado);
   const errorGrupo =
-    esGrupal && viajeSeleccionado && cantidadPersonas > asientosLibres
-      ? `Este viaje tiene ${asientosLibres} asiento(s) libre(s). Baja la cantidad del grupo.`
+    pideCantidad && viajeSeleccionado && cantidadPersonas > asientosLibres
+      ? `Este viaje tiene ${asientosLibres} asiento(s) libre(s). Baja la cantidad.`
       : esGrupal && cantidadPersonas < 2
         ? 'Una reserva grupal necesita al menos 2 personas (titular + acompañantes).'
-        : null;
+        : esPropio && cantidadPersonas < 1
+          ? 'El plan propio necesita al menos 1 persona.'
+          : null;
 
   const opcionesViaje: Opcion[] = viajes.map((v) => ({
     valor: v.id,
@@ -192,8 +196,8 @@ export default function PasoViajeCliente({
 
   const opcionesCliente: Opcion[] = clientes.map((c) => ({
     valor: c.cliente_id,
-    etiqueta: nombreCompleto(c.nombre, c.apellido),
-    busqueda: `${nombreCompleto(c.nombre, c.apellido)} ${c.tipo_documento}-${c.numero_documento}`,
+    etiqueta: nombreVisiblePersona(c) || `${c.tipo_documento}-${c.numero_documento}`,
+    busqueda: `${nombreVisiblePersona(c)} ${c.tipo_documento}-${c.numero_documento} ${c.razon_social ?? ''}`,
   }));
 
   const manejarSeleccionViaje = (op: Opcion | null) => {
@@ -361,9 +365,20 @@ export default function PasoViajeCliente({
             <strong>Grupo</strong>
             <span>Varias personas en una sola reserva</span>
           </button>
+          <button
+            type="button"
+            className={`reserva-tipo__opcion${modalidad === 'propio' ? ' reserva-tipo__opcion--activa' : ''}`}
+            onClick={() => {
+              setModalidad('propio');
+              setCantidadPersonas(Math.max(1, cantidadPersonas));
+            }}
+          >
+            <strong>Propio</strong>
+            <span>Plan propio: paquete a medida, las personas que indiquen</span>
+          </button>
         </div>
 
-        {esGrupal && (
+        {pideCantidad && (
           <div className="reserva-tipo__cantidad">
             <label className="campo-label" htmlFor="cantidad-grupo">
               ¿Cuántas personas viajan? <span style={{ color: 'var(--color-error)' }}>*</span>
@@ -372,16 +387,18 @@ export default function PasoViajeCliente({
               id="cantidad-grupo"
               className="drawer-form__input reserva-tipo__input"
               type="number"
-              min={2}
+              min={esPropio ? 1 : 2}
               max={maxPersonas || 40}
               value={cantidadPersonas}
               onChange={(e) => {
                 const n = Number(e.target.value);
-                setCantidadPersonas(Number.isFinite(n) ? n : 2);
+                setCantidadPersonas(Number.isFinite(n) ? n : (esPropio ? 1 : 2));
               }}
             />
             <p className="paso-aviso-cliente">
-              Incluye al titular. Ejemplo: 10 personas = 1 titular + 9 acompañantes, todos en esta misma reserva.
+              {esPropio
+                ? 'Plan propio: una reserva a medida (1 o más personas). Incluye al titular.'
+                : 'Incluye al titular. Ejemplo: 10 personas = 1 titular + 9 acompañantes, todos en esta misma reserva.'}
               {viajeSeleccionado ? ` Cupo libre: ${asientosLibres}.` : ''}
             </p>
             {errorGrupo && (

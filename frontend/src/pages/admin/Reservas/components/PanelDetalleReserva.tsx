@@ -5,7 +5,7 @@ import type { ReservaEnriquecida, ReservaCliente } from '../../../../types/reser
 import { etiquetaEstado, SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../../utils/formatoMoneda';
 import { reservaOfreceHospedaje } from '../../../../utils/hospedajeViaje';
-import { nombreCompleto } from '../../../../utils/nombrePersona';
+import { nombreVisiblePersona } from '../../../../utils/nombrePersona';
 import { resolverUrlArchivo } from '../../../../utils/resolverUrlArchivo';
 import PagosReserva from '../Pagos/PagosReserva';
 import { actualizarReserva } from '../../../../services/reservas';
@@ -248,10 +248,16 @@ export default function PanelDetalleReserva({
           : 'Detalle de reserva'
       }
       subtitulo={
-        reservaActiva?.clienteObj
-          ? nombreCompleto(reservaActiva.clienteObj.nombre, reservaActiva.clienteObj.apellido)
-          : reservaActiva
-          ? SIN_DATO.cliente
+        reservaActiva
+          ? textoVisible(
+              nombreVisiblePersona({
+                nombre: reservaActiva.clienteObj?.nombre ?? reservaActiva.cliente_nombre,
+                apellido: reservaActiva.clienteObj?.apellido ?? reservaActiva.cliente_apellido,
+                razon_social: reservaActiva.clienteObj?.razon_social ?? reservaActiva.cliente_razon_social,
+                tipo_cliente: reservaActiva.clienteObj?.tipo_cliente ?? reservaActiva.tipo_cliente,
+              }),
+              SIN_DATO.cliente,
+            )
           : ''
       }
       ancho="lg"
@@ -312,9 +318,9 @@ export default function PanelDetalleReserva({
                       setModalidadEdicion(e.target.value as 'individual' | 'grupo' | 'propio')
                     }
                   >
-                    {modalidadEdicion === 'propio' && <option value="propio">Propio (legado)</option>}
                     <option value="individual">Individual</option>
                     <option value="grupo">Grupo</option>
+                    <option value="propio">Propio</option>
                   </select>
                 ) : (
                   <strong>{etiquetaModalidad[reservaActiva.modalidad ?? ''] ?? reservaActiva.modalidad ?? '—'}</strong>
@@ -395,7 +401,15 @@ export default function PanelDetalleReserva({
                           <span className="detalle-rsv__pasajero-num">{i + 1}</span>
                           <div>
                             <span className="detalle-rsv__pasajero-nombre">
-                              {nombreCompleto(p.nombre, p.apellido)}
+                              {textoVisible(
+                                nombreVisiblePersona({
+                                  nombre: p.nombre,
+                                  apellido: p.apellido,
+                                  razon_social: p.razon_social,
+                                  tipo_cliente: p.tipo_cliente,
+                                }),
+                                SIN_DATO.cliente,
+                              )}
                             </span>
                             <span className="detalle-rsv__pasajero-doc">
                               {p.tipo_documento}-{p.numero_documento}

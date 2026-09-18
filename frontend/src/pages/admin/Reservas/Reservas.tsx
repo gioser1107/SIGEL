@@ -22,7 +22,7 @@ import { obtenerViajes } from '../../../services/viajes';
 import { LIMITE_PAGINA_MAX, type FiltroListado } from '../../../types/paginacion';
 import type { ReservaCliente, ReservaEnriquecida } from '../../../types/reservas';
 import { codigoReserva, SIN_DATO, textoVisible } from '../../../utils/etiquetasNegocio';
-import { nombreCompleto } from '../../../utils/nombrePersona';
+import { nombreVisiblePersona } from '../../../utils/nombrePersona';
 import PanelDetalleReserva from './components/PanelDetalleReserva';
 import ModalEliminarReserva from './components/ModalEliminarReserva';
 import './Reservas.css';
@@ -60,6 +60,18 @@ const COLUMNAS_REPORTE_RESERVAS = [
   { encabezado: 'Fecha reserva', clave: 'fecha' },
   { encabezado: 'Estado', clave: 'estado' },
 ] as const;
+
+function etiquetaClienteReserva(r: ReservaEnriquecida): string {
+  return textoVisible(
+    nombreVisiblePersona({
+      nombre: r.clienteObj?.nombre ?? r.cliente_nombre,
+      apellido: r.clienteObj?.apellido ?? r.cliente_apellido,
+      razon_social: r.clienteObj?.razon_social ?? r.cliente_razon_social,
+      tipo_cliente: r.clienteObj?.tipo_cliente ?? r.tipo_cliente,
+    }),
+    SIN_DATO.cliente,
+  );
+}
 
 function mensajeError(err: unknown): string {
   if (err instanceof ErrorApi && err.status === 403) {
@@ -115,7 +127,11 @@ export default function Reservas() {
       ]);
 
       setTotal(resData.total);
-      const clientesMap = new Map(clientesData.map((c) => [c.cliente_id, c]));
+      const clientesMap = new Map<number, (typeof clientesData)[number]>();
+      for (const c of clientesData) {
+        clientesMap.set(c.cliente_id, c);
+        clientesMap.set(c.id, c);
+      }
       const viajesMap = new Map(viajesData.items.map((v) => [v.id, v]));
 
       const reservasEnriquecidas = resData.items.map((r) => ({
@@ -148,6 +164,9 @@ export default function Reservas() {
         !q ||
         r.clienteObj?.nombre.toLowerCase().includes(q) ||
         r.clienteObj?.apellido.toLowerCase().includes(q) ||
+        (r.cliente_nombre ?? '').toLowerCase().includes(q) ||
+        (r.cliente_apellido ?? '').toLowerCase().includes(q) ||
+        (r.cliente_razon_social ?? '').toLowerCase().includes(q) ||
         r.viajeObj?.destino_nombre?.toLowerCase().includes(q);
       return coincideBusqueda;
     });
@@ -184,9 +203,7 @@ export default function Reservas() {
     () =>
       reservasFiltradas.map((r) => ({
         codigo: codigoReserva(r.id),
-        cliente: r.clienteObj
-          ? nombreCompleto(r.clienteObj.nombre, r.clienteObj.apellido)
-          : SIN_DATO.cliente,
+        cliente: etiquetaClienteReserva(r),
         viaje: textoVisible(r.viajeObj?.destino_nombre, SIN_DATO.viaje),
         fecha: new Date(r.fecha_reserva).toLocaleDateString('es-VE'),
         estado: ETIQUETA_ESTADO_RESERVA[r.estado] ?? r.estado,
@@ -237,7 +254,7 @@ export default function Reservas() {
       encabezado: 'Cliente',
       accessor: (r) => (
         <div className="reservas__tabla-nombre">
-          <strong>{r.clienteObj ? nombreCompleto(r.clienteObj.nombre, r.clienteObj.apellido) : SIN_DATO.cliente}</strong>
+          <strong>{etiquetaClienteReserva(r)}</strong>
         </div>
       ),
     },

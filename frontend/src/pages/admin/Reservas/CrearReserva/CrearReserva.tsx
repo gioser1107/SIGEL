@@ -45,7 +45,7 @@ export default function CrearReserva() {
   const [modalidad, setModalidad] = useState<'individual' | 'grupo' | 'propio'>('individual');
   const [tipoHospedaje, setTipoHospedaje] = useState<'compartido' | 'particular'>('compartido');
   const [cantidadPersonas, setCantidadPersonas] = useState(1);
-  const esGrupal = modalidad === 'grupo';
+  const esGrupal = modalidad === 'grupo' || modalidad === 'propio';
 
   async function recargarViajesDisponibles() {
     setCargandoViajes(true);
@@ -294,12 +294,13 @@ export default function CrearReserva() {
             onSiguiente={() => {
               setError(null);
               const hayAcompanantes = pasajeros.length > 0;
-              const usarGrupal = modalidad === 'grupo' || hayAcompanantes;
+              const usarVarios = modalidad === 'grupo' || modalidad === 'propio' || hayAcompanantes;
               if (hayAcompanantes && modalidad === 'individual') setModalidad('grupo');
-              const cantidad = usarGrupal
-                ? Math.max(2, hayAcompanantes ? pasajeros.length + 1 : cantidadPersonas)
+              const minimo = modalidad === 'propio' ? 1 : 2;
+              const cantidad = usarVarios
+                ? Math.max(minimo, hayAcompanantes ? pasajeros.length + 1 : cantidadPersonas)
                 : 1;
-              if (usarGrupal) setCantidadPersonas(cantidad);
+              if (usarVarios) setCantidadPersonas(cantidad);
               setPasajeros((prev) =>
                 sincronizarAcompanantes(
                   cantidad,

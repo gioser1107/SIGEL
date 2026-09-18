@@ -136,7 +136,7 @@ export default function PanelNuevaCotizacion({
             >
               <option value="individual">Individual</option>
               <option value="grupo">Grupo</option>
-              {form.modalidad === 'propio' && <option value="propio">Propio</option>}
+              <option value="propio">Propio</option>
             </select>
           </div>
         </div>

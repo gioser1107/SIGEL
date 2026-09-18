@@ -191,7 +191,7 @@ def pasajero_a_dict(
     }
 
 
-def reserva_a_dict(reserva: Reserva) -> dict:
+def reserva_a_dict(reserva: Reserva, cliente: Cliente | None = None) -> dict:
     resultado = {
         "id": reserva.id,
         "cliente_id": reserva.cliente_id,
@@ -200,6 +200,10 @@ def reserva_a_dict(reserva: Reserva) -> dict:
         "estado": reserva.estado,
         "modalidad": getattr(reserva, "modalidad", None) or "individual",
         "tipo_hospedaje": getattr(reserva, "tipo_hospedaje", None) or "compartido",
+        "cliente_nombre": cliente.nombre if cliente is not None else None,
+        "cliente_apellido": cliente.apellido if cliente is not None else None,
+        "cliente_razon_social": cliente.razon_social if cliente is not None else None,
+        "tipo_cliente": cliente.tipo_cliente if cliente is not None else None,
         "plazo_correccion": None,
         "boleto": None,
         "creado_en": reserva.creado_en,
@@ -211,6 +215,20 @@ def reserva_a_dict(reserva: Reserva) -> dict:
 
     resultado["plazo_correccion"] = plazo_correccion_a_dict(reserva)
     return resultado
+
+
+def _clientes_por_ids(db: Session, ids: set[int]) -> dict[int, Cliente]:
+    if not ids:
+        return {}
+    return {
+        c.id: c
+        for c in db.query(Cliente).filter(Cliente.id.in_(ids)).all()
+    }
+
+
+def reserva_con_cliente_a_dict(db: Session, reserva: Reserva) -> dict:
+    cliente = db.query(Cliente).filter(Cliente.id == reserva.cliente_id).first()
+    return reserva_a_dict(reserva, cliente)
 
 
 def listar_viajes_disponibles(db: Session) -> list[dict]:
@@ -514,7 +532,8 @@ def listar_reservas(
         .limit(limite)
         .all()
     )
-    items = [reserva_a_dict(r) for r in reservas]
+    clientes = _clientes_por_ids(db, {r.cliente_id for r in reservas})
+    items = [reserva_a_dict(r, clientes.get(r.cliente_id)) for r in reservas]
     return respuesta_paginada(items, total, pagina, limite)
 
 
@@ -575,7 +594,7 @@ def _reserva_a_item_portal(db: Session, reserva: Reserva) -> dict:
     from modelos.pago_modelo import calcular_resumen_pagos_reserva, listar_pagos_reserva_portal
     from modelos.viaje_modelo import Viaje
 
-    item = reserva_a_dict(reserva)
+    item = reserva_con_cliente_a_dict(db, reserva)
     item["fecha_reserva"] = (
         reserva.fecha_reserva.isoformat() if reserva.fecha_reserva else None
     )

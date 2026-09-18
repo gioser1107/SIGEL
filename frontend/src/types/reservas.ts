@@ -11,6 +11,10 @@ export interface Reserva {
   estado: "pendiente" | "confirmada" | "abonada" | "cancelada";
   modalidad?: "individual" | "grupo" | "propio";
   tipo_hospedaje?: "compartido" | "particular";
+  cliente_nombre?: string | null;
+  cliente_apellido?: string | null;
+  cliente_razon_social?: string | null;
+  tipo_cliente?: string | null;
   creado_en: string;
   actualizado_en: string;
   destino_nombre?: string | null;
@@ -31,6 +35,8 @@ export interface ReservaCliente {
   // Datos personales provenientes de JOIN con clientes
   nombre: string;
   apellido: string;
+  razon_social?: string | null;
+  tipo_cliente?: string;
   tipo_documento: string;
   numero_documento: string;
   // Datos propios de la reserva

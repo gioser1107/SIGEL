@@ -1,11 +1,8 @@
-import { nombreCompleto } from '../../../../utils/nombrePersona';
+import { nombreVisiblePersona } from '../../../../utils/nombrePersona';
 import type { Cliente } from '../../../../types/cliente';
 
 export function nombreVisibleCliente(c: Pick<Cliente, 'nombre' | 'apellido' | 'razon_social' | 'tipo_cliente'>): string {
-  if (c.tipo_cliente === 'juridico' && c.razon_social?.trim()) {
-    return c.razon_social.trim();
-  }
-  return nombreCompleto(c.nombre, c.apellido) || 'Cliente';
+  return nombreVisiblePersona(c) || 'Cliente';
 }
 
 export function inicialesCliente(c: Pick<Cliente, 'nombre' | 'apellido' | 'razon_social' | 'tipo_cliente'>): string {

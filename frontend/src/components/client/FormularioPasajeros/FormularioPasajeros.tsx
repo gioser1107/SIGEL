@@ -207,12 +207,14 @@ export default function FormularioPasajeros({
           <div className="fp-card">
             <h4 className="fp-card__titulo">Tipo de reserva</h4>
             <p className="fp-card__subtitulo">
-              Individual es solo el titular. Grupo es el titular más acompañantes en la misma reserva.
+              Individual: solo el titular. Grupo: titular y acompañantes en el viaje publicado.
+              Propio: plan a medida (las personas que indiquen, en una reserva).
             </p>
             <div className="fp-opciones" role="group" aria-label="Tipo de reserva">
               {([
                 ['individual', 'Individual', 'Viajas tú'],
                 ['grupo', 'Grupo', 'Varias personas'],
+                ['propio', 'Propio', 'Plan a medida'],
               ] as const).map(([valor, titulo, desc]) => (
                 <button
                   key={valor}

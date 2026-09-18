@@ -26,7 +26,7 @@ export const PREGUNTAS_FRECUENTES: EntradaConocimiento[] = [
     id: 'crear-viaje',
     pregunta: '¿Cómo creo un viaje?',
     respuesta:
-      'En Planificación pulsa Nuevo viaje. Elige destino, unidad, guías y fechas. La fecha de regreso debe ser posterior a la de salida. El viaje queda planificado y luego se puede publicar para reservas.',
+      'En Planificación pulsa Nuevo viaje. Elige destino, unidad, guías y fechas. El regreso debe ser después de la salida. Si el viaje dura más de 24 horas, la reserva ofrecerá hospedaje (compartido o particular); si dura 24 h o menos, no hay hospedaje.',
     palabras: ['crear', 'viaje', 'planificacion', 'planificación', 'salida', 'regreso', 'unidad'],
     audiencias: ['admin'],
     enlaces: [{ etiqueta: 'Planificación', to: '/admin/planificacion' }],
@@ -142,6 +142,31 @@ export const PREGUNTAS_FRECUENTES: EntradaConocimiento[] = [
     enlaces: [
       { etiqueta: 'Ayuda', to: '/admin/ayuda' },
       { etiqueta: 'Asistente', to: '/admin/asistente' },
+    ],
+  },
+  {
+    id: 'hospedaje',
+    pregunta: '¿Cuándo hay hospedaje en una reserva?',
+    respuesta:
+      'Solo si el viaje dura más de 24 horas (salida → regreso). Ahí eligen compartido o particular. En un viaje de 24 h o menos no aparece esa opción.',
+    palabras: ['hospedaje', 'habitacion', 'habitación', 'particular', 'compartido', '24'],
+    audiencias: ['admin', 'cliente', 'publico'],
+    enlaces: [
+      { etiqueta: 'Nueva reserva', to: '/admin/reservas/crear' },
+      { etiqueta: 'Planificación', to: '/admin/planificacion' },
+    ],
+  },
+  {
+    id: 'modalidades',
+    pregunta: '¿Qué es Individual, Grupo y Propio?',
+    respuesta:
+      'Son las modalidades del servicio. Individual: solo el titular. Grupo: titular y acompañantes en el viaje publicado. Propio: plan a medida (1 o más personas en una reserva). Se eligen al reservar o al pedir cotización. El hospedaje es otra política: solo si el viaje dura más de 24 horas.',
+    palabras: ['modalidad', 'modalidades', 'individual', 'grupo', 'propio', 'condiciones', 'política', 'politica'],
+    audiencias: ['admin', 'cliente', 'publico'],
+    enlaces: [
+      { etiqueta: 'Nueva reserva', to: '/admin/reservas/crear' },
+      { etiqueta: 'Mis solicitudes', to: '/client/solicitudes' },
+      { etiqueta: 'Ayuda', to: '/client/ayuda' },
     ],
   },
 ];
