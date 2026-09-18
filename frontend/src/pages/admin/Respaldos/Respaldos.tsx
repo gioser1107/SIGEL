@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { CabeceraModulo } from '../../../components/admin';
+import { CabeceraModulo, ModalConfirmacion } from '../../../components/admin';
 import Boton from '../../../components/ui/Boton/Boton';
 import { ErrorApi } from '../../../services/api';
 import {
@@ -7,6 +7,7 @@ import {
   crearRespaldo,
   descargarRespaldo,
   listarRespaldos,
+  restaurarRespaldo,
   type EstadoBase,
   type GrupoRespaldo,
 } from '../../../services/respaldos';
@@ -44,6 +45,8 @@ export default function Respaldos() {
   const [generando, setGenerando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [archivoARestaurar, setArchivoARestaurar] = useState<string | null>(null);
+  const [restaurando, setRestaurando] = useState(false);
 
   const cargar = useCallback(async () => {
     setError(null);
@@ -85,6 +88,23 @@ export default function Respaldos() {
     }
   }
 
+  async function restaurar() {
+    if (!archivoARestaurar) return;
+    setRestaurando(true);
+    setError(null);
+    setAviso(null);
+    try {
+      const resultado = await restaurarRespaldo(archivoARestaurar);
+      setAviso(resultado.mensaje);
+      setArchivoARestaurar(null);
+      await cargar();
+    } catch (err) {
+      setError(err instanceof ErrorApi || err instanceof Error ? err.message : 'No se pudo restaurar el respaldo');
+    } finally {
+      setRestaurando(false);
+    }
+  }
+
   async function descargar(archivo: string) {
     setError(null);
     try {
@@ -100,7 +120,7 @@ export default function Respaldos() {
         migaja="Configuración"
         titulo="Respaldos de base de datos"
         contador={grupos.length}
-        descripcion="Dos bases MySQL: seguridad (usuarios, roles, permisos y bitácora) y negocio (operación). Retención de 7 días."
+        descripcion="Dos bases MySQL: seguridad y negocio. Generar y descargar no borra data. Restaurar reemplaza SOLO la base de ese archivo."
         acciones={
           <Boton variante="primario" onClick={generar} disabled={generando}>
             {generando ? 'Generando…' : 'Generar respaldo ahora'}
@@ -145,6 +165,9 @@ export default function Respaldos() {
                       <Boton variante="secundario" tamano="sm" onClick={() => descargar(archivo.archivo)}>
                         Descargar
                       </Boton>
+                      <Boton variante="peligro" tamano="sm" onClick={() => setArchivoARestaurar(archivo.archivo)}>
+                        Restaurar
+                      </Boton>
                     </div>
                   </li>
                 ))}
@@ -153,6 +176,17 @@ export default function Respaldos() {
           ))}
         </div>
       )}
+
+      <ModalConfirmacion
+        abierto={archivoARestaurar != null}
+        titulo="Restaurar respaldo"
+        mensaje={`Esto reemplaza la base de ${archivoARestaurar ?? ''}. En travelbqto.kontrolaonline.com no lo uses salvo que el docente lo pida y el archivo sea el que acabas de generar.`}
+        textoConfirmar="Sí, restaurar"
+        variante="peligro"
+        cargando={restaurando}
+        onConfirmar={() => void restaurar()}
+        onCancelar={() => setArchivoARestaurar(null)}
+      />
     </div>
   );
 }

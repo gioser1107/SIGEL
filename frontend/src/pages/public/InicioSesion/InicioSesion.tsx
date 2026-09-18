@@ -20,6 +20,8 @@ import {
   validarFormularioLogin,
 } from '../../../utils/validacionesFormulario';
 import LogoMarca from '../../../components/ui/LogoMarca/LogoMarca';
+import CaptchaVerificacion from '../../../components/ui/CaptchaVerificacion/CaptchaVerificacion';
+import useCaptcha from '../../../hooks/useCaptcha';
 import PanelVisualAuth from './PanelVisualAuth';
 import './InicioSesion.css';
 
@@ -144,6 +146,7 @@ export default function InicioSesion() {
   const { iniciarSesion } = useAutenticacion();
   const { establecerSesionTrasRegistro } = useAutenticacionContext();
   const { viajePendiente, limpiarViajePendiente } = useReservas();
+  const captcha = useCaptcha();
 
   function irAlPortalCliente() {
     const destino = destinoClienteTrasAuth(viajePendiente, search);
@@ -214,6 +217,10 @@ export default function InicioSesion() {
         setError('El teléfono debe tener exactamente 7 dígitos.');
         return;
       }
+      if (!captcha.respuesta.trim()) {
+        setError('Completa la verificación CAPTCHA.');
+        return;
+      }
       const telefonoCompleto = numeroTelefono.trim()
         ? `${prefijoTelefono}${numeroTelefono.trim()}`
         : '';
@@ -227,12 +234,15 @@ export default function InicioSesion() {
           contrasena,
           tipo_documento: tipoDocumento,
           numero_documento: numeroDocumento.trim(),
+          captcha_token: captcha.token,
+          captcha_respuesta: captcha.respuesta,
           ...(telefonoCompleto ? { telefono: telefonoCompleto } : {}),
         });
         establecerSesionTrasRegistro(usuario);
         irAlPortalCliente();
       } catch (err) {
         setError(extraerMensajeError(err));
+        void captcha.recargar();
       } finally {
         setCargando(false);
       }
@@ -244,8 +254,15 @@ export default function InicioSesion() {
       setError(errorLogin);
       return;
     }
+    if (!captcha.respuesta.trim()) {
+      setError('Completa la verificación CAPTCHA.');
+      return;
+    }
     setCargando(true);
-    const resultado = await iniciarSesion(correo, contrasena);
+    const resultado = await iniciarSesion(correo, contrasena, {
+      captcha_token: captcha.token,
+      captcha_respuesta: captcha.respuesta,
+    });
     setCargando(false);
 
     if (resultado.success) {
@@ -256,6 +273,7 @@ export default function InicioSesion() {
       }
     } else {
       setError(resultado.mensaje ?? 'Credenciales incorrectas. Verifica tu correo y contraseña.');
+      void captcha.recargar();
     }
   };
 
@@ -412,6 +430,14 @@ export default function InicioSesion() {
                 />
               </>
             )}
+
+            <CaptchaVerificacion
+              pregunta={captcha.pregunta}
+              respuesta={captcha.respuesta}
+              onRespuesta={captcha.setRespuesta}
+              onRefrescar={() => void captcha.recargar()}
+              cargando={captcha.cargando}
+            />
 
             <Boton type="submit" variante="primario" tamano="md" anchoCompleto disabled={cargando}>
               {cargando

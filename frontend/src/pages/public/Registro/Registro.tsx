@@ -6,7 +6,9 @@ import '../../../components/puntos-recogida/puntos-recogida.css';
 import Boton from '../../../components/ui/Boton/Boton';
 import LogoMarca from '../../../components/ui/LogoMarca/LogoMarca';
 import Entrada from '../../../components/ui/Entrada/Entrada';
+import CaptchaVerificacion from '../../../components/ui/CaptchaVerificacion/CaptchaVerificacion';
 import { useAutenticacionContext } from '../../../context/Autenticacion';
+import useCaptcha from '../../../hooks/useCaptcha';
 import {
   destinoClienteTrasAuth,
   enlaceAuthPreservandoReserva,
@@ -152,6 +154,7 @@ export default function Registro() {
   const [ciudadId, setCiudadId] = useState('');
 
   const [puntosDraft, setPuntosDraft] = useState<PuntosRecogidaDraft>(PUNTOS_RECOGIDA_DRAFT_VACIO);
+  const captcha = useCaptcha();
 
   useEffect(() => {
     listarEstados().then(setEstados).catch(() => undefined);
@@ -234,6 +237,11 @@ export default function Registro() {
       return;
     }
 
+    if (!captcha.respuesta.trim()) {
+      setError('Completa la verificación CAPTCHA.');
+      return;
+    }
+
     const telefonoCompleto = numeroTelefono.trim()
       ? `${prefijoTelefono}${numeroTelefono.trim()}`
       : '';
@@ -252,6 +260,8 @@ export default function Registro() {
         direccion: direccion.trim() || undefined,
         estado_id: estadoId ? Number(estadoId) : undefined,
         ciudad_id: ciudadId ? Number(ciudadId) : undefined,
+        captcha_token: captcha.token,
+        captcha_respuesta: captcha.respuesta,
         ...puntosPayload,
       });
       establecerSesionTrasRegistro(usuario);
@@ -262,6 +272,7 @@ export default function Registro() {
       navegar(destino);
     } catch (err) {
       setError(err instanceof ErrorApi || err instanceof Error ? err.message : 'Error al registrarse.');
+      void captcha.recargar();
     } finally {
       setCargando(false);
     }
@@ -535,6 +546,14 @@ export default function Registro() {
                 value={puntosDraft}
                 onChange={setPuntosDraft}
                 onError={setError}
+              />
+
+              <CaptchaVerificacion
+                pregunta={captcha.pregunta}
+                respuesta={captcha.respuesta}
+                onRespuesta={captcha.setRespuesta}
+                onRefrescar={() => void captcha.recargar()}
+                cargando={captcha.cargando}
               />
 
               <div className="registro-page__acciones">

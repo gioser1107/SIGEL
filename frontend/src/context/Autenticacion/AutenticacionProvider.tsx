@@ -59,8 +59,12 @@ export function AutenticacionProvider({ children }: { children: ReactNode }) {
     verificar();
   }, []);
 
-  const iniciar = useCallback(async (correo: string, contrasena: string) => {
-    const res = await iniciarSesion(correo, contrasena);
+  const iniciar = useCallback(async (
+    correo: string,
+    contrasena: string,
+    captcha: { captcha_token: string; captcha_respuesta: string },
+  ) => {
+    const res = await iniciarSesion(correo, contrasena, captcha);
     setUsuario(res.usuario);
     return res.usuario;
   }, []);

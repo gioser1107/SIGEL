@@ -4,14 +4,15 @@
 
 import { useAutenticacionContext } from '../context/Autenticacion';
 import { ErrorApi } from '../services/api';
+import type { CredencialesCaptcha } from '../services/autenticacion';
 import { puedeAccederPanelAdmin } from '../utils/permisosModulos';
 
 export default function useAutenticacion() {
   const ctx = useAutenticacionContext();
 
-  const iniciarSesion = async (correo: string, contrasena: string) => {
+  const iniciarSesion = async (correo: string, contrasena: string, captcha: CredencialesCaptcha) => {
     try {
-      const usuario = await ctx.iniciarSesion(correo, contrasena);
+      const usuario = await ctx.iniciarSesion(correo, contrasena, captcha);
       const esPanelAdmin = puedeAccederPanelAdmin(usuario.permisos, ctx.esAdmin, usuario.rol);
       return {
         success: true as const,

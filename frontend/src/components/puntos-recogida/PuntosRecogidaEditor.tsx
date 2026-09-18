@@ -17,6 +17,7 @@ import type {
   PuntosRecogidaDraft,
 } from '../../types/puntoRecogida';
 import { PUNTOS_RECOGIDA_DRAFT_VACIO } from '../../types/puntoRecogida';
+import { ModalConfirmacion } from '../admin';
 import Boton from '../ui/Boton/Boton';
 import { type ValoresFormularioPuntoRecogida } from './FormularioPuntoRecogidaCampos';
 import ModalDomicilioRecogida from './ModalDomicilioRecogida';
@@ -74,6 +75,7 @@ const PuntosRecogidaEditor = forwardRef<PuntosRecogidaEditorHandle, PuntosRecogi
   const [errorForm, setErrorForm] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
   const [procesando, setProcesando] = useState(false);
+  const [puntoAEliminar, setPuntoAEliminar] = useState<number | null>(null);
   const valueRef = useRef(value);
   valueRef.current = value;
 
@@ -211,7 +213,12 @@ const PuntosRecogidaEditor = forwardRef<PuntosRecogidaEditorHandle, PuntosRecogi
   }
 
   async function quitarLive(id: number) {
-    if (!window.confirm('¿Eliminar este domicilio de recogida?')) return;
+    setPuntoAEliminar(id);
+  }
+
+  async function confirmarQuitarLive() {
+    if (puntoAEliminar == null) return;
+    const id = puntoAEliminar;
     setProcesando(true);
     try {
       if (mode === 'profile') {
@@ -220,6 +227,7 @@ const PuntosRecogidaEditor = forwardRef<PuntosRecogidaEditorHandle, PuntosRecogi
         await quitarPuntoRecogidaCliente(clienteId!, id);
       }
       await recargarLive();
+      setPuntoAEliminar(null);
     } catch (err) {
       onError?.(err instanceof Error ? err.message : 'No se pudo eliminar el domicilio');
     } finally {
@@ -340,6 +348,16 @@ const PuntosRecogidaEditor = forwardRef<PuntosRecogidaEditorHandle, PuntosRecogi
         etiquetaGuardar={
           editandoLiveId != null || editandoDraftIndex != null ? 'Guardar cambios' : 'Agregar domicilio'
         }
+      />
+      <ModalConfirmacion
+        abierto={puntoAEliminar != null}
+        titulo="Confirmar eliminación"
+        mensaje="¿Eliminar este domicilio de recogida?"
+        textoConfirmar="Eliminar"
+        variante="peligro"
+        cargando={procesando}
+        onConfirmar={() => void confirmarQuitarLive()}
+        onCancelar={() => setPuntoAEliminar(null)}
       />
     </>
   );

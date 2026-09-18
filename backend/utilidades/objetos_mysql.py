@@ -275,10 +275,87 @@ def _nombres_triggers() -> list[tuple[str, str]]:
     return nombres
 
 
+def _sql_funciones_procedimientos() -> list[tuple[str, str, str]]:
+    """Objetos aditivos. No tocan filas existentes."""
+    return [
+        (
+            nombre_bd,
+            "FUNCTION",
+            f"""
+CREATE FUNCTION `{nombre_bd}`.`fn_ocupacion_viaje`(p_viaje_id BIGINT)
+RETURNS DECIMAL(6,2)
+NOT DETERMINISTIC
+READS SQL DATA
+BEGIN
+  DECLARE v_ocupados INT DEFAULT 0;
+  DECLARE v_total INT DEFAULT 0;
+  SELECT COUNT(*) INTO v_ocupados
+  FROM `{nombre_bd}`.`asientos_reservados`
+  WHERE viaje_id = p_viaje_id AND eliminado_en IS NULL;
+  SELECT COUNT(*) INTO v_total
+  FROM `{nombre_bd}`.`asientos` a
+  INNER JOIN `{nombre_bd}`.`viajes` v ON v.unidad_id = a.unidad_id
+  WHERE v.id = p_viaje_id AND v.eliminado_en IS NULL AND a.eliminado_en IS NULL;
+  IF v_total IS NULL OR v_total = 0 THEN
+    RETURN 0;
+  END IF;
+  RETURN ROUND((v_ocupados * 100) / v_total, 2);
+END
+""".strip(),
+        ),
+        (
+            nombre_bd,
+            "FUNCTION",
+            f"""
+CREATE FUNCTION `{nombre_bd}`.`fn_ingresos_periodo`(p_desde DATE, p_hasta DATE)
+RETURNS DECIMAL(14,2)
+NOT DETERMINISTIC
+READS SQL DATA
+BEGIN
+  DECLARE v_total DECIMAL(14,2) DEFAULT 0;
+  SELECT COALESCE(SUM(monto), 0) INTO v_total
+  FROM `{nombre_bd}`.`pagos`
+  WHERE eliminado_en IS NULL
+    AND estado = 'aprobado'
+    AND COALESCE(fecha_pago, DATE(creado_en)) BETWEEN p_desde AND p_hasta;
+  RETURN v_total;
+END
+""".strip(),
+        ),
+        (
+            nombre_bd,
+            "PROCEDURE",
+            f"""
+CREATE PROCEDURE `{nombre_bd}`.`sp_ingresos_periodo`(IN p_desde DATE, IN p_hasta DATE)
+BEGIN
+  SELECT
+    COUNT(*) AS pagos_aprobados,
+    `{nombre_bd}`.`fn_ingresos_periodo`(p_desde, p_hasta) AS total_monto,
+    p_desde AS desde,
+    p_hasta AS hasta
+  FROM `{nombre_bd}`.`pagos`
+  WHERE eliminado_en IS NULL
+    AND estado = 'aprobado'
+    AND COALESCE(fecha_pago, DATE(creado_en)) BETWEEN p_desde AND p_hasta;
+END
+""".strip(),
+        ),
+    ]
+
+
+def _nombres_rutinas() -> list[tuple[str, str, str]]:
+    return [
+        (nombre_bd, "FUNCTION", "fn_ocupacion_viaje"),
+        (nombre_bd, "FUNCTION", "fn_ingresos_periodo"),
+        (nombre_bd, "PROCEDURE", "sp_ingresos_periodo"),
+    ]
+
+
 def aplicar_objetos_mysql() -> dict:
-    """Crea/recrea vistas y triggers. Seguro de ejecutar varias veces."""
+    """Crea/recrea vistas, triggers, función y procedimiento. No borra data."""
     motor = create_engine(url_mysql(nombre_bd), pool_pre_ping=True)
     creados = 0
+    rutinas = 0
     with motor.connect() as conexion:
         conexion = conexion.execution_options(isolation_level="AUTOCOMMIT")
         for vista_sql in _sql_vistas():
@@ -288,10 +365,19 @@ def aplicar_objetos_mysql() -> dict:
         for _esquema, trigger_sql in _sql_triggers():
             conexion.execute(text(trigger_sql))
             creados += 1
+        for esquema, tipo, nombre in _nombres_rutinas():
+            conexion.execute(text(f"DROP {tipo} IF EXISTS `{esquema}`.`{nombre}`"))
+        for _esquema, _tipo, rutina_sql in _sql_funciones_procedimientos():
+            try:
+                conexion.execute(text(rutina_sql))
+                rutinas += 1
+            except Exception:
+                continue
     motor.dispose()
     return {
         "vistas": 3,
         "triggers": creados,
+        "rutinas": rutinas,
         "bases": {"seguridad": nombre_bd_seguridad, "negocio": nombre_bd},
     }
 
@@ -310,6 +396,10 @@ def sql_para_archivo() -> str:
         partes.append(f"DROP TRIGGER IF EXISTS `{esquema}`.`{nombre}`$$")
     for esquema, trigger_sql in _sql_triggers():
         partes.append(trigger_sql + "$$")
+    for esquema, tipo, nombre in _nombres_rutinas():
+        partes.append(f"DROP {tipo} IF EXISTS `{esquema}`.`{nombre}`$$")
+    for _esquema, _tipo, rutina_sql in _sql_funciones_procedimientos():
+        partes.append(rutina_sql + "$$")
     partes.append("DELIMITER ;")
     partes.append("")
     return "\n\n".join(partes)

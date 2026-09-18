@@ -79,6 +79,52 @@ class Pago {
   estado
 }
 
+class Usuario {
+  id
+  correo
+  hash_contrasena
+  rol_id
+}
+
+class Rol {
+  id
+  nombre
+}
+
+class Permiso {
+  id
+  codigo
+}
+
+class PuntoRecogida {
+  id
+  cliente_id
+  direccion
+}
+
+class Abordaje {
+  id
+  viaje_id
+  reserva_cliente_id
+}
+
+class Resena {
+  id
+  reserva_id
+  puntuacion
+}
+
+class Banco {
+  id
+  nombre
+}
+
+class Tasa {
+  id
+  valor
+  fecha
+}
+
 class Bitacora {
   id
   usuario_id
@@ -88,6 +134,15 @@ class Bitacora {
   registro_id
 }
 
+Rol "1" -- "0..*" Usuario
+Rol "1" -- "0..*" Permiso
+Usuario "1" -- "0..*" Bitacora
+Usuario "0..1" -- "0..1" Cliente
+Cliente "1" -- "0..*" PuntoRecogida
+ReservaCliente "0..1" -- "0..*" Abordaje
+Reserva "1" -- "0..*" Resena
+Pago "0..*" -- "0..1" Banco
+Pago "0..*" -- "0..1" Tasa
 Cliente "1" -- "0..*" Cotizacion
 Destino "1" -- "0..*" Cotizacion
 Destino "1" -- "0..*" Viaje

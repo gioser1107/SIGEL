@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type { CredencialesCaptcha } from '../../services/autenticacion';
 import type { SesionUsuario } from '../../types/seguridad';
 import type { AccionPermiso } from '../../utils/permisosModulos';
 
@@ -6,7 +7,7 @@ export interface AutenticacionContextValue {
   estaAutenticado: boolean;
   estaCargando: boolean;
   usuario: SesionUsuario | null;
-  iniciarSesion: (correo: string, contrasena: string) => Promise<SesionUsuario>;
+  iniciarSesion: (correo: string, contrasena: string, captcha: CredencialesCaptcha) => Promise<SesionUsuario>;
   establecerSesionTrasRegistro: (usuario: SesionUsuario) => void;
   cerrarSesion: () => void;
   tienePermiso: (permiso: string) => boolean;

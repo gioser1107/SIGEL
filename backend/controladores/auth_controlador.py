@@ -7,6 +7,7 @@ from database import fijar_contexto_auditoria, get_db
 from dependencias.auth_dependencia import obtener_usuario_actual
 from modelos.usuario_modelo import iniciar_sesion, registrar_cliente_portal
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
+from utilidades.captcha import generar_captcha, validar_captcha
 
 router = APIRouter(prefix="/auth", tags=["Autenticación"])
 
@@ -14,6 +15,8 @@ router = APIRouter(prefix="/auth", tags=["Autenticación"])
 class DatosLogin(BaseModel):
     correo: str
     contrasena: str
+    captcha_token: str
+    captcha_respuesta: str
 
 
 class DatosRegistroCliente(BaseModel):
@@ -21,6 +24,8 @@ class DatosRegistroCliente(BaseModel):
     apellido: str
     correo: str
     contrasena: str
+    captcha_token: str
+    captcha_respuesta: str
     tipo_cliente: str = "natural"
     tipo_documento: str
     numero_documento: str
@@ -34,8 +39,14 @@ class DatosRegistroCliente(BaseModel):
     puntos_recogida: list[DatosPuntoRecogidaInline] | None = None
 
 
+@router.get("/captcha")
+def obtener_captcha_endpoint():
+    return generar_captcha()
+
+
 @router.post("/login")
 def iniciar_sesion_endpoint(datos: DatosLogin, request: Request, db: Session = Depends(get_db)):
+    validar_captcha(datos.captcha_token, datos.captcha_respuesta)
     resultado = iniciar_sesion(db, datos.correo, datos.contrasena)
     usuario = resultado["usuario"]
     fijar_contexto_auditoria(db, usuario["id"], obtener_ip_origen(request))
@@ -60,6 +71,7 @@ def registrar_cliente_portal_endpoint(
     datos: DatosRegistroCliente,
     db: Session = Depends(get_db),
 ):
+    validar_captcha(datos.captcha_token, datos.captcha_respuesta)
     return registrar_cliente_portal(db, datos)
 
 

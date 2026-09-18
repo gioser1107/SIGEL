@@ -37,15 +37,37 @@ export function usuarioTienePermiso(usuario: SesionUsuario | null, permiso: stri
   return tienePermisoEnLista(usuario?.permisos ?? [], permiso);
 }
 
+export interface DatosCaptcha {
+  token: string;
+  pregunta: string;
+  etiqueta?: string;
+  expira_en_segundos?: number;
+}
+
+export interface CredencialesCaptcha {
+  captcha_token: string;
+  captcha_respuesta: string;
+}
+
+export async function obtenerCaptcha(): Promise<DatosCaptcha> {
+  return apiRequest<DatosCaptcha>('/auth/captcha');
+}
+
 export async function iniciarSesion(
   correo: string,
-  contrasena: string
+  contrasena: string,
+  captcha: CredencialesCaptcha,
 ): Promise<{ token: string; usuario: SesionUsuario }> {
   limpiarSesionLocal();
 
   const response = await apiRequest<RespuestaLoginApi>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ correo, contrasena }),
+    body: JSON.stringify({
+      correo,
+      contrasena,
+      captcha_token: captcha.captcha_token,
+      captcha_respuesta: captcha.captcha_respuesta,
+    }),
   });
 
   if (!response?.token) {
@@ -101,6 +123,8 @@ export interface DatosRegistroCliente {
   ciudad_id?: number;
   punto_recogida_ids?: number[];
   puntos_recogida?: PuntoRecogidaInline[];
+  captcha_token: string;
+  captcha_respuesta: string;
 }
 
 export async function registrarCliente(

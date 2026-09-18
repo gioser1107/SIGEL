@@ -78,6 +78,11 @@ export interface ReporteEstadistico {
     ingresos_aprobados_eur: number;
     pagos_aprobados: number;
     pagos_periodo: number;
+    ingresos_sql?: {
+      pagos_aprobados: number;
+      total_monto: number;
+      origen: string;
+    } | null;
   };
   clientes_por_tipo: ConteoEtiquetado[];
   reservas_por_estado: ConteoEtiquetado[];

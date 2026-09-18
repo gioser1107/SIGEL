@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import and_, case, func
+from sqlalchemy import and_, case, func, text
 from sqlalchemy.orm import Session
 
 from modelos.cliente_modelo import Cliente
@@ -34,6 +34,33 @@ MESES_ES = (
     "Noviembre",
     "Diciembre",
 )
+
+
+def _consultar_ocupacion_sql(db: Session, viaje_id: int) -> float | None:
+    try:
+        valor = db.execute(text("SELECT fn_ocupacion_viaje(:id)"), {"id": viaje_id}).scalar()
+        return None if valor is None else float(valor)
+    except Exception:
+        db.rollback()
+        return None
+
+
+def _consultar_ingresos_sql(db: Session, desde: date, hasta: date) -> dict | None:
+    try:
+        fila = db.execute(
+            text("CALL sp_ingresos_periodo(:desde, :hasta)"),
+            {"desde": desde, "hasta": hasta},
+        ).mappings().first()
+        if fila is None:
+            return None
+        return {
+            "pagos_aprobados": int(fila.get("pagos_aprobados") or 0),
+            "total_monto": float(fila.get("total_monto") or 0),
+            "origen": "sp_ingresos_periodo",
+        }
+    except Exception:
+        db.rollback()
+        return None
 
 
 def _inicio_dia(dia: date) -> datetime:
@@ -448,7 +475,10 @@ def generar_reporte_estadistico(
         cupo = calcular_disponibilidad_viaje(db, viaje)
         total = int(cupo.get("total_asientos") or 0)
         ocupados = int(cupo.get("asientos_ocupados") or 0)
-        porcentaje = round((ocupados / total) * 100, 1) if total else 0.0
+        porcentaje_sql = _consultar_ocupacion_sql(db, viaje.id)
+        porcentaje = porcentaje_sql if porcentaje_sql is not None else (
+            round((ocupados / total) * 100, 1) if total else 0.0
+        )
         ocupacion_viajes.append(
             {
                 "id": viaje.id,
@@ -479,6 +509,7 @@ def generar_reporte_estadistico(
             "ingresos_aprobados_eur": round(ingresos_total, 2),
             "pagos_aprobados": len(pagos_aprobados),
             "pagos_periodo": len(pagos_periodo),
+            "ingresos_sql": _consultar_ingresos_sql(db, desde, hasta),
         },
         "clientes_por_tipo": clientes_por_tipo,
         "reservas_por_estado": reservas_por_estado,

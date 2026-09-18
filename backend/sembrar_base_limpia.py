@@ -10,7 +10,6 @@ Opciones:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -117,8 +116,10 @@ import modelos.viaje_guia_modelo  # noqa: E402,F401
 import modelos.viaje_modelo  # noqa: E402,F401
 import modelos.viaje_ruta_recogida_modelo  # noqa: E402,F401
 
+from modelos.usuario_modelo import hashear_contrasena
+
 CONTRASENA_ENTREGA = "TravelBqto2026"
-HASH_CONTRASENA = hashlib.sha256(CONTRASENA_ENTREGA.encode("utf-8")).hexdigest()
+HASH_CONTRASENA = hashear_contrasena(CONTRASENA_ENTREGA)
 RUTA_SQL = directorio_backend.parent / "instalacion" / "travel_bqto_limpia.sql"
 AHORA = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from database import estado_bases, get_db
 from dependencias.permiso_dependencia import requiere_administrador
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
-from utilidades.respaldo import generar_respaldo, listar_respaldos, ruta_respaldo_seguro
+from utilidades.respaldo import generar_respaldo, listar_respaldos, restaurar_respaldo, ruta_respaldo_seguro
 
 router = APIRouter(prefix="/respaldos", tags=["Respaldos"])
 
@@ -59,3 +59,31 @@ def descargar_respaldo_endpoint(
         filename=ruta.name,
         media_type="application/gzip",
     )
+
+
+@router.post("/{nombre_archivo}/restaurar")
+def restaurar_respaldo_endpoint(
+    nombre_archivo: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_administrador),
+):
+    try:
+        resultado = restaurar_respaldo(nombre_archivo)
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except RuntimeError as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+
+    registrar_evento(
+        db,
+        modulo="seguridad",
+        accion="OTRO",
+        resumen=f"Restauración de respaldo {nombre_archivo}",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="respaldos",
+        registro_id=resultado["marca"],
+        detalle={"archivo": nombre_archivo, "tipo": resultado["tipo"]},
+        ip_origen=obtener_ip_origen(request),
+    )
+    return resultado

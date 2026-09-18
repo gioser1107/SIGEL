@@ -228,6 +228,98 @@ def listar_respaldos() -> dict:
     }
 
 
+def _buscar_mysql_cli() -> str | None:
+    encontrado = shutil.which("mysql")
+    if encontrado:
+        return encontrado
+    candidatos = [
+        "/opt/homebrew/bin/mysql",
+        "/usr/local/bin/mysql",
+        "/usr/bin/mysql",
+        r"C:\xampp\mysql\bin\mysql.exe",
+        r"C:\Program Files\MariaDB 10.11\bin\mysql.exe",
+        r"C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe",
+    ]
+    for ruta in candidatos:
+        if Path(ruta).is_file():
+            return ruta
+    return None
+
+
+def _descomprimir_si_hace_falta(origen: Path, destino: Path) -> None:
+    if origen.name.endswith(".gz"):
+        with gzip.open(origen, "rb") as entrada, destino.open("wb") as salida:
+            shutil.copyfileobj(entrada, salida)
+        return
+    shutil.copyfile(origen, destino)
+
+
+def _restaurar_con_mysql(mysql: str, sql_path: Path) -> None:
+    comando = [
+        mysql,
+        f"--host={host_bd}",
+        f"--port={puerto_bd}",
+        f"--user={usuario_bd}",
+        "--default-character-set=utf8mb4",
+    ]
+    env = os.environ.copy()
+    clave = _contrasena_plana()
+    if clave:
+        env["MYSQL_PWD"] = clave
+    with sql_path.open("r", encoding="utf-8") as archivo:
+        proceso = subprocess.run(
+            comando,
+            stdin=archivo,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            check=False,
+            text=True,
+        )
+    if proceso.returncode != 0:
+        detalle = (proceso.stderr or "").strip() or f"código {proceso.returncode}"
+        raise RuntimeError(f"mysql restore falló: {detalle}")
+
+
+def _restaurar_con_sqlalchemy(sql_path: Path) -> None:
+    motor = create_engine(url_mysql(nombre_bd), pool_pre_ping=True, pool_size=1, max_overflow=0)
+    script = sql_path.read_text(encoding="utf-8")
+    with motor.connect() as conexion:
+        conexion = conexion.execution_options(isolation_level="AUTOCOMMIT")
+        conexion.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
+        for sentencia in script.split(";"):
+            limpia = sentencia.strip()
+            if not limpia or limpia.startswith("--"):
+                continue
+            conexion.execute(text(limpia))
+        conexion.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
+    motor.dispose()
+
+
+def restaurar_respaldo(nombre_archivo: str) -> dict:
+    """Restaura UN archivo de respaldo. No borra otros datos de la otra base."""
+    import tempfile
+
+    ruta = ruta_respaldo_seguro(nombre_archivo)
+    info = _info_archivo(ruta)
+    mysql = _buscar_mysql_cli()
+    metodo = "mysql" if mysql else "python"
+    with tempfile.TemporaryDirectory() as temporal:
+        sql_path = Path(temporal) / "restore.sql"
+        _descomprimir_si_hace_falta(ruta, sql_path)
+        if mysql:
+            _restaurar_con_mysql(mysql, sql_path)
+        else:
+            _restaurar_con_sqlalchemy(sql_path)
+    return {
+        "archivo": nombre_archivo,
+        "tipo": info["tipo"],
+        "marca": info["marca"],
+        "metodo": metodo,
+        "mensaje": f"Se restauró la base de {info['tipo']}. Los datos actuales de esa base fueron reemplazados por el respaldo.",
+    }
+
+
 def ruta_respaldo_seguro(nombre_archivo: str) -> Path:
     if not PATRON_ARCHIVO.match(nombre_archivo or ""):
         raise FileNotFoundError("Nombre de respaldo no válido")

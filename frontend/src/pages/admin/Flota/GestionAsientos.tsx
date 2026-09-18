@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { PanelDeslizable } from '../../../components/admin';
+import { ModalConfirmacion, PanelDeslizable } from '../../../components/admin';
 import CroquisUnidad from '../../../components/croquis/CroquisUnidad';
 import type { ModoEdicionCroquis } from '../../../components/croquis/CroquisUnidad';
 import Boton from '../../../components/ui/Boton/Boton';
@@ -45,6 +45,7 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
   const [nuevaColumna, setNuevaColumna] = useState<number | null>(null);
   const [formularioNuevo, setFormularioNuevo] = useState(false);
 
+  const [confirmacion, setConfirmacion] = useState<null | { tipo: 'asiento' | 'croquis'; id?: number; mensaje: string }>(null);
   const [asientoEditando, setAsientoEditando] = useState<Asiento | null>(null);
   const [editNum, setEditNum] = useState('');
   const [editPos, setEditPos] = useState<'ventana' | 'pasillo' | 'medio' | 'otro'>('otro');
@@ -156,26 +157,49 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
     }
   };
 
-  const quitarAsiento = async (id: number) => {
-    if (!window.confirm('¿Seguro que deseas eliminar este asiento? Las reservas futuras asignadas a este asiento podrían verse afectadas.')) return;
+  const quitarAsiento = (id: number) => {
+    setConfirmacion({
+      tipo: 'asiento',
+      id,
+      mensaje: '¿Seguro que deseas eliminar este asiento? Las reservas futuras asignadas a este asiento podrían verse afectadas.',
+    });
+  };
+
+  const confirmarQuitarAsiento = async (id: number) => {
     setCargando(true);
     try {
       await eliminarAsiento(id);
       await cargarAsientos();
       if (asientoEditando?.id === id) cerrarModalEditar();
+      setConfirmacion(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al eliminar asiento');
+    } finally {
       setCargando(false);
     }
   };
 
-  const aplicarCroquisTravel = async () => {
+  const confirmarAccionPendiente = async () => {
+    if (confirmacion?.tipo === 'asiento' && confirmacion.id != null) {
+      await confirmarQuitarAsiento(confirmacion.id);
+      return;
+    }
+    if (confirmacion?.tipo === 'croquis') {
+      await confirmarCroquisTravel();
+      setConfirmacion(null);
+    }
+  };
+
+  const aplicarCroquisTravel = () => {
     if (!unidad) return;
     const aviso = asientos.length > 0
       ? 'Esto reemplazará el mapa actual por el croquis Travel BQTO (A-0, A-00 y A-01 a A-31). ¿Continuar?'
       : 'Se cargará el croquis más usado de Travel BQTO (33 asientos). ¿Continuar?';
-    if (!window.confirm(aviso)) return;
+    setConfirmacion({ tipo: 'croquis', mensaje: aviso });
+  };
 
+  const confirmarCroquisTravel = async () => {
+    if (!unidad) return;
     setCargando(true);
     setError(null);
     try {
@@ -488,6 +512,17 @@ export default function GestionAsientos({ abierto, onCerrar, unidad }: GestionAs
           </div>
         </div>
       )}
+
+      <ModalConfirmacion
+        abierto={confirmacion != null}
+        titulo={confirmacion?.tipo === 'croquis' ? 'Confirmar croquis' : 'Confirmar eliminación'}
+        mensaje={confirmacion?.mensaje ?? ''}
+        textoConfirmar={confirmacion?.tipo === 'croquis' ? 'Aplicar croquis' : 'Eliminar asiento'}
+        variante="peligro"
+        cargando={cargando}
+        onConfirmar={() => void confirmarAccionPendiente()}
+        onCancelar={() => setConfirmacion(null)}
+      />
     </>
   );
 }

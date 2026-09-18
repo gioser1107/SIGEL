@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -53,13 +54,40 @@ def nombre_completo_de(nombre: str | None, apellido: str | None) -> str:
     return f"{nombre or ''} {apellido or ''}".strip()
 
 
+def hashear_md5(contrasena: str) -> str:
+    """Primer paso académico (baremo: cifrado MD5). No se guarda solo."""
+    texto = (contrasena or "").encode("utf-8")
+    try:
+        return hashlib.md5(texto, usedforsecurity=False).hexdigest()
+    except TypeError:
+        return hashlib.md5(texto).hexdigest()
+
+
+def hashear_sha256(contrasena: str) -> str:
+    return hashlib.sha256((contrasena or "").encode("utf-8")).hexdigest()
+
+
 def hashear_contrasena(contrasena: str) -> str:
-    return hashlib.sha256(contrasena.encode("utf-8")).hexdigest()
+    """MD5 + SHA-256. Las claves ya guardadas en producción siguen validando."""
+    return hashear_sha256(hashear_md5(contrasena))
+
+
+def _hash_igual(calculado: str, guardado: str) -> bool:
+    if len(calculado) != len(guardado):
+        return False
+    return hmac.compare_digest(calculado, guardado)
 
 
 def verificar_contrasena(contrasena: str, hash_guardado: str) -> bool:
-    hash_ingresado = hashear_contrasena(contrasena)
-    return hash_ingresado == hash_guardado
+    guardado = (hash_guardado or "").strip().lower()
+    if not guardado:
+        return False
+    candidatos = (
+        hashear_contrasena(contrasena),
+        hashear_sha256(contrasena),
+        hashear_md5(contrasena),
+    )
+    return any(_hash_igual(candidato, guardado) for candidato in candidatos)
 
 
 def usuario_a_dict(usuario: Usuario, nombre_rol: str) -> dict:

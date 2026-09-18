@@ -22,7 +22,9 @@ La base que se instala es **limpia**: pueden entrar, pero destinos y viajes los 
 
 No instales Docker ni Node.
 
-Si solo conocen XAMPP: instálalo, pero en el panel **arranca únicamente MySQL**. Apache y phpMyAdmin no hacen falta para usar SIGEL.
+Si solo conocen XAMPP: instálalo, pero en el panel **arranca únicamente MySQL**. En la laptop de la comunidad Apache no es obligatorio para usar SIGEL.
+
+En el servidor de defensa (Fastcomet, `https://travelbqto.kontrolaonline.com/`) Apache o LiteSpeed ya sirven el dominio: **ese dominio es el VirtualHost**. El archivo de ejemplo está en `instalacion/apache/sigel.conf`. La aplicación Python (FastAPI/Uvicorn) es el backend; Apache proxea HTTP hacia ella y ella habla con MySQL. Los profesores autorizaron Python: los errores de sitio se ven en las respuestas HTTP de FastAPI (400, 409, 422, 503), no en PHP.
 
 ## Parte A — En tu PC (antes de ir)
 

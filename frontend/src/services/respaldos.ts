@@ -52,6 +52,13 @@ export function crearRespaldo() {
   });
 }
 
+export function restaurarRespaldo(archivo: string) {
+  return apiRequest<{ archivo: string; tipo: string; marca: string; metodo: string; mensaje: string }>(
+    `/respaldos/${encodeURIComponent(archivo)}/restaurar`,
+    { method: 'POST', requiresAuth: true },
+  );
+}
+
 export async function descargarRespaldo(archivo: string): Promise<void> {
   const token = obtenerTokenSesion();
   const base = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
