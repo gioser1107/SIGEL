@@ -113,6 +113,11 @@ def _cuerpo_error(mensaje: str) -> dict:
 
 @app.exception_handler(IntegrityError)
 def manejar_conflicto_integridad(request: Request, error: IntegrityError):
+    from modelos.cliente_modelo import mensaje_conflicto_correo_o_documento
+
+    mensaje = mensaje_conflicto_correo_o_documento(error)
+    if mensaje:
+        return JSONResponse(status_code=400, content=_cuerpo_error(mensaje))
     return JSONResponse(
         status_code=409,
         content=_cuerpo_error(

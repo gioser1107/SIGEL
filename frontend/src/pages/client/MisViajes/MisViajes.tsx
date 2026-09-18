@@ -7,6 +7,8 @@ import type { EstadoPago } from '../../../types/pagos';
 import { ETIQUETA_ESTADO_PAGO_PORTAL } from '../../../types/pagosPortal';
 import {
   formatearMontoPortalPago,
+  puedeAbonarReserva,
+  saldoDisponibleEurResumen,
   ultimoPagoReserva,
 } from '../../../services/pagosPortal';
 import { aplicarCreditoPortal, obtenerMisCreditos, type ResumenCreditos } from '../../../services/creditos';
@@ -149,9 +151,10 @@ export default function MisViajes() {
               : reserva.resumen_pagos?.total_reserva_eur
                 ? formatearEuro(reserva.resumen_pagos.total_reserva_eur)
                 : '—';
-            const saldoPendiente = reserva.resumen_pagos?.saldo_pendiente_eur ?? 0;
-            const pagadoCompleto = reserva.resumen_pagos?.pagado_completo ?? false;
-            const mostrarAbonar = !pagadoCompleto && saldoPendiente > 0.01;
+            const saldoPendiente = reserva.resumen_pagos
+              ? saldoDisponibleEurResumen(reserva.resumen_pagos)
+              : 0;
+            const mostrarAbonar = puedeAbonarReserva(reserva.resumen_pagos);
 
             return (
               <article

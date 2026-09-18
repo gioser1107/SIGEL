@@ -154,7 +154,14 @@ def aplicar_credito_a_reserva(
         raise HTTPException(status_code=400, detail="No se puede aplicar saldo a una reserva cancelada")
 
     resumen = calcular_resumen_pagos_reserva(db, reserva)
-    pendiente = float(resumen["saldo_pendiente_eur"])
+    pendiente = max(
+        round(
+            float(resumen["saldo_pendiente_eur"])
+            - float(resumen.get("total_pendiente_validacion_eur") or 0),
+            2,
+        ),
+        0,
+    )
     disponible = saldo_disponible_cliente(db, cliente_id)
 
     if pendiente <= TOLERANCIA_EUR:

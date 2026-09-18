@@ -297,7 +297,7 @@ export default function Registro() {
             <h1 className="inicio-sesion__title">Crear cuenta</h1>
             <p className="inicio-sesion__subtitle">
               {paso === 1
-                ? 'Elige un correo y una contraseña para entrar al portal.'
+                ? 'El nombre puede coincidir con el de otra persona. El correo y la cédula sí deben ser únicos.'
                 : `Paso ${paso} de 3 — ${subtitulo}.`}
             </p>
           </div>

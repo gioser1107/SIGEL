@@ -32,3 +32,26 @@ export function esBloqueada(estado: string): boolean {
 export function formatearMonedaEur(monto: number): string {
   return `€ ${monto.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
+
+export function formatearCantidad(valor: number): string {
+  if (!Number.isFinite(valor)) return '0';
+  if (Number.isInteger(valor)) return String(valor);
+  return valor.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+export function etiquetaUnidadCorta(unidad: string): string {
+  const etiquetas: Record<string, string> = {
+    personas: 'pers.',
+    noches: 'noches',
+    servicios: 'serv.',
+    unidades: 'und.',
+  };
+  return etiquetas[unidad] ?? unidad;
+}
+
+export function importeDesdeCantidadYPrecio(cantidad: string | number, precio: string | number): number {
+  const cant = Number(cantidad);
+  const unitario = Number(precio);
+  if (!Number.isFinite(cant) || !Number.isFinite(unitario)) return 0;
+  return Math.round(cant * unitario * 100) / 100;
+}

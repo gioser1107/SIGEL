@@ -666,6 +666,12 @@ def validar_monto_pago_reserva(
         )
     )
 
+    if saldo_disponible <= TOLERANCIA_EUR:
+        raise HTTPException(
+            status_code=400,
+            detail="La reserva ya esta pagada en su totalidad.",
+        )
+
     if monto_eur > saldo_disponible + TOLERANCIA_EUR:
         raise HTTPException(
             status_code=400,

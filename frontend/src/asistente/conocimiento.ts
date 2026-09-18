@@ -82,7 +82,7 @@ export const PREGUNTAS_FRECUENTES: EntradaConocimiento[] = [
     id: 'cotizacion',
     pregunta: '¿Cómo funciona una cotización?',
     respuesta:
-      'En Cotizaciones crea una solicitud con cliente, destino y precio. El cliente la ve en Mis solicitudes. Cuando está aceptada, el equipo asocia un viaje y arma la reserva grupal desde Reservas.',
+      'En Cotizaciones crea una solicitud con cliente y destino. El detalle se arma como una factura: cada ítem tiene concepto, cantidad y precio unitario. El cliente la ve en Mis solicitudes. Cuando está aceptada, el equipo asocia un viaje y arma la reserva grupal desde Reservas.',
     palabras: ['cotizacion', 'cotización', 'solicitud', 'precio', 'convertir'],
     audiencias: ['admin', 'cliente'],
     enlaces: [
@@ -115,7 +115,7 @@ export const PREGUNTAS_FRECUENTES: EntradaConocimiento[] = [
     id: 'login',
     pregunta: '¿Cómo me registro o inicio sesión?',
     respuesta:
-      'Usa Registro con tu cédula, nombre (solo letras) y correo. Luego inicia sesión. Tanto el login como el registro piden CAPTCHA de imagen: escribe los caracteres que ves. El personal de TravelBqto entra por la misma pantalla con su usuario interno.',
+      'Usa Registro con tu cédula, nombre (solo letras) y correo. La cédula y el correo deben ser únicos; el nombre sí puede coincidir con el de otra persona. Luego inicia sesión. Tanto el login como el registro piden CAPTCHA de imagen: escribe los caracteres que ves. El personal de TravelBqto entra por la misma pantalla con su usuario interno.',
     palabras: ['registro', 'login', 'iniciar', 'sesion', 'sesión', 'contraseña', 'correo'],
     audiencias: ['publico', 'cliente', 'admin'],
     enlaces: [

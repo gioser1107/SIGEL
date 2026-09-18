@@ -1,7 +1,11 @@
 import LogoMarca from '../../../../components/ui/LogoMarca/LogoMarca';
 import type { Cotizacion, CotizacionLinea } from '../../../../types/cotizacion';
-import { CATEGORIAS_LINEA } from '../constants';
-import { formatearFecha, formatearMonedaEur } from '../utils/formatearCotizacion';
+import {
+  etiquetaUnidadCorta,
+  formatearCantidad,
+  formatearFecha,
+  formatearMonedaEur,
+} from '../utils/formatearCotizacion';
 import './DocumentoCotizacion.css';
 
 interface DocumentoCotizacionProps {
@@ -9,12 +13,8 @@ interface DocumentoCotizacionProps {
   lineas: CotizacionLinea[];
 }
 
-const ETIQUETA_CATEGORIA = Object.fromEntries(
-  CATEGORIAS_LINEA.map((c) => [c.id, c.etiqueta]),
-);
-
-function etiquetaCategoria(categoria: string): string {
-  return ETIQUETA_CATEGORIA[categoria] ?? categoria;
+function conceptoDeLinea(linea: CotizacionLinea): string {
+  return linea.concepto?.trim() || 'Servicio';
 }
 
 function numeroCotizacion(id: number): string {
@@ -26,6 +26,7 @@ export default function DocumentoCotizacion({ cotizacion, lineas }: DocumentoCot
     lineas.length > 0
       ? lineas.reduce((suma, l) => suma + l.monto_eur, 0)
       : (cotizacion.precio_cotizado_eur ?? 0);
+  const hayTotal = cotizacion.precio_cotizado_eur !== null || lineas.length > 0;
 
   return (
     <div className="zona-imprimible-cotizacion">
@@ -33,7 +34,7 @@ export default function DocumentoCotizacion({ cotizacion, lineas }: DocumentoCot
         <header className="doc-cotizacion__cabecera">
           <LogoMarca />
           <div className="doc-cotizacion__tipo">
-            <span className="doc-cotizacion__tipo-etiqueta">Cotización comercial</span>
+            <span className="doc-cotizacion__tipo-etiqueta">Cotización</span>
             <strong className="doc-cotizacion__numero">{numeroCotizacion(cotizacion.id)}</strong>
           </div>
         </header>
@@ -84,31 +85,42 @@ export default function DocumentoCotizacion({ cotizacion, lineas }: DocumentoCot
         )}
 
         <section className="doc-cotizacion__bloque">
-          <h2>Desglose de la propuesta</h2>
+          <h2>Detalle de servicios</h2>
           <table className="doc-cotizacion__tabla">
             <thead>
               <tr>
+                <th className="doc-cotizacion__col-num">#</th>
                 <th>Concepto</th>
-                <th>Descripción</th>
-                <th className="doc-cotizacion__col-monto">Monto</th>
+                <th className="doc-cotizacion__col-num">Cant.</th>
+                <th>Und.</th>
+                <th className="doc-cotizacion__col-monto">P. unitario</th>
+                <th className="doc-cotizacion__col-monto">Importe</th>
               </tr>
             </thead>
             <tbody>
               {lineas.length === 0 ? (
                 <tr>
-                  <td>Paquete turístico</td>
-                  <td>{cotizacion.destino_nombre ?? 'Servicio cotizado'}</td>
+                  <td className="doc-cotizacion__col-num">1</td>
+                  <td>{cotizacion.destino_nombre ?? 'Paquete turístico'}</td>
+                  <td className="doc-cotizacion__col-num">1</td>
+                  <td>serv.</td>
                   <td className="doc-cotizacion__col-monto">
-                    {cotizacion.precio_cotizado_eur !== null
-                      ? formatearMonedaEur(cotizacion.precio_cotizado_eur)
-                      : 'Por cotizar'}
+                    {hayTotal ? formatearMonedaEur(total) : 'Por cotizar'}
+                  </td>
+                  <td className="doc-cotizacion__col-monto">
+                    {hayTotal ? formatearMonedaEur(total) : 'Por cotizar'}
                   </td>
                 </tr>
               ) : (
-                lineas.map((linea) => (
+                lineas.map((linea, indice) => (
                   <tr key={linea.id}>
-                    <td>{etiquetaCategoria(linea.categoria)}</td>
-                    <td>{linea.descripcion?.trim() || '—'}</td>
+                    <td className="doc-cotizacion__col-num">{indice + 1}</td>
+                    <td>{conceptoDeLinea(linea)}</td>
+                    <td className="doc-cotizacion__col-num">{formatearCantidad(linea.cantidad)}</td>
+                    <td>{etiquetaUnidadCorta(linea.unidad)}</td>
+                    <td className="doc-cotizacion__col-monto">
+                      {formatearMonedaEur(linea.precio_unitario_eur)}
+                    </td>
                     <td className="doc-cotizacion__col-monto">
                       {formatearMonedaEur(linea.monto_eur)}
                     </td>
@@ -118,13 +130,15 @@ export default function DocumentoCotizacion({ cotizacion, lineas }: DocumentoCot
             </tbody>
           </table>
 
-          <div className="doc-cotizacion__total">
-            <span>Total de la cotización</span>
-            <strong>
-              {cotizacion.precio_cotizado_eur !== null || lineas.length > 0
-                ? formatearMonedaEur(total)
-                : 'Por cotizar'}
-            </strong>
+          <div className="doc-cotizacion__totales">
+            <div className="doc-cotizacion__total-fila">
+              <span>Subtotal</span>
+              <strong>{hayTotal ? formatearMonedaEur(total) : 'Por cotizar'}</strong>
+            </div>
+            <div className="doc-cotizacion__total-fila doc-cotizacion__total-fila--final">
+              <span>Total</span>
+              <strong>{hayTotal ? formatearMonedaEur(total) : 'Por cotizar'}</strong>
+            </div>
           </div>
         </section>
 

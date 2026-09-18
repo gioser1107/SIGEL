@@ -1,9 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { URL_INSTAGRAM, URL_WHATSAPP } from '../../../config/contacto';
 import LogoMarca from '../../ui/LogoMarca/LogoMarca';
 import useAutenticacion from '../../../hooks/useAutenticacion';
 import './LayoutPublico.css';
+
+function irAlInicioPagina() {
+  const activo = document.activeElement;
+  if (activo instanceof HTMLElement && activo !== document.body) {
+    activo.blur();
+  }
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+}
 
 /**
  * LayoutPublico — Envuelve todas las páginas públicas.
@@ -16,6 +24,7 @@ export default function LayoutPublico() {
   const [estaScrolleado, setEstaScrolleado] = useState(false);
   const [estaMenuMovilAbierto, setEstaMenuMovilAbierto] = useState(false);
   const scrollAntesMenuRef = useRef(0);
+  const rutaAlAbrirMenuRef = useRef('');
   const ubicacion = useLocation();
   const { estaAutenticado, esAdmin } = useAutenticacion();
 
@@ -47,6 +56,14 @@ export default function LayoutPublico() {
     setEstaMenuMovilAbierto(false);
   }, [ubicacion.pathname]);
 
+  /* Antes del pintado: el layout se queda montado y si no, caes en el pie */
+  useLayoutEffect(() => {
+    irAlInicioPagina();
+    setEstaScrolleado(false);
+    const frame = window.requestAnimationFrame(() => irAlInicioPagina());
+    return () => window.cancelAnimationFrame(frame);
+  }, [ubicacion.pathname]);
+
   /* Evita que la página se desplace detrás del menú móvil abierto */
   useEffect(() => {
     if (!estaMenuMovilAbierto) {
@@ -55,17 +72,24 @@ export default function LayoutPublico() {
 
     const scrollY = window.scrollY;
     scrollAntesMenuRef.current = scrollY;
+    rutaAlAbrirMenuRef.current = window.location.pathname;
     document.documentElement.classList.add('layout-publico--menu-abierto');
     document.body.classList.add('layout-publico--menu-abierto');
     document.body.style.top = `-${scrollY}px`;
 
     return () => {
       const scrollRestaurado = scrollAntesMenuRef.current;
+      const mismaRuta = window.location.pathname === rutaAlAbrirMenuRef.current;
       document.documentElement.classList.remove('layout-publico--menu-abierto');
       document.body.classList.remove('layout-publico--menu-abierto');
       document.body.style.top = '';
-      window.scrollTo(0, scrollRestaurado);
-      setEstaScrolleado(scrollRestaurado > 40);
+      if (mismaRuta) {
+        window.scrollTo(0, scrollRestaurado);
+        setEstaScrolleado(scrollRestaurado > 40);
+      } else {
+        irAlInicioPagina();
+        setEstaScrolleado(false);
+      }
     };
   }, [estaMenuMovilAbierto]);
 

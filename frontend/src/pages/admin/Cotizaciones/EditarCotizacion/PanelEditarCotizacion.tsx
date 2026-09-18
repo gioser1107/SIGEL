@@ -8,15 +8,10 @@ import type {
   EstadoCotizacion,
 } from '../../../../types/cotizacion';
 import { etiquetaEstado, SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
+import { type LineaFormCotizacion } from '../constants';
 import { esBloqueada } from '../utils/formatearCotizacion';
 import TabDesgloseCotizacion from './components/TabDesgloseCotizacion';
 import TabInfoCotizacion from './components/TabInfoCotizacion';
-
-interface PropsLineaForm {
-  categoria: string;
-  monto_eur: string;
-  descripcion: string;
-}
 
 interface PropsPanelEditar {
   abierto: boolean;
@@ -26,13 +21,13 @@ interface PropsPanelEditar {
   errorForm: string | null;
   drawerTab: 'info' | 'desglose';
   lineas: CotizacionLinea[];
-  lineaForm: PropsLineaForm;
+  lineaForm: LineaFormCotizacion;
   cargandoLineas: boolean;
   onCerrar: () => void;
   onGuardar: () => void;
   onTabChange: (tab: 'info' | 'desglose') => void;
   onFormChange: (form: DatosCotizacionNueva) => void;
-  onLineaFormChange: (form: PropsLineaForm) => void;
+  onLineaFormChange: (form: LineaFormCotizacion) => void;
   onAgregarLinea: () => void;
   onQuitarLinea: (lineaId: number) => void;
   onCambiarEstado: (cot: Cotizacion, estado: EstadoCotizacion) => void;
@@ -97,7 +92,8 @@ export default function PanelEditarCotizacion({
     >
       <div className="drawer-form">
         <p className="drawer-form__intro">
-          Presupuesto comercial para un cliente o empresa. Define requisitos, precio y vigencia antes de enviarlo.
+          Presupuesto comercial para un cliente o empresa. El detalle se arma como una factura:
+          concepto, cantidad y precio unitario.
         </p>
         {errorForm && (
           <div className="drawer-form__error" role="alert">
@@ -120,7 +116,7 @@ export default function PanelEditarCotizacion({
             }
             onClick={() => onTabChange('desglose')}
           >
-            Desglose
+            Ítems
           </button>
         </div>
 

@@ -56,7 +56,8 @@ export default function PanelNuevaCotizacion({
     >
       <div className="drawer-form">
         <p className="drawer-form__intro">
-          Presupuesto comercial para un cliente o empresa. Define requisitos, precio y vigencia antes de enviarlo.
+          Crea la cotización con cliente, destino y vigencia. Después podrás cargar los ítems como
+          en una factura (cantidad × precio unitario).
         </p>
         {errorForm && (
           <div className="drawer-form__error" role="alert">

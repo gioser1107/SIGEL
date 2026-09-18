@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { URL_LOGIN_PARA_RESERVA, useReservas } from '../../../context/Reservas';
 import useAutenticacion from '../../../hooks/useAutenticacion';
@@ -16,6 +17,14 @@ export default function ModalDetalleViaje({ viaje, fecha, fechaFormateada, onCer
   const navegar = useNavigate();
   const { seleccionarViaje } = useReservas();
   const { estaAutenticado } = useAutenticacion();
+
+  useEffect(() => {
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+    };
+  }, []);
 
   const manejarReservar = () => {
     seleccionarViaje(viaje, fecha);

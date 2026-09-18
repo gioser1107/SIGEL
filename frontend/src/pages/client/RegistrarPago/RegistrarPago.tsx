@@ -10,9 +10,11 @@ import Boton from '../../../components/ui/Boton/Boton';
 import { formatearBs, formatearEuro } from '../../../utils/formatoMoneda';
 import {
   construirReportePagoPortal,
-  montoBsSaldoPendiente,
+  montoBsSaldoDisponible,
   montoBsSugerido,
   montoBsTotalReserva,
+  puedeAbonarReserva,
+  saldoDisponibleEurResumen,
 } from '../../../services/pagosPortal';
 import { crearReservaCliente, asignarAsientosReservaPortal } from '../../../services/reservas';
 import { obtenerAsientosDisponiblesPortal } from '../../../services/viajes';
@@ -334,7 +336,7 @@ export default function RegistrarPago() {
   const errorVisible = errorReserva || (paso === 3 ? errorPagoPortal : null);
 
   const totalBsReserva = resumenPortal ? montoBsTotalReserva(resumenPortal) : null;
-  const saldoBsPendiente = resumenPortal ? montoBsSaldoPendiente(resumenPortal) : null;
+  const saldoBsPendiente = resumenPortal ? montoBsSaldoDisponible(resumenPortal) : null;
   const montoInicialBs = resumenPortal ? montoBsSugerido(resumenPortal) : null;
   const depositoMinimoEur =
     resumenPortal?.resumen.deposito_minimo_eur ?? resumenPortal?.deposito_minimo_eur ?? 5;
@@ -473,7 +475,9 @@ export default function RegistrarPago() {
           <FormularioPago
             totalEstimado={totalEstimado}
             totalReservaEur={resumenPortal?.resumen.total_reserva_eur}
-            saldoPendienteEur={resumenPortal?.resumen.saldo_pendiente_eur}
+            saldoPendienteEur={
+              resumenPortal ? saldoDisponibleEurResumen(resumenPortal.resumen) : undefined
+            }
             totalBsReserva={totalBsReserva}
             saldoBsPendiente={saldoBsPendiente}
             montoInicialBs={montoInicialBs}
@@ -563,11 +567,11 @@ export default function RegistrarPago() {
                   {formatearBs(parseFloat(datosPago.monto))}
                 </span>
               </div>
-              {resumenPortal && !resumenPortal.resumen.pagado_completo && (
+              {resumenPortal && puedeAbonarReserva(resumenPortal.resumen) && (
                 <div className="receipt-ticket__invoice-row">
                   <span className="receipt-ticket__invoice-label">Saldo pendiente</span>
                   <span className="receipt-ticket__invoice-value">
-                    {formatearEuro(resumenPortal.resumen.saldo_pendiente_eur)}
+                    {formatearEuro(saldoDisponibleEurResumen(resumenPortal.resumen))}
                   </span>
                 </div>
               )}

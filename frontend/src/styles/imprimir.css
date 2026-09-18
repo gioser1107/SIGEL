@@ -343,32 +343,45 @@
     text-align: right;
     white-space: nowrap;
     font-weight: 600;
-    width: 22%;
+    width: 16%;
   }
 
-  .doc-cotizacion__total {
+  .doc-cotizacion__col-num {
+    text-align: right;
+    white-space: nowrap;
+    width: 6%;
+  }
+
+  .doc-cotizacion__totales {
     display: flex;
-    justify-content: flex-end;
-    align-items: baseline;
-    gap: 1.25rem;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
     margin-top: 0.75rem;
-    padding: 0.65rem 0.8rem;
-    background: #f0f6fc;
-    border: 1px solid #c5d8ee;
-    border-radius: 8px;
   }
 
-  .doc-cotizacion__total span {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+  .doc-cotizacion__total-fila {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-width: 220px;
+    font-size: 0.78rem;
     color: var(--color-text-secondary, #475569);
   }
 
-  .doc-cotizacion__total strong {
+  .doc-cotizacion__total-fila--final {
+    margin-top: 0.2rem;
+    padding: 0.5rem 0.7rem;
+    background: #f0f6fc;
+    border: 1px solid #c5d8ee;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--color-text-primary, #12284b);
+  }
+
+  .doc-cotizacion__total-fila--final strong {
     font-family: var(--font-heading, 'Outfit', sans-serif);
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     color: var(--color-primary, #0055a0);
   }
 

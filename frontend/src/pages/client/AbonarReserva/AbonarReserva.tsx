@@ -7,10 +7,13 @@ import { ErrorApi } from '../../../services/api';
 import { obtenerUsuarioSesion } from '../../../services/autenticacion';
 import {
   construirReportePagoPortal,
-  obtenerMiReservaPortal,
-  montoBsSaldoPendiente,
+  mensajeReservaSinSaldo,
+  montoBsSaldoDisponible,
   montoBsSugerido,
   montoBsTotalReserva,
+  obtenerMiReservaPortal,
+  puedeAbonarReserva,
+  saldoDisponibleEurResumen,
 } from '../../../services/pagosPortal';
 import type { ReservaPortalMis } from '../../../types/pagosPortal';
 import { ETIQUETA_ESTADO_PAGO_PORTAL } from '../../../types/pagosPortal';
@@ -72,9 +75,6 @@ export default function AbonarReserva() {
     setError(null);
     try {
       const encontrada = await obtenerMiReservaPortal(reservaId);
-      if (encontrada.resumen_pagos?.pagado_completo) {
-        setError('Esta reserva ya está pagada en su totalidad.');
-      }
       setReserva(encontrada);
     } catch (err) {
       setError(
@@ -100,6 +100,10 @@ export default function AbonarReserva() {
     comprobanteArchivo: File | null;
   }) => {
     if (!resumenPortal || !tasaId || !reservaId) return;
+    if (!puedeAbonarReserva(resumenPortal.resumen)) {
+      setError(mensajeReservaSinSaldo(resumenPortal.resumen));
+      return;
+    }
 
     setGuardando(true);
     setError(null);
@@ -153,16 +157,19 @@ export default function AbonarReserva() {
     );
   }
 
+  const resumenSaldo = resumenPortal?.resumen ?? reserva?.resumen_pagos ?? null;
   const totalReservaEur = resumenPortal?.resumen.total_reserva_eur ?? reserva?.resumen_pagos?.total_reserva_eur ?? 0;
-  const saldoPendienteEur = resumenPortal?.resumen.saldo_pendiente_eur ?? reserva?.resumen_pagos?.saldo_pendiente_eur ?? 0;
+  const saldoPendienteEur = resumenSaldo ? saldoDisponibleEurResumen(resumenSaldo) : 0;
   const totalBsReserva = resumenPortal ? montoBsTotalReserva(resumenPortal) : null;
-  const saldoBsPendiente = resumenPortal ? montoBsSaldoPendiente(resumenPortal) : null;
+  const saldoBsPendiente = resumenPortal ? montoBsSaldoDisponible(resumenPortal) : null;
   const montoInicialBs = resumenPortal ? montoBsSugerido(resumenPortal) : null;
   const depositoMinimoEur =
     resumenPortal?.resumen.deposito_minimo_eur ?? resumenPortal?.deposito_minimo_eur ?? 5;
   const procesando = guardando || cargandoReserva || (cargandoPagoPortal && !resumenPortal);
   const errorVisible = error || errorPagoPortal;
   const exito = pagoReportado != null && datosPago != null;
+  const puedeAbonar = puedeAbonarReserva(resumenSaldo);
+  const sinSaldoCargable = resumenSaldo != null && !puedeAbonar;
 
   return (
     <div className="abonar-reserva">
@@ -175,12 +182,14 @@ export default function AbonarReserva() {
             {reserva?.destino_nombre ?? 'Abonar reserva'}
           </h1>
           <p className="abonar-reserva__subtitulo">
-            Reporta un abono parcial o liquida el saldo restante de tu reserva.
+            {sinSaldoCargable
+              ? 'Esta reserva no admite más pagos.'
+              : 'Reporta un abono parcial o liquida el saldo restante de tu reserva.'}
           </p>
         </div>
       </div>
 
-      {errorVisible && (
+      {errorVisible && !sinSaldoCargable && (
         <div className="abonar-reserva__error" role="alert">
           {errorVisible}
         </div>
@@ -203,7 +212,7 @@ export default function AbonarReserva() {
             <Boton type="button" variante="secundario" onClick={() => navegar('/client/dashboard')}>
               Volver a mis viajes
             </Boton>
-            {!resumenPortal?.resumen.pagado_completo && (
+            {puedeAbonar && (
               <Boton
                 type="button"
                 variante="primario"
@@ -217,9 +226,9 @@ export default function AbonarReserva() {
             )}
           </div>
         </div>
-      ) : reserva?.resumen_pagos?.pagado_completo ? (
+      ) : sinSaldoCargable ? (
         <div className="abonar-reserva__completo">
-          <p>Esta reserva ya está pagada en su totalidad.</p>
+          <p>{mensajeReservaSinSaldo(resumenSaldo)}</p>
           <Link to="/client/dashboard">Volver a mis viajes</Link>
         </div>
       ) : (

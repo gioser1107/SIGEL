@@ -32,6 +32,10 @@ _TIPOS_CLIENTE = frozenset({"natural", "juridico"})
 _CATEGORIAS_COSTO = frozenset(
     {"combustible", "logistica", "pago_guia", "alimentacion", "peajes", "otro"}
 )
+_UNIDADES_LINEA_COTIZACION = frozenset(
+    {"personas", "noches", "servicios", "unidades"}
+)
+_CANTIDAD_LINEA_MAXIMA = Decimal("9999.99")
 _POSICIONES_ASIENTO = frozenset({"ventana", "pasillo", "medio", "otro"})
 _TIPOS_CELDA_CROQUIS = frozenset({"conductor", "puerta"})
 _ESTADOS_VIAJE = frozenset({"planificado", "en_curso", "finalizado", "cancelado"})
@@ -409,6 +413,19 @@ class ValidadorEntrada:
     @classmethod
     def categoria_costo(cls, valor: str | None, campo: str = "categoria") -> str:
         return cls.valor_catalogo(valor, campo, _CATEGORIAS_COSTO)
+
+    @classmethod
+    def unidad_linea_cotizacion(cls, valor: str | None, campo: str = "unidad") -> str:
+        if valor is None or not str(valor).strip():
+            return "personas"
+        return cls.valor_catalogo(valor, campo, _UNIDADES_LINEA_COTIZACION)
+
+    @classmethod
+    def cantidad_linea(cls, valor: Any, campo: str = "cantidad") -> Decimal:
+        dec = cls.monto(valor, campo)
+        if dec > _CANTIDAD_LINEA_MAXIMA:
+            cls._error(campo, "excede el máximo permitido")
+        return dec
 
     @classmethod
     def estado_viaje(cls, valor: str | None, campo: str = "estado") -> str:

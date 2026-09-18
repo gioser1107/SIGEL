@@ -346,9 +346,11 @@ CREATE TABLE reservas (
 CREATE TABLE cotizacion_lineas (
 	id BIGINT NOT NULL AUTO_INCREMENT, 
 	cotizacion_id BIGINT NOT NULL, 
-	categoria ENUM('combustible','logistica','pago_guia','alimentacion','peajes','otro') NOT NULL, 
+	concepto VARCHAR(255) NOT NULL, 
+	cantidad NUMERIC(10, 2) NOT NULL DEFAULT '1.00', 
+	unidad VARCHAR(20) NOT NULL DEFAULT 'personas', 
+	precio_unitario_eur NUMERIC(12, 2) NOT NULL, 
 	monto_eur NUMERIC(12, 2) NOT NULL, 
-	descripcion VARCHAR(255), 
 	creado_en DATETIME NOT NULL, 
 	actualizado_en DATETIME NOT NULL, 
 	eliminado_en DATETIME, 
@@ -473,6 +475,10 @@ ALTER TABLE reserva_clientes ADD COLUMN cliente_activo_reserva BIGINT GENERATED 
 CREATE UNIQUE INDEX uq_reserva_cliente_vigente ON reserva_clientes (reserva_id, cliente_activo_reserva);
 ALTER TABLE asientos_reservados ADD COLUMN asiento_activo_viaje BIGINT GENERATED ALWAYS AS (IF(eliminado_en IS NULL, asiento_id, NULL)) STORED;
 CREATE UNIQUE INDEX uq_asiento_viaje_vigente ON asientos_reservados (viaje_id, asiento_activo_viaje);
+ALTER TABLE travel_bqto_seguridad.usuarios ADD COLUMN correo_activo VARCHAR(320) GENERATED ALWAYS AS (IF(eliminado_en IS NULL, correo, NULL)) STORED;
+CREATE UNIQUE INDEX uq_usuarios_correo_vigente ON travel_bqto_seguridad.usuarios (correo_activo);
+ALTER TABLE clientes ADD COLUMN documento_activo VARCHAR(62) GENERATED ALWAYS AS (IF(eliminado_en IS NULL, CONCAT(tipo_documento, '-', numero_documento), NULL)) STORED;
+CREATE UNIQUE INDEX uq_clientes_documento_vigente ON clientes (documento_activo);
 
 USE `travel_bqto_seguridad`;
 

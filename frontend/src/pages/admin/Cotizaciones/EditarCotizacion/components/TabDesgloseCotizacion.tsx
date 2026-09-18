@@ -1,23 +1,28 @@
 import Boton from '../../../../../components/ui/Boton/Boton';
+import CampoMonto from '../../../../../components/ui/CampoMonto/CampoMonto';
 import type { Cotizacion, CotizacionLinea, DatosCotizacionNueva } from '../../../../../types/cotizacion';
-import { CATEGORIAS_LINEA } from '../../constants';
-import { esBloqueada } from '../../utils/formatearCotizacion';
-
-interface PropsLineaForm {
-  categoria: string;
-  monto_eur: string;
-  descripcion: string;
-}
+import { UNIDADES_LINEA, type LineaFormCotizacion } from '../../constants';
+import {
+  esBloqueada,
+  etiquetaUnidadCorta,
+  formatearCantidad,
+  formatearMonedaEur,
+  importeDesdeCantidadYPrecio,
+} from '../../utils/formatearCotizacion';
 
 interface PropsTabDesglose {
   cotizacion: Cotizacion;
   form: DatosCotizacionNueva;
   lineas: CotizacionLinea[];
-  lineaForm: PropsLineaForm;
+  lineaForm: LineaFormCotizacion;
   cargando: boolean;
-  onLineaFormChange: (form: PropsLineaForm) => void;
+  onLineaFormChange: (form: LineaFormCotizacion) => void;
   onAgregarLinea: () => void;
   onQuitarLinea: (lineaId: number) => void;
+}
+
+function conceptoDeLinea(linea: CotizacionLinea): string {
+  return linea.concepto?.trim() || 'Servicio';
 }
 
 export default function TabDesgloseCotizacion({
@@ -31,90 +36,135 @@ export default function TabDesgloseCotizacion({
   onQuitarLinea,
 }: PropsTabDesglose) {
   const bloqueada = esBloqueada(cotizacion.estado);
+  const importeNuevo = importeDesdeCantidadYPrecio(
+    lineaForm.cantidad,
+    lineaForm.precio_unitario_eur,
+  );
+  const total =
+    lineas.length > 0
+      ? lineas.reduce((suma, l) => suma + l.monto_eur, 0)
+      : (form.precio_cotizado_eur ?? 0);
 
   if (cargando) {
-    return <p>Cargando desglose...</p>;
+    return <p>Cargando ítems…</p>;
   }
 
   return (
     <div className="cot-desglose">
       <p className="drawer-form__intro">
-        Agrega líneas por categoría. El precio total se calcula automáticamente.
+        Cada ítem se cobra como en una factura: concepto, cantidad y precio unitario. El importe y
+        el total se calculan solos.
       </p>
 
-      <table className="cot-desglose__tabla">
-        <thead>
-          <tr>
-            <th>Categoría</th>
-            <th>Monto EUR</th>
-            <th>Descripción</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {lineas.length === 0 && (
+      <div className="cot-factura">
+        <table className="cot-desglose__tabla cot-factura__tabla">
+          <thead>
             <tr>
-              <td colSpan={4}>Sin líneas. Agrega la primera abajo.</td>
+              <th className="cot-factura__col-num">#</th>
+              <th>Concepto</th>
+              <th className="cot-factura__col-num">Cant.</th>
+              <th>Und.</th>
+              <th className="cot-factura__col-monto">P. unitario</th>
+              <th className="cot-factura__col-monto">Importe</th>
+              <th />
             </tr>
-          )}
-          {lineas.map((l) => (
-            <tr key={l.id}>
-              <td>{l.categoria}</td>
-              <td>€ {l.monto_eur.toFixed(2)}</td>
-              <td>{l.descripcion ?? '—'}</td>
-              <td>
-                <button
-                  type="button"
-                  className="cot-desglose__quitar"
-                  onClick={() => onQuitarLinea(l.id)}
-                >
-                  ×
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {lineas.length === 0 && (
+              <tr>
+                <td colSpan={7} className="cot-factura__vacio">
+                  Sin ítems. Agrega el primero abajo.
+                </td>
+              </tr>
+            )}
+            {lineas.map((l, indice) => (
+              <tr key={l.id}>
+                <td className="cot-factura__col-num">{indice + 1}</td>
+                <td>{conceptoDeLinea(l)}</td>
+                <td className="cot-factura__col-num">{formatearCantidad(l.cantidad)}</td>
+                <td>{etiquetaUnidadCorta(l.unidad)}</td>
+                <td className="cot-factura__col-monto">
+                  {formatearMonedaEur(l.precio_unitario_eur)}
+                </td>
+                <td className="cot-factura__col-monto">{formatearMonedaEur(l.monto_eur)}</td>
+                <td>
+                  {!bloqueada && (
+                    <button
+                      type="button"
+                      className="cot-desglose__quitar"
+                      onClick={() => onQuitarLinea(l.id)}
+                      aria-label="Quitar ítem"
+                    >
+                      ×
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="cot-factura__totales">
+          <div className="cot-factura__total-fila">
+            <span>Subtotal</span>
+            <strong>{formatearMonedaEur(total)}</strong>
+          </div>
+          <div className="cot-factura__total-fila cot-factura__total-fila--final">
+            <span>Total</span>
+            <strong>{formatearMonedaEur(total)}</strong>
+          </div>
+        </div>
+      </div>
 
       {!bloqueada && (
-        <div className="cot-desglose__form">
+        <div className="cot-desglose__form cot-factura__form">
+          <input
+            className="drawer-form__input cot-factura__concepto-input"
+            type="text"
+            placeholder="Concepto (ej. Pasaje adulto)"
+            value={lineaForm.concepto}
+            onChange={(e) =>
+              onLineaFormChange({ ...lineaForm, concepto: e.target.value.slice(0, 255) })
+            }
+            maxLength={255}
+          />
           <select
             className="drawer-form__input"
-            value={lineaForm.categoria}
-            onChange={(e) => onLineaFormChange({ ...lineaForm, categoria: e.target.value })}
+            value={lineaForm.unidad}
+            onChange={(e) => onLineaFormChange({ ...lineaForm, unidad: e.target.value })}
+            aria-label="Unidad"
           >
-            {CATEGORIAS_LINEA.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.etiqueta}
+            {UNIDADES_LINEA.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.etiqueta}
               </option>
             ))}
           </select>
           <input
             className="drawer-form__input"
             type="number"
-            min={0}
-            step={0.01}
-            placeholder="Monto EUR"
-            value={lineaForm.monto_eur}
-            onChange={(e) => onLineaFormChange({ ...lineaForm, monto_eur: e.target.value })}
+            min={0.01}
+            step={1}
+            placeholder="Cant."
+            value={lineaForm.cantidad}
+            onChange={(e) => onLineaFormChange({ ...lineaForm, cantidad: e.target.value })}
+            aria-label="Cantidad"
           />
-          <input
+          <CampoMonto
             className="drawer-form__input"
-            type="text"
-            placeholder="Descripción"
-            value={lineaForm.descripcion}
-            onChange={(e) => onLineaFormChange({ ...lineaForm, descripcion: e.target.value.slice(0, 255) })}
-            maxLength={255}
+            placeholder="P. unitario EUR"
+            value={lineaForm.precio_unitario_eur}
+            onTexto={(texto) => onLineaFormChange({ ...lineaForm, precio_unitario_eur: texto })}
+            aria-label="Precio unitario"
           />
+          <p className="cot-factura__importe-vivo">
+            {importeNuevo > 0 ? formatearMonedaEur(importeNuevo) : '—'}
+          </p>
           <Boton variante="secundario" tamano="sm" onClick={onAgregarLinea}>
             Agregar
           </Boton>
         </div>
       )}
-
-      <p className="cot-desglose__total">
-        Total: € {(form.precio_cotizado_eur ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2 })}
-      </p>
     </div>
   );
 }

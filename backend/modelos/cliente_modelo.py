@@ -61,34 +61,33 @@ def obtener_cliente_por_usuario_id(db: Session, usuario_id: int) -> Cliente | No
     ).first()
 
 
-def _candidatos_cliente_sin_usuario(db: Session, usuario) -> list[Cliente]:
-    """Fichas en clientes creadas desde admin sin usuario vinculado."""
-    consulta = db.query(Cliente).filter(
-        Cliente.eliminado_en.is_(None),
-        Cliente.usuario_id.is_(None),
-        Cliente.nombre == usuario.nombre.strip(),
-        Cliente.apellido == usuario.apellido.strip(),
-    )
-    candidatos = consulta.all()
-    if len(candidatos) <= 1:
-        return candidatos
+MENSAJE_CORREO_DUPLICADO = (
+    "Este correo ya está registrado. Inicia sesión o usa otro correo."
+)
+MENSAJE_DOCUMENTO_DUPLICADO = (
+    "Esta cédula o documento ya está registrado. Inicia sesión o usa otro documento."
+)
 
-    telefono = (usuario.telefono or "").strip()
-    if telefono:
-        filtrados = [
-            c for c in candidatos
-            if not (c.telefono or "").strip() or (c.telefono or "").strip() == telefono
-        ]
-        if len(filtrados) == 1:
-            return filtrados
 
-    return candidatos
+def mensaje_conflicto_correo_o_documento(error: Exception) -> str | None:
+    """Traduce un choque de unicidad de correo/cédula. El nombre no es único."""
+    origen = getattr(error, "orig", None)
+    if origen is not None and getattr(origen, "args", None):
+        texto = " ".join(str(parte) for parte in origen.args).lower()
+    else:
+        texto = str(error).lower()
+    if "correo" in texto:
+        return MENSAJE_CORREO_DUPLICADO
+    if "documento" in texto:
+        return MENSAJE_DOCUMENTO_DUPLICADO
+    return None
 
 
 def asegurar_perfil_cliente_usuario(db: Session, usuario, rol_nombre: str) -> Cliente | None:
     """
     Garantiza que un usuario con rol Cliente tenga ficha en la tabla clientes.
-    Vincula automáticamente fichas huérfanas (creadas en admin) o crea una mínima.
+    No vincula por nombre: hay homónimos. La ficha de agencia se reclama por documento
+    en el registro del portal.
     """
     if not es_rol_cliente(rol_nombre):
         return None
@@ -98,18 +97,6 @@ def asegurar_perfil_cliente_usuario(db: Session, usuario, rol_nombre: str) -> Cl
         return vinculado
 
     ahora = datetime.now()
-    candidatos = _candidatos_cliente_sin_usuario(db, usuario)
-
-    if len(candidatos) == 1:
-        cliente = candidatos[0]
-        cliente.usuario_id = usuario.id
-        cliente.actualizado_en = ahora
-        if cliente.actualizado_por is None:
-            cliente.actualizado_por = usuario.id
-        _confirmar_transaccion(db)
-        db.refresh(cliente)
-        return cliente
-
     numero_documento = f"USR{usuario.id:08d}"
     existente_doc = db.query(Cliente).filter(
         Cliente.tipo_documento == "V",
@@ -423,7 +410,7 @@ def validar_documento_no_repetido(
     if cliente_existente is not None and cliente_existente.id != cliente_id_actual:
         raise HTTPException(
             status_code=400,
-            detail="Ya existe un cliente con ese documento",
+            detail=MENSAJE_DOCUMENTO_DUPLICADO,
         )
 
 

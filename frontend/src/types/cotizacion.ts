@@ -46,15 +46,25 @@ export interface Cotizacion {
 export interface CotizacionLinea {
   id: number;
   cotizacion_id: number;
-  categoria: string;
+  concepto: string;
+  cantidad: number;
+  unidad: string;
+  precio_unitario_eur: number;
   monto_eur: number;
-  descripcion: string | null;
+}
+
+export interface ResumenItemCotizacion {
+  concepto: string;
+  cantidad: number;
+  unidad: string;
+  precio_unitario_eur: number;
+  monto_eur: number;
 }
 
 export interface ResumenLineasCotizacion {
   cotizacion_id: number;
   total_eur: number;
-  por_categoria: { categoria: string; monto_eur: number }[];
+  items?: ResumenItemCotizacion[];
 }
 
 export interface DatosCotizacionNueva {
@@ -68,9 +78,10 @@ export interface DatosCotizacionNueva {
 }
 
 export interface DatosLineaCotizacionNueva {
-  categoria: string;
-  monto_eur: number;
-  descripcion?: string | null;
+  concepto: string;
+  cantidad: number;
+  unidad: string;
+  precio_unitario_eur: number;
 }
 
 export interface NuevaCotizacion {

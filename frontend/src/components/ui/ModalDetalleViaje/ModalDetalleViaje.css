@@ -16,6 +16,9 @@
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: modalOverlayIn 250ms ease-out;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 @keyframes modalOverlayIn {
@@ -30,7 +33,10 @@
   width: 100%;
   max-width: 560px;
   max-height: 90vh;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   position: relative;
   animation: modalSlideIn 350ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -143,6 +149,7 @@
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-xs);
   letter-spacing: -0.3px;
+  overflow-wrap: anywhere;
 }
 
 .modal-detalle__ubicacion {
@@ -166,6 +173,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .modal-detalle__dato-label {
@@ -180,6 +188,7 @@
   font-size: var(--font-size-sm);
   font-weight: 700;
   color: var(--color-text-primary);
+  overflow-wrap: anywhere;
 }
 
 /* ─── Descripción del viaje ─── */
@@ -196,6 +205,7 @@
   color: var(--color-text-secondary);
   line-height: 1.7;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 /* Línea de corte con muescas */
@@ -214,12 +224,10 @@
 }
 
 .modal-detalle__notch--left {
-  margin-left: -10px;
   background: rgba(10, 14, 23, 0.55);
 }
 
 .modal-detalle__notch--right {
-  margin-right: -10px;
   background: rgba(10, 14, 23, 0.55);
 }
 
@@ -284,6 +292,7 @@
   }
 
   .modal-detalle__card {
+    width: 100%;
     max-width: 100%;
     max-height: 92svh;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;

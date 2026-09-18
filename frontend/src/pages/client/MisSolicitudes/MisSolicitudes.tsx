@@ -67,14 +67,18 @@ const COLUMNAS: ColumnaKanban[] = [
   },
 ];
 
-const ETIQUETA_CATEGORIA: Record<string, string> = {
-  combustible: 'Combustible',
-  logistica: 'Logística',
-  pago_guia: 'Pago guía',
-  alimentacion: 'Alimentación',
-  peajes: 'Peajes',
-  otro: 'Otro',
+const ETIQUETA_UNIDAD: Record<string, string> = {
+  personas: 'pers.',
+  noches: 'noches',
+  servicios: 'serv.',
+  unidades: 'und.',
 };
+
+function formatearCantidadCorta(valor: number): string {
+  if (!Number.isFinite(valor)) return '0';
+  if (Number.isInteger(valor)) return String(valor);
+  return valor.toLocaleString('es-ES', { maximumFractionDigits: 2 });
+}
 
 /* ─── Helpers ─── */
 function formatearFechaCotizacion(fechaISO: string): string {
@@ -103,7 +107,13 @@ function TarjetaCotizacion({
   resumen?: ResumenLineasCotizacion | null;
 }) {
   const badge = BADGE_CONFIG[cotizacion.estado];
-  const mostrarDesglose = resumen && resumen.por_categoria.length > 0;
+  const itemsVista = (resumen?.items ?? []).map((item) => ({
+    concepto: item.concepto,
+    cantidad: item.cantidad,
+    unidad: item.unidad,
+    monto_eur: item.monto_eur,
+  }));
+  const mostrarDesglose = itemsVista.length > 0;
 
   return (
     <article className="kanban__tarjeta">
@@ -116,9 +126,12 @@ function TarjetaCotizacion({
 
       {mostrarDesglose && (
         <ul className="kanban__tarjeta-desglose">
-          {resumen.por_categoria.map((item) => (
-            <li key={item.categoria}>
-              <span>{ETIQUETA_CATEGORIA[item.categoria] ?? item.categoria}</span>
+          {itemsVista.map((item, indice) => (
+            <li key={`${item.concepto}-${indice}`}>
+              <span>
+                {item.concepto} × {formatearCantidadCorta(item.cantidad)}{' '}
+                {ETIQUETA_UNIDAD[item.unidad] ?? item.unidad}
+              </span>
               <span>{formatearEuro(item.monto_eur)}</span>
             </li>
           ))}
@@ -188,7 +201,7 @@ export default function MisSolicitudes() {
         cotizacionesConDesglose.map(async (c) => {
           try {
             const resumen = await obtenerResumenLineasCotizacion(c.id);
-            if (resumen.por_categoria.length > 0) {
+            if ((resumen.items?.length ?? 0) > 0) {
               resumenesMap[c.id] = resumen;
             }
           } catch {

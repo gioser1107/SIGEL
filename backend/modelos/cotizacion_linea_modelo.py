@@ -1,9 +1,9 @@
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import BigInteger, Column, DateTime, Enum, ForeignKey, Numeric, String
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Numeric, String
 from sqlalchemy.orm import Session
 
 from database import Base
@@ -16,25 +16,80 @@ class CotizacionLinea(Base):
 
     id = Column(BigInteger, primary_key=True, index=True)
     cotizacion_id = Column(BigInteger, ForeignKey("cotizaciones.id"), nullable=False, index=True)
-    categoria = Column(
-        Enum("combustible", "logistica", "pago_guia", "alimentacion", "peajes", "otro"),
-        nullable=False,
-        default="otro",
-    )
+    concepto = Column(String(255), nullable=False)
+    cantidad = Column(Numeric(10, 2), nullable=False, default=Decimal("1.00"), server_default="1.00")
+    unidad = Column(String(20), nullable=False, default="personas", server_default="personas")
+    precio_unitario_eur = Column(Numeric(12, 2), nullable=False)
     monto_eur = Column(Numeric(12, 2), nullable=False)
-    descripcion = Column(String(255), nullable=True)
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
     eliminado_en = Column(DateTime, nullable=True)
 
 
+def _redondear_eur(valor: Decimal) -> Decimal:
+    return valor.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def calcular_importe_linea(cantidad: Decimal, precio_unitario: Decimal) -> Decimal:
+    return _redondear_eur(cantidad * precio_unitario)
+
+
 def linea_a_dict(linea: CotizacionLinea) -> dict:
+    cantidad = float(linea.cantidad) if linea.cantidad is not None else 1.0
+    precio = (
+        float(linea.precio_unitario_eur)
+        if linea.precio_unitario_eur is not None
+        else float(linea.monto_eur)
+    )
     return {
         "id": linea.id,
         "cotizacion_id": linea.cotizacion_id,
-        "categoria": linea.categoria,
+        "concepto": (linea.concepto or "").strip() or "Servicio",
+        "cantidad": cantidad,
+        "unidad": linea.unidad or "personas",
+        "precio_unitario_eur": precio,
         "monto_eur": float(linea.monto_eur),
-        "descripcion": linea.descripcion,
+    }
+
+
+def _resolver_valores_linea(
+    concepto: Optional[str],
+    cantidad: Optional[Decimal],
+    unidad: Optional[str],
+    precio_unitario_eur: Optional[Decimal],
+    *,
+    concepto_actual: Optional[str] = None,
+    cantidad_actual: Optional[Decimal] = None,
+    unidad_actual: Optional[str] = None,
+    precio_actual: Optional[Decimal] = None,
+) -> dict:
+    concepto_limpio = ValidadorEntrada.texto_libre(
+        concepto if concepto is not None else concepto_actual,
+        "concepto",
+        obligatorio=True,
+        minimo=3,
+        maximo=255,
+    )
+    cantidad_limpia = ValidadorEntrada.cantidad_linea(
+        cantidad if cantidad is not None else (cantidad_actual or Decimal("1"))
+    )
+    unidad_limpia = ValidadorEntrada.unidad_linea_cotizacion(
+        unidad if unidad is not None else unidad_actual
+    )
+
+    if precio_unitario_eur is not None:
+        precio_limpio = ValidadorEntrada.monto(precio_unitario_eur, "precio_unitario_eur")
+    elif precio_actual is not None:
+        precio_limpio = ValidadorEntrada.monto(precio_actual, "precio_unitario_eur")
+    else:
+        raise HTTPException(status_code=422, detail="precio_unitario_eur: es obligatorio")
+
+    return {
+        "concepto": concepto_limpio,
+        "cantidad": cantidad_limpia,
+        "unidad": unidad_limpia,
+        "precio_unitario_eur": precio_limpio,
+        "monto_eur": calcular_importe_linea(cantidad_limpia, precio_limpio),
     }
 
 
@@ -45,8 +100,8 @@ def recalcular_precio_cotizacion(db: Session, cotizacion: Cotizacion) -> None:
     ).all()
     if not lineas:
         return
-    total = sum(float(l.monto_eur) for l in lineas)
-    cotizacion.precio_cotizado_eur = Decimal(str(total))
+    total = sum((l.monto_eur for l in lineas), Decimal("0.00"))
+    cotizacion.precio_cotizado_eur = _redondear_eur(Decimal(str(total)))
     cotizacion.actualizado_en = datetime.now()
 
 
@@ -81,46 +136,43 @@ def resumen_lineas_cotizacion(
     lineas = db.query(CotizacionLinea).filter(
         CotizacionLinea.cotizacion_id == cotizacion_id,
         CotizacionLinea.eliminado_en.is_(None),
-    ).all()
+    ).order_by(CotizacionLinea.id).all()
 
-    por_categoria: dict[str, float] = {}
-    for linea in lineas:
-        cat = linea.categoria
-        por_categoria[cat] = por_categoria.get(cat, 0) + float(linea.monto_eur)
-
-    total = sum(por_categoria.values())
+    items = [linea_a_dict(l) for l in lineas]
     return {
         "cotizacion_id": cotizacion_id,
-        "total_eur": total,
-        "por_categoria": [{"categoria": k, "monto_eur": v} for k, v in por_categoria.items()],
+        "total_eur": sum(item["monto_eur"] for item in items),
+        "items": items,
     }
 
 
 def crear_linea_cotizacion(
     db: Session,
     cotizacion_id: int,
-    categoria: str,
-    monto_eur: Decimal,
-    descripcion: Optional[str],
+    concepto: str,
+    cantidad: Optional[Decimal] = None,
+    unidad: Optional[str] = None,
+    precio_unitario_eur: Optional[Decimal] = None,
 ) -> tuple[CotizacionLinea, Cotizacion]:
     cotizacion = obtener_cotizacion_activa(db, cotizacion_id)
     if cotizacion.estado in ("aceptada", "cancelada"):
-        raise HTTPException(status_code=400, detail="No se puede modificar el desglose en este estado")
+        raise HTTPException(status_code=400, detail="No se puede modificar el detalle en este estado")
 
-    categoria_limpia = ValidadorEntrada.categoria_costo(categoria)
-    monto_limpio = ValidadorEntrada.monto(monto_eur, "monto_eur")
-    descripcion_limpia = ValidadorEntrada.texto_libre(descripcion, "descripcion") or None
+    valores = _resolver_valores_linea(concepto, cantidad, unidad, precio_unitario_eur)
 
     ahora = datetime.now()
     nueva_linea = CotizacionLinea(
         cotizacion_id=cotizacion_id,
-        categoria=categoria_limpia,
-        monto_eur=monto_limpio,
-        descripcion=descripcion_limpia,
+        concepto=valores["concepto"],
+        cantidad=valores["cantidad"],
+        unidad=valores["unidad"],
+        precio_unitario_eur=valores["precio_unitario_eur"],
+        monto_eur=valores["monto_eur"],
         creado_en=ahora,
         actualizado_en=ahora,
     )
     db.add(nueva_linea)
+    db.flush()
     recalcular_precio_cotizacion(db, cotizacion)
     db.commit()
     db.refresh(nueva_linea)
@@ -132,13 +184,14 @@ def actualizar_linea_cotizacion(
     db: Session,
     cotizacion_id: int,
     linea_id: int,
-    categoria: Optional[str],
-    monto_eur: Optional[Decimal],
-    descripcion: Optional[str],
+    concepto: Optional[str] = None,
+    cantidad: Optional[Decimal] = None,
+    unidad: Optional[str] = None,
+    precio_unitario_eur: Optional[Decimal] = None,
 ) -> tuple[CotizacionLinea, Cotizacion]:
     cotizacion = obtener_cotizacion_activa(db, cotizacion_id)
     if cotizacion.estado in ("aceptada", "cancelada"):
-        raise HTTPException(status_code=400, detail="No se puede modificar el desglose en este estado")
+        raise HTTPException(status_code=400, detail="No se puede modificar el detalle en este estado")
 
     linea = db.query(CotizacionLinea).filter(
         CotizacionLinea.id == linea_id,
@@ -148,13 +201,23 @@ def actualizar_linea_cotizacion(
     if linea is None:
         raise HTTPException(status_code=404, detail="Línea no encontrada")
 
-    if categoria is not None:
-        linea.categoria = ValidadorEntrada.categoria_costo(categoria)
-    if monto_eur is not None:
-        linea.monto_eur = ValidadorEntrada.monto(monto_eur, "monto_eur")
-    if descripcion is not None:
-        linea.descripcion = ValidadorEntrada.texto_libre(descripcion, "descripcion") or None
+    valores = _resolver_valores_linea(
+        concepto,
+        cantidad,
+        unidad,
+        precio_unitario_eur,
+        concepto_actual=linea.concepto,
+        cantidad_actual=linea.cantidad,
+        unidad_actual=linea.unidad,
+        precio_actual=linea.precio_unitario_eur,
+    )
+    linea.concepto = valores["concepto"]
+    linea.cantidad = valores["cantidad"]
+    linea.unidad = valores["unidad"]
+    linea.precio_unitario_eur = valores["precio_unitario_eur"]
+    linea.monto_eur = valores["monto_eur"]
     linea.actualizado_en = datetime.now()
+    db.flush()
 
     recalcular_precio_cotizacion(db, cotizacion)
     db.commit()
@@ -180,6 +243,7 @@ def eliminar_linea_cotizacion(
     ahora = datetime.now()
     linea.eliminado_en = ahora
     linea.actualizado_en = ahora
+    db.flush()
     recalcular_precio_cotizacion(db, cotizacion)
     db.commit()
     db.refresh(cotizacion)

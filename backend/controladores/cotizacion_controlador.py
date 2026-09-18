@@ -54,15 +54,17 @@ class DatosCotizacionActualizar(BaseModel):
 
 
 class DatosLineaCrear(BaseModel):
-    categoria: str = "otro"
-    monto_eur: Decimal = Field(ge=0)
-    descripcion: str | None = None
+    concepto: str
+    cantidad: Decimal = Field(default=Decimal("1"), gt=0)
+    unidad: str = "personas"
+    precio_unitario_eur: Decimal = Field(gt=0)
 
 
 class DatosLineaActualizar(BaseModel):
-    categoria: str | None = None
-    monto_eur: Decimal | None = Field(default=None, ge=0)
-    descripcion: str | None = None
+    concepto: str | None = None
+    cantidad: Decimal | None = Field(default=None, gt=0)
+    unidad: str | None = None
+    precio_unitario_eur: Decimal | None = Field(default=None, gt=0)
 
 
 @router.get("")
@@ -234,20 +236,27 @@ def crear_linea_cotizacion_endpoint(
     nueva_linea, cotizacion = crear_linea_cotizacion(
         db,
         cotizacion_id,
-        categoria=datos.categoria,
-        monto_eur=datos.monto_eur,
-        descripcion=datos.descripcion,
+        concepto=datos.concepto,
+        cantidad=datos.cantidad,
+        unidad=datos.unidad,
+        precio_unitario_eur=datos.precio_unitario_eur,
     )
 
     registrar_evento(
         db,
         modulo="cotizaciones",
         accion="INSERT",
-        resumen=f"Línea de cotización agregada (cotización {cotizacion_id})",
+        resumen=f"Ítem de cotización agregado (cotización {cotizacion_id})",
         usuario_id=usuario_actual["id"],
         tabla_afectada="cotizacion_lineas",
         registro_id=nueva_linea.id,
-        detalle={"categoria": datos.categoria, "monto_eur": float(datos.monto_eur)},
+        detalle={
+            "concepto": datos.concepto,
+            "cantidad": float(datos.cantidad),
+            "unidad": datos.unidad,
+            "precio_unitario_eur": float(datos.precio_unitario_eur),
+            "monto_eur": float(nueva_linea.monto_eur),
+        },
         ip_origen=obtener_ip_origen(request),
     )
 
@@ -274,9 +283,10 @@ def actualizar_linea_cotizacion_endpoint(
         db,
         cotizacion_id,
         linea_id,
-        categoria=datos.categoria,
-        monto_eur=datos.monto_eur,
-        descripcion=datos.descripcion,
+        concepto=datos.concepto,
+        cantidad=datos.cantidad,
+        unidad=datos.unidad,
+        precio_unitario_eur=datos.precio_unitario_eur,
     )
 
     registrar_evento(

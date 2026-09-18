@@ -60,7 +60,7 @@ export default function TabInfoCotizacion({
       <div className="drawer-form__fila-2">
         <div className="drawer-form__campo">
           <label className="drawer-form__label">
-            Precio total (EUR) {lineasCount > 0 && '(calculado)'}
+            Total (EUR) {lineasCount > 0 && '(según ítems)'}
           </label>
           <input
             className="drawer-form__input"

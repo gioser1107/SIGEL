@@ -23,7 +23,7 @@ import type {
 import type { FiltroListado } from '../../../../types/paginacion';
 import type { OpcionSelectBuscador } from '../../../../components/admin';
 import { FORM_VACIO, LINEA_FORM_VACIO } from '../constants';
-import { validarFormularioCotizacion, validarLineaCosto } from '../../../../utils/validacionesFormulario';
+import { validarFormularioCotizacion, validarLineaCotizacion } from '../../../../utils/validacionesFormulario';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
 
 export function useCotizaciones() {
@@ -220,7 +220,7 @@ export function useCotizaciones() {
 
   const agregarLinea = async () => {
     if (!cotizacionActiva) return;
-    const errorLinea = validarLineaCosto(lineaForm);
+    const errorLinea = validarLineaCotizacion(lineaForm);
     if (errorLinea) {
       setErrorForm(errorLinea);
       return;
@@ -228,9 +228,10 @@ export function useCotizaciones() {
     setErrorForm(null);
     try {
       const res = await crearLineaCotizacion(cotizacionActiva.id, {
-        categoria: lineaForm.categoria,
-        monto_eur: Number(lineaForm.monto_eur),
-        descripcion: lineaForm.descripcion || null,
+        concepto: lineaForm.concepto.trim(),
+        cantidad: Number(lineaForm.cantidad),
+        unidad: lineaForm.unidad,
+        precio_unitario_eur: Number(lineaForm.precio_unitario_eur),
       });
       setLineas((prev) => [...prev, res.linea]);
       setForm((f) => ({ ...f, precio_cotizado_eur: res.cotizacion.precio_cotizado_eur }));

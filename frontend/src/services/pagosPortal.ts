@@ -16,6 +16,7 @@ import {
   type ReportarPagoPortalRespuesta,
   type ReservaPortalMis,
   type ResumenPagoPortal,
+  type ResumenPagoPortalReserva,
 } from '../types/pagosPortal';
 
 function esMetodoPortalPermitido(codigo: string): codigo is MetodoPagoPortalCodigo {
@@ -142,16 +143,53 @@ export async function reportarPago(
   );
 }
 
+const TOLERANCIA_EUR = 0.01;
+
+export type ResumenSaldoPortal = Pick<
+  ResumenPagoPortalReserva,
+  'pagado_completo' | 'saldo_pendiente_eur' | 'total_pendiente_validacion_eur'
+>;
+
+/** Saldo que aún se puede reportar: pendiente menos lo que ya está en validación. */
+export function saldoDisponibleEurResumen(resumen: ResumenSaldoPortal): number {
+  const saldo = resumen.saldo_pendiente_eur ?? 0;
+  const enValidacion = resumen.total_pendiente_validacion_eur ?? 0;
+  return Math.max(Math.round((saldo - enValidacion) * 100) / 100, 0);
+}
+
+/** True solo si la reserva aún admite un abono nuevo. */
+export function puedeAbonarReserva(resumen?: ResumenSaldoPortal | null): boolean {
+  if (!resumen || resumen.pagado_completo) return false;
+  return saldoDisponibleEurResumen(resumen) > TOLERANCIA_EUR;
+}
+
+export function mensajeReservaSinSaldo(resumen?: ResumenSaldoPortal | null): string {
+  if (!resumen) {
+    return 'Esta reserva ya está pagada en su totalidad.';
+  }
+  if (!resumen.pagado_completo && (resumen.total_pendiente_validacion_eur ?? 0) > TOLERANCIA_EUR) {
+    return 'Ya reportaste el saldo restante. Cuando se valide el pago no quedará nada por abonar.';
+  }
+  return 'Esta reserva ya está pagada en su totalidad.';
+}
+
 /** Monto en Bs del saldo pendiente según el resumen del portal. */
 export function montoBsSaldoPendiente(resumen: ResumenPagoPortal): number | null {
   return montoBsDesdeEur(resumen, resumen.resumen.saldo_pendiente_eur);
 }
 
+/** Monto en Bs del saldo que todavía se puede reportar (descuenta validación). */
+export function montoBsSaldoDisponible(resumen: ResumenPagoPortal): number | null {
+  return montoBsDesdeEur(resumen, saldoDisponibleEurResumen(resumen.resumen));
+}
+
 /** Monto sugerido para el primer abono (depósito mínimo o saldo restante). */
 export function montoBsSugerido(resumen: ResumenPagoPortal): number | null {
+  const disponibleEur = saldoDisponibleEurResumen(resumen.resumen);
   const sugeridoEur =
-    resumen.resumen.monto_sugerido_eur ??
-    Math.min(DEPOSITO_MINIMO_EUR, resumen.resumen.saldo_pendiente_eur);
+    resumen.resumen.monto_sugerido_eur != null
+      ? Math.min(resumen.resumen.monto_sugerido_eur, disponibleEur)
+      : Math.min(DEPOSITO_MINIMO_EUR, disponibleEur);
   return montoBsDesdeEur(resumen, sugeridoEur);
 }
 
@@ -228,8 +266,6 @@ export function ultimoPagoReserva(pagos: PagoPortalMis[], reservaId: number): Pa
     .sort((a, b) => b.id - a.id)[0];
 }
 
-const TOLERANCIA_EUR = 0.01;
-
 export interface DatosFormularioPagoPortal {
   metodo: string;
   banco: string;
@@ -270,12 +306,16 @@ export async function construirReportePagoPortal(
     throw new Error('Método de pago no disponible.');
   }
 
+  if (!puedeAbonarReserva(resumenPortal.resumen)) {
+    throw new Error(mensajeReservaSinSaldo(resumenPortal.resumen));
+  }
+
   const montoBs = Number(datos.monto);
   if (!Number.isFinite(montoBs) || montoBs <= 0) {
     throw new Error('Ingrese un monto válido en bolívares.');
   }
 
-  const saldoBs = montoBsSaldoPendiente(resumenPortal);
+  const saldoBs = montoBsSaldoDisponible(resumenPortal) ?? montoBsSaldoPendiente(resumenPortal);
   if (saldoBs == null) {
     throw new Error('No se pudo obtener el monto en bolívares del resumen.');
   }
@@ -290,9 +330,7 @@ export async function construirReportePagoPortal(
   }
 
   const montoEurAprox = montoBs / tasa;
-  const saldoEur = resumenPortal.resumen.saldo_pendiente_eur;
-  const pendienteValidacionEur = resumenPortal.resumen.total_pendiente_validacion_eur ?? 0;
-  const saldoDisponibleEur = Math.max(saldoEur - pendienteValidacionEur, 0);
+  const saldoDisponibleEur = saldoDisponibleEurResumen(resumenPortal.resumen);
   const esPagoTotal = montoEurAprox >= saldoDisponibleEur - TOLERANCIA_EUR;
   const depositoMinimoEur =
     resumenPortal.resumen.deposito_minimo_eur ??

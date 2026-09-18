@@ -19,14 +19,12 @@ export const ETIQUETA_ESTADO: Record<string, string> = {
 
 export const ESTADOS_COTIZACION = ['solicitada', 'pendiente', 'aceptada', 'vencida', 'cancelada'] as const;
 
-export const CATEGORIAS_LINEA = [
-  { id: 'combustible', etiqueta: 'Combustible' },
-  { id: 'logistica', etiqueta: 'Logística' },
-  { id: 'pago_guia', etiqueta: 'Pago guía' },
-  { id: 'alimentacion', etiqueta: 'Alimentación' },
-  { id: 'peajes', etiqueta: 'Peajes' },
-  { id: 'otro', etiqueta: 'Otro' },
-];
+export const UNIDADES_LINEA = [
+  { id: 'personas', etiqueta: 'Personas' },
+  { id: 'noches', etiqueta: 'Noches' },
+  { id: 'servicios', etiqueta: 'Servicios' },
+  { id: 'unidades', etiqueta: 'Unidades' },
+] as const;
 
 export const FORM_VACIO: DatosCotizacionNueva = {
   cliente_id: 0,
@@ -38,4 +36,11 @@ export const FORM_VACIO: DatosCotizacionNueva = {
   modalidad: 'individual',
 };
 
-export const LINEA_FORM_VACIO = { categoria: 'otro', monto_eur: '', descripcion: '' };
+export const LINEA_FORM_VACIO = {
+  concepto: '',
+  cantidad: '1',
+  unidad: 'personas',
+  precio_unitario_eur: '',
+};
+
+export type LineaFormCotizacion = typeof LINEA_FORM_VACIO;

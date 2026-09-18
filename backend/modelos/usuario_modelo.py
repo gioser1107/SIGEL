@@ -8,13 +8,17 @@ import jwt
 from dotenv import load_dotenv
 from fastapi import HTTPException
 from sqlalchemy import BigInteger, Column, DateTime, String
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from database import Base, fijar_contexto_auditoria, fk_rol, tabla_seguridad
 from modelos.cliente_modelo import (
     Cliente,
+    MENSAJE_CORREO_DUPLICADO,
+    MENSAJE_DOCUMENTO_DUPLICADO,
     asegurar_perfil_cliente_usuario,
     es_rol_cliente,
+    mensaje_conflicto_correo_o_documento,
     obtener_cliente_por_usuario_id,
     obtener_rol_cliente,
     resolver_cliente_id_portal,
@@ -227,6 +231,24 @@ def cambiar_mi_contrasena(
     db.commit()
 
 
+def _persistir_unicidad_persona(db: Session, *, commit: bool = False) -> None:
+    try:
+        if commit:
+            db.commit()
+        else:
+            db.flush()
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=mensaje_conflicto_correo_o_documento(error)
+            or (
+                "Ya existe una cuenta con este correo o documento. "
+                "El nombre sí puede repetirse."
+            ),
+        ) from error
+
+
 def crear_usuario(
     db: Session,
     nombre: str,
@@ -247,7 +269,7 @@ def crear_usuario(
     if usuario_existente is not None and usuario_existente.eliminado_en is None:
         raise HTTPException(
             status_code=400,
-            detail="El correo ya está registrado en el sistema",
+            detail=MENSAJE_CORREO_DUPLICADO,
         )
 
     rol = db.query(Rol).filter(
@@ -269,7 +291,7 @@ def crear_usuario(
         actualizado_en=ahora,
     )
     db.add(nuevo_usuario)
-    db.commit()
+    _persistir_unicidad_persona(db, commit=True)
     db.refresh(nuevo_usuario)
 
     if es_rol_cliente(rol.nombre):
@@ -294,7 +316,7 @@ def actualizar_usuario(
         if otro is not None and otro.id != usuario_id and otro.eliminado_en is None:
             raise HTTPException(
                 status_code=400,
-                detail="El correo ya está en uso por otro usuario",
+                detail=MENSAJE_CORREO_DUPLICADO,
             )
         usuario.correo = correo_limpio
 
@@ -306,7 +328,7 @@ def actualizar_usuario(
         usuario.telefono = ValidadorEntrada.telefono(telefono, "telefono") or None
 
     usuario.actualizado_en = datetime.now()
-    db.commit()
+    _persistir_unicidad_persona(db, commit=True)
     db.refresh(usuario)
     return usuario_a_dict_con_rol(db, usuario)
 
@@ -420,7 +442,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
     existente = consulta_correo.first()
 
     if existente is not None and existente.eliminado_en is None:
-        raise HTTPException(status_code=400, detail="El correo ya está registrado")
+        raise HTTPException(status_code=400, detail=MENSAJE_CORREO_DUPLICADO)
 
     consulta_documento = db.query(Cliente).filter(
         Cliente.tipo_documento == campos["tipo_documento"],
@@ -430,10 +452,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
     cliente_existente = consulta_documento.first()
 
     if cliente_existente is not None and cliente_existente.usuario_id is not None:
-        raise HTTPException(
-            status_code=400,
-            detail="Ese cliente ya tiene una cuenta registrada",
-        )
+        raise HTTPException(status_code=400, detail=MENSAJE_DOCUMENTO_DUPLICADO)
 
     validar_ubicacion(db, datos.estado_id, datos.ciudad_id, obligatorio=True)
 
@@ -458,7 +477,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
     )
 
     db.add(nuevo_usuario)
-    db.flush()
+    _persistir_unicidad_persona(db)
     fijar_contexto_auditoria(db, nuevo_usuario.id, None)
 
     ficha_vinculada = False
@@ -516,7 +535,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
         if nuevo_cliente.creado_por is None:
             nuevo_cliente.creado_por = nuevo_usuario.id
 
-    db.flush()
+    _persistir_unicidad_persona(db)
 
     punto_ids = getattr(datos, "punto_recogida_ids", None)
     puntos_nuevos = getattr(datos, "puntos_recogida", None)
@@ -529,7 +548,7 @@ def registrar_cliente_portal(db: Session, datos) -> dict:
             creado_por_usuario_id=nuevo_usuario.id,
         )
 
-    db.commit()
+    _persistir_unicidad_persona(db, commit=True)
     db.refresh(nuevo_cliente)
     db.refresh(nuevo_usuario)
 

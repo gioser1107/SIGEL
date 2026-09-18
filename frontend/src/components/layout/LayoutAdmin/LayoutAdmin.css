@@ -12,8 +12,8 @@
   display: flex;
   min-height: 100vh;
   min-width: 0;
-  /* El color del footer de la landing page (gradiente slate) para el fondo del panel */
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  width: 100%;
+  background: var(--color-bg-dark);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
 }
@@ -642,6 +642,8 @@
   flex: 1;
   padding: var(--spacing-2xl);
   overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--color-bg-dark);
 }
 
 /* Mobile toggle button */

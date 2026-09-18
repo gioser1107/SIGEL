@@ -18,6 +18,13 @@ export const CATEGORIAS_COSTO_PERMITIDAS = [
   'otro',
 ] as const;
 
+export const UNIDADES_LINEA_COTIZACION = [
+  'personas',
+  'noches',
+  'servicios',
+  'unidades',
+] as const;
+
 export const POSICIONES_ASIENTO = ['ventana', 'pasillo', 'medio', 'otro'] as const;
 
 export function esCorreoValido(correo: string): boolean {
@@ -410,6 +417,38 @@ export function validarLineaCosto(form: {
     return 'El monto debe ser mayor a 0 y tener máximo 2 decimales.';
   }
   return validarTextoLibre(form.descripcion, 'La descripción', { maximo: 255 });
+}
+
+export function validarLineaCotizacion(form: {
+  concepto: string;
+  cantidad: string | number;
+  unidad: string;
+  precio_unitario_eur: string | number;
+}): string | null {
+  const errorConcepto = validarTextoLibre(form.concepto, 'El concepto', {
+    obligatorio: true,
+    minimo: 3,
+    maximo: 255,
+  });
+  if (errorConcepto) return errorConcepto;
+  const cantidad = Number(form.cantidad);
+  if (!Number.isFinite(cantidad) || cantidad <= 0) {
+    return 'La cantidad debe ser mayor a 0.';
+  }
+  if (cantidad > 9999.99) return 'La cantidad no puede superar 9999.99.';
+  if (!/^\d{1,4}(\.\d{1,2})?$/.test(String(cantidad))) {
+    return 'La cantidad admite máximo 2 decimales.';
+  }
+  if (
+    !UNIDADES_LINEA_COTIZACION.includes(form.unidad as (typeof UNIDADES_LINEA_COTIZACION)[number])
+  ) {
+    return 'Selecciona una unidad válida.';
+  }
+  const precio = Number(form.precio_unitario_eur);
+  if (!esMontoEurValido(precio)) {
+    return 'El precio unitario debe ser mayor a 0 y tener máximo 2 decimales.';
+  }
+  return null;
 }
 
 export function validarRequisitosCotizacion(

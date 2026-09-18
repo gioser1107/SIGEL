@@ -244,6 +244,10 @@ def _indices_3fn() -> list[str]:
         "CREATE UNIQUE INDEX uq_reserva_cliente_vigente ON reserva_clientes (reserva_id, cliente_activo_reserva);",
         "ALTER TABLE asientos_reservados ADD COLUMN asiento_activo_viaje BIGINT GENERATED ALWAYS AS (IF(eliminado_en IS NULL, asiento_id, NULL)) STORED;",
         "CREATE UNIQUE INDEX uq_asiento_viaje_vigente ON asientos_reservados (viaje_id, asiento_activo_viaje);",
+        f"ALTER TABLE `{nombre_bd_seguridad}`.usuarios ADD COLUMN correo_activo VARCHAR(320) GENERATED ALWAYS AS (IF(eliminado_en IS NULL, correo, NULL)) STORED;",
+        f"CREATE UNIQUE INDEX uq_usuarios_correo_vigente ON `{nombre_bd_seguridad}`.usuarios (correo_activo);",
+        "ALTER TABLE clientes ADD COLUMN documento_activo VARCHAR(62) GENERATED ALWAYS AS (IF(eliminado_en IS NULL, CONCAT(tipo_documento, '-', numero_documento), NULL)) STORED;",
+        "CREATE UNIQUE INDEX uq_clientes_documento_vigente ON clientes (documento_activo);",
     ]
 
 

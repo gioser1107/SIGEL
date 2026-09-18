@@ -96,6 +96,8 @@ export default function FormularioPago({
       ? Math.max(Math.round((saldoMostrarEur - montoActualNum / tasaValor) * 100) / 100, 0)
       : Math.max(Math.round((saldoMostrarEur - montoInicialEur) * 100) / 100, 0);
 
+  const sinSaldoCargable =
+    saldoMostrarEur <= 0.01 || (saldoMostrarBs != null && saldoMostrarBs <= 0.01);
   const esPagoTotal =
     montoActualValido &&
     ((tasaValor != null && montoActualNum / tasaValor >= saldoMostrarEur - 0.01) ||
@@ -154,6 +156,10 @@ export default function FormularioPago({
     e.preventDefault();
     if (sinTasa) {
       setErrorForm('No hay tasa de cambio disponible. Intente más tarde o contacte a la agencia.');
+      return;
+    }
+    if (sinSaldoCargable) {
+      setErrorForm('Esta reserva ya está pagada en su totalidad. No puedes cargar más dinero.');
       return;
     }
     if (!referencia || !monto) {
@@ -295,6 +301,14 @@ export default function FormularioPago({
           )}
         </div>
 
+        {sinSaldoCargable && (
+          <div className="formulario-pago__pago-total" role="status">
+            <p className="formulario-pago__pago-total-nota">
+              Esta reserva ya está pagada en su totalidad. No puedes cargar más dinero.
+            </p>
+          </div>
+        )}
+
         {sinTasa && (
           <div style={{ marginBottom: '1rem', padding: '0.875rem 1rem', background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '8px', color: 'var(--color-error)', fontSize: '0.875rem' }}>
             No hay tasa de cambio del día registrada. No es posible reportar el pago en este momento.
@@ -432,7 +446,7 @@ export default function FormularioPago({
         <Boton type="button" variante="secundario" tamano="md" onClick={onBack}>
           Atrás
         </Boton>
-        <Boton type="submit" variante="primario" tamano="md" anchoCompleto className="formulario-pago__submit-btn" disabled={sinTasa || cargandoResumen}>
+        <Boton type="submit" variante="primario" tamano="md" anchoCompleto className="formulario-pago__submit-btn" disabled={sinTasa || cargandoResumen || sinSaldoCargable}>
           Registrar pago
         </Boton>
       </div>
