@@ -1,9 +1,8 @@
 import Boton from '../../../../../components/ui/Boton/Boton';
 import CampoMonto from '../../../../../components/ui/CampoMonto/CampoMonto';
-import type { Cotizacion, CotizacionLinea, DatosCotizacionNueva } from '../../../../../types/cotizacion';
+import type { CotizacionLinea } from '../../../../../types/cotizacion';
 import { UNIDADES_LINEA, type LineaFormCotizacion } from '../../constants';
 import {
-  esBloqueada,
   etiquetaUnidadCorta,
   formatearCantidad,
   formatearMonedaEur,
@@ -11,11 +10,10 @@ import {
 } from '../../utils/formatearCotizacion';
 
 interface PropsTabDesglose {
-  cotizacion: Cotizacion;
-  form: DatosCotizacionNueva;
   lineas: CotizacionLinea[];
   lineaForm: LineaFormCotizacion;
-  cargando: boolean;
+  cargando?: boolean;
+  bloqueada?: boolean;
   onLineaFormChange: (form: LineaFormCotizacion) => void;
   onAgregarLinea: () => void;
   onQuitarLinea: (lineaId: number) => void;
@@ -26,24 +24,19 @@ function conceptoDeLinea(linea: CotizacionLinea): string {
 }
 
 export default function TabDesgloseCotizacion({
-  cotizacion,
-  form,
   lineas,
   lineaForm,
-  cargando,
+  cargando = false,
+  bloqueada = false,
   onLineaFormChange,
   onAgregarLinea,
   onQuitarLinea,
 }: PropsTabDesglose) {
-  const bloqueada = esBloqueada(cotizacion.estado);
   const importeNuevo = importeDesdeCantidadYPrecio(
     lineaForm.cantidad,
     lineaForm.precio_unitario_eur,
   );
-  const total =
-    lineas.length > 0
-      ? lineas.reduce((suma, l) => suma + l.monto_eur, 0)
-      : (form.precio_cotizado_eur ?? 0);
+  const total = lineas.reduce((suma, l) => suma + l.monto_eur, 0);
 
   if (cargando) {
     return <p>Cargando ítems…</p>;
@@ -51,11 +44,6 @@ export default function TabDesgloseCotizacion({
 
   return (
     <div className="cot-desglose">
-      <p className="drawer-form__intro">
-        Cada ítem se cobra como en una factura: concepto, cantidad y precio unitario. El importe y
-        el total se calculan solos.
-      </p>
-
       <div className="cot-factura">
         <table className="cot-desglose__tabla cot-factura__tabla">
           <thead>

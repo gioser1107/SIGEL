@@ -59,9 +59,6 @@ export default function PanelNuevoViaje({
       }
     >
       <div className="drawer-form">
-        <p className="drawer-form__intro">
-          Define a dónde va el viaje, qué bus asignas y cuándo sale. Al crearlo quedará en estado planificado.
-        </p>
         {errorForm && (
           <div className="drawer-form__error" role="alert">
             {errorForm}

@@ -10,6 +10,7 @@ import Boton from '../../../components/ui/Boton/Boton';
 import { formatearBs, formatearEuro } from '../../../utils/formatoMoneda';
 import {
   construirReportePagoPortal,
+  getResumenPago,
   montoBsSaldoDisponible,
   montoBsSugerido,
   montoBsTotalReserva,
@@ -30,6 +31,7 @@ import {
   guardarBorradorReservaWizard,
   limpiarBorradorReservaWizard,
 } from './borradorReservaWizard';
+import { normalizarDomicilioInline } from '../../../components/puntos-recogida/utils';
 import './RegistrarPago.css';
 
 interface InformacionPago {
@@ -63,7 +65,7 @@ function pasoTrasErrorReserva(mensaje: string, pasoActual: number): number {
   const texto = mensaje.toLowerCase();
   if (texto.includes('reserva activa')) return 1;
   if (texto.includes('asiento')) return 2;
-  if (texto.includes('domicilio') || texto.includes('recogida')) return 1;
+  if (texto.includes('domicilio') || texto.includes('recogida') || texto.includes('notas_referencia')) return 1;
   return pasoActual;
 }
 
@@ -194,7 +196,7 @@ export default function RegistrarPago() {
         viaje_id: viajePendiente.viaje.id,
         titular_punto_recogida_id: datosPasajeros.titularPuntoRecogidaId ?? null,
         titular_puntos_recogida: datosPasajeros.titularDomicilioNuevo
-          ? [datosPasajeros.titularDomicilioNuevo]
+          ? [normalizarDomicilioInline(datosPasajeros.titularDomicilioNuevo)]
           : undefined,
         pasajeros_extra: datosPasajeros.pasajeros.map((p) =>
           acompananteFormularioAPayload(p.ficha, p.es_menor, p.domicilio, {
@@ -282,7 +284,14 @@ export default function RegistrarPago() {
       const id = reservaId ?? (await crearReservaSiFalta());
       if (!id) return;
 
-      if (!resumenPortal || !tasaId) {
+      let resumen = resumenPortal;
+      let idTasa = tasaId;
+      if (!resumen || !idTasa) {
+        resumen = await getResumenPago(id);
+        idTasa = resumen?.tasa_eur?.tasa?.id ?? null;
+      }
+
+      if (!resumen || !idTasa) {
         throw new Error('No hay tasa de cambio disponible para reportar el pago.');
       }
 
@@ -294,9 +303,9 @@ export default function RegistrarPago() {
       }
 
       const payload = await construirReportePagoPortal({
-        resumenPortal,
+        resumenPortal: resumen,
         datos,
-        tasaId,
+        tasaId: idTasa,
         metodoPagoIdPorCodigo: (codigo) => metodoPagoIdPorCodigo(codigo),
         cotizarMontoEur,
         obtenerBancoDestinoId,

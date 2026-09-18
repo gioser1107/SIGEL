@@ -79,7 +79,7 @@ export default function Cotizaciones() {
     guardar,
     agregarLinea,
     quitarLinea,
-    cambiarEstado,
+    convertirAReserva,
     confirmarRechazar,
     ejecutarRechazar,
     cancelarRechazar,
@@ -270,6 +270,8 @@ export default function Cotizaciones() {
       <PanelNuevaCotizacion
         abierto={drawerAbierto && drawerModo === 'crear'}
         form={form}
+        lineas={lineas}
+        lineaForm={lineaForm}
         guardando={guardando}
         errorForm={errorForm}
         clientesOpciones={clientesOpciones}
@@ -279,6 +281,9 @@ export default function Cotizaciones() {
         onCerrar={cerrarDrawer}
         onGuardar={guardar}
         onFormChange={setForm}
+        onLineaFormChange={setLineaForm}
+        onAgregarLinea={agregarLinea}
+        onQuitarLinea={quitarLinea}
       />
 
       <PanelEditarCotizacion
@@ -298,9 +303,10 @@ export default function Cotizaciones() {
         onLineaFormChange={setLineaForm}
         onAgregarLinea={agregarLinea}
         onQuitarLinea={quitarLinea}
-        onCambiarEstado={cambiarEstado}
         onRechazar={confirmarRechazar}
-        onConvertir={() => setConvertirAbierto(true)}
+        onConvertir={() => {
+          void convertirAReserva();
+        }}
         onImprimir={() => {
           if (cotizacionActiva) return imprimirPdf(cotizacionActiva);
         }}

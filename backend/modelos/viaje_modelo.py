@@ -54,19 +54,41 @@ def fecha_fin_viaje(viaje: Viaje) -> datetime:
     return _naive(viaje.fecha_regreso or viaje.fecha_salida)
 
 
-def _aplicar_cierre_por_fecha(viaje: Viaje, ahora: datetime | None = None) -> None:
-    """Solo cierra planificado/en_curso. No toca cancelado ni finalizado."""
-    if viaje.estado not in ESTADOS_VIAJE_AUTO_FINALIZABLES:
+def _estado_segun_fechas(viaje: Viaje, ahora: datetime) -> str:
+    if fecha_fin_viaje(viaje) <= ahora:
+        return "finalizado"
+    if _naive(viaje.fecha_salida) <= ahora:
+        return "en_curso"
+    return "planificado"
+
+
+def _aplicar_estado_por_fecha(
+    viaje: Viaje,
+    ahora: datetime | None = None,
+    *,
+    permitir_reabrir: bool = False,
+) -> None:
+    """El estado operativo sale de las fechas. Cancelado no se toca."""
+    if viaje.estado == "cancelado":
         return
-    if fecha_fin_viaje(viaje) <= (ahora or _ahora_operativo()):
-        viaje.estado = "finalizado"
+    momento = ahora or _ahora_operativo()
+    destino = _estado_segun_fechas(viaje, momento)
+    if viaje.estado == "finalizado" and not permitir_reabrir:
+        return
+    if not permitir_reabrir:
+        orden = {"planificado": 0, "en_curso": 1, "finalizado": 2}
+        if orden.get(destino, 0) < orden.get(viaje.estado, 0):
+            return
+    viaje.estado = destino
 
 
 def sincronizar_viajes_vencidos(db: Session) -> int:
-    """Pasa a finalizado los viajes operativos cuya fecha de fin ya pasó."""
+    """Ajusta planificado → en curso → finalizado según las fechas."""
     ahora = _ahora_operativo()
     fecha_fin = func.coalesce(Viaje.fecha_regreso, Viaje.fecha_salida)
-    viajes = (
+    cambios = 0
+
+    por_finalizar = (
         db.query(Viaje)
         .filter(
             Viaje.eliminado_en.is_(None),
@@ -75,14 +97,29 @@ def sincronizar_viajes_vencidos(db: Session) -> int:
         )
         .all()
     )
-    if not viajes:
-        return 0
-
-    for viaje in viajes:
+    for viaje in por_finalizar:
         viaje.estado = "finalizado"
         viaje.actualizado_en = ahora
-    db.commit()
-    return len(viajes)
+        cambios += 1
+
+    por_iniciar = (
+        db.query(Viaje)
+        .filter(
+            Viaje.eliminado_en.is_(None),
+            Viaje.estado == "planificado",
+            Viaje.fecha_salida <= ahora,
+            fecha_fin > ahora,
+        )
+        .all()
+    )
+    for viaje in por_iniciar:
+        viaje.estado = "en_curso"
+        viaje.actualizado_en = ahora
+        cambios += 1
+
+    if cambios:
+        db.commit()
+    return cambios
 
 
 def contar_asientos_activos_unidad(db: Session, unidad_id: int) -> int:
@@ -264,7 +301,7 @@ def obtener_viaje_activo(db: Session, viaje_id: int) -> Viaje:
     if viaje is None:
         raise HTTPException(status_code=404, detail="Viaje no encontrado")
     estado_previo = viaje.estado
-    _aplicar_cierre_por_fecha(viaje)
+    _aplicar_estado_por_fecha(viaje)
     if viaje.estado != estado_previo:
         viaje.actualizado_en = _ahora_operativo()
         db.commit()
@@ -391,7 +428,7 @@ def crear_viaje(
     if fecha_regreso is None:
         raise HTTPException(status_code=400, detail="La fecha de regreso es obligatoria")
     validar_fechas_viaje(fecha_salida, fecha_regreso)
-    estado_limpio = ValidadorEntrada.estado_viaje(estado)
+    _ = estado
 
     ahora = datetime.now()
     nuevo_viaje = Viaje(
@@ -399,11 +436,11 @@ def crear_viaje(
         unidad_id=unidad_id,
         fecha_salida=fecha_salida,
         fecha_regreso=fecha_regreso,
-        estado=estado_limpio,
+        estado="planificado",
         creado_en=ahora,
         actualizado_en=ahora,
     )
-    _aplicar_cierre_por_fecha(nuevo_viaje, ahora)
+    _aplicar_estado_por_fecha(nuevo_viaje, ahora, permitir_reabrir=True)
 
     db.add(nuevo_viaje)
     db.commit()
@@ -449,11 +486,10 @@ def actualizar_viaje(
         viaje.fecha_salida = fecha_salida
     if fecha_regreso is not None:
         viaje.fecha_regreso = fecha_regreso
-    if estado is not None:
-        viaje.estado = ValidadorEntrada.estado_viaje(estado)
+    _ = estado
 
     validar_fechas_viaje(viaje.fecha_salida, viaje.fecha_regreso)
-    _aplicar_cierre_por_fecha(viaje)
+    _aplicar_estado_por_fecha(viaje, permitir_reabrir=True)
 
     viaje.actualizado_en = datetime.now()
     db.commit()

@@ -99,10 +99,43 @@ def recalcular_precio_cotizacion(db: Session, cotizacion: Cotizacion) -> None:
         CotizacionLinea.eliminado_en.is_(None),
     ).all()
     if not lineas:
+        cotizacion.precio_cotizado_eur = None
+        cotizacion.actualizado_en = datetime.now()
         return
     total = sum((l.monto_eur for l in lineas), Decimal("0.00"))
     cotizacion.precio_cotizado_eur = _redondear_eur(Decimal(str(total)))
     cotizacion.actualizado_en = datetime.now()
+
+
+def agregar_lineas_sin_commit(
+    db: Session,
+    cotizacion: Cotizacion,
+    lineas: list[dict],
+) -> None:
+    if not lineas:
+        return
+    ahora = datetime.now()
+    for datos in lineas:
+        valores = _resolver_valores_linea(
+            datos.get("concepto"),
+            datos.get("cantidad"),
+            datos.get("unidad"),
+            datos.get("precio_unitario_eur"),
+        )
+        db.add(
+            CotizacionLinea(
+                cotizacion_id=cotizacion.id,
+                concepto=valores["concepto"],
+                cantidad=valores["cantidad"],
+                unidad=valores["unidad"],
+                precio_unitario_eur=valores["precio_unitario_eur"],
+                monto_eur=valores["monto_eur"],
+                creado_en=ahora,
+                actualizado_en=ahora,
+            )
+        )
+    db.flush()
+    recalcular_precio_cotizacion(db, cotizacion)
 
 
 def listar_lineas_cotizacion(
@@ -174,6 +207,8 @@ def crear_linea_cotizacion(
     db.add(nueva_linea)
     db.flush()
     recalcular_precio_cotizacion(db, cotizacion)
+    from modelos.cotizacion_modelo import aplicar_estado_automatico_cotizacion
+    aplicar_estado_automatico_cotizacion(db, cotizacion)
     db.commit()
     db.refresh(nueva_linea)
     db.refresh(cotizacion)
@@ -220,6 +255,8 @@ def actualizar_linea_cotizacion(
     db.flush()
 
     recalcular_precio_cotizacion(db, cotizacion)
+    from modelos.cotizacion_modelo import aplicar_estado_automatico_cotizacion
+    aplicar_estado_automatico_cotizacion(db, cotizacion)
     db.commit()
     db.refresh(linea)
     db.refresh(cotizacion)
@@ -245,6 +282,8 @@ def eliminar_linea_cotizacion(
     linea.actualizado_en = ahora
     db.flush()
     recalcular_precio_cotizacion(db, cotizacion)
+    from modelos.cotizacion_modelo import aplicar_estado_automatico_cotizacion
+    aplicar_estado_automatico_cotizacion(db, cotizacion)
     db.commit()
     db.refresh(cotizacion)
     return cotizacion

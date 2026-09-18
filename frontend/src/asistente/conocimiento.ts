@@ -82,7 +82,7 @@ export const PREGUNTAS_FRECUENTES: EntradaConocimiento[] = [
     id: 'cotizacion',
     pregunta: '¿Cómo funciona una cotización?',
     respuesta:
-      'En Cotizaciones crea una solicitud con cliente y destino. El detalle se arma como una factura: cada ítem tiene concepto, cantidad y precio unitario. El cliente la ve en Mis solicitudes. Cuando está aceptada, el equipo asocia un viaje y arma la reserva grupal desde Reservas.',
+      'En Cotizaciones arma el presupuesto de una vez: cliente, destino, vigencia e ítems (concepto, cantidad y precio unitario). El total se calcula solo. El estado también: queda pendiente al cotizar, vencida al caducar y aceptada al convertirla en reserva. El cliente la ve en Mis solicitudes.',
     palabras: ['cotizacion', 'cotización', 'solicitud', 'precio', 'convertir'],
     audiencias: ['admin', 'cliente'],
     enlaces: [

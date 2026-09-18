@@ -14,6 +14,7 @@ import type { Cliente } from '../../../../types/cliente';
 import type { PuntoRecogidaInline } from '../../../../types/puntoRecogida';
 import type { CrearPasajeroDTO, PasajeroDraft, ViajeDisponibleReserva } from '../../../../types/reservas';
 import { formularioAPayload } from '../../Clientes/utils/mapeoFormulario';
+import { normalizarDomicilioInline } from '../../../../components/puntos-recogida/utils';
 import { sincronizarAcompanantes } from './utils/pasajerosGrupo';
 import PasoViajeCliente from './components/PasoViajeCliente';
 import PasoPasajeros from './components/PasoPasajeros';
@@ -113,7 +114,7 @@ export default function CrearReserva() {
         cliente: {
           ...formularioAPayload(p.ficha),
           puntos_recogida: p.puntos_recogida
-            ? [{ ...p.puntos_recogida, es_predeterminado: true }]
+            ? [{ ...normalizarDomicilioInline(p.puntos_recogida), es_predeterminado: true }]
             : undefined,
         },
       };
@@ -121,7 +122,7 @@ export default function CrearReserva() {
     return {
       ...base,
       cliente_id: p.cliente_id,
-      puntos_recogida: p.puntos_recogida ? [p.puntos_recogida] : undefined,
+      puntos_recogida: p.puntos_recogida ? [normalizarDomicilioInline(p.puntos_recogida)] : undefined,
     };
   }
 
@@ -159,7 +160,7 @@ export default function CrearReserva() {
           ocupa_asiento: true,
           punto_recogida_id: titularDomicilioNuevo ? undefined : titularPuntoRecogidaId,
           puntos_recogida: titularDomicilioNuevo
-            ? [{ ...titularDomicilioNuevo, es_predeterminado: true }]
+            ? [{ ...normalizarDomicilioInline(titularDomicilioNuevo), es_predeterminado: true }]
             : undefined,
         },
         ...pasajeros.map((p) => armarPayloadPasajero(p)),

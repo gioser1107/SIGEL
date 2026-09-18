@@ -75,6 +75,7 @@ export interface DatosCotizacionNueva {
   valida_hasta?: string | null;
   estado?: EstadoCotizacion;
   modalidad?: string;
+  lineas?: DatosLineaCotizacionNueva[];
 }
 
 export interface DatosLineaCotizacionNueva {

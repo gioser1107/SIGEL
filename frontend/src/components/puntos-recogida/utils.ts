@@ -1,5 +1,9 @@
-import type { PuntoRecogidaInline, PuntosRecogidaDraft } from '../../types/puntoRecogida';
-import type { PuntoRecogida } from '../../types/puntoRecogida';
+import type {
+  DomicilioRecogidaDTO,
+  PuntoRecogida,
+  PuntoRecogidaInline,
+  PuntosRecogidaDraft,
+} from '../../types/puntoRecogida';
 import type { ValoresFormularioPuntoRecogida } from './FormularioPuntoRecogidaCampos';
 
 export function etiquetaPunto(p: Pick<PuntoRecogida, 'nombre' | 'ciudad' | 'estado'>): string {
@@ -44,7 +48,7 @@ export function valoresADomicilioDTO(
   estadoNombre: string | undefined,
   ciudadNombre: string | undefined,
   es_predeterminado?: boolean,
-): PuntoRecogidaInline {
+): DomicilioRecogidaDTO {
   return {
     nombre: valores.nombre.trim(),
     direccion: valores.direccion.trim(),
@@ -52,6 +56,17 @@ export function valoresADomicilioDTO(
     estado: estadoNombre ?? '',
     notas_referencia: valores.notas.trim(),
     es_predeterminado,
+  };
+}
+
+export function normalizarDomicilioInline(punto: PuntoRecogidaInline): PuntoRecogidaInline {
+  return {
+    nombre: punto.nombre,
+    direccion: punto.direccion,
+    ciudad: punto.ciudad,
+    estado: punto.estado,
+    notas_referencia: punto.notas_referencia ?? punto.referencia ?? '',
+    es_predeterminado: punto.es_predeterminado,
   };
 }
 

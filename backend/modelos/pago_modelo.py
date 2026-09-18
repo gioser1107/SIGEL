@@ -20,6 +20,8 @@ from modelos.reserva_cliente_modelo import ReservaCliente
 from modelos.reservas_modelo import Reserva
 from modelos.tasa_modelo import (
     Tasa,
+    asegurar_tasa_eur_del_dia,
+    obtener_tasa_eur_del_dia,
     obtener_tasa_eur_del_dia_o_error,
     obtener_tasa_eur_reciente,
     obtener_tasa_moneda_en_o_antes,
@@ -183,13 +185,13 @@ def calcular_monto_en_moneda_desde_eur(
 
 def obtener_resumen_pago_portal(db: Session, reserva: Reserva) -> dict:
     resumen = calcular_resumen_pagos_reserva(db, reserva)
-    tasa_dia = obtener_tasa_eur_del_dia_o_error(db)
+    tasa_dia = asegurar_tasa_eur_del_dia(db)
     catalogo = obtener_catalogo_pagos(db)
 
     cotizaciones = []
     saldo_eur = resumen["saldo_pendiente_eur"]
     monto_sugerido_eur = resumen.get("monto_sugerido_eur", 0)
-    if saldo_eur > 0:
+    if tasa_dia and saldo_eur > 0:
         montos_a_cotizar = {saldo_eur}
         if monto_sugerido_eur > 0 and monto_sugerido_eur < saldo_eur - TOLERANCIA_EUR:
             montos_a_cotizar.add(monto_sugerido_eur)
@@ -773,7 +775,11 @@ def obtener_catalogo_pagos(db: Session) -> dict:
         .all()
     )
 
-    tasa_eur_dia = obtener_tasa_eur_del_dia_o_error(db)
+    tasa_eur_dia = obtener_tasa_eur_del_dia(db)
+    tasa_reciente_par = obtener_tasa_eur_reciente(db)
+    tasa_reciente = (
+        tasa_a_dict(tasa_reciente_par[0], tasa_reciente_par[1]) if tasa_reciente_par else None
+    )
 
     lista_tasas = []
     for tasa in tasas:
@@ -786,7 +792,7 @@ def obtener_catalogo_pagos(db: Session) -> dict:
         "metodos_pago": lista_metodos,
         "bancos": [banco_a_dict(b) for b in bancos],
         "puntos_venta": [punto_venta_a_dict(p) for p in puntos],
-        "tasa_eur_reciente": tasa_eur_dia["tasa"],
+        "tasa_eur_reciente": (tasa_eur_dia["tasa"] if tasa_eur_dia else tasa_reciente),
         "tasa_eur_del_dia": tasa_eur_dia,
         "tasas": lista_tasas,
     }

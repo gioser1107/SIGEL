@@ -208,9 +208,11 @@ export function usePlanificacion() {
     setErrorForm(null);
     try {
       if (drawerModo === 'crear') {
-        await crearViaje({ ...payload, estado: 'planificado' });
+        const { estado: _estadoOmitido, ...alta } = payload;
+        await crearViaje(alta);
       } else if (viajeActivo) {
-        await actualizarViaje(viajeActivo.id, payload);
+        const { estado: _estadoOmitido, ...cambios } = payload;
+        await actualizarViaje(viajeActivo.id, cambios);
       }
       await cargarViajes();
       if (drawerModo === 'crear') cerrarDrawer();

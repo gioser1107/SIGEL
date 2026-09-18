@@ -42,6 +42,18 @@ export async function crearCotizacion(
   );
 }
 
+export async function aceptarCotizacion(
+  id: number,
+): Promise<{ mensaje: string; cotizacion: Cotizacion }> {
+  return apiMutacion(() =>
+    apiRequest<{ mensaje: string; cotizacion: Cotizacion }>(`/cotizaciones/${id}/aceptar`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+      requiresAuth: true,
+    }),
+  );
+}
+
 export async function actualizarCotizacion(
   id: number,
   datos: Partial<DatosCotizacionNueva>,

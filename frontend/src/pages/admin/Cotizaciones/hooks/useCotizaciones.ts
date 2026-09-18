@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom';
 import { useVistaModuloResponsive } from '../../../../hooks/useVistaModuloResponsive';
 import { usePaginacionListado } from '../../../../hooks/usePaginacionListado';
 import {
+  aceptarCotizacion,
   actualizarCotizacion,
   crearCotizacion,
   crearLineaCotizacion,
@@ -18,13 +19,13 @@ import type {
   Cotizacion,
   CotizacionLinea,
   DatosCotizacionNueva,
-  EstadoCotizacion,
 } from '../../../../types/cotizacion';
 import type { FiltroListado } from '../../../../types/paginacion';
 import type { OpcionSelectBuscador } from '../../../../components/admin';
 import { FORM_VACIO, LINEA_FORM_VACIO } from '../constants';
 import { validarFormularioCotizacion, validarLineaCotizacion } from '../../../../utils/validacionesFormulario';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
+import { importeDesdeCantidadYPrecio } from '../utils/formatearCotizacion';
 
 export function useCotizaciones() {
   const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([]);
@@ -159,6 +160,7 @@ export function useCotizaciones() {
     setLineas([]);
     setCotizacionActiva(null);
     setForm(FORM_VACIO);
+    setLineaForm(LINEA_FORM_VACIO);
     setErrorForm(null);
     setDrawerAbierto(true);
   };
@@ -173,7 +175,6 @@ export function useCotizaciones() {
       requisitos: cot.requisitos ?? '',
       precio_cotizado_eur: cot.precio_cotizado_eur,
       valida_hasta: cot.valida_hasta,
-      estado: cot.estado,
       modalidad: cot.modalidad ?? 'individual',
     });
     setErrorForm(null);
@@ -186,6 +187,7 @@ export function useCotizaciones() {
     setCotizacionActiva(null);
     setLineas([]);
     setDrawerTab('info');
+    setLineaForm(LINEA_FORM_VACIO);
     setErrorForm(null);
   };
 
@@ -195,17 +197,31 @@ export function useCotizaciones() {
       setErrorForm(errorValidacion);
       return;
     }
+    if (drawerModo === 'crear' && lineas.length === 0) {
+      setErrorForm('Agrega al menos un ítem a la cotización.');
+      return;
+    }
     setGuardando(true);
     setErrorForm(null);
     try {
       if (drawerModo === 'crear') {
-        await crearCotizacion(form);
+        await crearCotizacion({
+          cliente_id: form.cliente_id,
+          destino_id: form.destino_id,
+          requisitos: form.requisitos,
+          valida_hasta: form.valida_hasta,
+          modalidad: form.modalidad,
+          lineas: lineas.map((l) => ({
+            concepto: l.concepto,
+            cantidad: l.cantidad,
+            unidad: l.unidad,
+            precio_unitario_eur: l.precio_unitario_eur,
+          })),
+        });
       } else if (cotizacionActiva) {
         await actualizarCotizacion(cotizacionActiva.id, {
           requisitos: form.requisitos,
-          precio_cotizado_eur: form.precio_cotizado_eur,
           valida_hasta: form.valida_hasta,
-          estado: form.estado,
           modalidad: form.modalidad,
         });
       }
@@ -219,13 +235,38 @@ export function useCotizaciones() {
   };
 
   const agregarLinea = async () => {
-    if (!cotizacionActiva) return;
     const errorLinea = validarLineaCotizacion(lineaForm);
     if (errorLinea) {
       setErrorForm(errorLinea);
       return;
     }
     setErrorForm(null);
+
+    if (drawerModo === 'crear') {
+      const cantidad = Number(lineaForm.cantidad);
+      const precio = Number(lineaForm.precio_unitario_eur);
+      const monto = importeDesdeCantidadYPrecio(cantidad, precio);
+      setLineas((prev) => [
+        ...prev,
+        {
+          id: Date.now() + prev.length,
+          cotizacion_id: 0,
+          concepto: lineaForm.concepto.trim(),
+          cantidad,
+          unidad: lineaForm.unidad,
+          precio_unitario_eur: precio,
+          monto_eur: monto,
+        },
+      ]);
+      setForm((f) => ({
+        ...f,
+        precio_cotizado_eur: (f.precio_cotizado_eur ?? 0) + monto,
+      }));
+      setLineaForm(LINEA_FORM_VACIO);
+      return;
+    }
+
+    if (!cotizacionActiva) return;
     try {
       const res = await crearLineaCotizacion(cotizacionActiva.id, {
         concepto: lineaForm.concepto.trim(),
@@ -236,7 +277,13 @@ export function useCotizaciones() {
       setLineas((prev) => [...prev, res.linea]);
       setForm((f) => ({ ...f, precio_cotizado_eur: res.cotizacion.precio_cotizado_eur }));
       setCotizacionActiva((prev) =>
-        prev ? { ...prev, precio_cotizado_eur: res.cotizacion.precio_cotizado_eur } : prev,
+        prev
+          ? {
+              ...prev,
+              precio_cotizado_eur: res.cotizacion.precio_cotizado_eur,
+              estado: res.cotizacion.estado,
+            }
+          : prev,
       );
       setLineaForm(LINEA_FORM_VACIO);
       await cargarCotizaciones();
@@ -246,27 +293,51 @@ export function useCotizaciones() {
   };
 
   const quitarLinea = async (lineaId: number) => {
+    if (drawerModo === 'crear') {
+      const linea = lineas.find((l) => l.id === lineaId);
+      setLineas((prev) => prev.filter((l) => l.id !== lineaId));
+      if (linea) {
+        setForm((f) => ({
+          ...f,
+          precio_cotizado_eur: Math.max(0, (f.precio_cotizado_eur ?? 0) - linea.monto_eur),
+        }));
+      }
+      return;
+    }
     if (!cotizacionActiva) return;
     try {
       const res = await eliminarLineaCotizacion(cotizacionActiva.id, lineaId);
       setLineas((prev) => prev.filter((l) => l.id !== lineaId));
       setForm((f) => ({ ...f, precio_cotizado_eur: res.cotizacion.precio_cotizado_eur }));
+      setCotizacionActiva((prev) =>
+        prev
+          ? {
+              ...prev,
+              precio_cotizado_eur: res.cotizacion.precio_cotizado_eur,
+              estado: res.cotizacion.estado,
+            }
+          : prev,
+      );
       await cargarCotizaciones();
     } catch (e) {
       setErrorForm(e instanceof Error ? e.message : 'Error al eliminar línea');
     }
   };
 
-  const cambiarEstado = async (cot: Cotizacion, nuevoEstado: EstadoCotizacion) => {
+  const convertirAReserva = async () => {
+    if (!cotizacionActiva) return;
+    setErrorForm(null);
     try {
-      await actualizarCotizacion(cot.id, { estado: nuevoEstado });
-      await cargarCotizaciones();
-      if (cotizacionActiva?.id === cot.id) {
-        setCotizacionActiva((prev) => (prev ? { ...prev, estado: nuevoEstado } : prev));
-        setForm((f) => ({ ...f, estado: nuevoEstado }));
+      if (cotizacionActiva.estado === 'pendiente') {
+        const res = await aceptarCotizacion(cotizacionActiva.id);
+        setCotizacionActiva((prev) =>
+          prev ? { ...prev, estado: res.cotizacion.estado } : prev,
+        );
+        await cargarCotizaciones();
       }
+      setConvertirAbierto(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error al cambiar estado');
+      setErrorForm(e instanceof Error ? e.message : 'Error al convertir cotización');
     }
   };
 
@@ -396,7 +467,7 @@ export function useCotizaciones() {
     guardar,
     agregarLinea,
     quitarLinea,
-    cambiarEstado,
+    convertirAReserva,
     confirmarRechazar,
     ejecutarRechazar,
     cancelarRechazar,

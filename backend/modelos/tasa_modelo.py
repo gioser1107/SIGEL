@@ -137,13 +137,25 @@ def listar_tasas(
     return respuesta_paginada(items, total, pagina, limite)
 
 
+def asegurar_tasa_eur_del_dia(db: Session) -> dict | None:
+    """Tasa EUR de hoy. Si falta, intenta traerla del BCV una vez."""
+    resultado = obtener_tasa_eur_del_dia(db)
+    if resultado is not None:
+        return resultado
+    try:
+        sincronizar_tasas_bcv(db, solo_si_falta=True, fecha_efectiva=fecha_operativa_hoy())
+    except HTTPException:
+        pass
+    return obtener_tasa_eur_del_dia(db)
+
+
 def obtener_tasa_eur_del_dia_o_error(db: Session) -> dict:
     hoy = fecha_operativa_hoy()
     moneda_eur = buscar_moneda_por_codigo(db, "EUR")
     if not moneda_eur:
         raise HTTPException(status_code=503, detail="Moneda EUR no configurada en el sistema")
 
-    resultado = obtener_tasa_eur_del_dia(db)
+    resultado = asegurar_tasa_eur_del_dia(db)
     if resultado is None:
         raise HTTPException(
             status_code=503,

@@ -283,7 +283,7 @@ def crear_viaje_endpoint(
         usuario_id=usuario_actual["id"],
         tabla_afectada="viajes",
         registro_id=nuevo_viaje.id,
-        detalle={"destino_id": datos.destino_id, "estado": datos.estado},
+        detalle={"destino_id": datos.destino_id, "estado": nuevo_viaje.estado},
         ip_origen=obtener_ip_origen(request),
     )
 

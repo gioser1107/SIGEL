@@ -144,7 +144,7 @@ const PuntosRecogidaEditor = forwardRef<PuntosRecogidaEditorHandle, PuntosRecogi
     setForm({
       nombre: p.nombre,
       direccion: p.direccion,
-      notas: p.notas_referencia,
+      notas: p.notas_referencia ?? p.referencia ?? '',
     });
     setFormAbierto(true);
     await ubicacion.initDesdeNombres(p.estado, p.ciudad);

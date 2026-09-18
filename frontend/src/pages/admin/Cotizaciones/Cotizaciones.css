@@ -166,6 +166,16 @@
   border-color: var(--color-primary);
 }
 
+.cot-nueva__seccion-items {
+  margin-top: var(--spacing-lg);
+}
+.cot-nueva__seccion-titulo {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm);
+}
+
 .cot-desglose__tabla {
   width: 100%;
   border-collapse: collapse;

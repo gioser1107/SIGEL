@@ -18,6 +18,7 @@ from modelos.cotizacion_linea_modelo import (
     resumen_lineas_cotizacion,
 )
 from modelos.cotizacion_modelo import (
+    aceptar_cotizacion,
     actualizar_cotizacion,
     cotizacion_a_dict,
     crear_cotizacion,
@@ -35,24 +36,6 @@ from modelos.permiso_modelo import (
 router = APIRouter(prefix="/cotizaciones", tags=["Cotizaciones"])
 
 
-class DatosCotizacionCrear(BaseModel):
-    cliente_id: int | None = None
-    destino_id: int
-    requisitos: str | None = None
-    precio_cotizado_eur: Decimal | None = None
-    valida_hasta: datetime | None = None
-    estado: str = "solicitada"
-    modalidad: str | None = None
-
-
-class DatosCotizacionActualizar(BaseModel):
-    requisitos: str | None = None
-    precio_cotizado_eur: Decimal | None = Field(default=None, ge=0)
-    valida_hasta: datetime | None = None
-    estado: str | None = None
-    modalidad: str | None = None
-
-
 class DatosLineaCrear(BaseModel):
     concepto: str
     cantidad: Decimal = Field(default=Decimal("1"), gt=0)
@@ -65,6 +48,25 @@ class DatosLineaActualizar(BaseModel):
     cantidad: Decimal | None = Field(default=None, gt=0)
     unidad: str | None = None
     precio_unitario_eur: Decimal | None = Field(default=None, gt=0)
+
+
+class DatosCotizacionCrear(BaseModel):
+    cliente_id: int | None = None
+    destino_id: int
+    requisitos: str | None = None
+    precio_cotizado_eur: Decimal | None = None
+    valida_hasta: datetime | None = None
+    estado: str | None = None
+    modalidad: str | None = None
+    lineas: list[DatosLineaCrear] = Field(default_factory=list)
+
+
+class DatosCotizacionActualizar(BaseModel):
+    requisitos: str | None = None
+    precio_cotizado_eur: Decimal | None = Field(default=None, ge=0)
+    valida_hasta: datetime | None = None
+    estado: str | None = None
+    modalidad: str | None = None
 
 
 @router.get("")
@@ -115,8 +117,9 @@ def crear_cotizacion_endpoint(
         requisitos=datos.requisitos,
         precio_cotizado_eur=datos.precio_cotizado_eur,
         valida_hasta=datos.valida_hasta,
-        estado=datos.estado,
+        estado=datos.estado or "solicitada",
         modalidad=datos.modalidad,
+        lineas=[linea.model_dump() for linea in datos.lineas],
     )
 
     registrar_evento(
@@ -201,6 +204,33 @@ def eliminar_cotizacion_endpoint(
     return {
         "mensaje": "Cotización cancelada con éxito",
         "cotizacion_id": cotizacion_id,
+    }
+
+
+@router.post("/{cotizacion_id}/aceptar")
+def aceptar_cotizacion_endpoint(
+    cotizacion_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_COTIZACIONES)),
+):
+    cotizacion = aceptar_cotizacion(db, cotizacion_id, usuario_actual)
+
+    registrar_evento(
+        db,
+        modulo="cotizaciones",
+        accion="UPDATE",
+        resumen=f"Cotización aceptada para convertir en reserva (id {cotizacion_id})",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="cotizaciones",
+        registro_id=cotizacion_id,
+        detalle={"estado": cotizacion.estado},
+        ip_origen=obtener_ip_origen(request),
+    )
+
+    return {
+        "mensaje": "Cotización aceptada con éxito",
+        "cotizacion": cotizacion_a_dict(db, cotizacion),
     }
 
 

@@ -2,7 +2,7 @@ import { EtiquetaEstado, resolverVariante } from '../../../../../components/admi
 import type { DatosViajeNuevo, Viaje } from '../../../../../types/viaje';
 import { formatearEuro } from '../../../../../utils/formatoMoneda';
 import CampoGuiasViaje from '../../components/CampoGuiasViaje';
-import { ESTADOS_VIAJE, ETIQUETA_ESTADO } from '../../constants';
+import { ETIQUETA_ESTADO } from '../../constants';
 import { formatearFecha } from '../../utils/formatearViaje';
 import { etiquetaGuiasViaje } from '../../utils/planificacionGuias';
 
@@ -74,12 +74,6 @@ export default function TabInfoViaje({
         )}
       </div>
 
-      <p className="drawer-form__intro">
-        Cambia fechas, estado o guías. El destino y la unidad se asignan al crear el viaje.
-        Al vencer la fecha de regreso (o la de salida si no hay regreso), el estado pasa solo
-        a Finalizado si estaba en Planificado o En curso. Cancelado no se cambia automático.
-      </p>
-
       <CampoGuiasViaje
         guiasIds={form.guias_ids ?? []}
         guiaPrincipalId={form.guia_principal_id ?? null}
@@ -114,21 +108,6 @@ export default function TabInfoViaje({
               onChange={(e) => actualizarCampo('fecha_regreso', e.target.value || null)}
             />
         </div>
-      </div>
-
-      <div className="drawer-form__campo">
-        <label className="drawer-form__label">Estado</label>
-        <select
-          className="drawer-form__input"
-          value={form.estado}
-          onChange={(e) => actualizarCampo('estado', e.target.value)}
-        >
-          {ESTADOS_VIAJE.map((s) => (
-            <option key={s} value={s}>
-              {ETIQUETA_ESTADO[s] ?? s}
-            </option>
-          ))}
-        </select>
       </div>
     </div>
   );

@@ -295,7 +295,11 @@ def asignar_puntos_a_cliente(
                 direccion=getattr(punto_datos, "direccion", "") or "",
                 ciudad=getattr(punto_datos, "ciudad", "") or "",
                 estado=getattr(punto_datos, "estado", "") or "",
-                notas_referencia=getattr(punto_datos, "notas_referencia", "") or "",
+                notas_referencia=(
+                    getattr(punto_datos, "notas_referencia", None)
+                    or getattr(punto_datos, "referencia", None)
+                    or ""
+                ),
                 creado_por_usuario_id=creado_por_usuario_id,
             )
             _vincular_punto_a_cliente(

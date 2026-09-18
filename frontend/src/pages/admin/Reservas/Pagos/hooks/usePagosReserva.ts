@@ -46,7 +46,7 @@ export default function usePagosReserva({
         obtenerResumenPagos(reservaId),
         listarPagosReserva(reservaId, { pagina: 1, limite: 200 }),
         obtenerTasaDelDia().catch((err) => {
-          if (err instanceof ErrorApi && err.status === 404) return null;
+          if (err instanceof ErrorApi && (err.status === 404 || err.status === 503)) return null;
           throw err;
         }),
       ]);

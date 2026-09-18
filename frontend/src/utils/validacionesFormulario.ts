@@ -165,7 +165,6 @@ export function validarFormularioViaje(form: {
 export function validarFormularioCotizacion(form: {
   cliente_id?: number;
   destino_id?: number;
-  precio_cotizado_eur?: number | null;
   valida_hasta?: string | null;
   requisitos?: string | null;
 }): string | null {
@@ -174,12 +173,6 @@ export function validarFormularioCotizacion(form: {
   if (!form.valida_hasta) return 'Indica hasta cuándo es válida la cotización.';
   const requisitos = (form.requisitos ?? '').trim();
   if (!requisitos) return 'Los requisitos de la cotización son obligatorios.';
-
-  if (form.precio_cotizado_eur != null && form.precio_cotizado_eur !== 0) {
-    if (!esMontoEurValido(form.precio_cotizado_eur)) {
-      return 'El precio cotizado debe ser un monto positivo válido.';
-    }
-  }
 
   if (form.valida_hasta) {
     const hasta = new Date(form.valida_hasta);

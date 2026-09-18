@@ -246,7 +246,6 @@ export default function MisSolicitudes() {
       await crearCotizacion({
         destino_id: Number(destinoId),
         requisitos: requisitos.trim(),
-        estado: 'solicitada',
         modalidad,
       });
       await cargarDatos();

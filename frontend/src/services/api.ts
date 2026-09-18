@@ -84,12 +84,38 @@ function extraerMensajeError(error: Record<string, unknown>, status: number): st
     textoError(error.detail) ??
     textoError(error.mensaje) ??
     textoError(error.message);
-  if (mensaje) return mensaje;
+  if (mensaje) return mensajeAmigableValidacion(mensaje, error);
   if (status === 403) return 'No tienes permiso para realizar esta acción.';
   if (status === 401) return 'Sesión inválida o expirada.';
   if (status === 409) return 'El registro ya fue tomado. Actualiza e intenta de nuevo.';
   if (status === 503) return 'El servicio no está disponible. Intenta de nuevo en unos segundos.';
   return `Error del servidor (${status})`;
+}
+
+const ETIQUETAS_CAMPO: Record<string, string> = {
+  notas_referencia: 'La referencia del domicilio',
+  referencia: 'La referencia',
+};
+
+function mensajeAmigableValidacion(mensaje: string, error: Record<string, unknown>): string {
+  const normalizado = mensaje.trim();
+  if (/^notas_referencia:\s*es obligatorio$/i.test(normalizado)) {
+    return 'Confirma la dirección de recogida en el paso Pasajeros. La referencia (portón, timbre) es opcional.';
+  }
+  const detalle = error.detail ?? error.detalle;
+  if (Array.isArray(detalle) && detalle[0] && typeof detalle[0] === 'object') {
+    const item = detalle[0] as { loc?: unknown; type?: string; msg?: string };
+    const loc = Array.isArray(item.loc) ? item.loc : [];
+    const campo = String(loc[loc.length - 1] ?? '');
+    if (campo === 'notas_referencia' && (item.type === 'missing' || /field required/i.test(item.msg ?? ''))) {
+      return 'Confirma la dirección de recogida en el paso Pasajeros. La referencia (portón, timbre) es opcional.';
+    }
+    if (item.type === 'missing' || /field required/i.test(item.msg ?? '')) {
+      const etiqueta = ETIQUETAS_CAMPO[campo] ?? campo.replace(/_/g, ' ');
+      return `${etiqueta} es obligatorio.`;
+    }
+  }
+  return normalizado;
 }
 
 export async function apiRequest<T>(

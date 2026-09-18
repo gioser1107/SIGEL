@@ -82,6 +82,18 @@ async def lifespan(_app: FastAPI):
     finally:
         db_viajes.close()
 
+    db_cotizaciones = SessionLocal()
+    try:
+        from modelos.cotizacion_modelo import sincronizar_cotizaciones_vencidas
+
+        vencidas = sincronizar_cotizaciones_vencidas(db_cotizaciones)
+        if vencidas:
+            logger.info("Cotizaciones pasadas a vencida por vigencia: %s", vencidas)
+    except Exception as error:
+        logger.warning("No se pudieron vencer cotizaciones: %s", error)
+    finally:
+        db_cotizaciones.close()
+
     db_plazos = SessionLocal()
     try:
         from utilidades.plazo_pago import liberar_cupos_plazo_vencido

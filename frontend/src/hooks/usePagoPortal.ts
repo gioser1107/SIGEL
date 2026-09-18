@@ -42,7 +42,8 @@ export function usePagoPortal(reservaId: number | null) {
   }, [reservaId, recargar]);
 
   const tasaId = resumenPortal?.tasa_eur?.tasa?.id ?? null;
-  const sinTasa = !tasaId;
+  const errorEsFaltaTasa = Boolean(error && /tasa/i.test(error));
+  const sinTasa = (resumenPortal != null && !tasaId) || errorEsFaltaTasa;
 
   const cotizarMontoEur = useCallback(
     async (montoEur: number, codigoMetodo: MetodoPagoPortalCodigo) => {

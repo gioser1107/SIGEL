@@ -19,7 +19,8 @@ export interface PuntoRecogidaInline {
   direccion: string;
   ciudad: string;
   estado: string;
-  notas_referencia: string;
+  notas_referencia?: string;
+  referencia?: string | null;
   es_predeterminado?: boolean;
 }
 

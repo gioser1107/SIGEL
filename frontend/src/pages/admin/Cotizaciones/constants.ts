@@ -32,7 +32,6 @@ export const FORM_VACIO: DatosCotizacionNueva = {
   requisitos: '',
   precio_cotizado_eur: null,
   valida_hasta: null,
-  estado: 'solicitada',
   modalidad: 'individual',
 };
 

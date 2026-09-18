@@ -685,14 +685,14 @@ def crear_reserva(
         )
 
     _exigir_cupo_disponible(db, viaje, 1)
-    estado_limpio = ValidadorEntrada.estado_reserva(estado)
+    _ = estado
 
     ahora = datetime.now()
     nueva_reserva = Reserva(
         cliente_id=cliente_id,
         viaje_id=viaje_id,
         fecha_reserva=ahora,
-        estado=estado_limpio,
+        estado="pendiente",
         modalidad=normalizar_modalidad(modalidad),
         tipo_hospedaje=normalizar_hospedaje(tipo_hospedaje),
         creado_por=usuario_id,
@@ -710,8 +710,7 @@ def actualizar_reserva(
     tipo_hospedaje: Optional[str] = None,
 ) -> Reserva:
     reserva = obtener_reserva_activa(db, reserva_id)
-    if estado:
-        reserva.estado = ValidadorEntrada.estado_reserva(estado)
+    _ = estado
     if modalidad is not None:
         reserva.modalidad = normalizar_modalidad(modalidad)
     if tipo_hospedaje is not None:

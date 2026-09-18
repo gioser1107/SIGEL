@@ -38,7 +38,8 @@ class DatosPuntoRecogidaInline(BaseModel):
     direccion: str
     ciudad: str
     estado: str
-    notas_referencia: str
+    notas_referencia: str | None = ""
+    referencia: str | None = None
     es_predeterminado: bool = False
 
 
@@ -306,10 +307,10 @@ def agregar_punto_recogida_cliente(
         )
     if not datos.nombre:
         raise HTTPException(status_code=422, detail="El nombre del domicilio es requerido")
-    if not all([datos.direccion, datos.ciudad, datos.estado, datos.notas_referencia]):
+    if not all([datos.direccion, datos.ciudad, datos.estado]):
         raise HTTPException(
             status_code=422,
-            detail="Se requiere nombre, direccion, ciudad, estado y referencia del domicilio",
+            detail="Se requiere nombre, direccion, ciudad y estado del domicilio",
         )
     punto = crear_punto_para_cliente(
         db,
@@ -318,7 +319,7 @@ def agregar_punto_recogida_cliente(
         direccion=datos.direccion,
         ciudad=datos.ciudad,
         estado=datos.estado,
-        notas_referencia=datos.notas_referencia,
+        notas_referencia=datos.notas_referencia or "",
         es_predeterminado=datos.es_predeterminado,
         creado_por_usuario_id=usuario_actual["id"],
     )

@@ -5,7 +5,6 @@ import type {
   Cotizacion,
   CotizacionLinea,
   DatosCotizacionNueva,
-  EstadoCotizacion,
 } from '../../../../types/cotizacion';
 import { etiquetaEstado, SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { type LineaFormCotizacion } from '../constants';
@@ -30,7 +29,6 @@ interface PropsPanelEditar {
   onLineaFormChange: (form: LineaFormCotizacion) => void;
   onAgregarLinea: () => void;
   onQuitarLinea: (lineaId: number) => void;
-  onCambiarEstado: (cot: Cotizacion, estado: EstadoCotizacion) => void;
   onRechazar: (cot: Cotizacion) => void;
   onConvertir: () => void;
   onImprimir: () => void | Promise<void>;
@@ -54,7 +52,6 @@ export default function PanelEditarCotizacion({
   onLineaFormChange,
   onAgregarLinea,
   onQuitarLinea,
-  onCambiarEstado,
   onRechazar,
   onConvertir,
   onImprimir,
@@ -63,6 +60,7 @@ export default function PanelEditarCotizacion({
   if (!cotizacion) return null;
 
   const bloqueada = esBloqueada(cotizacion.estado);
+  const sePuedeConvertir = cotizacion.estado === 'pendiente' || cotizacion.estado === 'aceptada';
 
   return (
     <PanelDeslizable
@@ -70,6 +68,7 @@ export default function PanelEditarCotizacion({
       onCerrar={onCerrar}
       titulo={textoVisible(cotizacion.destino_nombre, 'Editar cotización')}
       subtitulo={`${textoVisible(cotizacion.cliente_nombre, SIN_DATO.cliente)} · ${etiquetaEstado(cotizacion.estado)}`}
+      ancho="lg"
       pie={
         <>
           <div className="cot-drawer__pie-imprimir">
@@ -91,10 +90,6 @@ export default function PanelEditarCotizacion({
       }
     >
       <div className="drawer-form">
-        <p className="drawer-form__intro">
-          Presupuesto comercial para un cliente o empresa. El detalle se arma como una factura:
-          concepto, cantidad y precio unitario.
-        </p>
         {errorForm && (
           <div className="drawer-form__error" role="alert">
             {errorForm}
@@ -124,27 +119,24 @@ export default function PanelEditarCotizacion({
           <TabInfoCotizacion
             cotizacion={cotizacion}
             form={form}
-            lineasCount={lineas.length}
             onFormChange={onFormChange}
-            onCambiarEstado={onCambiarEstado}
             onRechazar={onRechazar}
           />
         )}
 
         {drawerTab === 'desglose' && (
           <TabDesgloseCotizacion
-            cotizacion={cotizacion}
-            form={form}
             lineas={lineas}
             lineaForm={lineaForm}
             cargando={cargandoLineas}
+            bloqueada={bloqueada}
             onLineaFormChange={onLineaFormChange}
             onAgregarLinea={onAgregarLinea}
             onQuitarLinea={onQuitarLinea}
           />
         )}
 
-        {cotizacion.estado === 'aceptada' && (
+        {sePuedeConvertir && (
           <button type="button" className="cot-drawer__convertir" onClick={onConvertir}>
             <div className="cot-drawer__convertir-info">
               <svg

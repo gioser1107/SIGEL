@@ -1,12 +1,15 @@
 import { PanelDeslizable, SelectBuscador } from '../../../../components/admin';
 import type { OpcionSelectBuscador } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
-import type { DatosCotizacionNueva, EstadoCotizacion } from '../../../../types/cotizacion';
-import { ETIQUETA_ESTADO, ESTADOS_COTIZACION } from '../constants';
+import type { CotizacionLinea, DatosCotizacionNueva } from '../../../../types/cotizacion';
+import { type LineaFormCotizacion } from '../constants';
+import TabDesgloseCotizacion from '../EditarCotizacion/components/TabDesgloseCotizacion';
 
 interface PropsPanelNueva {
   abierto: boolean;
   form: DatosCotizacionNueva;
+  lineas: CotizacionLinea[];
+  lineaForm: LineaFormCotizacion;
   guardando: boolean;
   errorForm: string | null;
   clientesOpciones: OpcionSelectBuscador[];
@@ -16,11 +19,16 @@ interface PropsPanelNueva {
   onCerrar: () => void;
   onGuardar: () => void;
   onFormChange: (form: DatosCotizacionNueva) => void;
+  onLineaFormChange: (form: LineaFormCotizacion) => void;
+  onAgregarLinea: () => void;
+  onQuitarLinea: (lineaId: number) => void;
 }
 
 export default function PanelNuevaCotizacion({
   abierto,
   form,
+  lineas,
+  lineaForm,
   guardando,
   errorForm,
   clientesOpciones,
@@ -30,6 +38,9 @@ export default function PanelNuevaCotizacion({
   onCerrar,
   onGuardar,
   onFormChange,
+  onLineaFormChange,
+  onAgregarLinea,
+  onQuitarLinea,
 }: PropsPanelNueva) {
   const actualizarCampo = <K extends keyof DatosCotizacionNueva>(
     campo: K,
@@ -43,6 +54,7 @@ export default function PanelNuevaCotizacion({
       abierto={abierto}
       onCerrar={onCerrar}
       titulo="Nueva cotización"
+      ancho="lg"
       pie={
         <>
           <Boton variante="secundario" tamano="sm" onClick={onCerrar} disabled={guardando}>
@@ -55,10 +67,6 @@ export default function PanelNuevaCotizacion({
       }
     >
       <div className="drawer-form">
-        <p className="drawer-form__intro">
-          Crea la cotización con cliente, destino y vigencia. Después podrás cargar los ítems como
-          en una factura (cantidad × precio unitario).
-        </p>
         {errorForm && (
           <div className="drawer-form__error" role="alert">
             {errorForm}
@@ -109,23 +117,6 @@ export default function PanelNuevaCotizacion({
 
         <div className="drawer-form__fila-2">
           <div className="drawer-form__campo">
-            <label className="drawer-form__label">Precio total (EUR)</label>
-            <input
-              className="drawer-form__input"
-              type="number"
-              min={0}
-              step={0.01}
-              value={form.precio_cotizado_eur ?? ''}
-              onChange={(e) =>
-                actualizarCampo(
-                  'precio_cotizado_eur',
-                  e.target.value ? Number(e.target.value) : null,
-                )
-              }
-              placeholder="0.00"
-            />
-          </div>
-          <div className="drawer-form__campo">
             <label className="drawer-form__label">
               Válida hasta <span className="drawer-form__req">*</span>
             </label>
@@ -136,34 +127,29 @@ export default function PanelNuevaCotizacion({
               onChange={(e) => actualizarCampo('valida_hasta', e.target.value || null)}
             />
           </div>
+          <div className="drawer-form__campo">
+            <label className="drawer-form__label">Modalidad</label>
+            <select
+              className="drawer-form__input"
+              value={form.modalidad ?? 'individual'}
+              onChange={(e) => actualizarCampo('modalidad', e.target.value)}
+            >
+              <option value="individual">Individual</option>
+              <option value="grupo">Grupo</option>
+              <option value="propio">Propio</option>
+            </select>
+          </div>
         </div>
 
-        <div className="drawer-form__campo">
-          <label className="drawer-form__label">Modalidad</label>
-          <select
-            className="drawer-form__input"
-            value={form.modalidad ?? 'individual'}
-            onChange={(e) => actualizarCampo('modalidad', e.target.value)}
-          >
-            <option value="individual">Individual</option>
-            <option value="grupo">Grupo</option>
-            <option value="propio">Propio</option>
-          </select>
-        </div>
-
-        <div className="drawer-form__campo">
-          <label className="drawer-form__label">Estado</label>
-          <select
-            className="drawer-form__input"
-            value={form.estado}
-            onChange={(e) => actualizarCampo('estado', e.target.value as EstadoCotizacion)}
-          >
-            {ESTADOS_COTIZACION.map((s) => (
-              <option key={s} value={s}>
-                {ETIQUETA_ESTADO[s] ?? s}
-              </option>
-            ))}
-          </select>
+        <div className="cot-nueva__seccion-items">
+          <p className="cot-nueva__seccion-titulo">Ítems</p>
+          <TabDesgloseCotizacion
+            lineas={lineas}
+            lineaForm={lineaForm}
+            onLineaFormChange={onLineaFormChange}
+            onAgregarLinea={onAgregarLinea}
+            onQuitarLinea={onQuitarLinea}
+          />
         </div>
       </div>
     </PanelDeslizable>
