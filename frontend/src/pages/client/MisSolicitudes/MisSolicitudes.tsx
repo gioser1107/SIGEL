@@ -376,11 +376,10 @@ export default function MisSolicitudes() {
                   id="cot-modalidad"
                   className="modal-cotizacion__select"
                   value={modalidad}
-                  onChange={(e) => setModalidad(e.target.value as 'individual' | 'grupo' | 'propio')}
+                  onChange={(e) => setModalidad(e.target.value as 'individual' | 'grupo')}
                 >
                   <option value="individual">Individual</option>
                   <option value="grupo">Grupo</option>
-                  <option value="propio">Propio</option>
                 </select>
               </div>
 

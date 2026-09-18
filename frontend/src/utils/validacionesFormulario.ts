@@ -97,6 +97,7 @@ export function validarFormularioDestino(form: {
   nombre: string;
   descripcion?: string | null;
   precio_base_eur: number;
+  extra_hospedaje_particular_eur?: number;
 }): string | null {
   const nombre = form.nombre.trim();
   if (!nombre) return 'El nombre es obligatorio.';
@@ -111,6 +112,12 @@ export function validarFormularioDestino(form: {
   if (form.precio_base_eur < 0) return 'El precio base no puede ser negativo.';
   if (form.precio_base_eur === 0) return 'El precio base debe ser mayor a 0.';
   if (!esMontoEurValido(form.precio_base_eur)) return 'Ingresa un precio válido (máx. 2 decimales).';
+
+  const extra = form.extra_hospedaje_particular_eur ?? 0;
+  if (extra < 0) return 'El extra de hospedaje no puede ser negativo.';
+  if (extra > 0 && !esMontoEurValido(extra)) {
+    return 'Ingresa un extra de hospedaje válido (máx. 2 decimales).';
+  }
 
   return null;
 }

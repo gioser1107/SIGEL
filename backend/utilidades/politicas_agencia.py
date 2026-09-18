@@ -16,6 +16,7 @@ RECARGO_MENOR_POR_DEFECTO = 7.00
 MOTIVO_CREDITO_CANCELACION = "cancelacion_sin_reembolso"
 HORAS_PLAZO_CORRECCION_PAGO = 24
 HORAS_ANTICIPACION_CANCELACION = 24
+HORAS_MINIMAS_HOSPEDAJE = 24
 TIPOS_INCIDENCIA = ("retraso", "eventualidad", "incidencia")
 
 
@@ -71,6 +72,35 @@ def normalizar_hospedaje(valor: Optional[str], por_defecto: str = "compartido") 
             detail="El hospedaje debe ser compartido o particular",
         )
     return limpio
+
+
+def _naive_fecha(valor) -> Optional[datetime]:
+    if valor is None:
+        return None
+    if isinstance(valor, datetime):
+        return valor.replace(tzinfo=None) if valor.tzinfo is not None else valor
+    if isinstance(valor, date):
+        return datetime.combine(valor, datetime.min.time())
+    return None
+
+
+def viaje_incluye_hospedaje(fecha_salida, fecha_regreso) -> bool:
+    """Hay hospedaje si el viaje dura más de 24 horas (salida → regreso)."""
+    salida = _naive_fecha(fecha_salida)
+    regreso = _naive_fecha(fecha_regreso)
+    if salida is None or regreso is None:
+        return False
+    return (regreso - salida) > timedelta(hours=HORAS_MINIMAS_HOSPEDAJE)
+
+
+def resolver_tipo_hospedaje(viaje, tipo_solicitado: Optional[str] = None) -> str:
+    """En viajes de 24 h o menos no hay elección: siempre compartido."""
+    if viaje is None or not viaje_incluye_hospedaje(
+        getattr(viaje, "fecha_salida", None),
+        getattr(viaje, "fecha_regreso", None),
+    ):
+        return "compartido"
+    return normalizar_hospedaje(tipo_solicitado)
 
 
 def parsear_fecha(valor) -> Optional[date]:

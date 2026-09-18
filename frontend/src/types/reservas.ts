@@ -146,6 +146,7 @@ export interface ViajeDisponibleReserva {
   precio_base_eur: number;
   recargo_menor_eur?: number;
   extra_hospedaje_particular_eur?: number;
+  incluye_hospedaje?: boolean;
   fecha_salida: string;
   fecha_regreso: string;
   estado: string;

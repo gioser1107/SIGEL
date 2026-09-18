@@ -33,6 +33,8 @@ export interface Viaje {
   fecha_salida: string;
   fecha_regreso: string | null;
   estado: string;
+  extra_hospedaje_particular_eur?: number;
+  incluye_hospedaje?: boolean;
   creado_en: string;
   actualizado_en: string;
   eliminado_en?: string | null;
@@ -165,6 +167,9 @@ export interface ViajeAgenda {
   recargo_menor_eur: number;
   extra_hospedaje_particular_eur?: number;
   hospedaje_por_defecto?: string;
+  incluye_hospedaje?: boolean;
+  fecha_salida?: string;
+  fecha_regreso?: string | null;
   imagen: string;
   hora: string;
   cupos: number;

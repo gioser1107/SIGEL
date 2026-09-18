@@ -41,9 +41,9 @@ from utilidades.persistencia import (
 )
 from utilidades.validaciones import ValidadorEntrada
 from utilidades.politicas_agencia import (
-    normalizar_hospedaje,
     normalizar_modalidad,
     resolver_politica_menor,
+    resolver_tipo_hospedaje,
 )
 
 
@@ -400,7 +400,7 @@ def crear_reserva_desde_landing(
         fecha_reserva=ahora,
         estado="pendiente",
         modalidad=normalizar_modalidad(modalidad, "grupo" if extras_resueltos else "individual"),
-        tipo_hospedaje=normalizar_hospedaje(tipo_hospedaje),
+        tipo_hospedaje=resolver_tipo_hospedaje(viaje, tipo_hospedaje),
         creado_por=usuario_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -694,7 +694,7 @@ def crear_reserva(
         fecha_reserva=ahora,
         estado="pendiente",
         modalidad=normalizar_modalidad(modalidad),
-        tipo_hospedaje=normalizar_hospedaje(tipo_hospedaje),
+        tipo_hospedaje=resolver_tipo_hospedaje(viaje, tipo_hospedaje),
         creado_por=usuario_id,
         creado_en=ahora,
         actualizado_en=ahora,
@@ -709,12 +709,15 @@ def actualizar_reserva(
     modalidad: Optional[str] = None,
     tipo_hospedaje: Optional[str] = None,
 ) -> Reserva:
+    from modelos.viaje_modelo import Viaje
+
     reserva = obtener_reserva_activa(db, reserva_id)
     _ = estado
     if modalidad is not None:
         reserva.modalidad = normalizar_modalidad(modalidad)
     if tipo_hospedaje is not None:
-        reserva.tipo_hospedaje = normalizar_hospedaje(tipo_hospedaje)
+        viaje = db.query(Viaje).filter(Viaje.id == reserva.viaje_id).first()
+        reserva.tipo_hospedaje = resolver_tipo_hospedaje(viaje, tipo_hospedaje)
     reserva.actualizado_en = datetime.now()
     _confirmar_transaccion(db)
     db.refresh(reserva)

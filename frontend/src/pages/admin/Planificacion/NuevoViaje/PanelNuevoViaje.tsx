@@ -2,6 +2,7 @@ import { PanelDeslizable, SelectBuscador } from '../../../../components/admin';
 import type { OpcionSelectBuscador } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
 import type { DatosViajeNuevo } from '../../../../types/viaje';
+import { textoAvisoHospedajeViaje } from '../../../../utils/hospedajeViaje';
 import CampoGuiasViaje from '../components/CampoGuiasViaje';
 
 interface PropsPanelNuevo {
@@ -41,6 +42,7 @@ export default function PanelNuevoViaje({
   ) => {
     onFormChange({ ...form, [campo]: valor });
   };
+  const avisoHospedaje = textoAvisoHospedajeViaje(form.fecha_salida, form.fecha_regreso);
 
   return (
     <PanelDeslizable
@@ -128,6 +130,11 @@ export default function PanelNuevoViaje({
             />
           </div>
         </div>
+        {avisoHospedaje && (
+          <p className="drawer-form__hint">
+            {avisoHospedaje}
+          </p>
+        )}
       </div>
     </PanelDeslizable>
   );

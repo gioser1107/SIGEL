@@ -8,6 +8,7 @@ import {
   etiquetaViajeDisponible,
   formatearFechaSalidaViaje,
 } from '../utils/formatearViajeDisponible';
+import { reservaOfreceHospedaje } from '../../../../../utils/hospedajeViaje';
 
 // ─── SelectBuscador ──────────────────────────────────────────────
 
@@ -168,6 +169,7 @@ export default function PasoViajeCliente({
   const sinViajes = !cargandoViajes && viajes.length === 0;
   const asientosLibres = viajeSeleccionado?.disponibilidad.asientos_disponibles ?? 0;
   const maxPersonas = Math.max(1, asientosLibres);
+  const incluyeHospedaje = reservaOfreceHospedaje(viajeSeleccionado);
   const errorGrupo =
     esGrupal && viajeSeleccionado && cantidadPersonas > asientosLibres
       ? `Este viaje tiene ${asientosLibres} asiento(s) libre(s). Baja la cantidad del grupo.`
@@ -197,9 +199,14 @@ export default function PasoViajeCliente({
   const manejarSeleccionViaje = (op: Opcion | null) => {
     if (!op) {
       setViajeSeleccionado(null);
+      setTipoHospedaje('compartido');
       return;
     }
-    setViajeSeleccionado(viajes.find((x) => x.id === op.valor) ?? null);
+    const viaje = viajes.find((x) => x.id === op.valor) ?? null;
+    setViajeSeleccionado(viaje);
+    if (!viaje || !reservaOfreceHospedaje(viaje)) {
+      setTipoHospedaje('compartido');
+    }
   };
 
   const manejarSeleccionCliente = (op: Opcion | null) => {
@@ -265,6 +272,16 @@ export default function PasoViajeCliente({
               <span className="sb-detalle__label">Precio</span>
               <span className="sb-detalle__valor">
                 {viajeSeleccionado.precio_base_eur} € por pasajero
+              </span>
+            </div>
+            <div className="sb-detalle__item">
+              <span className="sb-detalle__label">Hospedaje</span>
+              <span className="sb-detalle__valor">
+                {incluyeHospedaje
+                  ? extraHospedajeParticularEur > 0
+                    ? `Sí · particular +€${extraHospedajeParticularEur.toFixed(2)}`
+                    : 'Sí (compartido o particular)'
+                  : 'No aplica (24 h o menos)'}
               </span>
             </div>
             <div className="sb-detalle__item">
@@ -344,17 +361,6 @@ export default function PasoViajeCliente({
             <strong>Grupo</strong>
             <span>Varias personas en una sola reserva</span>
           </button>
-          <button
-            type="button"
-            className={`reserva-tipo__opcion${modalidad === 'propio' ? ' reserva-tipo__opcion--activa' : ''}`}
-            onClick={() => {
-              setModalidad('propio');
-              setCantidadPersonas(Math.max(1, cantidadPersonas));
-            }}
-          >
-            <strong>Propio</strong>
-            <span>Salida privada para el cliente</span>
-          </button>
         </div>
 
         {esGrupal && (
@@ -387,6 +393,7 @@ export default function PasoViajeCliente({
         )}
       </div>
 
+      {incluyeHospedaje && (
       <div className="paso-seccion">
         <span className="paso-seccion__label">Hospedaje</span>
         <div className="reserva-tipo" role="group" aria-label="Tipo de hospedaje">
@@ -412,6 +419,7 @@ export default function PasoViajeCliente({
           </button>
         </div>
       </div>
+      )}
 
       <div className="crear-reserva-admin__actions">
         <Boton variante="secundario" onClick={onCancelar}>

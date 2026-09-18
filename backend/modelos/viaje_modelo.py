@@ -15,6 +15,7 @@ from modelos.unidad_transporte_modelo import UnidadTransporte
 from modelos.viaje_guia_modelo import ViajeGuia, asignar_guias_si_provisto, guias_en_respuesta_viaje
 from utilidades.fecha_operativa import ahora_caracas
 from utilidades.paginacion import paginar_consulta, respuesta_paginada
+from utilidades.politicas_agencia import viaje_incluye_hospedaje
 from utilidades.validaciones import ValidadorEntrada
 
 
@@ -257,6 +258,7 @@ def viaje_reserva_a_dict(db: Session, viaje: Viaje) -> dict:
         "precio_base_eur": float(destino.precio_base_eur) if destino else 0.0,
         "recargo_menor_eur": float(destino.recargo_menor_eur) if destino and destino.recargo_menor_eur is not None else 0.0,
         "extra_hospedaje_particular_eur": float(getattr(destino, "extra_hospedaje_particular_eur", 0) or 0) if destino else 0.0,
+        "incluye_hospedaje": viaje_incluye_hospedaje(viaje.fecha_salida, viaje.fecha_regreso),
         "fecha_salida": viaje.fecha_salida,
         "fecha_regreso": viaje.fecha_regreso,
         "estado": viaje.estado,
@@ -318,6 +320,12 @@ def viaje_a_dict(db: Session, viaje: Viaje) -> dict:
         "destino_id": viaje.destino_id,
         "destino_nombre": destino.nombre if destino is not None else None,
         "precio_base": float(destino.precio_base_eur) if destino is not None else 0.0,
+        "extra_hospedaje_particular_eur": (
+            float(getattr(destino, "extra_hospedaje_particular_eur", 0) or 0)
+            if destino is not None
+            else 0.0
+        ),
+        "incluye_hospedaje": viaje_incluye_hospedaje(viaje.fecha_salida, viaje.fecha_regreso),
         "unidad_id": viaje.unidad_id,
         "unidad_placa": unidad.placa if unidad is not None else None,
         "fecha_salida": viaje.fecha_salida,
@@ -710,6 +718,7 @@ def viaje_catalogo_dict(db: Session, viaje: Viaje) -> dict:
         "precio": precio,
         "recargo_menor_eur": recargo_menor,
         "extra_hospedaje_particular_eur": float(getattr(destino, "extra_hospedaje_particular_eur", 0) or 0) if destino is not None else 0,
+        "incluye_hospedaje": viaje_incluye_hospedaje(viaje.fecha_salida, viaje.fecha_regreso),
         "hospedaje_por_defecto": "compartido",
         "imagen": portada,
         "hora": formatear_hora(viaje.fecha_salida),

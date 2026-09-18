@@ -127,7 +127,7 @@ export default function PanelNuevoDestino({
 
         <div className="drawer-form__campo">
           <label className="drawer-form__label" htmlFor="destino-hospedaje">
-            Extra hospedaje particular (EUR)
+            Extra habitación particular (EUR)
           </label>
           <CampoMonto
             id="destino-hospedaje"
@@ -137,7 +137,8 @@ export default function PanelNuevoDestino({
             onValorNumerico={(n) => actualizarCampo('extra_hospedaje_particular_eur', n)}
           />
           <p className="drawer-form__ayuda">
-            Por defecto el hospedaje es compartido. Este extra se suma si el cliente pide particular.
+            Recargo por ocupante si eligen habitación privada. Déjalo en 0 si no hay recargo.
+            El hospedaje lo activa el viaje cuando dura más de 24 horas, no este campo.
           </p>
         </div>
 

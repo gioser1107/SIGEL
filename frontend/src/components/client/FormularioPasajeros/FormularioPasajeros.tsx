@@ -29,6 +29,7 @@ interface FormularioPasajerosProps {
   viajeId: number;
   recargo_menor_eur: number;
   extra_hospedaje_particular_eur?: number;
+  incluyeHospedaje?: boolean;
   estadoInicial?: EstadoFormularioPasajeros | null;
   onSubmit: (datos: EstadoFormularioPasajeros) => void;
   onBack: () => void;
@@ -37,6 +38,7 @@ interface FormularioPasajerosProps {
 export default function FormularioPasajeros({
   recargo_menor_eur,
   extra_hospedaje_particular_eur = 0,
+  incluyeHospedaje = false,
   estadoInicial,
   onSubmit,
   onBack,
@@ -181,7 +183,7 @@ export default function FormularioPasajeros({
       pasajeros: pasajerosNormalizados,
       proximoId,
       modalidad: pasajerosNormalizados.length > 0 && modalidad === 'individual' ? 'grupo' : modalidad,
-      tipo_hospedaje: tipoHospedaje,
+      tipo_hospedaje: incluyeHospedaje ? tipoHospedaje : 'compartido',
     });
   };
 
@@ -203,15 +205,14 @@ export default function FormularioPasajeros({
 
         <div className="formulario-pago__body">
           <div className="fp-card">
-            <h4 className="fp-card__titulo">Modalidad y hospedaje</h4>
+            <h4 className="fp-card__titulo">Tipo de reserva</h4>
             <p className="fp-card__subtitulo">
-              Elige cómo viajas. El hospedaje particular suma un extra por ocupante.
+              Individual es solo el titular. Grupo es el titular más acompañantes en la misma reserva.
             </p>
-            <div className="fp-opciones" role="group" aria-label="Modalidad">
+            <div className="fp-opciones" role="group" aria-label="Tipo de reserva">
               {([
                 ['individual', 'Individual', 'Viajas tú'],
                 ['grupo', 'Grupo', 'Varias personas'],
-                ['propio', 'Propio', 'Salida privada'],
               ] as const).map(([valor, titulo, desc]) => (
                 <button
                   key={valor}
@@ -224,12 +225,17 @@ export default function FormularioPasajeros({
                 </button>
               ))}
             </div>
+            {incluyeHospedaje && (
             <div className="fp-opciones" role="group" aria-label="Hospedaje">
               {([
                 ['compartido', 'Compartido', 'Habitación con el grupo'],
-                ['particular', 'Particular', extra_hospedaje_particular_eur > 0
-                  ? `+€${extra_hospedaje_particular_eur.toFixed(2)} por ocupante`
-                  : 'Habitación privada'],
+                [
+                  'particular',
+                  'Particular',
+                  extra_hospedaje_particular_eur > 0
+                    ? `+€${extra_hospedaje_particular_eur.toFixed(2)} por ocupante`
+                    : 'Habitación privada',
+                ],
               ] as const).map(([valor, titulo, desc]) => (
                 <button
                   key={valor}
@@ -242,6 +248,7 @@ export default function FormularioPasajeros({
                 </button>
               ))}
             </div>
+            )}
           </div>
 
           <div className="fp-card">

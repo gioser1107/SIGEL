@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PanelDeslizable, EtiquetaEstado } from '../../../../components/admin';
 import Boton from '../../../../components/ui/Boton/Boton';
 import type { ReservaEnriquecida, ReservaCliente } from '../../../../types/reservas';
 import { etiquetaEstado, SIN_DATO, textoVisible } from '../../../../utils/etiquetasNegocio';
 import { formatearEuro } from '../../../../utils/formatoMoneda';
+import { reservaOfreceHospedaje } from '../../../../utils/hospedajeViaje';
 import { nombreCompleto } from '../../../../utils/nombrePersona';
 import { resolverUrlArchivo } from '../../../../utils/resolverUrlArchivo';
 import PagosReserva from '../Pagos/PagosReserva';
+import { actualizarReserva } from '../../../../services/reservas';
 import {
   aplicarCreditoAdmin,
   cancelarReservaSinReembolso,
@@ -103,6 +105,22 @@ export default function PanelDetalleReserva({
   const [accionando, setAccionando] = useState(false);
   const [mensajeAccion, setMensajeAccion] = useState<string | null>(null);
   const [confirmarCancelar, setConfirmarCancelar] = useState(false);
+  const [modalidadEdicion, setModalidadEdicion] = useState<'individual' | 'grupo' | 'propio'>('individual');
+  const [hospedajeEdicion, setHospedajeEdicion] = useState<'compartido' | 'particular'>('compartido');
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+
+  useEffect(() => {
+    if (!reservaActiva) return;
+    setModalidadEdicion(
+      reservaActiva.modalidad === 'grupo'
+        ? 'grupo'
+        : reservaActiva.modalidad === 'propio'
+          ? 'propio'
+          : 'individual',
+    );
+    setHospedajeEdicion(reservaActiva.tipo_hospedaje === 'particular' ? 'particular' : 'compartido');
+    setMensajeAccion(null);
+  }, [reservaActiva?.id, reservaActiva?.modalidad, reservaActiva?.tipo_hospedaje]);
   const total = pasajerosActivos.reduce(
     (sum, p) => sum + (p.precio_pasajero_eur ?? 0) + (p.recargo_eur ?? 0),
     0,
@@ -138,6 +156,16 @@ export default function PanelDetalleReserva({
   const cancelable = Boolean(
     puedeGestionar && reservaActiva && reservaActiva.estado !== 'cancelada',
   );
+  const editable = Boolean(
+    puedeGestionar && reservaActiva && reservaActiva.estado !== 'cancelada',
+  );
+  const ofreceHospedaje = reservaOfreceHospedaje(reservaActiva?.viajeObj);
+  const mostrarHospedaje = ofreceHospedaje || reservaActiva?.tipo_hospedaje === 'particular';
+  const hayCambiosEdicion = Boolean(
+    reservaActiva &&
+      (modalidadEdicion !== (reservaActiva.modalidad ?? 'individual') ||
+        (mostrarHospedaje && hospedajeEdicion !== (reservaActiva.tipo_hospedaje ?? 'compartido'))),
+  );
 
   const fechaSalidaDate = reservaActiva?.viajeObj?.fecha_salida
     ? new Date(reservaActiva.viajeObj.fecha_salida)
@@ -145,6 +173,28 @@ export default function PanelDetalleReserva({
   const cumpleAvisoAnticipacion = fechaSalidaDate
     ? Date.now() <= fechaSalidaDate.getTime() - 24 * 60 * 60 * 1000
     : true;
+
+  const manejarGuardarEdicion = async () => {
+    if (!reservaActiva) return;
+    if (modalidadEdicion === 'individual' && pasajerosActivos.length > 1) {
+      setMensajeAccion('No puedes pasar a Individual mientras haya acompañantes en esta reserva.');
+      return;
+    }
+    setGuardandoEdicion(true);
+    setMensajeAccion(null);
+    try {
+      await actualizarReserva(reservaActiva.id, {
+        modalidad: modalidadEdicion,
+        tipo_hospedaje: mostrarHospedaje ? hospedajeEdicion : 'compartido',
+      });
+      setMensajeAccion('Se actualizó el tipo de reserva y el hospedaje.');
+      onReservaActualizada?.();
+    } catch (err) {
+      setMensajeAccion(err instanceof Error ? err.message : 'No se pudo actualizar la reserva.');
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  };
 
   const manejarCancelar = async () => {
     if (!reservaActiva) return;
@@ -253,12 +303,43 @@ export default function PanelDetalleReserva({
                 </div>
               )}
               <div className="drawer-form__ficha-item">
-                <span className="drawer-form__ficha-etiqueta">Modalidad</span>
-                <strong>{etiquetaModalidad[reservaActiva.modalidad ?? ''] ?? reservaActiva.modalidad ?? '—'}</strong>
+                <span className="drawer-form__ficha-etiqueta">Tipo de reserva</span>
+                {editable ? (
+                  <select
+                    className="drawer-form__input"
+                    value={modalidadEdicion}
+                    onChange={(e) =>
+                      setModalidadEdicion(e.target.value as 'individual' | 'grupo' | 'propio')
+                    }
+                  >
+                    {modalidadEdicion === 'propio' && <option value="propio">Propio (legado)</option>}
+                    <option value="individual">Individual</option>
+                    <option value="grupo">Grupo</option>
+                  </select>
+                ) : (
+                  <strong>{etiquetaModalidad[reservaActiva.modalidad ?? ''] ?? reservaActiva.modalidad ?? '—'}</strong>
+                )}
               </div>
               <div className="drawer-form__ficha-item">
                 <span className="drawer-form__ficha-etiqueta">Hospedaje</span>
-                <strong>{etiquetaHospedaje[reservaActiva.tipo_hospedaje ?? ''] ?? reservaActiva.tipo_hospedaje ?? '—'}</strong>
+                {editable && mostrarHospedaje ? (
+                  <select
+                    className="drawer-form__input"
+                    value={hospedajeEdicion}
+                    onChange={(e) =>
+                      setHospedajeEdicion(e.target.value as 'compartido' | 'particular')
+                    }
+                  >
+                    <option value="compartido">Compartido</option>
+                    <option value="particular">Particular</option>
+                  </select>
+                ) : (
+                  <strong>
+                    {mostrarHospedaje
+                      ? (etiquetaHospedaje[reservaActiva.tipo_hospedaje ?? ''] ?? reservaActiva.tipo_hospedaje ?? '—')
+                      : 'No aplica (24 h o menos)'}
+                  </strong>
+                )}
               </div>
               <div className="drawer-form__ficha-item">
                 <span className="drawer-form__ficha-etiqueta">Estado del viaje</span>
@@ -267,6 +348,27 @@ export default function PanelDetalleReserva({
                 </span>
               </div>
             </div>
+            {editable && (
+              <div className="detalle-rsv__editar-acciones">
+                <p className="drawer-form__ayuda" style={{ margin: 0 }}>
+                  Puedes cambiar el tipo y el hospedaje. El viaje y el cliente no se cambian aquí:
+                  cancela y crea otra reserva. El estado lo marcan los pagos.
+                </p>
+                {mensajeAccion && (
+                  <div className="detalle-rsv__vacio" role="status">
+                    {mensajeAccion}
+                  </div>
+                )}
+                <Boton
+                  variante="primario"
+                  tamano="sm"
+                  disabled={guardandoEdicion || !hayCambiosEdicion}
+                  onClick={() => void manejarGuardarEdicion()}
+                >
+                  {guardandoEdicion ? 'Guardando…' : 'Guardar tipo y hospedaje'}
+                </Boton>
+              </div>
+            )}
           </div>
 
           {/* ── Manifiesto de pasajeros ── */}

@@ -1,6 +1,7 @@
 import { EtiquetaEstado, resolverVariante } from '../../../../../components/admin';
 import type { DatosViajeNuevo, Viaje } from '../../../../../types/viaje';
 import { formatearEuro } from '../../../../../utils/formatoMoneda';
+import { textoAvisoHospedajeViaje, viajeIncluyeHospedaje } from '../../../../../utils/hospedajeViaje';
 import CampoGuiasViaje from '../../components/CampoGuiasViaje';
 import { ETIQUETA_ESTADO } from '../../constants';
 import { formatearFecha } from '../../utils/formatearViaje';
@@ -29,6 +30,9 @@ export default function TabInfoViaje({
   };
 
   const otrosGuias = (viaje.guias ?? []).filter((g) => !g.es_principal).map((g) => g.nombre);
+  const fechaSalidaHospedaje = form.fecha_salida || viaje.fecha_salida;
+  const fechaRegresoHospedaje = form.fecha_regreso ?? viaje.fecha_regreso;
+  const avisoHospedaje = textoAvisoHospedajeViaje(fechaSalidaHospedaje, fechaRegresoHospedaje);
 
   return (
     <div className="drawer-form">
@@ -72,6 +76,14 @@ export default function TabInfoViaje({
             <strong>{formatearEuro(viaje.precio_base)}</strong>
           </div>
         )}
+        <div className="drawer-form__ficha-item">
+          <span className="drawer-form__ficha-etiqueta">Hospedaje</span>
+          <strong>
+            {viajeIncluyeHospedaje(fechaSalidaHospedaje, fechaRegresoHospedaje)
+              ? 'Sí (más de 24 h)'
+              : 'No aplica (24 h o menos)'}
+          </strong>
+        </div>
       </div>
 
       <CampoGuiasViaje
@@ -109,6 +121,11 @@ export default function TabInfoViaje({
             />
         </div>
       </div>
+      {avisoHospedaje && (
+        <p className="drawer-form__hint">
+          {avisoHospedaje}
+        </p>
+      )}
     </div>
   );
 }

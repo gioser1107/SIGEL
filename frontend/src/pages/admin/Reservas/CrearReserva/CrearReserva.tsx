@@ -16,6 +16,7 @@ import type { CrearPasajeroDTO, PasajeroDraft, ViajeDisponibleReserva } from '..
 import { formularioAPayload } from '../../Clientes/utils/mapeoFormulario';
 import { normalizarDomicilioInline } from '../../../../components/puntos-recogida/utils';
 import { sincronizarAcompanantes } from './utils/pasajerosGrupo';
+import { reservaOfreceHospedaje } from '../../../../utils/hospedajeViaje';
 import PasoViajeCliente from './components/PasoViajeCliente';
 import PasoPasajeros from './components/PasoPasajeros';
 import PasoAsientos from './components/PasoAsientos';
@@ -146,7 +147,7 @@ export default function CrearReserva() {
         viaje_id: viajeSeleccionado.id,
         estado: 'pendiente',
         modalidad,
-        tipo_hospedaje: tipoHospedaje,
+        tipo_hospedaje: reservaOfreceHospedaje(viajeSeleccionado) ? tipoHospedaje : 'compartido',
       });
       reservaIdCreada = res.reserva.id;
 
@@ -297,10 +298,8 @@ export default function CrearReserva() {
               if (hayAcompanantes && modalidad === 'individual') setModalidad('grupo');
               const cantidad = usarGrupal
                 ? Math.max(2, hayAcompanantes ? pasajeros.length + 1 : cantidadPersonas)
-                : modalidad === 'propio'
-                  ? Math.max(1, hayAcompanantes ? pasajeros.length + 1 : cantidadPersonas)
-                  : 1;
-              if (usarGrupal || modalidad === 'propio') setCantidadPersonas(cantidad);
+                : 1;
+              if (usarGrupal) setCantidadPersonas(cantidad);
               setPasajeros((prev) =>
                 sincronizarAcompanantes(
                   cantidad,

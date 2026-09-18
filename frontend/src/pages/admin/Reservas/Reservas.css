@@ -492,6 +492,32 @@
   font-family: var(--font-heading);
 }
 
+.detalle-rsv__editar-acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: var(--spacing-sm);
+}
+
+.detalle-rsv__editar-acciones .drawer-form__ayuda {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.detalle-rsv__seccion .drawer-form__input {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  width: 100%;
+  max-width: 16rem;
+}
+
 @media (max-width: 640px) {
   .reservas__header {
     flex-direction: column;

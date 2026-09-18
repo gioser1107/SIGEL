@@ -351,8 +351,8 @@ export default function Reservas() {
             : (r) => (
           <>
             <BotonAccionTabla
-              accion="ver"
-              titulo="Ver detalle"
+              accion={puedeEditarReserva ? 'editar' : 'ver'}
+              titulo={puedeEditarReserva ? 'Editar reserva' : 'Ver detalle'}
               onClick={(e) => { e.stopPropagation(); abrirDetalles(r); }}
             />
             {puedeBorrarReserva && (

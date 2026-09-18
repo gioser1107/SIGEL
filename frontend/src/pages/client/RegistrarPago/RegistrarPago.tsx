@@ -8,6 +8,7 @@ import FormularioPasajeros, {
 import MapaAsientos from '../../../components/client/MapaAsientos/MapaAsientos';
 import Boton from '../../../components/ui/Boton/Boton';
 import { formatearBs, formatearEuro } from '../../../utils/formatoMoneda';
+import { reservaOfreceHospedaje } from '../../../utils/hospedajeViaje';
 import {
   construirReportePagoPortal,
   getResumenPago,
@@ -447,6 +448,7 @@ export default function RegistrarPago() {
             viajeId={viaje.id}
             recargo_menor_eur={viaje.recargo_menor_eur ?? 0}
             extra_hospedaje_particular_eur={viaje.extra_hospedaje_particular_eur ?? 0}
+            incluyeHospedaje={reservaOfreceHospedaje(viaje)}
             estadoInicial={datosPasajeros}
             onSubmit={manejarEnvioPasajeros}
             onBack={manejarCancelar}

@@ -84,7 +84,7 @@ export default function TabInfoCotizacion({
         </div>
         <div className="drawer-form__campo">
           <label className="drawer-form__label">Modalidad</label>
-          <select
+            <select
             className="drawer-form__input"
             value={form.modalidad ?? 'individual'}
             onChange={(e) => actualizarCampo('modalidad', e.target.value)}
@@ -92,7 +92,7 @@ export default function TabInfoCotizacion({
           >
             <option value="individual">Individual</option>
             <option value="grupo">Grupo</option>
-            <option value="propio">Propio</option>
+            {form.modalidad === 'propio' && <option value="propio">Propio</option>}
           </select>
         </div>
       </div>
