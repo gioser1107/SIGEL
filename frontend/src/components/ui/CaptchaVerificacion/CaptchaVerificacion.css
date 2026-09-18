@@ -4,9 +4,9 @@
   gap: 0.45rem;
   margin: 0.35rem 0 0.75rem;
   padding: 0.7rem 0.8rem;
-  border: 1px dashed rgba(18, 40, 75, 0.28);
+  border: 1px solid rgba(18, 40, 75, 0.18);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.55);
+  background: #f4f7fb;
 }
 
 .captcha-verificacion__etiqueta {
@@ -24,6 +24,16 @@
   gap: 0.6rem;
 }
 
+.captcha-verificacion__imagen {
+  flex: 1;
+  height: 72px;
+  max-width: 220px;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid rgba(18, 40, 75, 0.15);
+  background: #fff;
+}
+
 .captcha-verificacion__pregunta {
   flex: 1;
   font-weight: 600;
@@ -34,7 +44,7 @@
   border: 1px solid rgba(18, 40, 75, 0.2);
   background: #fff;
   border-radius: 8px;
-  padding: 0.25rem 0.6rem;
+  padding: 0.35rem 0.7rem;
   font-size: 0.8rem;
   cursor: pointer;
 }
@@ -50,4 +60,6 @@
   border-radius: 8px;
   padding: 0.55rem 0.7rem;
   font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }

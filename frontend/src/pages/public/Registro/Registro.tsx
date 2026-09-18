@@ -550,6 +550,7 @@ export default function Registro() {
 
               <CaptchaVerificacion
                 pregunta={captcha.pregunta}
+                imagen={captcha.imagen}
                 respuesta={captcha.respuesta}
                 onRespuesta={captcha.setRespuesta}
                 onRefrescar={() => void captcha.recargar()}

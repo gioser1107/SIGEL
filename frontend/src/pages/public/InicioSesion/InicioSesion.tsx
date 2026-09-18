@@ -433,6 +433,7 @@ export default function InicioSesion() {
 
             <CaptchaVerificacion
               pregunta={captcha.pregunta}
+              imagen={captcha.imagen}
               respuesta={captcha.respuesta}
               onRespuesta={captcha.setRespuesta}
               onRefrescar={() => void captcha.recargar()}

@@ -40,6 +40,7 @@ export function usuarioTienePermiso(usuario: SesionUsuario | null, permiso: stri
 export interface DatosCaptcha {
   token: string;
   pregunta: string;
+  imagen?: string;
   etiqueta?: string;
   expira_en_segundos?: number;
 }

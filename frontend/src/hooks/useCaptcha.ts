@@ -4,6 +4,7 @@ import { obtenerCaptcha } from '../services/autenticacion';
 export default function useCaptcha() {
   const [token, setToken] = useState('');
   const [pregunta, setPregunta] = useState('');
+  const [imagen, setImagen] = useState('');
   const [respuesta, setRespuesta] = useState('');
   const [cargando, setCargando] = useState(false);
 
@@ -13,9 +14,11 @@ export default function useCaptcha() {
       const captcha = await obtenerCaptcha();
       setToken(captcha.token);
       setPregunta(captcha.pregunta);
+      setImagen(captcha.imagen ?? '');
       setRespuesta('');
     } catch {
       setToken('');
+      setImagen('');
       setPregunta('No se pudo cargar el CAPTCHA');
     } finally {
       setCargando(false);
@@ -26,5 +29,5 @@ export default function useCaptcha() {
     void recargar();
   }, [recargar]);
 
-  return { token, pregunta, respuesta, setRespuesta, recargar, cargando };
+  return { token, pregunta, imagen, respuesta, setRespuesta, recargar, cargando };
 }

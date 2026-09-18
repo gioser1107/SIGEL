@@ -115,7 +115,7 @@ export const PREGUNTAS_FRECUENTES: EntradaConocimiento[] = [
     id: 'login',
     pregunta: '¿Cómo me registro o inicio sesión?',
     respuesta:
-      'Usa Registro con tu cédula, nombre (solo letras) y correo. Luego inicia sesión. Tanto el login como el registro piden CAPTCHA (una suma). El personal de TravelBqto entra por la misma pantalla con su usuario interno.',
+      'Usa Registro con tu cédula, nombre (solo letras) y correo. Luego inicia sesión. Tanto el login como el registro piden CAPTCHA de imagen: escribe los caracteres que ves. El personal de TravelBqto entra por la misma pantalla con su usuario interno.',
     palabras: ['registro', 'login', 'iniciar', 'sesion', 'sesión', 'contraseña', 'correo'],
     audiencias: ['publico', 'cliente', 'admin'],
     enlaces: [

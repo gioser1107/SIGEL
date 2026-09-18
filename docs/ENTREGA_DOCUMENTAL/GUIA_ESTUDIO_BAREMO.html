@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Guía de estudio y defensa — Baremo Fase I SIGEL</title>
+  <style>
+    @page { size: letter; margin: 1.5cm 1.7cm; }
+    body { font-family: 'Times New Roman', Times, serif; font-size: 11.2pt; line-height: 1.32; color: #111; max-width: 860px; margin: 0 auto; }
+    h1 { font-size: 15pt; text-align: center; text-transform: uppercase; margin: 6px 0 4px; }
+    h2 { font-size: 12.5pt; margin: 16px 0 6px; border-bottom: 1px solid #333; page-break-after: avoid; }
+    h3 { font-size: 11.4pt; margin: 11px 0 4px; }
+    p, li { margin: 4px 0; text-align: justify; }
+    .encabezado { text-align: center; font-size: 10.5pt; line-height: 1.3; }
+    .frase { background: #f3f3f3; border-left: 3px solid #12304b; padding: 6px 10px; margin: 6px 0 10px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 10.5pt; }
+    th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; vertical-align: top; }
+    th { background: #f3f3f3; }
+    .no { color: #7a1f1f; }
+    .si { color: #14532d; }
+    .no-print { font-family: Calibri, Arial, sans-serif; background: #fff3cd; border: 1px solid #c9a227; padding: 10px 12px; margin-bottom: 14px; }
+    @media print { .no-print { display: none; } body { max-width: none; } h2 { page-break-before: auto; } }
+  </style>
+</head>
+<body>
+<p class="no-print"><strong>Imprime esto esta noche.</strong> No es entregable del sobre: es tu hoja de estudio. Archivo → Imprimir → PDF o papel. El recuadro amarillo no se imprime.</p>
+
+<div class="encabezado">
+  <strong>UPTAEB — PNF INFORMÁTICA — TRAYECTO III — FASE I</strong><br>
+  SIGEL / Travel BQTO · https://travelbqto.kontrolaonline.com/<br>
+  Guía de preparación al baremo oficial 2026
+</div>
+<h1>Qué voy a decir mañana</h1>
+
+<h2>0. Cómo estudiar esta noche (90 minutos)</h2>
+<ol>
+  <li>Lee esta guía entera una vez (25 min).</li>
+  <li>Ensayo en el <strong>servidor</strong> la demo de 8 minutos (3 veces).</li>
+  <li>Abre phpMyAdmin y corre <code>backend/migraciones/defensa_phpmyadmin_servidor.sql</code> (solo SHOW/SELECT).</li>
+  <li>Memoriza las 8 frases en recuadro gris. Son las que te salvan.</li>
+  <li>Imprime: SRS, DCUS SI, modelo de dominio, manual de usuario, sigel.conf, Cap. I–III.</li>
+</ol>
+<p><strong>No afirmes</strong> machine learning, stored procedure creado en Fastcomet, ni PHP.</p>
+
+<h2>1. Apertura (30 segundos, los 5 docentes la oyen)</h2>
+<div class="frase">
+SIGEL digitaliza Travel BQTO: destinos, clientes, cotización, reserva con viajeros y asientos, pagos, abordaje, bitácora y reportes estadísticos. Stack: React + FastAPI + MySQL. Dos bases: <em>travel_bqto_seguridad</em> (usuarios, roles, bitácora) y <em>travel_bqto</em> (negocio). El dominio es el VirtualHost. Python lo autorizó la cátedra.
+</div>
+
+<h2>2. Demo de 8 minutos (ensáyala 3 veces en el dominio)</h2>
+<ol>
+  <li><strong>Login + CAPTCHA.</strong> Falla una vez a propósito → “el CAPTCHA rechaza bots”. Luego entra. Di: “la clave no va en texto plano: MD5 y luego SHA-256”.</li>
+  <li><strong>Menú.</strong> Recorre Operación / Comercial / Catálogos / Reportes / Configuración. “Cada ítem aparece según permiso leer_ del rol”.</li>
+  <li><strong>Validación.</strong> Destino o cliente: pon un correo mal o números en el nombre. “Valida front y back; el API responde 422”.</li>
+  <li><strong>Reserva + asiento.</strong> Asigna un asiento. Segunda pestaña, mismo asiento: 409. “InnoDB, SELECT FOR UPDATE, índice único. Eso es concurrencia y recuperación” (SO 4%).</li>
+  <li><strong>Bitácora.</strong> Filtros. Se ve LOGIN e INSERT. “La escribe el sistema y también triggers. No se puede borrar: hay trigger BEFORE DELETE”.</li>
+  <li><strong>Campana.</strong> “Notificaciones: cotizaciones y reservas pendientes”.</li>
+  <li><strong>Reportes.</strong> Rango real → PDF o Excel. “Parametrizado, sin fechas futuras”.</li>
+  <li><strong>Asistente.</strong> “¿Qué destino rinde más?”. Di: “sistema experto por reglas, RCI-01/02/03, no es un modelo ML entrenado”.</li>
+  <li><strong>Respaldos.</strong> Generar y descargar. No restaurar backup viejo.</li>
+</ol>
+
+<h2>3. Tutor (10%) — lo que clica</h2>
+<table>
+  <tr><th>Ítem</th><th>Qué dices / qué muestras</th></tr>
+  <tr><td>Menú amigable 0,5</td><td>Menú agrupado, colapsable, por permisos. Un guía no ve Seguridad.</td></tr>
+  <tr><td>Inserción + validación 0,5</td><td>Formulario + 422 si el dato es inválido.</td></tr>
+  <tr><td>Reportes parametrizados 0,5</td><td>Desde/hasta, KPIs, exportar. No es predicción.</td></tr>
+  <tr><td>Confirmar eliminación 0,5</td><td>Modal “¿Seguro?”. No borra a la primera.</td></tr>
+  <tr><td>Consulta con filtros 0,5</td><td>Bitácora, pagos, reservas, flota.</td></tr>
+  <tr><td>Módulos completos 1</td><td>Catálogo, planificación, reservas, pagos, abordaje, reportes, seguridad, portal.</td></tr>
+  <tr><td>Validación por módulo 0,5</td><td>Cupo lleno, asiento duplicado, monto ≤ 0 (trigger).</td></tr>
+  <tr><td>Sesiones 0,5</td><td>JWT Bearer, expiración, 401 si caduca. Equivale a $_SESSION en PHP.</td></tr>
+  <tr><td>Bitácora 0,5</td><td>Usuario, módulo, acción, tabla, IP, fecha.</td></tr>
+  <tr><td>100% funcional 1,5</td><td>Data real del negocio en el dominio.</td></tr>
+  <tr><td>Cumple SRS 0,5</td><td>Señala RF-12 reserva, RF-15 reportes, RCI en el SRS impreso.</td></tr>
+</table>
+
+<h2>4. Ingeniería de Software (15%)</h2>
+<h3>Grupal</h3>
+<ul>
+  <li><strong>JAD / levantamiento / cuadro de procesos / DCUN-DA-plantilla:</strong> está en Cap. I–III y el SRS. Señala con el dedo. No improvises un taller que no documentaste.</li>
+  <li><strong>Casos de uso = vistas:</strong> imprime <code>CASOS_USO_SI.pdf</code>. “Gestionar X es un óvalo; el CRUD está en permisos crear_/leer_/editar_/borrar_”.</li>
+  <li><strong>Clases = código:</strong> <code>MODELO_DOMINIO.pdf</code> es la vista de negocio. El MER es la vista física. Backend: <code>backend/modelos/*.py</code>.</li>
+  <li><strong>Componente inteligente en DCUS (1,0):</strong> el PDF tiene RCI, RCI-01, RCI-02, RCI-03 con include.</li>
+</ul>
+<div class="frase">El componente inteligente es un sistema experto por reglas sobre los reportes: RCI-01 rentabilidad, RCI-02 ranking de destinos, RCI-03 demanda estacional. No hay red neuronal ni modelo entrenado.</div>
+<ul>
+  <li><strong>Manual 0,5:</strong> <code>docs/ENTREGABLES_FINALES/5_manual_usuario/MANUAL_USUARIO_SIGEL.html</code> impreso. En el sistema: Ayuda (pasos) vs Asistente (datos).</li>
+  <li><strong>Notificaciones 0,5:</strong> campana del admin. “Cotizaciones y reservas pendientes”.</li>
+</ul>
+<h3>Individual (el de más puntos: secuencias 2,0)</h3>
+<p>Cada uno señala <strong>su</strong> diagrama. Objetos en secuencia: Actor → Interfaz React → Controlador FastAPI → Modelo → MySQL → Bitácora. Carriles: Actor / Sistema (validación, error, bitácora). IBM: pre, flujo, excepciones, post, alineado al DA.</p>
+<p>Pregunta típica: “¿Dónde está el Service?” Respuesta: “No usamos capa Service/Repository. El controlador llama al modelo.”</p>
+
+<h2>5. Docente de Proyecto (10%)</h2>
+<p>Casi todo es el documento: título, diagnóstico, instrumentos, propuesta, objetivos, justificación, procesos, marco teórico (1,0), marco legal, planificación, Cap. I–II, normas, redacción, equipo.</p>
+<p><strong>Técnico (1,5 juntos):</strong> bitácora 0,5 + MD5 y CAPTCHA 1,0.</p>
+<div class="frase">El baremo pide cifrado MD5. El primer paso del hash es MD5, como el trayecto. SHA-256 va encima porque MD5 solo ya está roto. El usuario escribe 5 caracteres de una imagen CAPTCHA; el token va firmado (HMAC) y caduca en 5 minutos. No usamos reCAPTCHA de Google para poder demostrarlo offline.</div>
+<p>Si pide ver el código: <code>backend/modelos/usuario_modelo.py</code> → <code>hashear_md5</code>. Login: imagen + campo.</p>
+
+<h2>6. Base de datos (10%) — el oral vale 8</h2>
+<p>Nota del Word 2026: si la BD “no cuadra con requisitos”, pueden no puntuar el resto. Empieza siempre así:</p>
+<div class="frase">Cada RF tiene tabla. Destinos RF-04, viajes RF-18, clientes RF-11, reservas RF-12, asientos RF-16, pagos RF-09, bitácora de auditoría, usuarios/roles de seguridad. Dos esquemas para no mezclar credenciales con operación.</div>
+<table>
+  <tr><th>Pregunta</th><th>Respuesta</th></tr>
+  <tr><td>¿3FN?</td><td>Nombre y cédula viven en Cliente, no se copian en reserva_clientes. El viajero es un cliente_id.</td></tr>
+  <tr><td>¿Índice único?</td><td>asientos_reservados: viaje + asiento + eliminado_en. Impide doble asiento.</td></tr>
+  <tr><td>¿Vistas?</td><td>v_ocupacion_viaje, v_bitacora_listado, v_reserva_totales_eur. SHOW FULL TABLES … VIEW.</td></tr>
+  <tr><td>¿Triggers?</td><td>Después de INSERT/UPDATE/DELETE escriben bitácora. Pagos: monto &gt; 0. Bitácora: no se borra. SHOW TRIGGERS.</td></tr>
+  <tr><td>¿Función / SP en el servidor?</td><td class="no">No están creadas. Usuario kontrola error 1370 CREATE ROUTINE. El diseño está en el .sql. La misma cuenta se ejecuta en reportes (Python) y el SELECT del archivo de defensa.</td></tr>
+  <tr><td>¿Backup?</td><td>Pantalla Respaldos: mysqldump de las dos bases, .gz, 7 días. Restaurar existe; en producción no se usa un archivo viejo.</td></tr>
+</table>
+<p>En phpMyAdmin del servidor usa solo <code>defensa_phpmyadmin_servidor.sql</code>. Nunca el de CREATE FUNCTION.</p>
+<p>Si quiere ver CALL: “en la laptop local sí se crearon; aquí el hosting lo bloquea. Esta es la consulta equivalente” (paso 6 de ese archivo).</p>
+
+<h2>7. Sistemas operativos (5%)</h2>
+<div class="frase">Apache o LiteSpeed de Fastcomet sirve https://travelbqto.kontrolaonline.com/. Ese dominio es el VirtualHost. El archivo sigel.conf muestra el proxy a Uvicorn :8000. La app Python habla con MySQL por .env / database.py. PHP no aplica: la cátedra pidió Python. Los errores se ven en HTTP 400, 409, 422, 503, no en php.ini.</div>
+<p><strong>Concurrencia 4%:</strong> dos pestañas, mismo asiento. Uno gana, el otro 409 “el cupo o asiento ya fue tomado”. Motor InnoDB, transacción, <code>with_for_update()</code>, índice único. Recuperación = no dejan dos reservas del mismo asiento; rollback si hay IntegrityError.</p>
+
+<h2>8. Preguntas trampa (respóndelas así, no de otra forma)</h2>
+<table>
+  <tr><th>Si dicen…</th><th>Tú dices…</th></tr>
+  <tr><td>¿Dónde está el PHP?</td><td>La unidad de SO enseña LAMP; este proyecto se autorizó en Python. Equivalente: FastAPI = backend, Uvicorn+Apache = HTTP.</td></tr>
+  <tr><td>¿MD5 o bcrypt?</td><td>MD5 como pide el trayecto, más SHA-256. No bcrypt, para que encuentren md5() en el código.</td></tr>
+  <tr><td>¿Es inteligencia artificial?</td><td>Sistema experto por reglas. Analítica descriptiva. No predicción entrenada.</td></tr>
+  <tr><td>¿Dónde está el stored procedure?</td><td>Diseñado; el hosting no permite CREATE ROUTINE (1370). Triggers sí. Consulta equivalente en phpMyAdmin.</td></tr>
+  <tr><td>¿Cómo evitan doble asiento?</td><td>Lock de fila + índice único + 409.</td></tr>
+  <tr><td>¿El acompañante es texto?</td><td>No. Es cliente en reserva_clientes (3FN).</td></tr>
+  <tr><td>¿Quién modificó este registro?</td><td>Bitácora: usuario, tabla, registro, IP, fecha. Trigger + API.</td></tr>
+  <tr><td>¿El CAPTCHA es de Google?</td><td>No. Imagen propia, 5 caracteres, token HMAC, caduca 5 min. Funciona sin internet de Google.</td></tr>
+</table>
+
+<h2>9. Qué llevar impreso (sobre + mano)</h2>
+<ol>
+  <li>Cap. I, II y III (proyecto).</li>
+  <li>SRS formato Trayecto III.</li>
+  <li>Modelado del sistema (carriles, secuencia, IBM).</li>
+  <li>DCUS SI con componente inteligente.</li>
+  <li>Modelo de dominio + MER (si cabe).</li>
+  <li>Manual de usuario (este HTML a PDF).</li>
+  <li>sigel.conf (una hoja).</li>
+  <li>Esta guía (para ustedes, no se entrega).</li>
+</ol>
+
+<h2>10. Frases que no debes decir</h2>
+<ul>
+  <li class="no">“Tenemos machine learning / predicción / red neuronal.”</li>
+  <li class="no">“El stored procedure está creado en el servidor.” (en Fastcomet no)</li>
+  <li class="no">“Usamos PHP.”</li>
+  <li class="no">“La contraseña está en MD5 solo.” (también SHA-256)</li>
+  <li class="no">“Restauré la base anoche.”</li>
+</ul>
+
+<p class="frase">Si te trabas: muestra el sistema, no discutas. Un clic en bitácora, un 409 de asiento o un CAPTCHA malo vale más que un discurso.</p>
+</body>
+</html>
