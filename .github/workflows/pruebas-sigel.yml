@@ -36,7 +36,6 @@ jobs:
     env:
       TZ: America/Caracas
       DB_HOST: 127.0.0.1
-      DB_PUERTO: ${{ job.services.mysql.ports[3306] }}
       DB_USUARIO: root
       DB_CONTRASENA: SoloBaseEfimeraCI2026
       DB_NOMBRE: sigel_ci_negocio
@@ -46,6 +45,8 @@ jobs:
       TASA_BCV_AUTO: '0'
       RESPALDO_AUTO: '0'
     steps:
+      - name: Obtener el puerto de MySQL de esta ejecución
+        run: echo "DB_PUERTO=${{ job.services.mysql.ports[3306] }}" >> "$GITHUB_ENV"
       - name: Obtener código de esta versión
         uses: actions/checkout@v4
       - name: Preparar Python
