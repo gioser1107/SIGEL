@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -29,6 +30,32 @@ from modelos.permiso_modelo import (
 )
 
 router = APIRouter(prefix="/abordajes", tags=["Abordaje"])
+
+
+class DatosEstadoOperativo(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    estado: Literal["en_curso", "finalizado"]
+
+
+@router.put("/viajes/{viaje_id}/estado")
+def cambiar_estado_operativo_endpoint(
+    viaje_id: int,
+    datos: DatosEstadoOperativo,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_ABORDAJE)),
+):
+    from modelos.viaje_modelo import cambiar_estado_operativo, viaje_a_dict
+
+    asegurar_acceso_reporte_viaje(db, usuario_actual, viaje_id)
+    viaje = cambiar_estado_operativo(db, viaje_id, datos.estado)
+    registrar_evento(
+        db, modulo="abordaje", accion="UPDATE",
+        resumen=f"Viaje {viaje_id}: estado operativo {datos.estado}",
+        usuario_id=usuario_actual["id"], tabla_afectada="viajes",
+        registro_id=viaje_id, ip_origen=obtener_ip_origen(request),
+    )
+    return {"mensaje": "Estado del viaje actualizado", "viaje": viaje_a_dict(db, viaje)}
 
 
 class DatosAbordajeRegistrar(BaseModel):

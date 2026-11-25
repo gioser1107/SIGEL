@@ -89,12 +89,20 @@ export async function aprobarPagoReserva(
   reservaId: number,
   pagoId: number,
 ): Promise<{ mensaje: string; pago: PagoReserva }> {
-  return apiMutacion(() =>
-    apiRequest<{ mensaje: string; pago: PagoReserva }>(
-      `/reservas/${reservaId}/pagos/${pagoId}/aprobar`,
+  return apiMutacion(async () => {
+    const autorizado = await apiRequest<{ token_operacion: string }>(
+      `/reservas/${reservaId}/pagos/${pagoId}/token-aprobacion`,
       { method: 'POST', requiresAuth: true },
-    ),
-  );
+    );
+    return apiRequest<{ mensaje: string; pago: PagoReserva }>(
+      `/reservas/${reservaId}/pagos/${pagoId}/aprobar`,
+      {
+        method: 'POST',
+        requiresAuth: true,
+        body: JSON.stringify({ token_operacion: autorizado.token_operacion }),
+      },
+    );
+  });
 }
 
 export async function eliminarPagoReserva(

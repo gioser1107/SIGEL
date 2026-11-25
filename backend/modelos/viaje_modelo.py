@@ -513,8 +513,40 @@ def actualizar_viaje(
     return viaje
 
 
+def cambiar_estado_operativo(db: Session, viaje_id: int, estado: str) -> Viaje:
+    viaje = db.query(Viaje).filter(
+        Viaje.id == viaje_id, Viaje.eliminado_en.is_(None)
+    ).with_for_update().first()
+    if viaje is None:
+        raise HTTPException(status_code=404, detail="Viaje no encontrado")
+    ahora = _ahora_operativo()
+    if _naive(viaje.fecha_salida).date() != ahora.date():
+        raise HTTPException(status_code=400, detail="La operación manual corresponde a viajes con salida hoy")
+    if viaje.estado == "cancelado":
+        raise HTTPException(status_code=400, detail="No se puede operar un viaje cancelado")
+    _aplicar_estado_por_fecha(viaje, ahora)
+    permitidos = {
+        "en_curso": {"planificado", "en_curso"},
+        "finalizado": {"en_curso", "finalizado"},
+    }
+    if estado not in permitidos or viaje.estado not in permitidos[estado]:
+        raise HTTPException(status_code=400, detail="La transición del estado del viaje no está permitida")
+    viaje.estado = estado
+    viaje.actualizado_en = ahora
+    db.commit()
+    db.refresh(viaje)
+    return viaje
+
+
 def eliminar_viaje(db: Session, viaje_id: int) -> None:
     viaje = obtener_viaje_activo(db, viaje_id)
+    from modelos.reservas_modelo import Reserva
+    activa = db.query(Reserva.id).filter(
+        Reserva.viaje_id == viaje_id, Reserva.eliminado_en.is_(None),
+        Reserva.estado != "cancelada",
+    ).first()
+    if activa:
+        raise HTTPException(status_code=409, detail="No se puede anular un viaje con reservas vigentes")
     ahora = datetime.now()
     viaje.eliminado_en = ahora
     viaje.estado = "cancelado"

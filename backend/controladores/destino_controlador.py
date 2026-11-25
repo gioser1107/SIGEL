@@ -35,7 +35,7 @@ class DatosDestinoCrear(BaseModel):
     nombre: str
     descripcion: str | None = None
     precio_base_eur: Decimal = Field(default=Decimal("0.00"), ge=0)
-    recargo_menor_eur: Decimal = Field(default=Decimal("7.00"), ge=0)
+    recargo_menor_eur: Decimal = Field(default=Decimal("7.00"), ge=5, le=10)
     extra_hospedaje_particular_eur: Decimal = Field(default=Decimal("0.00"), ge=0)
     dificultad: str = "Moderado"
     activo: bool = True
@@ -46,7 +46,7 @@ class DatosDestinoActualizar(BaseModel):
     nombre: str | None = None
     descripcion: str | None = None
     precio_base_eur: Decimal | None = Field(default=None, ge=0)
-    recargo_menor_eur: Decimal | None = Field(default=None, ge=0)
+    recargo_menor_eur: Decimal | None = Field(default=None, ge=5, le=10)
     extra_hospedaje_particular_eur: Decimal | None = Field(default=None, ge=0)
     dificultad: str | None = None
     activo: bool | None = None

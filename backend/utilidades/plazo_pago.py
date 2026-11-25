@@ -65,7 +65,7 @@ def plazo_correccion_a_dict(reserva) -> dict | None:
 def liberar_cupos_plazo_vencido(db: Session) -> int:
     from modelos.boleto_modelo import anular_boleto_reserva
     from modelos.pago_modelo import TOLERANCIA_EUR, calcular_resumen_pagos_reserva
-    from modelos.reservas_modelo import Reserva
+    from modelos.reservas_modelo import Reserva, _liberar_asientos_reserva
 
     ahora = datetime.now()
     reservas = (
@@ -93,6 +93,7 @@ def liberar_cupos_plazo_vencido(db: Session) -> int:
         reserva.estado = "cancelada"
         reserva.plazo_correccion_hasta = None
         reserva.actualizado_en = ahora
+        _liberar_asientos_reserva(db, reserva.id, ahora)
         anular_boleto_reserva(db, reserva.id)
         liberadas += 1
 

@@ -87,6 +87,13 @@ export interface ResumenPagosReserva {
 export type EstadoPago = 'en_validacion' | 'aprobado' | 'rechazado';
 export type TipoPago = 'cuota' | 'total';
 
+export interface IntegridadBoleto {
+  valida: boolean;
+  motivo?: string;
+  algoritmo?: string | null;
+  huella_sha256?: string | null;
+}
+
 export interface BoletoDigital {
   id: number;
   reserva_id: number;
@@ -94,6 +101,9 @@ export interface BoletoDigital {
   estado: 'emitido' | 'anulado' | string;
   emitido_en: string | null;
   anulado_en?: string | null;
+  huella_sha256?: string | null;
+  algoritmo?: string | null;
+  integridad?: IntegridadBoleto | null;
 }
 
 export interface PagoReserva {

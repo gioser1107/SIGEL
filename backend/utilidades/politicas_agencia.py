@@ -177,4 +177,6 @@ def resolver_politica_menor(
             )
 
     recargo = float(recargo_destino_eur or 0) if (es_menor and not ocupa) else 0.0
+    if not ocupa and not 5 <= recargo <= 10:
+        raise HTTPException(status_code=400, detail="Configura el recargo del destino entre 5 y 10 EUR antes de registrar un menor sin asiento")
     return True, ocupa, recargo, nacimiento, edad

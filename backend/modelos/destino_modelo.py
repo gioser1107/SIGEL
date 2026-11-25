@@ -41,9 +41,9 @@ class Destino(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     nombre = Column(String(120), unique=True, nullable=False)
     descripcion = Column(Text, nullable=True)
-    precio_base_eur = Column(Numeric(12, 2), nullable=False, default=0)
-    recargo_menor_eur = Column(Numeric(12, 2), nullable=False, default=0)
-    extra_hospedaje_particular_eur = Column(Numeric(12, 2), nullable=False, default=0)
+    precio_base_eur = Column(Numeric(12, 2), nullable=False, default=7)
+    recargo_menor_eur = Column(Numeric(12, 2), nullable=False, default=7)
+    extra_hospedaje_particular_eur = Column(Numeric(12, 2), nullable=False, default=7)
     dificultad = Column(String(20), nullable=False, default=DIFICULTAD_POR_DEFECTO)
     activo = Column(Boolean, nullable=False, default=True)
     creado_en = Column(DateTime, nullable=False)
@@ -260,7 +260,7 @@ def crear_destino(
     nombre: str,
     descripcion: str | None,
     precio_base_eur: Decimal,
-    recargo_menor_eur: Decimal = Decimal("0.00"),
+    recargo_menor_eur: Decimal = Decimal("7.00"),
     extra_hospedaje_particular_eur: Decimal = Decimal("0.00"),
     dificultad: str = DIFICULTAD_POR_DEFECTO,
     activo: bool = True,
@@ -284,6 +284,8 @@ def crear_destino(
         "recargo_menor_eur",
         permitir_cero=True,
     )
+    if not Decimal("5") <= recargo_limpio <= Decimal("10"):
+        raise HTTPException(status_code=400, detail="El recargo de menor debe estar entre 5 y 10 EUR")
     extra_hospedaje_limpio = ValidadorEntrada.monto(
         extra_hospedaje_particular_eur,
         "extra_hospedaje_particular_eur",
@@ -347,6 +349,8 @@ def actualizar_destino(
         destino.precio_base_eur = ValidadorEntrada.monto(precio_base_eur, "precio_base_eur")
 
     if recargo_menor_eur is not None:
+        if not Decimal("5") <= Decimal(str(recargo_menor_eur)) <= Decimal("10"):
+            raise HTTPException(status_code=400, detail="El recargo de menor debe estar entre 5 y 10 EUR")
         destino.recargo_menor_eur = ValidadorEntrada.monto(
             recargo_menor_eur,
             "recargo_menor_eur",
@@ -392,6 +396,17 @@ def actualizar_destino(
 
 def anular_destino(db: Session, destino_id: int) -> Destino:
     destino = buscar_destino_activo(db, destino_id)
+    from modelos.viaje_modelo import Viaje
+    from modelos.reservas_modelo import Reserva
+    viaje_activo = db.query(Viaje.id).filter(
+        Viaje.destino_id == destino_id, Viaje.eliminado_en.is_(None)
+    ).first()
+    reserva_activa = db.query(Reserva.id).join(Viaje, Reserva.viaje_id == Viaje.id).filter(
+        Viaje.destino_id == destino_id, Reserva.eliminado_en.is_(None),
+        Reserva.estado != "cancelada",
+    ).first()
+    if viaje_activo or reserva_activa:
+        raise HTTPException(status_code=409, detail="No se puede anular un destino con viajes o reservas vigentes")
     ahora = datetime.now()
     destino.eliminado_en = ahora
     destino.activo = False

@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from database import get_db
+from dependencias.auth_dependencia import obtener_usuario_actual
 from dependencias.permiso_dependencia import requiere_permiso
 from modelos.bitacora_modelo import obtener_ip_origen, registrar_evento
 from modelos.cliente_modelo import es_rol_cliente
@@ -34,6 +35,15 @@ from modelos.permiso_modelo import (
 )
 
 router = APIRouter(prefix="/cotizaciones", tags=["Cotizaciones"])
+
+
+def acceso_cotizacion_propia_o_permiso(permiso: str):
+    """El portal opera sobre solicitudes propias; el modelo limita propiedad y campos."""
+    def validar(usuario_actual: dict = Depends(obtener_usuario_actual), db: Session = Depends(get_db)):
+        if es_rol_cliente(usuario_actual.get("rol", "")):
+            return usuario_actual
+        return requiere_permiso(permiso)(usuario_actual=usuario_actual, db=db)
+    return validar
 
 
 class DatosLineaCrear(BaseModel):
@@ -80,7 +90,7 @@ def listar_cotizaciones_endpoint(
     pagina: int = Query(default=1, ge=1),
     limite: int = Query(default=10, ge=1, le=200),
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_COTIZACIONES)),
+    usuario_actual: dict = Depends(acceso_cotizacion_propia_o_permiso(PERMISO_LEER_COTIZACIONES)),
 ):
     return listar_cotizaciones(
         db,
@@ -97,7 +107,7 @@ def listar_cotizaciones_endpoint(
 def obtener_cotizacion(
     cotizacion_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_COTIZACIONES)),
+    usuario_actual: dict = Depends(acceso_cotizacion_propia_o_permiso(PERMISO_LEER_COTIZACIONES)),
 ):
     return obtener_cotizacion_detalle(db, cotizacion_id, usuario_actual)
 
@@ -107,7 +117,7 @@ def crear_cotizacion_endpoint(
     datos: DatosCotizacionCrear,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_CREAR_COTIZACIONES)),
+    usuario_actual: dict = Depends(acceso_cotizacion_propia_o_permiso(PERMISO_CREAR_COTIZACIONES)),
 ):
     nueva_cotizacion = crear_cotizacion(
         db,
@@ -150,7 +160,7 @@ def actualizar_cotizacion_endpoint(
     datos: DatosCotizacionActualizar,
     request: Request,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_COTIZACIONES)),
+    usuario_actual: dict = Depends(acceso_cotizacion_propia_o_permiso(PERMISO_EDITAR_COTIZACIONES)),
 ):
     cotizacion, accion_bitacora = actualizar_cotizacion(
         db,
@@ -238,7 +248,7 @@ def aceptar_cotizacion_endpoint(
 def listar_lineas_cotizacion_endpoint(
     cotizacion_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_COTIZACIONES)),
+    usuario_actual: dict = Depends(acceso_cotizacion_propia_o_permiso(PERMISO_LEER_COTIZACIONES)),
 ):
     return listar_lineas_cotizacion(db, cotizacion_id, usuario_actual)
 
@@ -247,7 +257,7 @@ def listar_lineas_cotizacion_endpoint(
 def resumen_lineas_cotizacion_endpoint(
     cotizacion_id: int,
     db: Session = Depends(get_db),
-    usuario_actual: dict = Depends(requiere_permiso(PERMISO_LEER_COTIZACIONES)),
+    usuario_actual: dict = Depends(acceso_cotizacion_propia_o_permiso(PERMISO_LEER_COTIZACIONES)),
 ):
     return resumen_lineas_cotizacion(db, cotizacion_id, usuario_actual)
 

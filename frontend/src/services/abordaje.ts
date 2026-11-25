@@ -1,5 +1,6 @@
 import apiRequest from './api';
 import { apiMutacion } from '../utils/notificacionesEventos';
+import type { Viaje } from '../types/viaje';
 import type {
   AbordajeRegistro,
   EditarAbordajeDTO,
@@ -13,6 +14,15 @@ import type {
 export interface FiltrosViajesAbordaje {
   solo_hoy?: boolean;
   estado?: string;
+}
+
+export async function cambiarEstadoOperativoViaje(
+  viajeId: number,
+  estado: 'en_curso' | 'finalizado',
+): Promise<{ mensaje: string; viaje: Viaje }> {
+  return apiMutacion(() => apiRequest(`/abordajes/viajes/${viajeId}/estado`, {
+    method: 'PUT', requiresAuth: true, body: JSON.stringify({ estado }),
+  }));
 }
 
 export async function listarViajesAbordaje(

@@ -84,6 +84,10 @@ COLUMNAS = (
     (nombre_bd, "reservas", "plazo_correccion_hasta", "DATETIME NULL"),
     (nombre_bd, "resenas", "calificacion_guia", "SMALLINT NULL"),
     (nombre_bd, "cotizaciones", "modalidad", "VARCHAR(20) NOT NULL DEFAULT 'propio'"),
+    (nombre_bd, "boletos", "contenido_canonico", "TEXT NULL"),
+    (nombre_bd, "boletos", "huella_sha256", "VARCHAR(64) NULL"),
+    (nombre_bd, "boletos", "firma_ecdsa", "VARCHAR(256) NULL"),
+    (nombre_bd, "boletos", "algoritmo", "VARCHAR(40) NULL"),
 )
 
 
@@ -174,6 +178,10 @@ def _crear_tablas_credito(conexion) -> None:
                   `estado` VARCHAR(20) NOT NULL DEFAULT 'emitido',
                   `emitido_en` DATETIME NOT NULL,
                   `anulado_en` DATETIME NULL,
+                  `contenido_canonico` TEXT NULL,
+                  `huella_sha256` VARCHAR(64) NULL,
+                  `firma_ecdsa` VARCHAR(256) NULL,
+                  `algoritmo` VARCHAR(40) NULL,
                   `creado_en` DATETIME NOT NULL,
                   `actualizado_en` DATETIME NOT NULL,
                   PRIMARY KEY (`id`),

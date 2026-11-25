@@ -31,6 +31,13 @@ from modelos.pago_modelo import (
     registrar_pago_reserva,
 )
 from modelos.reservas_modelo import obtener_reserva_activa
+from utilidades.ciberdefensa import (
+    OPERACION_APROBAR_PAGO,
+    TokenOperacionInvalido,
+    emitir_token_operacion,
+    registro_operacion,
+    verificar_token_operacion,
+)
 from modelos.permiso_modelo import (
     PERMISO_BORRAR_REPORTES_PAGO,
     PERMISO_CREAR_REPORTES_PAGO,
@@ -392,17 +399,71 @@ class DatosPagoValidar(BaseModel):
     notas: Optional[str] = None
 
 
+class DatosAprobarPago(BaseModel):
+    token_operacion: str = Field(min_length=16)
+    notas: Optional[str] = None
+
+
+@router.post("/reservas/{reserva_id}/pagos/{pago_id}/token-aprobacion")
+def emitir_token_aprobacion_pago(
+    reserva_id: int,
+    pago_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_REPORTES_PAGO)),
+):
+    """Autoriza durante 5 minutos la aprobación de un pago concreto."""
+    obtener_reserva_activa(db, reserva_id)
+    pago = obtener_pago_activo(db, reserva_id, pago_id)
+    if pago.estado != "en_validacion":
+        raise HTTPException(
+            status_code=400,
+            detail="Solo un pago en validación puede autorizarse con un token temporal.",
+        )
+    emitido = emitir_token_operacion(
+        OPERACION_APROBAR_PAGO,
+        registro_operacion(reserva_id, pago_id),
+        usuario_actual["id"],
+    )
+    registrar_evento(
+        db,
+        modulo="pagos",
+        accion="VALIDAR",
+        resumen=f"Token de 5 minutos para aprobar el pago {pago_id} de la reserva {reserva_id}",
+        usuario_id=usuario_actual["id"],
+        tabla_afectada="pagos",
+        registro_id=pago_id,
+        ip_origen=obtener_ip_origen(request),
+    )
+    return {
+        "mensaje": "Token de aprobación emitido. Vence en 5 minutos.",
+        "operacion": emitido["operacion"],
+        "vigencia_segundos": emitido["vigencia_segundos"],
+        "expira_en": emitido["expira_en"],
+        "token_operacion": emitido["token"],
+    }
+
+
 @router.post("/reservas/{reserva_id}/pagos/{pago_id}/aprobar")
 def aprobar_pago_reserva_endpoint(
     reserva_id: int,
     pago_id: int,
+    datos: DatosAprobarPago,
     request: Request,
-    datos: DatosPagoValidar | None = None,
     db: Session = Depends(get_db),
     usuario_actual: dict = Depends(requiere_permiso(PERMISO_EDITAR_REPORTES_PAGO)),
 ):
     reserva = obtener_reserva_activa(db, reserva_id)
     pago = obtener_pago_activo(db, reserva_id, pago_id)
+    try:
+        verificar_token_operacion(
+            datos.token_operacion,
+            OPERACION_APROBAR_PAGO,
+            registro_operacion(reserva_id, pago_id),
+            usuario_actual["id"],
+        )
+    except TokenOperacionInvalido as error:
+        raise HTTPException(status_code=403, detail=str(error)) from error
     pago = actualizar_pago_reserva(
         db, reserva, pago,
         metodo_pago_id=None,
@@ -418,7 +479,7 @@ def aprobar_pago_reserva_endpoint(
         telefono_origen=None,
         correo_origen=None,
         comprobante_url=None,
-        notas=datos.notas if datos else None,
+        notas=datos.notas,
         usuario_id=usuario_actual["id"],
     )
 
@@ -426,7 +487,7 @@ def aprobar_pago_reserva_endpoint(
         db,
         modulo="pagos",
         accion="UPDATE",
-        resumen=f"Pago {pago_id} aprobado en reserva {reserva_id}",
+        resumen=f"Pago {pago_id} aprobado en reserva {reserva_id} con token HMAC de 5 minutos",
         usuario_id=usuario_actual["id"],
         tabla_afectada="pagos",
         registro_id=pago_id,

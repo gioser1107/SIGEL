@@ -22,6 +22,9 @@ import {
 import { useManifiestoAbordaje } from './hooks/useManifiestoAbordaje';
 import { useSelectorViajesAbordaje } from './hooks/useSelectorViajesAbordaje';
 import { formatearFechaViaje } from './utils/formatearAbordaje';
+import { cambiarEstadoOperativoViaje } from '../../../services/abordaje';
+import { etiquetaEstado } from '../../../utils/etiquetasNegocio';
+import { fechaHoyIso } from '../../../utils/validacionesFormulario';
 import '../Cotizaciones/Cotizaciones.css';
 import './Abordaje.css';
 
@@ -40,6 +43,9 @@ export default function Abordaje() {
   const [soloHoy, setSoloHoy] = useState(true);
   const [estadoViaje, setEstadoViaje] = useState('');
   const [exito, setExito] = useState<string | null>(null);
+  const [estadoPendiente, setEstadoPendiente] = useState<'en_curso' | 'finalizado' | null>(null);
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
+  const [errorEstado, setErrorEstado] = useState<string | null>(null);
   const [accionNotas, setAccionNotas] = useState<AccionNotas>(null);
   const [pasajeroEditar, setPasajeroEditar] = useState<PasajeroManifiesto | null>(null);
   const [pasajeroAnular, setPasajeroAnular] = useState<PasajeroManifiesto | null>(null);
@@ -66,6 +72,23 @@ export default function Abordaje() {
     setViajeId(null);
     setExito(null);
     manifiesto.setError(null);
+  }
+
+  async function confirmarEstadoViaje() {
+    if (!viajeId || !estadoPendiente) return;
+    setCambiandoEstado(true);
+    setErrorEstado(null);
+    try {
+      await cambiarEstadoOperativoViaje(viajeId, estadoPendiente);
+      setEstadoPendiente(null);
+      setExito('Estado del viaje actualizado.');
+      await manifiesto.recargar();
+      await selector.recargar();
+    } catch (err) {
+      setErrorEstado(err instanceof Error ? err.message : 'No se pudo actualizar el estado.');
+    } finally {
+      setCambiandoEstado(false);
+    }
   }
 
   async function confirmarAbordadoIndividual(pasajero: PasajeroManifiesto) {
@@ -160,14 +183,39 @@ export default function Abordaje() {
         contador={manifiesto.manifiesto?.resumen.total_pasajeros}
         descripcion={
           viaje
-            ? `${formatearFechaViaje(viaje.fecha_salida)}${viaje.guia_nombre ? ` · Guía: ${viaje.guia_nombre}` : ''}`
+            ? `${formatearFechaViaje(viaje.fecha_salida)}${viaje.guia_nombre ? ` · Guía: ${viaje.guia_nombre}` : ''} · Estado: ${etiquetaEstado(viaje.estado ?? '')}`
             : 'Cargando manifiesto…'
         }
         acciones={
+          <>
+          {puedeCorregir && viaje?.fecha_salida?.slice(0, 10) === fechaHoyIso() &&
+            (viaje.estado === 'planificado' || viaje.estado === 'en_curso') && (
+            <Boton variante="primario" tamano="sm" onClick={() => {
+              setErrorEstado(null);
+              setEstadoPendiente(viaje.estado === 'planificado' ? 'en_curso' : 'finalizado');
+            }}>
+              {viaje.estado === 'planificado' ? 'Iniciar viaje' : 'Finalizar viaje'}
+            </Boton>
+          )}
           <Boton variante="secundario" tamano="sm" onClick={volverSelector}>
             ← Cambiar viaje
           </Boton>
+          </>
         }
+      />
+
+      <ModalConfirmacion
+        abierto={estadoPendiente !== null}
+        titulo={estadoPendiente === 'finalizado' ? '¿Finalizar viaje?' : '¿Iniciar viaje?'}
+        mensaje={estadoPendiente === 'finalizado'
+          ? 'El viaje quedará finalizado y se conservará el historial de asistencia e incidencias.'
+          : 'El viaje quedará en curso. El cambio automático por fechas seguirá activo.'}
+        variante="primario"
+        textoConfirmar={estadoPendiente === 'finalizado' ? 'Finalizar viaje' : 'Iniciar viaje'}
+        cargando={cambiandoEstado}
+        error={errorEstado}
+        onConfirmar={confirmarEstadoViaje}
+        onCancelar={() => { if (!cambiandoEstado) setEstadoPendiente(null); }}
       />
 
       {manifiesto.manifiesto && (

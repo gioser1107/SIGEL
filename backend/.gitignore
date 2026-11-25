@@ -7,3 +7,4 @@ venv/
 respaldos/*.sql
 respaldos/*.sql.gz
 respaldos/.candado
+claves/*.pem

@@ -99,6 +99,12 @@ export interface ReservaPortalMis {
     codigo: string;
     estado: string;
     emitido_en: string | null;
+    huella_sha256?: string | null;
+    algoritmo?: string | null;
+    integridad?: {
+      valida: boolean;
+      motivo?: string;
+    } | null;
   } | null;
   plazo_correccion?: {
     hasta: string;

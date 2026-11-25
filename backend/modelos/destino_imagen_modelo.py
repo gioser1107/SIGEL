@@ -1,4 +1,5 @@
 import io
+import os
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,7 +9,7 @@ from sqlalchemy import BigInteger, Boolean, Column, DateTime, ForeignKey, SmallI
 
 from database import Base
 
-UPLOAD_ROOT = Path(__file__).resolve().parent.parent / "uploads"
+UPLOAD_ROOT = Path(os.environ.get("SIGEL_UPLOAD_ROOT", Path(__file__).resolve().parent.parent / "uploads"))
 PREFIJO_ARCHIVOS = "/api/archivos"
 MAX_BYTES = 10 * 1024 * 1024
 MAX_LADO_PX = 1920

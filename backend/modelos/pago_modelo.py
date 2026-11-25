@@ -370,8 +370,10 @@ def cargar_datos_pago(
         punto_venta,
     )
     from modelos.boleto_modelo import boleto_a_dict, obtener_boleto_emitido
+    from modelos.reservas_modelo import Reserva
 
-    detalle["boleto"] = boleto_a_dict(obtener_boleto_emitido(db, pago.reserva_id))
+    reserva_boleto = db.query(Reserva).filter(Reserva.id == pago.reserva_id).first()
+    detalle["boleto"] = boleto_a_dict(obtener_boleto_emitido(db, pago.reserva_id), reserva_boleto)
     return detalle
 
 
@@ -542,9 +544,11 @@ def calcular_resumen_pagos_reserva(db: Session, reserva: Reserva) -> dict:
     )
     pagado_completo = saldo_pendiente_eur <= 0 and total_reserva_eur > 0
     deposito_minimo_eur = float(DEPOSITO_MINIMO_EUR)
+    minimo_exigible_eur = min(deposito_minimo_eur, total_reserva_eur)
     deposito_minimo_cumplido = (
-        total_aprobado_eur >= deposito_minimo_eur - TOLERANCIA_EUR
-        or total_reserva_eur <= deposito_minimo_eur + TOLERANCIA_EUR
+        total_reserva_eur > 0
+        and total_aprobado_eur > 0
+        and total_aprobado_eur >= minimo_exigible_eur - TOLERANCIA_EUR
     )
     monto_sugerido_eur = (
         _redondear_eur(min(saldo_pendiente_eur, deposito_minimo_eur))
@@ -1036,6 +1040,9 @@ def actualizar_pago_reserva(
         pago.notas = ValidadorEntrada.texto_libre(notas, "notas", maximo=255) or None
 
     pago.actualizado_en = datetime.now()
+    # La sesión tiene autoflush=False. Las consultas por estado del plazo de
+    # corrección deben ver el rechazo recién aplicado dentro de la transacción.
+    db.flush()
     actualizar_estado_reserva_por_pagos(db, reserva)
     reserva.actualizado_en = datetime.now()
     from modelos.boleto_modelo import emitir_boleto_si_corresponde
@@ -1052,6 +1059,12 @@ def eliminar_pago_reserva(db: Session, reserva: Reserva, pago: Pago) -> None:
     ahora = datetime.now()
     pago.eliminado_en = ahora
     pago.actualizado_en = ahora
+    db.flush()
     actualizar_estado_reserva_por_pagos(db, reserva)
     reserva.actualizado_en = ahora
+    from modelos.boleto_modelo import emitir_boleto_si_corresponde
+    from utilidades.plazo_pago import actualizar_plazo_tras_pago
+
+    actualizar_plazo_tras_pago(db, reserva)
+    emitir_boleto_si_corresponde(db, reserva)
     db.commit()

@@ -91,7 +91,7 @@ export default function CrearReserva() {
       return 'Uno de los asientos seleccionados ya no existe. Regresa al paso de asientos.';
     }
     if (detalle.includes('ya está reservado')) {
-      return 'Uno de los asientos ya fue tomado. Elige otros disponibles.';
+      return detalle;
     }
     return detalle ? `Error: ${detalle}` : 'No se pudo crear la reserva. Intenta de nuevo.';
   }

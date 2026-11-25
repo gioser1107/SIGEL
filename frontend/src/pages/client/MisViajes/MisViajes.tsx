@@ -242,11 +242,27 @@ export default function MisViajes() {
                   </div>
 
                   <div className="mis-viajes__ticket-footer">
-                    <span className="mis-viajes__ticket-ref">
-                      {reserva.boleto?.codigo
-                        ? `Boleto ${reserva.boleto.codigo}`
-                        : `Ref: ${pago?.referencia ?? '—'}`}
-                    </span>
+                    <div className="mis-viajes__ticket-identidad">
+                      <span className="mis-viajes__ticket-ref">
+                        {reserva.boleto?.codigo
+                          ? `Boleto ${reserva.boleto.codigo}`
+                          : `Ref: ${pago?.referencia ?? '—'}`}
+                      </span>
+                      {reserva.boleto?.huella_sha256 && (
+                        <span
+                          className={
+                            reserva.boleto.integridad?.valida === false
+                              ? 'mis-viajes__ticket-id mis-viajes__ticket-huella--rechazada'
+                              : 'mis-viajes__ticket-id'
+                          }
+                          title={reserva.boleto.huella_sha256}
+                        >
+                          {reserva.boleto.integridad?.valida === false
+                            ? 'Integridad rechazada'
+                            : `SHA-256 ${reserva.boleto.huella_sha256.slice(0, 18)}…`}
+                        </span>
+                      )}
+                    </div>
                     <div className="mis-viajes__ticket-footer-actions">
                       {mostrarAbonar && (
                         <Link

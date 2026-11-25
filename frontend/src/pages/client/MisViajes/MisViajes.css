@@ -282,10 +282,22 @@ button.mis-viajes__btn-abonar {
   font-size: var(--font-size-xs);
 }
 
+.mis-viajes__ticket-identidad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
 .mis-viajes__ticket-ref {
   font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-primary-dark);
+}
+
+.mis-viajes__ticket-huella--rechazada {
+  color: #b42318;
+  font-weight: 700;
 }
 
 .mis-viajes__ticket-id {

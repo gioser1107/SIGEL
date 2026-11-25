@@ -27,7 +27,7 @@ DIAS_RETENCION = 7
 ZONA_LOCAL = ZoneInfo("America/Caracas")
 HORA_PROGRAMADA = 3
 MINUTO_PROGRAMADO = 15
-DIRECTORIO_RESPALDOS = Path(__file__).resolve().parent.parent / "respaldos"
+DIRECTORIO_RESPALDOS = Path(os.environ.get("SIGEL_RESPALDOS_DIR", Path(__file__).resolve().parent.parent / "respaldos"))
 PATRON_ARCHIVO = re.compile(
     r"^respaldo_(seguridad|negocio)_(\d{8}_\d{6})\.sql(?:\.gz)?$"
 )

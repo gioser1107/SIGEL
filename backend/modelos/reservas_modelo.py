@@ -639,7 +639,7 @@ def _reserva_a_item_portal(db: Session, reserva: Reserva) -> dict:
     item["pagos"] = listar_pagos_reserva_portal(db, reserva.id, pagina=1, limite=100)["items"]
     from modelos.boleto_modelo import boleto_a_dict, obtener_boleto_emitido
 
-    item["boleto"] = boleto_a_dict(obtener_boleto_emitido(db, reserva.id))
+    item["boleto"] = boleto_a_dict(obtener_boleto_emitido(db, reserva.id), reserva)
     return item
 
 
@@ -743,6 +743,18 @@ def actualizar_reserva(
     return reserva
 
 
+def _liberar_asientos_reserva(db: Session, reserva_id: int, ahora: datetime) -> None:
+    """Conserva el historial y libera los puestos en la misma transacción."""
+    pasajeros = db.query(ReservaCliente.id).filter(ReservaCliente.reserva_id == reserva_id)
+    db.query(AsientoReservado).filter(
+        AsientoReservado.reserva_cliente_id.in_(pasajeros),
+        AsientoReservado.eliminado_en.is_(None),
+    ).update(
+        {AsientoReservado.eliminado_en: ahora, AsientoReservado.actualizado_en: ahora},
+        synchronize_session=False,
+    )
+
+
 def cancelar_reserva_sin_reembolso(
     db: Session,
     reserva_id: int,
@@ -772,6 +784,7 @@ def cancelar_reserva_sin_reembolso(
     reserva.estado = "cancelada"
     reserva.plazo_correccion_hasta = None
     reserva.actualizado_en = datetime.now()
+    _liberar_asientos_reserva(db, reserva.id, reserva.actualizado_en)
     anular_boleto_reserva(db, reserva.id)
 
     credito = None
@@ -821,6 +834,7 @@ def eliminar_reserva(db: Session, reserva_id: int) -> None:
     ahora = datetime.now()
     reserva.eliminado_en = ahora
     reserva.actualizado_en = ahora
+    _liberar_asientos_reserva(db, reserva.id, ahora)
     _confirmar_transaccion(db)
 
 
@@ -896,7 +910,7 @@ def agregar_pasajero(
         ocupa_asiento,
         recargo_destino,
         partida_nacimiento_url,
-        exigir_partida=False,
+        exigir_partida=True,
     )
     recargo_final = recargo_auto if es_menor else float(recargo_eur or 0)
 
@@ -969,7 +983,7 @@ def actualizar_pasajero(
         ocupa_final,
         recargo_destino,
         partida_final,
-        exigir_partida=False,
+        exigir_partida=True,
     )
     pasajero.es_menor = menor_final
     pasajero.ocupa_asiento = ocupa_final

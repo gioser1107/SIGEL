@@ -1,4 +1,4 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import BigInteger, Column, Computed, DateTime, ForeignKey, UniqueConstraint
 
 from database import Base
 
@@ -8,9 +8,8 @@ class AsientoReservado(Base):
     __table_args__ = (
         UniqueConstraint(
             "viaje_id",
-            "asiento_id",
-            "eliminado_en",
-            name="uq_asiento_viaje_activo",
+            "asiento_activo_viaje",
+            name="uq_asiento_viaje_vigente",
         ),
     )
 
@@ -21,3 +20,9 @@ class AsientoReservado(Base):
     creado_en = Column(DateTime, nullable=False)
     actualizado_en = Column(DateTime, nullable=False)
     eliminado_en = Column(DateTime, nullable=True)
+    # Solo las asignaciones vigentes deben ser únicas. Las históricas pueden
+    # haberse liberado dentro del mismo segundo sin entrar en conflicto.
+    asiento_activo_viaje = Column(
+        BigInteger,
+        Computed("IF(eliminado_en IS NULL, asiento_id, NULL)", persisted=True),
+    )
